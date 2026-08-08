@@ -59,20 +59,31 @@ class SplitReadResult:
     example_partner_loci: list    # up to 5 "chrom:pos" strings for inspection
 
 @dataclass
+class ReadDepthProfile:
+    chromosome: str
+    start: int
+    end: int
+    window_size: int
+    windows: list      # [{window_start, window_end, depth}, ...]
+    summary: dict       # {min_depth, max_depth, mean_depth, depth_ratio_min_to_mean, likely_deletion}
+
+@dataclass
 class BreakpointEvidenceSummary:
     label: str
     chromosome: str
     position: int
-    evidence_score: float          # 0-100, normalized sum of the 3 components below
+    evidence_score: float          # 0-100, normalized sum of the 4 components below
     evidence_strength: str         # "none" | "weak" | "moderate" | "strong"
-    signal_layers: str             # e.g. "3/3" — how many of the 3 layers show any signal
+    signal_layers: str             # e.g. "3/4" — how many of the 4 layers show any signal
     discordant_pair_score: float   # 0-50
     soft_clip_score: float         # 0-50
     split_read_score: float        # 0-50
+    depth_score: float             # 0-50
     locus_stats: dict
     discordant_pairs: dict
     soft_clips: dict
     split_reads: dict
+    depth_profile: dict
     supporting_observations: list
 
 
@@ -397,7 +408,91 @@ def get_split_reads(
     return asdict(result)
 
 
-# ── Tool 5: Combined breakpoint evidence summary ──────────────────────────────
+# ── Tool 5: Read depth profile ─────────────────────────────────────────────────
+
+def get_read_depth_profile(
+    bam_path: str,
+    chromosome: str,
+    start: int,
+    end: int,
+    window_size: int = 100
+) -> dict:
+    """
+    Computes mean read depth in sliding windows across a region.
+    Useful for detecting copy-number changes at SV breakpoints:
+    - Deletions: depth drops inside the deleted region
+    - Duplications: depth rises
+    - Balanced events: depth stays flat (use other evidence layers)
+
+    Depth here is approximated as the number of reads with actual aligned
+    sequence in each window (not per-base pileup depth). Overlap is judged
+    from each read's aligned reference positions rather than its
+    reference_start/reference_end span, so a read carrying an internal CIGAR
+    deletion is correctly NOT counted as covering the deleted region it
+    spans but has no sequence in — this is exactly the case that matters
+    for spotting a deletion inside a long read.
+
+    Args:
+        bam_path:    Path to indexed BAM file
+        chromosome:  Chromosome of the region
+        start:       Region start (0-based)
+        end:         Region end
+        window_size: Width of each sliding window in bp (default 100bp)
+
+    Returns:
+        ReadDepthProfile as dict, or error dict if BAM cannot be read
+    """
+    try:
+        bam = pysam.AlignmentFile(bam_path, "rb")
+    except Exception as e:
+        return {"error": str(e), "bam_path": bam_path}
+
+    window_starts = list(range(start, end, window_size))
+    counts = [0] * len(window_starts)
+
+    for read in bam.fetch(chromosome, start, end):
+        if read.is_unmapped or read.is_secondary or read.is_supplementary:
+            continue
+
+        touched_windows = set()
+        for pos in read.get_reference_positions():
+            if start <= pos < end:
+                touched_windows.add((pos - start) // window_size)
+        for idx in touched_windows:
+            counts[idx] += 1
+
+    bam.close()
+
+    windows = [
+        {"window_start": w_start, "window_end": min(w_start + window_size, end), "depth": depth}
+        for w_start, depth in zip(window_starts, counts)
+    ]
+
+    min_depth = min(counts) if counts else 0
+    max_depth = max(counts) if counts else 0
+    mean_depth = round(sum(counts) / len(counts), 2) if counts else 0.0
+    depth_ratio_min_to_mean = round(min_depth / mean_depth, 3) if mean_depth > 0 else 0.0
+
+    summary = {
+        "min_depth": min_depth,
+        "max_depth": max_depth,
+        "mean_depth": mean_depth,
+        "depth_ratio_min_to_mean": depth_ratio_min_to_mean,
+        "likely_deletion": depth_ratio_min_to_mean < 0.6,
+    }
+
+    result = ReadDepthProfile(
+        chromosome=chromosome,
+        start=start,
+        end=end,
+        window_size=window_size,
+        windows=windows,
+        summary=summary,
+    )
+    return asdict(result)
+
+
+# ── Tool 6: Combined breakpoint evidence summary ──────────────────────────────
 
 def summarize_breakpoint_evidence(
     bam_path: str,
@@ -408,12 +503,12 @@ def summarize_breakpoint_evidence(
     min_mapq: int = 20
 ) -> dict:
     """
-    Combines discordant-pair, soft-clip, and split-read evidence into a single
-    interpretable breakpoint evidence summary. Each of the 3 evidence layers is
-    scored independently (0-50), summed, and normalized to a 0-100
-    evidence_score, so the contribution of each layer stays visible rather
-    than collapsed into a black-box number. signal_layers reports how many of
-    the 3 layers show any signal at all (e.g. "3/3").
+    Combines discordant-pair, soft-clip, split-read, and read-depth evidence
+    into a single interpretable breakpoint evidence summary. Each of the 4
+    evidence layers is scored independently (0-50), summed, and normalized to
+    a 0-100 evidence_score, so the contribution of each layer stays visible
+    rather than collapsed into a black-box number. signal_layers reports how
+    many of the 4 layers show any signal at all (e.g. "3/4").
 
     This tool does not infer disease relevance — it only summarizes read-level
     structural-variant evidence at a candidate breakpoint.
@@ -443,8 +538,12 @@ def summarize_breakpoint_evidence(
         bam_path, chromosome, position,
         window_bp=min(window_bp, 200), min_mapq=min_mapq
     )
+    depth_profile = get_read_depth_profile(
+        bam_path, chromosome, max(0, position - window_bp), position + window_bp,
+        window_size=100
+    )
 
-    for result in (stats, disc, clips, split):
+    for result in (stats, disc, clips, split, depth_profile):
         if "error" in result:
             return {"error": result["error"], "bam_path": bam_path}
 
@@ -511,10 +610,30 @@ def summarize_breakpoint_evidence(
             f"(e.g. {split['example_partner_loci'][:1]})."
         )
 
-    # ── Combine: normalize 3 x (0-50) components onto a 0-100 scale ──
-    raw_sum = discordant_pair_score + soft_clip_score + split_read_score
-    evidence_score = round(raw_sum / 1.5, 1)
-    signal_layers = f"{sum(1 for s in (discordant_pair_score, soft_clip_score, split_read_score) if s > 0)}/3"
+    # ── Read-depth component (0-50) ──
+    # depth_ratio_min_to_mean < 0.6 flags a possible deletion (coverage drop);
+    # the lower the ratio, the more pronounced the drop.
+    depth_ratio = depth_profile["summary"]["depth_ratio_min_to_mean"]
+    if depth_ratio < 0.3:
+        depth_score = 50.0
+    elif depth_ratio < 0.6:
+        depth_score = 30.0
+    else:
+        depth_score = 0.0
+
+    if depth_score > 0:
+        observations.append(
+            f"Read depth drops to {depth_ratio:.0%} of the window mean "
+            f"(min {depth_profile['summary']['min_depth']} vs mean "
+            f"{depth_profile['summary']['mean_depth']} reads/window) — "
+            f"consistent with a possible deletion."
+        )
+
+    # ── Combine: normalize 4 x (0-50) components onto a 0-100 scale ──
+    component_scores = (discordant_pair_score, soft_clip_score, split_read_score, depth_score)
+    raw_sum = sum(component_scores)
+    evidence_score = round(raw_sum / 2.0, 1)
+    signal_layers = f"{sum(1 for s in component_scores if s > 0)}/4"
 
     if evidence_score >= 70:
         evidence_strength = "strong"
@@ -525,7 +644,7 @@ def summarize_breakpoint_evidence(
     else:
         evidence_strength = "none"
         if stats["total_reads"] > 0:
-            observations.append("No discordant pairs, soft-clipping, or split reads detected near this position.")
+            observations.append("No discordant pairs, soft-clipping, split reads, or depth changes detected near this position.")
 
     result = BreakpointEvidenceSummary(
         label=label,
@@ -537,10 +656,12 @@ def summarize_breakpoint_evidence(
         discordant_pair_score=discordant_pair_score,
         soft_clip_score=soft_clip_score,
         split_read_score=split_read_score,
+        depth_score=depth_score,
         locus_stats=stats,
         discordant_pairs=disc,
         soft_clips=clips,
         split_reads=split,
+        depth_profile=depth_profile,
         supporting_observations=observations,
     )
     return asdict(result)

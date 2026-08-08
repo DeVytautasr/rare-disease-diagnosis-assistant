@@ -299,7 +299,11 @@ def run_tests():
         for obs in summary["supporting_observations"]:
             print(f"    - {obs}")
         assert summary["evidence_strength"] == "strong", "Expected STRONG evidence"
-        assert summary["signal_layers"] == "3/3", "Expected all 3 evidence layers to show signal"
+        # signal_layers is 4/4 here rather than 3/4: the read-free gaps deliberately
+        # built into this synthetic BAM (to keep discordant/clip/split fractions clean)
+        # also trip the depth-drop threshold — an artifact of test construction, not a
+        # real deletion signal. See TEST 6 output above: min depth is 0 reads/window.
+        assert summary["signal_layers"] == "4/4", "Expected all 4 evidence layers to show signal"
 
         print("  PASSED ✓\n")
 
