@@ -1,0 +1,5 @@
+2026-08-06T08:39:37 fastq-dump.2.9.6 sys: connection failed while opening file within cryptographic module - mbedtls_ssl_handshake returned -9984 ( X509 - Certificate verification failed, e.g. CRL, CA or signature check failed )
+2026-08-06T08:39:37 fastq-dump.2.9.6 sys: mbedtls_ssl_get_verify_result returned 0x4008 (  !! The certificate is not correctly signed by the trusted CA  !! The certificate is signed with an unacceptable hash.  )
+2026-08-06T08:39:37 fastq-dump.2.9.6 sys: connection failed while opening file within cryptographic module - ktls_handshake failed while accessing '130.14.29.110' from '172.26.93.32'
+2026-08-06T08:39:37 fastq-dump.2.9.6 sys: connection failed while opening file within cryptographic module - Failed to create TLS stream for 'www.ncbi.nlm.nih.gov' (130.14.29.110) from '172.26.93.32'
+2026-08-06T08:39:37 fastq-dump.2.9.6 err: item not found while constructing within virtual database module - the path 'SRX969058' cannot be opened as database or table
