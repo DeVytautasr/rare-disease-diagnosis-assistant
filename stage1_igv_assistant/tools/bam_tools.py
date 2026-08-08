@@ -8,6 +8,7 @@ that are not in the tool output.
 """
 
 import pysam
+import requests as _requests
 from dataclasses import dataclass, asdict
 from typing import Optional
 
@@ -66,6 +67,14 @@ class ReadDepthProfile:
     window_size: int
     windows: list      # [{window_start, window_end, depth}, ...]
     summary: dict       # {min_depth, max_depth, mean_depth, depth_ratio_min_to_mean, likely_deletion}
+
+@dataclass
+class GeneLocus:
+    chromosome: str
+    position: int
+    gene_count: int
+    is_intergenic: bool
+    genes: list
 
 @dataclass
 class BreakpointEvidenceSummary:
@@ -665,3 +674,149 @@ def summarize_breakpoint_evidence(
         supporting_observations=observations,
     )
     return asdict(result)
+
+
+# ── Tool 7: Gene lookup at a locus ─────────────────────────────────────────────
+
+def get_gene_at_locus(
+    chromosome: str,
+    position: int,
+    genome_build: str = "GRCh38"
+) -> dict:
+    """
+    Query Ensembl REST API for genes overlapping a position.
+    Tells the assistant whether a breakpoint disrupts a known gene,
+    hits an intron, or falls in intergenic space — the key clinical question.
+
+    Args:
+        chromosome:   e.g. "chr1" or "1"
+        position:     genomic position
+        genome_build: "GRCh38" (default) or "GRCh37"
+
+    Returns:
+        dict with gene names, biotypes, and whether position is intergenic
+    """
+    chrom = chromosome.replace("chr", "")
+
+    if genome_build == "GRCh37":
+        server = "https://grch37.rest.ensembl.org"
+    else:
+        server = "https://rest.ensembl.org"
+
+    url = f"{server}/overlap/region/human/{chrom}:{position}-{position}"
+    headers = {"Content-Type": "application/json"}
+    params = {"feature": "gene"}
+
+    try:
+        r = _requests.get(url, headers=headers, params=params, timeout=15)
+        if r.status_code == 200:
+            genes = r.json()
+            gene_list = [
+                {
+                    "gene_id": g.get("gene_id", "unknown"),
+                    "gene_name": g.get("external_name", "unknown"),
+                    "biotype": g.get("biotype", "unknown"),
+                    "strand": "+" if g.get("strand", 1) == 1 else "-",
+                    "gene_start": g.get("start"),
+                    "gene_end": g.get("end"),
+                    "distance_from_position": 0,
+                }
+                for g in genes
+            ]
+            return {
+                "chromosome": chromosome,
+                "position": position,
+                "genome_build": genome_build,
+                "gene_count": len(gene_list),
+                "is_intergenic": len(gene_list) == 0,
+                "genes": gene_list,
+                "clinical_note": (
+                    f"Breakpoint directly disrupts {len(gene_list)} gene(s)."
+                    if gene_list
+                    else "Breakpoint is intergenic — check nearby genes for positional effects."
+                )
+            }
+        else:
+            return {"error": f"Ensembl returned HTTP {r.status_code}",
+                    "chromosome": chromosome, "position": position}
+    except Exception as e:
+        return {"error": str(e), "chromosome": chromosome, "position": position}
+
+
+# ── Tool 8: Reciprocal breakpoint check ────────────────────────────────────────
+
+def check_reciprocal_breakpoint(
+    bam_path: str,
+    primary_chromosome: str,
+    primary_position: int,
+    partner_chromosome: str,
+    partner_position: int,
+    window_bp: int = 500,
+    min_mapq: int = 20
+) -> dict:
+    """
+    For a suspected balanced translocation, verify the reciprocal breakpoint.
+
+    If discordant pairs at primary_chromosome:primary_position point to
+    partner_chromosome, this function checks partner_chromosome:partner_position
+    and confirms whether discordant pairs there point BACK to primary_chromosome.
+
+    True balanced translocation: both sides show reciprocal discordant signal.
+    One-sided signal only: artifact or unbalanced event.
+
+    Args:
+        bam_path:           Path to indexed BAM
+        primary_chromosome: First breakpoint chromosome (e.g. "chr1")
+        primary_position:   First breakpoint position
+        partner_chromosome: Partner chromosome (e.g. "chr8")
+        partner_position:   Estimated partner breakpoint position
+        window_bp:          Half-window for read counting
+        min_mapq:           Minimum mapping quality
+
+    Returns:
+        dict with primary evidence, reciprocal evidence, and reciprocity verdict
+    """
+    # Check primary side
+    primary = count_discordant_pairs(
+        bam_path, primary_chromosome, primary_position, window_bp, min_mapq
+    )
+
+    # Check reciprocal side
+    reciprocal = count_discordant_pairs(
+        bam_path, partner_chromosome, partner_position, window_bp, min_mapq
+    )
+
+    # Reciprocity check: does partner side have discordant mates pointing back?
+    primary_disc = primary.get("discordant_pairs", 0)
+    reciprocal_disc = reciprocal.get("discordant_pairs", 0)
+
+    # Check if reciprocal mates point back to primary chromosome
+    reciprocal_mate_chroms = reciprocal.get("mate_chromosomes", {})
+    back_pointing = reciprocal_mate_chroms.get(primary_chromosome, 0)
+
+    if primary_disc >= 5 and reciprocal_disc >= 5 and back_pointing >= 3:
+        verdict = "RECIPROCAL CONFIRMED — both breakpoints show concordant inter-chromosomal signal"
+    elif primary_disc >= 5 and reciprocal_disc >= 2:
+        verdict = "RECIPROCAL LIKELY — primary signal strong, partner signal present but weak"
+    elif primary_disc >= 5 and reciprocal_disc == 0:
+        verdict = "RECIPROCAL NOT FOUND — only one side shows signal; may be artifact or wrong partner coords"
+    else:
+        verdict = "INSUFFICIENT EVIDENCE at both positions"
+
+    return {
+        "primary": {
+            "chromosome": primary_chromosome,
+            "position": primary_position,
+            "discordant_pairs": primary_disc,
+            "mate_chromosomes": primary.get("mate_chromosomes", {}),
+        },
+        "reciprocal": {
+            "chromosome": partner_chromosome,
+            "position": partner_position,
+            "discordant_pairs": reciprocal_disc,
+            "back_pointing_to_primary": back_pointing,
+            "mate_chromosomes": reciprocal_mate_chroms,
+        },
+        "verdict": verdict,
+        "is_balanced": primary_disc >= 3 and reciprocal_disc >= 3,
+    }

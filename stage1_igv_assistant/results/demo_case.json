@@ -1,0 +1,330 @@
+{
+  "case_id": "demo_synthetic_translocation",
+  "clinical": {
+    "sample_id": "demo_synthetic_translocation",
+    "organism": "homo_sapiens",
+    "sex": null,
+    "age_group": null,
+    "hpo_terms": [],
+    "absent_hpo_terms": [],
+    "suspected_sv_type": "balanced_translocation",
+    "cytogenetic_result": "t(1;8)(synthetic demo locus)",
+    "karyotype_chromosomes": [
+      "chr1",
+      "chr8"
+    ]
+  },
+  "sequencing": {
+    "bam_path": "/home/ecovytis/rare-disease-diagnosis-assistant/stage1_igv_assistant/data/bam/synthetic_translocation_demo.sorted.bam",
+    "genome_build": "GRCh38",
+    "technology": "short_read_illumina",
+    "is_paired": true,
+    "mean_coverage": null,
+    "aligner": "bwa-mem"
+  },
+  "breakpoints": [
+    {
+      "label": "BP1_chr1",
+      "chromosome": "chr1",
+      "position": 1050000,
+      "locus_stats": {
+        "chromosome": "chr1",
+        "start": 1049500,
+        "end": 1050500,
+        "total_reads": 28,
+        "mean_depth": 2.73,
+        "mean_mapq": 55.54,
+        "low_mapq_fraction": 0.0,
+        "forward_reads": 28,
+        "reverse_reads": 0
+      },
+      "discordant_pairs": {
+        "chromosome": "chr1",
+        "position": 1050000,
+        "window_bp": 500,
+        "total_reads_in_window": 28,
+        "discordant_pairs": 15,
+        "discordant_fraction": 0.536,
+        "mate_chromosomes": {
+          "chr8": 15
+        }
+      },
+      "soft_clipped_reads": {
+        "chromosome": "chr1",
+        "position": 1050000,
+        "window_bp": 200,
+        "total_reads_in_window": 13,
+        "soft_clipped_reads": 5,
+        "soft_clipped_fraction": 0.385,
+        "consensus_clip_position": 1049950,
+        "max_clips_at_position": 1
+      },
+      "split_reads": {
+        "chromosome": "chr1",
+        "position": 1050000,
+        "window_bp": 200,
+        "total_reads_in_window": 13,
+        "split_reads": 8,
+        "split_read_fraction": 0.615,
+        "partner_chromosomes": {
+          "chr8": 8
+        },
+        "example_partner_loci": [
+          "chr8:47000000",
+          "chr8:47000020",
+          "chr8:47000040",
+          "chr8:47000060",
+          "chr8:47000080"
+        ]
+      },
+      "depth_profile": {
+        "chromosome": "chr1",
+        "start": 1049500,
+        "end": 1050500,
+        "window_size": 100,
+        "windows": [
+          {
+            "window_start": 1049500,
+            "window_end": 1049600,
+            "depth": 0
+          },
+          {
+            "window_start": 1049600,
+            "window_end": 1049700,
+            "depth": 0
+          },
+          {
+            "window_start": 1049700,
+            "window_end": 1049800,
+            "depth": 0
+          },
+          {
+            "window_start": 1049800,
+            "window_end": 1049900,
+            "depth": 0
+          },
+          {
+            "window_start": 1049900,
+            "window_end": 1050000,
+            "depth": 5
+          },
+          {
+            "window_start": 1050000,
+            "window_end": 1050100,
+            "depth": 13
+          },
+          {
+            "window_start": 1050100,
+            "window_end": 1050200,
+            "depth": 7
+          },
+          {
+            "window_start": 1050200,
+            "window_end": 1050300,
+            "depth": 10
+          },
+          {
+            "window_start": 1050300,
+            "window_end": 1050400,
+            "depth": 15
+          },
+          {
+            "window_start": 1050400,
+            "window_end": 1050500,
+            "depth": 4
+          }
+        ],
+        "summary": {
+          "min_depth": 0,
+          "max_depth": 15,
+          "mean_depth": 5.4,
+          "depth_ratio_min_to_mean": 0.0,
+          "likely_deletion": true
+        }
+      },
+      "gene_at_locus": {
+        "chromosome": "chr1",
+        "position": 1050000,
+        "genome_build": "GRCh38",
+        "gene_count": 1,
+        "is_intergenic": false,
+        "genes": [
+          {
+            "gene_id": "ENSG00000188157",
+            "gene_name": "AGRN",
+            "biotype": "protein_coding",
+            "strand": "+",
+            "gene_start": 1020069,
+            "gene_end": 1056119,
+            "distance_from_position": 0
+          }
+        ],
+        "clinical_note": "Breakpoint directly disrupts 1 gene(s)."
+      },
+      "reciprocal_check": {
+        "primary": {
+          "chromosome": "chr1",
+          "position": 1050000,
+          "discordant_pairs": 15,
+          "mate_chromosomes": {
+            "chr8": 15
+          }
+        },
+        "reciprocal": {
+          "chromosome": "chr8",
+          "position": 47000000,
+          "discordant_pairs": 15,
+          "back_pointing_to_primary": 15,
+          "mate_chromosomes": {
+            "chr1": 15
+          }
+        },
+        "verdict": "RECIPROCAL CONFIRMED \u2014 both breakpoints show concordant inter-chromosomal signal",
+        "is_balanced": true
+      },
+      "evidence_strength": "strong",
+      "evidence_score": 100.0,
+      "signal_layers": "4/4",
+      "supporting_observations": [
+        "15 discordant pair(s) (54% of reads in window) with mates mapping predominantly to chr8.",
+        "5 soft-clipped read(s) (38% of reads in window), consensus clip position at 1049950 (1 reads).",
+        "8 split read(s) (62% of reads in window) with supplementary alignments mapping predominantly to chr8 (e.g. ['chr8:47000000']).",
+        "Read depth drops to 0% of the window mean (min 0 vs mean 5.4 reads/window) \u2014 consistent with a possible deletion."
+      ],
+      "interpretation": null
+    },
+    {
+      "label": "BP2_chr8",
+      "chromosome": "chr8",
+      "position": 47000000,
+      "locus_stats": {
+        "chromosome": "chr8",
+        "start": 46999500,
+        "end": 47000500,
+        "total_reads": 15,
+        "mean_depth": 1.5,
+        "mean_mapq": 55.0,
+        "low_mapq_fraction": 0.0,
+        "forward_reads": 15,
+        "reverse_reads": 0
+      },
+      "discordant_pairs": {
+        "chromosome": "chr8",
+        "position": 47000000,
+        "window_bp": 500,
+        "total_reads_in_window": 15,
+        "discordant_pairs": 15,
+        "discordant_fraction": 1.0,
+        "mate_chromosomes": {
+          "chr1": 15
+        }
+      },
+      "soft_clipped_reads": {
+        "chromosome": "chr8",
+        "position": 47000000,
+        "window_bp": 200,
+        "total_reads_in_window": 15,
+        "soft_clipped_reads": 0,
+        "soft_clipped_fraction": 0.0,
+        "consensus_clip_position": null,
+        "max_clips_at_position": 0
+      },
+      "split_reads": {
+        "chromosome": "chr8",
+        "position": 47000000,
+        "window_bp": 200,
+        "total_reads_in_window": 15,
+        "split_reads": 0,
+        "split_read_fraction": 0.0,
+        "partner_chromosomes": {},
+        "example_partner_loci": []
+      },
+      "depth_profile": {
+        "chromosome": "chr8",
+        "start": 46999500,
+        "end": 47000500,
+        "window_size": 100,
+        "windows": [
+          {
+            "window_start": 46999500,
+            "window_end": 46999600,
+            "depth": 0
+          },
+          {
+            "window_start": 46999600,
+            "window_end": 46999700,
+            "depth": 0
+          },
+          {
+            "window_start": 46999700,
+            "window_end": 46999800,
+            "depth": 0
+          },
+          {
+            "window_start": 46999800,
+            "window_end": 46999900,
+            "depth": 0
+          },
+          {
+            "window_start": 46999900,
+            "window_end": 47000000,
+            "depth": 0
+          },
+          {
+            "window_start": 47000000,
+            "window_end": 47000100,
+            "depth": 15
+          },
+          {
+            "window_start": 47000100,
+            "window_end": 47000200,
+            "depth": 14
+          },
+          {
+            "window_start": 47000200,
+            "window_end": 47000300,
+            "depth": 0
+          },
+          {
+            "window_start": 47000300,
+            "window_end": 47000400,
+            "depth": 0
+          },
+          {
+            "window_start": 47000400,
+            "window_end": 47000500,
+            "depth": 0
+          }
+        ],
+        "summary": {
+          "min_depth": 0,
+          "max_depth": 15,
+          "mean_depth": 2.9,
+          "depth_ratio_min_to_mean": 0.0,
+          "likely_deletion": true
+        }
+      },
+      "gene_at_locus": {
+        "chromosome": "chr8",
+        "position": 47000000,
+        "genome_build": "GRCh38",
+        "gene_count": 0,
+        "is_intergenic": true,
+        "genes": [],
+        "clinical_note": "Breakpoint is intergenic \u2014 check nearby genes for positional effects."
+      },
+      "reciprocal_check": null,
+      "evidence_strength": "moderate",
+      "evidence_score": 50.0,
+      "signal_layers": "2/4",
+      "supporting_observations": [
+        "15 discordant pair(s) (100% of reads in window) with mates mapping predominantly to chr1.",
+        "Read depth drops to 0% of the window mean (min 0 vs mean 2.9 reads/window) \u2014 consistent with a possible deletion."
+      ],
+      "interpretation": null
+    }
+  ],
+  "created_at": "2026-08-09T00:29:17.217780",
+  "stage": "stage1_igv_inspection",
+  "notes": "SYNTHETIC DATA. No public BAM/CRAM for a confirmed germline balanced translocation could be located (searched HGSVC2, SRA/ENA, GIAB SV benchmarks, and literature on t(11;22)/t(8;22)/t(17;22) constitutional translocations \u2014 raw alignment data for this SV type is not publicly deposited in any case found). This demo instead uses the synthetic translocation BAM built and validated in TEST 6/TEST 8 of test_bam_tools.py, to prove the full pipeline runs correctly end-to-end."
+}

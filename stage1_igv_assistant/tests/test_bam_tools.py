@@ -18,7 +18,10 @@ from stage1_igv_assistant.tools.bam_tools import (
     count_soft_clipped_reads,
     get_split_reads,
     summarize_breakpoint_evidence,
+    get_gene_at_locus,
+    check_reciprocal_breakpoint,
 )
+from stage1_igv_assistant.case_object import BamCase
 
 
 def create_synthetic_bam(path: str):
@@ -105,6 +108,9 @@ def create_translocation_bam(path: str):
     - 200 normal concordant read pairs on chr1:1,000,000-1,100,000, kept
       clear of the breakpoint window so they don't dilute the signal.
     - 15 discordant pairs at chr1:1,050,000 with mates on chr8:47,000,000
+    - 15 reciprocal discordant pairs at chr8:47,000,000 with mates back on
+      chr1:1,050,000 — a real balanced translocation shows discordant
+      evidence on BOTH derivative chromosomes, not just one side
     - 8 split reads at chr1:1,050,000 carrying SA tags pointing to
       chr8:47,000,000 (ordinary discordant-pair mate info is NOT set for
       these — the SA tag is the signal being tested)
@@ -166,6 +172,22 @@ def create_translocation_bam(path: str):
             read.cigar = [(0, 100)]
             read.next_reference_id = 1    # chr8
             read.next_reference_start = 47000000 + i * 20
+            read.template_length = 0
+            read.query_qualities = pysam.qualitystring_to_array("I" * 100)
+            bam.write(read)
+
+        # 15 reciprocal discordant pairs at chr8:47,000,000 — mates back on chr1
+        for i in range(15):
+            read = pysam.AlignedSegment(header)
+            read.query_name = f"reciprocal_discordant_read_{i}"
+            read.query_sequence = "T" * 100
+            read.flag = 0x1               # paired, NOT proper pair
+            read.reference_id = 1         # chr8
+            read.reference_start = 47000000 + i * 5
+            read.mapping_quality = 55
+            read.cigar = [(0, 100)]
+            read.next_reference_id = 0    # chr1
+            read.next_reference_start = 1050000 + i * 20
             read.template_length = 0
             read.query_qualities = pysam.qualitystring_to_array("I" * 100)
             bam.write(read)
@@ -307,12 +329,69 @@ def run_tests():
 
         print("  PASSED ✓\n")
 
+        # ── TEST 8: check_reciprocal_breakpoint ─────────────────────────
+        print("TEST 8: check_reciprocal_breakpoint")
+        reciprocal = check_reciprocal_breakpoint(
+            translocation_bam, "chr1", 1050000, "chr8", 47000000
+        )
+        print(f"  Verdict: {reciprocal['verdict']}")
+        print(f"  is_balanced: {reciprocal['is_balanced']}")
+        assert "RECIPROCAL" in reciprocal["verdict"], "Expected verdict to contain RECIPROCAL"
+        assert reciprocal["is_balanced"] is True, "Expected is_balanced == True"
+        print("  PASSED ✓\n")
+
     finally:
         os.unlink(tmp_path2)
         if os.path.exists(translocation_bam):
             os.unlink(translocation_bam)
         if os.path.exists(translocation_bam + ".bai"):
             os.unlink(translocation_bam + ".bai")
+
+    # ── TEST 7: get_gene_at_locus ────────────────────────────────────────
+    print("TEST 7: get_gene_at_locus")
+    gene_result = None
+    for attempt in range(4):
+        gene_result = get_gene_at_locus("chr1", 115686862)
+        if "error" not in gene_result:
+            break
+        print(f"  (Ensembl attempt {attempt + 1} failed: {gene_result['error']} — retrying)")
+    assert gene_result is not None and "error" not in gene_result, \
+        "Ensembl REST API did not respond after retries"
+    print(f"  Gene(s) at chr1:115686862: {[g['gene_name'] for g in gene_result['genes']]}")
+    assert gene_result["gene_count"] >= 1, "Expected at least 1 gene"
+    assert gene_result["is_intergenic"] is False, "Expected is_intergenic == False"
+
+    intergenic_result = None
+    for attempt in range(4):
+        intergenic_result = get_gene_at_locus("chr13", 15000000)
+        if "error" not in intergenic_result:
+            break
+        print(f"  (Ensembl attempt {attempt + 1} failed: {intergenic_result['error']} — retrying)")
+    assert intergenic_result is not None and "error" not in intergenic_result, \
+        "Ensembl REST API did not respond after retries"
+    print(f"  chr13:15000000 is_intergenic: {intergenic_result['is_intergenic']}")
+    assert intergenic_result["is_intergenic"] is True, "Expected is_intergenic == True"
+    print("  PASSED ✓\n")
+
+    # ── TEST 9: BamCase object ───────────────────────────────────────────
+    print("TEST 9: BamCase object")
+    case = BamCase.new("test_case_009", "test.bam")
+    case.add_breakpoint("BP1", "chr1", 1050000)
+    case.add_breakpoint("BP2", "chr8", 47000000)
+    assert len(case.breakpoints) == 2, "Expected 2 breakpoints"
+
+    case_path = "/tmp/test_case_009.json"
+    case.save(case_path)
+    loaded = BamCase.load(case_path)
+    assert loaded.case_id == "test_case_009", "Expected case_id to match after reload"
+    assert len(loaded.breakpoints) == 2, "Expected 2 breakpoints after reload"
+    os.unlink(case_path)
+
+    assert loaded.sequencing.is_paired is True, "Default is_paired should be True"
+    assert "discordant_pairs" in loaded.sequencing.applicable_evidence_layers, \
+        "Expected discordant_pairs in applicable_evidence_layers for paired short-read data"
+    print(f"  applicable_evidence_layers: {loaded.sequencing.applicable_evidence_layers}")
+    print("  PASSED ✓\n")
 
     print("=" * 60)
     print("ALL TESTS PASSED")
