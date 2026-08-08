@@ -1,3 +1,11 @@
+---
+NOTE: This file records the demo session from the original Stage 1 run.
+Two caveats listed below were fixed in subsequent commits:
+- Caveat #1 (interpretation_template missing) → fixed in 385c77f
+- Caveat #4 (no retry logic in get_gene_at_locus) → fixed in 385c77f
+REAL_DATA_VALIDATION.md contains the current, fully up-to-date validation record.
+---
+
 # End-to-End Demo — Full Pipeline on a Synthetic Balanced Translocation
 
 **Date:** 2026-08-09
@@ -68,10 +76,10 @@ Full structured record saved to `stage1_igv_assistant/results/demo_case.json`.
 
 ## Caveats found while building this demo
 
-1. **`breakpoint_evidence_summary`'s docstring (in `server.py`) claims it returns an `interpretation_template` field — it doesn't.** The actual keys are: `chromosome, depth_profile, depth_score, discordant_pair_score, discordant_pairs, evidence_score, evidence_strength, label, locus_stats, position, signal_layers, soft_clip_score, soft_clips, split_read_score, split_reads, supporting_observations`. The docstring should be corrected in a future pass — left as-is here since Step 1 asked for the file verbatim.
+1. **(FIXED in 385c77f)** ~~`breakpoint_evidence_summary`'s docstring (in `server.py`) claims it returns an `interpretation_template` field — it doesn't.~~ The actual keys at the time were: `chromosome, depth_profile, depth_score, discordant_pair_score, discordant_pairs, evidence_score, evidence_strength, label, locus_stats, position, signal_layers, soft_clip_score, soft_clips, split_read_score, split_reads, supporting_observations`. The docstring should be corrected in a future pass — left as-is here since Step 1 asked for the file verbatim. *(As of `385c77f`, `interpretation_template` is a real field and the docstring lists it accurately — see `REAL_DATA_VALIDATION.md` for current state.)*
 
 2. **The depth-profile layer flagged `likely_deletion: True` at a translocation locus**, contributing a full 50-point `depth_score`. This isn't because the depth tool is wrong about deletions — it's a known artifact of this synthetic fixture (documented in `test_bam_tools.py`'s TEST 6 comment): the fixture deliberately isolates its signal reads with read-free gaps to keep other fractions clean, and one of those gaps has 0 reads, which trips the ratio threshold. The `server.py` system instructions explicitly warn the LLM that "flat depth is expected [for balanced translocations]; do not interpret it as negative evidence" — but here the depth layer produced a *positive* (deletion-like) signal instead of a flat one, for a translocation. Worth keeping in mind: the depth layer's automatic score isn't yet reliable as a general-purpose 4th signal for translocation loci specifically, only for genuine coverage-based events like the real GIAB deletion validated previously.
 
 3. **Gene lookups (`gene_at_locus`) are independent of the synthetic BAM's read data.** AGRN is genuinely at chr1:1,050,000 on GRCh38 — but the synthetic reads there have nothing to do with AGRN biology; they were placed purely to exercise the discordant/clip/split-read tools. This lookup would carry real meaning in production, on real coordinates.
 
-4. **Ensembl's REST API was intermittently slow/unresponsive** (multiple 15s timeouts across this session, both for this demo and earlier gene lookups) — genuine third-party flakiness, not a bug in `get_gene_at_locus`. Production use of this tool should implement retry logic, which the current implementation does not have.
+4. **(FIXED in 385c77f)** Ensembl's REST API was intermittently slow/unresponsive (multiple 15s timeouts across this session, both for this demo and earlier gene lookups) — genuine third-party flakiness, not a bug in `get_gene_at_locus`. ~~Production use of this tool should implement retry logic, which the current implementation does not have.~~ *(As of `385c77f`, `get_gene_at_locus` retries with exponential backoff on HTTP 429 and network/timeout errors, up to `max_retries` attempts — see `REAL_DATA_VALIDATION.md` for current state.)*
