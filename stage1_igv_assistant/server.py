@@ -1,10 +1,10 @@
 """
 server.py
-FastMCP server exposing 6 BAM inspection tools to an LLM.
+FastMCP server exposing 8 BAM/breakpoint inspection tools to an LLM.
 Anti-hallucination design: the LLM reads only tool output,
 never adds genomic facts from its own training data.
 
-Run: python stage1_igv_assistant/server.py
+Run from repo root: python -m stage1_igv_assistant.server
 """
 
 from fastmcp import FastMCP
@@ -96,9 +96,18 @@ def breakpoint_evidence_summary(bam_path: str, chromosome: str,
                                  position: int, label: str = "candidate_BP") -> dict:
     """
     Integrates all 4 evidence layers into one structured report. Call this LAST.
-    Returns: evidence_strength, evidence_score (0-100), signal_layers (N/4),
-    supporting_observations, and interpretation_template.
-    The interpretation_template contains ONLY facts from tool outputs.
+
+    Returns exactly these fields:
+      label, chromosome, position — echoed back from the call
+      evidence_score (float, 0-100), evidence_strength ("none"|"weak"|"moderate"|"strong")
+      signal_layers (str, "N/4" — how many of the 4 layers showed any signal)
+      discordant_pair_score, soft_clip_score, split_read_score, depth_score (each 0-50,
+        the decomposed per-layer scores that sum into evidence_score)
+      locus_stats, discordant_pairs, soft_clips, split_reads, depth_profile
+        (the full raw dict returned by each underlying tool, for inspection)
+      supporting_observations (list[str] — plain-language notes on what fired)
+      interpretation_template (str — one sentence restating the above fields;
+        adds no new facts, only recombines values already in this same dict)
     """
     return summarize_breakpoint_evidence(bam_path, chromosome, position, label)
 

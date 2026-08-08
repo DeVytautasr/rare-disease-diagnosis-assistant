@@ -9,6 +9,7 @@ that are not in the tool output.
 
 import pysam
 import requests as _requests
+import time as _time
 from dataclasses import dataclass, asdict
 from typing import Optional
 
@@ -94,6 +95,7 @@ class BreakpointEvidenceSummary:
     split_reads: dict
     depth_profile: dict
     supporting_observations: list
+    interpretation_template: str   # plain-language recap built only from the fields above
 
 
 # ── Tool 1: Basic locus quality stats ────────────────────────────────────────
@@ -655,6 +657,18 @@ def summarize_breakpoint_evidence(
         if stats["total_reads"] > 0:
             observations.append("No discordant pairs, soft-clipping, split reads, or depth changes detected near this position.")
 
+    # interpretation_template is built ONLY from values already computed above —
+    # it adds no new facts, just restates them as one plain-language sentence.
+    interpretation_template = (
+        f"Breakpoint {label} at {chromosome}:{position}. "
+        f"Evidence strength: {evidence_strength}. "
+        f"Score: {evidence_score}/100 ({signal_layers} evidence layers showing signal). "
+        f"Observations: {'; '.join(observations) if observations else 'none'}. "
+        f"Technology note: discordant_pairs only valid for paired-end data; "
+        f"split_reads only valid for modern-alignment BAMs with SA tags. "
+        f"All values in this template come from tool outputs only."
+    )
+
     result = BreakpointEvidenceSummary(
         label=label,
         chromosome=chromosome,
@@ -672,6 +686,7 @@ def summarize_breakpoint_evidence(
         split_reads=split,
         depth_profile=depth_profile,
         supporting_observations=observations,
+        interpretation_template=interpretation_template,
     )
     return asdict(result)
 
@@ -681,20 +696,30 @@ def summarize_breakpoint_evidence(
 def get_gene_at_locus(
     chromosome: str,
     position: int,
-    genome_build: str = "GRCh38"
+    genome_build: str = "GRCh38",
+    max_retries: int = 3
 ) -> dict:
     """
     Query Ensembl REST API for genes overlapping a position.
     Tells the assistant whether a breakpoint disrupts a known gene,
     hits an intron, or falls in intergenic space — the key clinical question.
 
+    Retries on HTTP 429 (rate-limited) with exponential backoff, and retries
+    on network/timeout exceptions the same way. Ensembl's public REST API is
+    observed to be intermittently slow (occasional 15s+ timeouts even on
+    healthy requests) — this makes a single-attempt call unreliable in
+    practice, so a transient failure is retried before giving up.
+
     Args:
         chromosome:   e.g. "chr1" or "1"
         position:     genomic position
         genome_build: "GRCh38" (default) or "GRCh37"
+        max_retries:  attempts before giving up (default 3)
 
     Returns:
-        dict with gene names, biotypes, and whether position is intergenic
+        dict with gene names, biotypes, and whether position is intergenic,
+        or an error dict (with a "note" explaining gene annotation was skipped)
+        if Ensembl could not be reached after max_retries attempts
     """
     chrom = chromosome.replace("chr", "")
 
@@ -707,40 +732,54 @@ def get_gene_at_locus(
     headers = {"Content-Type": "application/json"}
     params = {"feature": "gene"}
 
-    try:
-        r = _requests.get(url, headers=headers, params=params, timeout=15)
-        if r.status_code == 200:
-            genes = r.json()
-            gene_list = [
-                {
-                    "gene_id": g.get("gene_id", "unknown"),
-                    "gene_name": g.get("external_name", "unknown"),
-                    "biotype": g.get("biotype", "unknown"),
-                    "strand": "+" if g.get("strand", 1) == 1 else "-",
-                    "gene_start": g.get("start"),
-                    "gene_end": g.get("end"),
-                    "distance_from_position": 0,
+    last_error = None
+    for attempt in range(max_retries):
+        try:
+            r = _requests.get(url, headers=headers, params=params, timeout=15)
+            if r.status_code == 200:
+                genes = r.json()
+                gene_list = [
+                    {
+                        "gene_id": g.get("gene_id", "unknown"),
+                        "gene_name": g.get("external_name", "unknown"),
+                        "biotype": g.get("biotype", "unknown"),
+                        "strand": "+" if g.get("strand", 1) == 1 else "-",
+                        "gene_start": g.get("start"),
+                        "gene_end": g.get("end"),
+                    }
+                    for g in genes
+                ]
+                return {
+                    "chromosome": chromosome,
+                    "position": position,
+                    "genome_build": genome_build,
+                    "gene_count": len(gene_list),
+                    "is_intergenic": len(gene_list) == 0,
+                    "genes": gene_list,
+                    "clinical_note": (
+                        f"Breakpoint directly disrupts {len(gene_list)} gene(s)."
+                        if gene_list
+                        else "Breakpoint is intergenic — check nearby genes for positional effects."
+                    )
                 }
-                for g in genes
-            ]
-            return {
-                "chromosome": chromosome,
-                "position": position,
-                "genome_build": genome_build,
-                "gene_count": len(gene_list),
-                "is_intergenic": len(gene_list) == 0,
-                "genes": gene_list,
-                "clinical_note": (
-                    f"Breakpoint directly disrupts {len(gene_list)} gene(s)."
-                    if gene_list
-                    else "Breakpoint is intergenic — check nearby genes for positional effects."
-                )
-            }
-        else:
-            return {"error": f"Ensembl returned HTTP {r.status_code}",
-                    "chromosome": chromosome, "position": position}
-    except Exception as e:
-        return {"error": str(e), "chromosome": chromosome, "position": position}
+            elif r.status_code == 429:
+                wait = 2 ** attempt
+                _time.sleep(wait)
+                last_error = f"HTTP 429 rate-limited (attempt {attempt + 1})"
+            else:
+                last_error = f"HTTP {r.status_code}"
+                break
+        except Exception as e:
+            last_error = str(e)
+            if attempt < max_retries - 1:
+                _time.sleep(2 ** attempt)
+
+    return {
+        "error": last_error,
+        "chromosome": chromosome,
+        "position": position,
+        "note": "Ensembl unavailable — gene annotation skipped"
+    }
 
 
 # ── Tool 8: Reciprocal breakpoint check ────────────────────────────────────────
