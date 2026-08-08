@@ -63,13 +63,16 @@ class BreakpointEvidenceSummary:
     label: str
     chromosome: str
     position: int
-    evidence_score: float          # 0-100, sum of decomposed components below
+    evidence_score: float          # 0-100, normalized sum of the 3 components below
     evidence_strength: str         # "none" | "weak" | "moderate" | "strong"
+    signal_layers: str             # e.g. "3/3" — how many of the 3 layers show any signal
     discordant_pair_score: float   # 0-50
     soft_clip_score: float         # 0-50
+    split_read_score: float        # 0-50
     locus_stats: dict
     discordant_pairs: dict
     soft_clips: dict
+    split_reads: dict
     supporting_observations: list
 
 
@@ -400,10 +403,12 @@ def summarize_breakpoint_evidence(
     min_mapq: int = 20
 ) -> dict:
     """
-    Combines discordant-pair and soft-clip evidence into a single interpretable
-    breakpoint evidence summary. Each evidence layer is scored independently
-    (0-50) and summed to an overall 0-100 evidence_score, so the contribution
-    of each layer stays visible rather than collapsed into a black-box number.
+    Combines discordant-pair, soft-clip, and split-read evidence into a single
+    interpretable breakpoint evidence summary. Each of the 3 evidence layers is
+    scored independently (0-50), summed, and normalized to a 0-100
+    evidence_score, so the contribution of each layer stays visible rather
+    than collapsed into a black-box number. signal_layers reports how many of
+    the 3 layers show any signal at all (e.g. "3/3").
 
     This tool does not infer disease relevance — it only summarizes read-level
     structural-variant evidence at a candidate breakpoint.
@@ -429,8 +434,12 @@ def summarize_breakpoint_evidence(
         bam_path, chromosome, position,
         window_bp=min(window_bp, 200), min_mapq=min_mapq
     )
+    split = get_split_reads(
+        bam_path, chromosome, position,
+        window_bp=min(window_bp, 200), min_mapq=min_mapq
+    )
 
-    for result in (stats, disc, clips):
+    for result in (stats, disc, clips, split):
         if "error" in result:
             return {"error": result["error"], "bam_path": bam_path}
 
@@ -455,7 +464,7 @@ def summarize_breakpoint_evidence(
         observations.append(
             f"{disc['discordant_pairs']} discordant pair(s) "
             f"({disc_fraction:.0%} of reads in window) with mates mapping "
-            f"predominantly to chr{top_mate_chrom}."
+            f"predominantly to {top_mate_chrom}."
         )
 
     # ── Soft-clip component (0-50) ──
@@ -477,7 +486,30 @@ def summarize_breakpoint_evidence(
             f"({clips['max_clips_at_position']} reads)."
         )
 
-    evidence_score = round(discordant_pair_score + soft_clip_score, 1)
+    # ── Split-read component (0-50) ──
+    split_fraction = split["split_read_fraction"]
+    if split_fraction >= 0.3:
+        split_read_score = 50.0
+    elif split_fraction >= 0.1:
+        split_read_score = 30.0
+    elif split_fraction > 0:
+        split_read_score = 15.0
+    else:
+        split_read_score = 0.0
+
+    if split["split_reads"] > 0:
+        top_partner_chrom = next(iter(split["partner_chromosomes"]))
+        observations.append(
+            f"{split['split_reads']} split read(s) "
+            f"({split_fraction:.0%} of reads in window) with supplementary "
+            f"alignments mapping predominantly to {top_partner_chrom} "
+            f"(e.g. {split['example_partner_loci'][:1]})."
+        )
+
+    # ── Combine: normalize 3 x (0-50) components onto a 0-100 scale ──
+    raw_sum = discordant_pair_score + soft_clip_score + split_read_score
+    evidence_score = round(raw_sum / 1.5, 1)
+    signal_layers = f"{sum(1 for s in (discordant_pair_score, soft_clip_score, split_read_score) if s > 0)}/3"
 
     if evidence_score >= 70:
         evidence_strength = "strong"
@@ -488,7 +520,7 @@ def summarize_breakpoint_evidence(
     else:
         evidence_strength = "none"
         if stats["total_reads"] > 0:
-            observations.append("No discordant pairs or soft-clipping detected near this position.")
+            observations.append("No discordant pairs, soft-clipping, or split reads detected near this position.")
 
     result = BreakpointEvidenceSummary(
         label=label,
@@ -496,11 +528,14 @@ def summarize_breakpoint_evidence(
         position=position,
         evidence_score=evidence_score,
         evidence_strength=evidence_strength,
+        signal_layers=signal_layers,
         discordant_pair_score=discordant_pair_score,
         soft_clip_score=soft_clip_score,
+        split_read_score=split_read_score,
         locus_stats=stats,
         discordant_pairs=disc,
         soft_clips=clips,
+        split_reads=split,
         supporting_observations=observations,
     )
     return asdict(result)
