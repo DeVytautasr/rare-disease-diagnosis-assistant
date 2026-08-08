@@ -192,6 +192,11 @@ def count_discordant_pairs(
             continue
         if read.mapping_quality < min_mapq:
             continue
+        # Unpaired reads (e.g. single-molecule long reads) have no mate at
+        # all, so "mate_is_unmapped" defaults to False for them — without
+        # this check they'd all be miscounted as discordant.
+        if not read.is_paired:
+            continue
         if read.mate_is_unmapped:
             continue
 
