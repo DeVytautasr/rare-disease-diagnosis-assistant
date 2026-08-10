@@ -79,3 +79,28 @@ The tool is now validated on two independent real sequencing technologies for de
 One important caveat on the threshold itself: **0.7 is calibrated against a single confirmed locus**, replicated across 2 sequencing technologies (not 2 independent genomic loci). Both calibration points are the same underlying deletion in the same individual (HG002). This is a reasonable starting point, not a general-purpose validated threshold — it hasn't been checked against true-negative regions (normal, non-deletion loci) to confirm it doesn't also flag ordinary coverage variance as "likely deletion." A false-positive-rate check against several known-normal loci would be a natural next step before relying on this threshold for anything beyond this specific validation exercise.
 
 Balanced translocation validation on real data remains outstanding — no public modern-alignment BAM with a confirmed germline balanced translocation was found in this session.
+
+## Scoring bug fix (2026-08-10)
+
+An LLM assistant session using only the 8 MCP tools (no source access) on this same locus (chr1:115,686,862, Illumina 300x) surfaced a genuine inconsistency in `summarize_breakpoint_evidence`'s output: `discordant_pair_score=15, soft_clip_score=15, split_read_score=0, depth_score=30` sum to 60, but the returned `evidence_score` was 30 — contradicting the tool's own docstring/description, which claimed the components "sum into evidence_score."
+
+**Root cause:** `discordant_pair_score`, `soft_clip_score`, `split_read_score`, and `depth_score` were each tiered on a 0-50 scale, but the combination step computed `evidence_score = round(sum(component_scores) / 2.0, 1)` — silently halving the total without that division being reflected anywhere in the returned component values. `evidence_score` itself was arithmetically correct as a normalized composite; the component scores were mislabeled relative to their real contribution.
+
+**Fix:** each component is now tiered directly on a 0-25 scale (half the old tier values: 0 / 7.5 / 15 / 25 for discordant-pair, soft-clip, split-read; 0 / 15 / 25 for depth), and `evidence_score` is their direct, unweighted sum — no separate normalization step. Because halving four 0-50 components then summing is mathematically identical to summing four 0-25 components directly, **`evidence_score` values are unchanged by this fix** for every case in this document; only the component breakdown is now internally consistent with the total.
+
+Re-validated at chr1:115,686,862 (Illumina 300x, this same locus) after the fix:
+
+| | Before fix (mislabeled) | After fix (corrected) |
+|---|---|---|
+| `discordant_pair_score` | 15 | **7.5** |
+| `soft_clip_score` | 15 | **7.5** |
+| `split_read_score` | 0 | **0** |
+| `depth_score` | 30 | **15** |
+| component sum | 60 (≠ evidence_score) | **30 (= evidence_score)** |
+| `evidence_score` | 30.0 | **30.0 (unchanged)** |
+| `evidence_strength` | weak | **weak (unchanged)** |
+| `signal_layers` | 3/4 | **3/4 (unchanged)** |
+
+All 9 tests in `test_bam_tools.py` pass unchanged after the fix — none asserted on raw component-score magnitudes, only on `evidence_strength`/`signal_layers`, which are unaffected by the rescaling.
+
+Found by an LLM assistant during its first end-to-end MCP session (constrained to tool calls only, no source access) — see `LLM_SESSION_1.md` for the full session report that surfaced this. That the inconsistency was catchable purely from tool outputs, without reading `bam_tools.py`, is itself a small positive data point for the interpretability goals of this project.

@@ -101,8 +101,8 @@ def breakpoint_evidence_summary(bam_path: str, chromosome: str,
       label, chromosome, position — echoed back from the call
       evidence_score (float, 0-100), evidence_strength ("none"|"weak"|"moderate"|"strong")
       signal_layers (str, "N/4" — how many of the 4 layers showed any signal)
-      discordant_pair_score, soft_clip_score, split_read_score, depth_score (each 0-50,
-        the decomposed per-layer scores that sum into evidence_score)
+      discordant_pair_score, soft_clip_score, split_read_score, depth_score (each 0-25,
+        the decomposed per-layer scores — these always sum exactly to evidence_score)
       locus_stats, discordant_pairs, soft_clips, split_reads, depth_profile
         (the full raw dict returned by each underlying tool, for inspection)
       supporting_observations (list[str] — plain-language notes on what fired)

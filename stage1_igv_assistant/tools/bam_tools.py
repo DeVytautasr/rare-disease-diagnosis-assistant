@@ -82,13 +82,13 @@ class BreakpointEvidenceSummary:
     label: str
     chromosome: str
     position: int
-    evidence_score: float          # 0-100, normalized sum of the 4 components below
+    evidence_score: float          # 0-100, direct sum of the 4 components below
     evidence_strength: str         # "none" | "weak" | "moderate" | "strong"
     signal_layers: str             # e.g. "3/4" — how many of the 4 layers show any signal
-    discordant_pair_score: float   # 0-50
-    soft_clip_score: float         # 0-50
-    split_read_score: float        # 0-50
-    depth_score: float             # 0-50
+    discordant_pair_score: float   # 0-25
+    soft_clip_score: float         # 0-25
+    split_read_score: float        # 0-25
+    depth_score: float             # 0-25
     locus_stats: dict
     discordant_pairs: dict
     soft_clips: dict
@@ -516,8 +516,12 @@ def summarize_breakpoint_evidence(
     """
     Combines discordant-pair, soft-clip, split-read, and read-depth evidence
     into a single interpretable breakpoint evidence summary. Each of the 4
-    evidence layers is scored independently (0-50), summed, and normalized to
-    a 0-100 evidence_score, so the contribution of each layer stays visible
+    evidence layers is scored independently on a 0-25 scale (tiers: 0 / 7.5 /
+    15 / 25 for discordant-pair, soft-clip, and split-read; 0 / 15 / 25 for
+    depth, which has 3 tiers instead of 4). evidence_score is the direct,
+    unweighted sum of the four component scores — discordant_pair_score +
+    soft_clip_score + split_read_score + depth_score always equals
+    evidence_score exactly, so the contribution of each layer stays visible
     rather than collapsed into a black-box number. signal_layers reports how
     many of the 4 layers show any signal at all (e.g. "3/4").
 
@@ -570,14 +574,14 @@ def summarize_breakpoint_evidence(
     if stats["total_reads"] == 0:
         observations.append("No reads found in the inspection window — evidence cannot be assessed.")
 
-    # ── Discordant-pair component (0-50) ──
+    # ── Discordant-pair component (0-25) ──
     disc_fraction = disc["discordant_fraction"]
     if disc_fraction >= 0.5:
-        discordant_pair_score = 50.0
+        discordant_pair_score = 25.0
     elif disc_fraction >= 0.2:
-        discordant_pair_score = 30.0
-    elif disc_fraction > 0:
         discordant_pair_score = 15.0
+    elif disc_fraction > 0:
+        discordant_pair_score = 7.5
     else:
         discordant_pair_score = 0.0
 
@@ -589,14 +593,14 @@ def summarize_breakpoint_evidence(
             f"predominantly to {top_mate_chrom}."
         )
 
-    # ── Soft-clip component (0-50) ──
+    # ── Soft-clip component (0-25) ──
     clip_fraction = clips["soft_clipped_fraction"]
     if clip_fraction >= 0.3:
-        soft_clip_score = 50.0
+        soft_clip_score = 25.0
     elif clip_fraction >= 0.1:
-        soft_clip_score = 30.0
-    elif clip_fraction > 0:
         soft_clip_score = 15.0
+    elif clip_fraction > 0:
+        soft_clip_score = 7.5
     else:
         soft_clip_score = 0.0
 
@@ -608,14 +612,14 @@ def summarize_breakpoint_evidence(
             f"({clips['max_clips_at_position']} reads)."
         )
 
-    # ── Split-read component (0-50) ──
+    # ── Split-read component (0-25) ──
     split_fraction = split["split_read_fraction"]
     if split_fraction >= 0.3:
-        split_read_score = 50.0
+        split_read_score = 25.0
     elif split_fraction >= 0.1:
-        split_read_score = 30.0
-    elif split_fraction > 0:
         split_read_score = 15.0
+    elif split_fraction > 0:
+        split_read_score = 7.5
     else:
         split_read_score = 0.0
 
@@ -628,7 +632,7 @@ def summarize_breakpoint_evidence(
             f"(e.g. {split['example_partner_loci'][:1]})."
         )
 
-    # ── Read-depth component (0-50) ──
+    # ── Read-depth component (0-25) ──
     # depth_ratio_min_to_mean < 0.7 flags a possible deletion (coverage drop);
     # the lower the ratio, the more pronounced the drop. 0.7 (raised from an
     # initial 0.6) is calibrated against the real GIAB HG002 deletion at
@@ -639,9 +643,9 @@ def summarize_breakpoint_evidence(
     # loci) — treat as a starting point, not a validated general threshold.
     depth_ratio = depth_profile["summary"]["depth_ratio_min_to_mean"]
     if depth_ratio < 0.3:
-        depth_score = 50.0
+        depth_score = 25.0
     elif depth_ratio < 0.7:
-        depth_score = 30.0
+        depth_score = 15.0
     else:
         depth_score = 0.0
 
@@ -653,10 +657,12 @@ def summarize_breakpoint_evidence(
             f"consistent with a possible deletion."
         )
 
-    # ── Combine: normalize 4 x (0-50) components onto a 0-100 scale ──
+    # ── Combine: each component is already 0-25, so evidence_score is their
+    # direct sum (0-100) — no separate normalization step. This means
+    # discordant_pair_score + soft_clip_score + split_read_score + depth_score
+    # always equals evidence_score exactly. ──
     component_scores = (discordant_pair_score, soft_clip_score, split_read_score, depth_score)
-    raw_sum = sum(component_scores)
-    evidence_score = round(raw_sum / 2.0, 1)
+    evidence_score = round(sum(component_scores), 1)
     signal_layers = f"{sum(1 for s in component_scores if s > 0)}/4"
 
     if evidence_score >= 70:
