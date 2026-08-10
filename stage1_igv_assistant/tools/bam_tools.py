@@ -102,6 +102,71 @@ class BreakpointEvidenceSummary:
     interpretation_template: str   # plain-language recap built only from the fields above
 
 
+# ── Error-handling helpers ─────────────────────────────────────────────────────
+
+def _resolve_contig(bam, chromosome: str) -> Optional[str]:
+    """
+    Resolve a chromosome name against the BAM header, trying the
+    chr-prefixed/unprefixed alternate form if the name as given isn't
+    present. Returns the resolved name usable with bam.fetch(), or None
+    if neither form is found in the header.
+    """
+    refs = bam.references
+    if chromosome in refs:
+        return chromosome
+    alt = chromosome[3:] if chromosome.startswith("chr") else f"chr{chromosome}"
+    if alt in refs:
+        return alt
+    return None
+
+
+def _contig_not_found_error(bam, chromosome: str) -> dict:
+    return {
+        "error": f"Chromosome '{chromosome}' not found in BAM header "
+                 f"(also tried the alternate chr-prefix form).",
+        "error_type": "invalid_region",
+        "chromosome": chromosome,
+        "contigs_in_header_sample": list(bam.references[:5]),
+    }
+
+
+def _validate_range(chromosome: str, start: int, end: int) -> Optional[dict]:
+    """Returns an error dict for an invalid start/end pair, else None."""
+    if start < 0 or end < 0:
+        return {
+            "error": f"start and end must be non-negative (got start={start}, end={end})",
+            "error_type": "invalid_parameters",
+            "chromosome": chromosome,
+            "position": start,
+        }
+    if start > end:
+        return {
+            "error": f"start ({start}) must not be greater than end ({end})",
+            "error_type": "invalid_parameters",
+            "chromosome": chromosome,
+            "position": start,
+        }
+    return None
+
+
+def _fetch_or_error(bam, chromosome: str, resolved_chrom: str, start: int, end: int):
+    """
+    Calls bam.fetch() and returns (iterator, None) on success or
+    (None, error_dict) if the region is invalid (e.g. position beyond
+    the end of the chromosome). pysam raises ValueError synchronously
+    when fetch() is called with a bad region, before iteration starts.
+    """
+    try:
+        return bam.fetch(resolved_chrom, start, end), None
+    except ValueError as e:
+        return None, {
+            "error": str(e),
+            "error_type": "invalid_region",
+            "chromosome": chromosome,
+            "position": start,
+        }
+
+
 # ── Tool 1: Basic locus quality stats ────────────────────────────────────────
 
 def get_bam_stats_at_locus(
@@ -121,12 +186,31 @@ def get_bam_stats_at_locus(
         end:        End position
 
     Returns:
-        LocusStats as dict, or error dict if BAM cannot be read
+        LocusStats as dict, or a structured error dict
+        ({"error", "error_type", ...}) if the BAM cannot be read or the
+        region is invalid. error_type is one of "bam_access",
+        "invalid_region", "invalid_parameters".
     """
     try:
         bam = pysam.AlignmentFile(bam_path, "rb")
     except Exception as e:
-        return {"error": str(e), "bam_path": bam_path}
+        return {"error": str(e), "error_type": "bam_access", "bam_path": bam_path}
+
+    range_error = _validate_range(chromosome, start, end)
+    if range_error:
+        bam.close()
+        return range_error
+
+    resolved_chrom = _resolve_contig(bam, chromosome)
+    if resolved_chrom is None:
+        err = _contig_not_found_error(bam, chromosome)
+        bam.close()
+        return err
+
+    read_iter, fetch_error = _fetch_or_error(bam, chromosome, resolved_chrom, start, end)
+    if fetch_error:
+        bam.close()
+        return fetch_error
 
     total = 0
     mapq_sum = 0
@@ -135,7 +219,7 @@ def get_bam_stats_at_locus(
     reverse = 0
     depth_positions = {}
 
-    for read in bam.fetch(chromosome, start, end):
+    for read in read_iter:
         if read.is_unmapped or read.is_secondary or read.is_supplementary:
             continue
         total += 1
@@ -197,7 +281,10 @@ def count_discordant_pairs(
         min_mapq:   Minimum mapping quality to include read (default 20)
 
     Returns:
-        DiscordantPairResult as dict
+        DiscordantPairResult as dict, or a structured error dict
+        ({"error", "error_type", ...}) if the BAM cannot be read or the
+        region is invalid. error_type is one of "bam_access",
+        "invalid_region", "invalid_parameters".
     """
     start = max(0, position - window_bp)
     end = position + window_bp
@@ -205,13 +292,29 @@ def count_discordant_pairs(
     try:
         bam = pysam.AlignmentFile(bam_path, "rb")
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": str(e), "error_type": "bam_access", "bam_path": bam_path}
+
+    range_error = _validate_range(chromosome, start, end)
+    if range_error:
+        bam.close()
+        return range_error
+
+    resolved_chrom = _resolve_contig(bam, chromosome)
+    if resolved_chrom is None:
+        err = _contig_not_found_error(bam, chromosome)
+        bam.close()
+        return err
+
+    read_iter, fetch_error = _fetch_or_error(bam, chromosome, resolved_chrom, start, end)
+    if fetch_error:
+        bam.close()
+        return fetch_error
 
     total = 0
     discordant = 0
     mate_chroms = {}
 
-    for read in bam.fetch(chromosome, start, end):
+    for read in read_iter:
         if read.is_unmapped:
             continue
         if read.is_secondary or read.is_supplementary:
@@ -278,7 +381,10 @@ def count_soft_clipped_reads(
         min_mapq:        Minimum mapping quality (default 20)
 
     Returns:
-        SoftClipResult as dict
+        SoftClipResult as dict, or a structured error dict
+        ({"error", "error_type", ...}) if the BAM cannot be read or the
+        region is invalid. error_type is one of "bam_access",
+        "invalid_region", "invalid_parameters".
     """
     start = max(0, position - window_bp)
     end = position + window_bp
@@ -286,13 +392,29 @@ def count_soft_clipped_reads(
     try:
         bam = pysam.AlignmentFile(bam_path, "rb")
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": str(e), "error_type": "bam_access", "bam_path": bam_path}
+
+    range_error = _validate_range(chromosome, start, end)
+    if range_error:
+        bam.close()
+        return range_error
+
+    resolved_chrom = _resolve_contig(bam, chromosome)
+    if resolved_chrom is None:
+        err = _contig_not_found_error(bam, chromosome)
+        bam.close()
+        return err
+
+    read_iter, fetch_error = _fetch_or_error(bam, chromosome, resolved_chrom, start, end)
+    if fetch_error:
+        bam.close()
+        return fetch_error
 
     total = 0
     clipped = 0
     clip_positions = {}
 
-    for read in bam.fetch(chromosome, start, end):
+    for read in read_iter:
         if read.is_unmapped or read.is_secondary:
             continue
         if read.mapping_quality < min_mapq:
@@ -360,7 +482,10 @@ def get_split_reads(
         min_mapq:   Minimum mapping quality of the primary read (default 0)
 
     Returns:
-        SplitReadResult as dict
+        SplitReadResult as dict, or a structured error dict
+        ({"error", "error_type", ...}) if the BAM cannot be read or the
+        region is invalid. error_type is one of "bam_access",
+        "invalid_region", "invalid_parameters".
     """
     start = max(0, position - window_bp)
     end = position + window_bp
@@ -368,14 +493,30 @@ def get_split_reads(
     try:
         bam = pysam.AlignmentFile(bam_path, "rb")
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": str(e), "error_type": "bam_access", "bam_path": bam_path}
+
+    range_error = _validate_range(chromosome, start, end)
+    if range_error:
+        bam.close()
+        return range_error
+
+    resolved_chrom = _resolve_contig(bam, chromosome)
+    if resolved_chrom is None:
+        err = _contig_not_found_error(bam, chromosome)
+        bam.close()
+        return err
+
+    read_iter, fetch_error = _fetch_or_error(bam, chromosome, resolved_chrom, start, end)
+    if fetch_error:
+        bam.close()
+        return fetch_error
 
     total = 0
     split = 0
     partner_chroms = {}
     example_loci = []
 
-    for read in bam.fetch(chromosome, start, end):
+    for read in read_iter:
         if read.is_unmapped or read.is_secondary or read.is_supplementary:
             continue
         if read.mapping_quality < min_mapq:
@@ -455,17 +596,36 @@ def get_read_depth_profile(
         window_size: Width of each sliding window in bp (default 100bp)
 
     Returns:
-        ReadDepthProfile as dict, or error dict if BAM cannot be read
+        ReadDepthProfile as dict, or a structured error dict
+        ({"error", "error_type", ...}) if the BAM cannot be read or the
+        region is invalid. error_type is one of "bam_access",
+        "invalid_region", "invalid_parameters".
     """
     try:
         bam = pysam.AlignmentFile(bam_path, "rb")
     except Exception as e:
-        return {"error": str(e), "bam_path": bam_path}
+        return {"error": str(e), "error_type": "bam_access", "bam_path": bam_path}
+
+    range_error = _validate_range(chromosome, start, end)
+    if range_error:
+        bam.close()
+        return range_error
+
+    resolved_chrom = _resolve_contig(bam, chromosome)
+    if resolved_chrom is None:
+        err = _contig_not_found_error(bam, chromosome)
+        bam.close()
+        return err
+
+    read_iter, fetch_error = _fetch_or_error(bam, chromosome, resolved_chrom, start, end)
+    if fetch_error:
+        bam.close()
+        return fetch_error
 
     window_starts = list(range(start, end, window_size))
     counts = [0] * len(window_starts)
 
-    for read in bam.fetch(chromosome, start, end):
+    for read in read_iter:
         if read.is_unmapped or read.is_secondary or read.is_supplementary:
             continue
 
@@ -571,7 +731,11 @@ def summarize_breakpoint_evidence(
 
     for result in (stats, disc, clips, split, depth_profile):
         if "error" in result:
-            return {"error": result["error"], "bam_path": bam_path}
+            return {
+                "error": result["error"],
+                "error_type": result.get("error_type", "bam_access"),
+                "bam_path": bam_path,
+            }
 
     observations = []
 
@@ -836,17 +1000,38 @@ def check_reciprocal_breakpoint(
         min_mapq:           Minimum mapping quality
 
     Returns:
-        dict with primary evidence, reciprocal evidence, and reciprocity verdict
+        dict with primary evidence, reciprocal evidence, and reciprocity
+        verdict, or a structured error dict ({"error", "error_type",
+        "side": "primary" | "reciprocal", ...}) if either side's
+        underlying discordant-pair check failed. A tool failure (bad BAM
+        path, invalid contig, etc.) is never reported as
+        "INSUFFICIENT EVIDENCE" — those must stay visibly distinct.
     """
     # Check primary side
     primary = count_discordant_pairs(
         bam_path, primary_chromosome, primary_position, window_bp, min_mapq
     )
+    if "error" in primary:
+        return {
+            "error": primary["error"],
+            "error_type": primary.get("error_type", "bam_access"),
+            "side": "primary",
+            "chromosome": primary_chromosome,
+            "position": primary_position,
+        }
 
     # Check reciprocal side
     reciprocal = count_discordant_pairs(
         bam_path, partner_chromosome, partner_position, window_bp, min_mapq
     )
+    if "error" in reciprocal:
+        return {
+            "error": reciprocal["error"],
+            "error_type": reciprocal.get("error_type", "bam_access"),
+            "side": "reciprocal",
+            "chromosome": partner_chromosome,
+            "position": partner_position,
+        }
 
     # Reciprocity check: does partner side have discordant mates pointing back?
     primary_disc = primary.get("discordant_pairs", 0)

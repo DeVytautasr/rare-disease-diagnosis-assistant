@@ -17,6 +17,7 @@ from stage1_igv_assistant.tools.bam_tools import (
     count_discordant_pairs,
     count_soft_clipped_reads,
     get_split_reads,
+    get_read_depth_profile,
     summarize_breakpoint_evidence,
     get_gene_at_locus,
     check_reciprocal_breakpoint,
@@ -453,6 +454,162 @@ def run_tests():
                 os.unlink(synthetic_bam + ".bai")
             if os.path.exists(snapshot_out):
                 os.unlink(snapshot_out)
+
+    # ── TEST 11: structured error handling for invalid inputs ────────────
+    print("TEST 11: structured error handling for invalid inputs")
+
+    with tempfile.NamedTemporaryFile(suffix=".bam", delete=False) as f:
+        tmp_path4 = f.name
+    try:
+        err_bam = create_synthetic_bam(tmp_path4)  # header: chr1, chr8
+
+        NONEXISTENT = "/nonexistent/path/does_not_exist.bam"
+
+        def assert_error_dict(name, result, expected_error_type=None):
+            assert isinstance(result, dict), f"{name}: expected a dict, got {type(result)}"
+            assert "error" in result, f"{name}: expected an 'error' key, got keys {list(result.keys())}"
+            if expected_error_type is not None:
+                assert result.get("error_type") == expected_error_type, (
+                    f"{name}: expected error_type={expected_error_type!r}, "
+                    f"got {result.get('error_type')!r}"
+                )
+
+        # -- Nonexistent BAM path: every BAM-touching tool must return a
+        #    clean error dict, never raise. --
+        assert_error_dict(
+            "get_bam_stats_at_locus/nonexistent",
+            get_bam_stats_at_locus(NONEXISTENT, "chr1", 100, 200),
+            "bam_access",
+        )
+        assert_error_dict(
+            "count_discordant_pairs/nonexistent",
+            count_discordant_pairs(NONEXISTENT, "chr1", 150),
+            "bam_access",
+        )
+        assert_error_dict(
+            "count_soft_clipped_reads/nonexistent",
+            count_soft_clipped_reads(NONEXISTENT, "chr1", 150),
+            "bam_access",
+        )
+        assert_error_dict(
+            "get_split_reads/nonexistent",
+            get_split_reads(NONEXISTENT, "chr1", 150),
+            "bam_access",
+        )
+        assert_error_dict(
+            "get_read_depth_profile/nonexistent",
+            get_read_depth_profile(NONEXISTENT, "chr1", 100, 200),
+            "bam_access",
+        )
+        assert_error_dict(
+            "summarize_breakpoint_evidence/nonexistent",
+            summarize_breakpoint_evidence(NONEXISTENT, "chr1", 150),
+            "bam_access",
+        )
+        # check_reciprocal_breakpoint must propagate the failure, not mask
+        # it behind a fabricated "INSUFFICIENT EVIDENCE" verdict.
+        recip_err = check_reciprocal_breakpoint(NONEXISTENT, "chr1", 150, "chr8", 200)
+        assert_error_dict("check_reciprocal_breakpoint/nonexistent", recip_err, "bam_access")
+        assert "verdict" not in recip_err, \
+            "A tool failure must not be reported alongside a verdict field"
+        print("  Nonexistent BAM path: all tools return a clean error dict — PASSED")
+
+        # -- Chromosome not in header --
+        assert_error_dict(
+            "get_bam_stats_at_locus/badchrom",
+            get_bam_stats_at_locus(err_bam, "chrZZ", 100, 200),
+            "invalid_region",
+        )
+        assert_error_dict(
+            "count_discordant_pairs/badchrom",
+            count_discordant_pairs(err_bam, "chrZZ", 150),
+            "invalid_region",
+        )
+        assert_error_dict(
+            "count_soft_clipped_reads/badchrom",
+            count_soft_clipped_reads(err_bam, "chrZZ", 150),
+            "invalid_region",
+        )
+        assert_error_dict(
+            "get_split_reads/badchrom",
+            get_split_reads(err_bam, "chrZZ", 150),
+            "invalid_region",
+        )
+        assert_error_dict(
+            "get_read_depth_profile/badchrom",
+            get_read_depth_profile(err_bam, "chrZZ", 100, 200),
+            "invalid_region",
+        )
+        assert_error_dict(
+            "summarize_breakpoint_evidence/badchrom",
+            summarize_breakpoint_evidence(err_bam, "chrZZ", 150),
+            "invalid_region",
+        )
+        assert_error_dict(
+            "check_reciprocal_breakpoint/badchrom",
+            check_reciprocal_breakpoint(err_bam, "chrZZ", 150, "chr8", 200),
+            "invalid_region",
+        )
+        print("  Chromosome not in header (chrZZ): all tools return a clean error dict — PASSED")
+
+        # -- Contig-name normalisation: BAM header uses "chr1"/"chr8"; the
+        #    unprefixed form must still resolve rather than error. --
+        stats_noprefix = get_bam_stats_at_locus(err_bam, "1", 1000, 1100)
+        assert "error" not in stats_noprefix, \
+            f"Expected '1' to resolve to 'chr1' via alternate-form lookup, got {stats_noprefix}"
+        print("  Contig normalisation ('1' resolves to 'chr1' in header) — PASSED")
+
+        # -- Position beyond the end of the chromosome --
+        assert_error_dict(
+            "get_bam_stats_at_locus/beyond_end",
+            get_bam_stats_at_locus(err_bam, "chr1", 999999999999, 999999999999 + 100),
+            "invalid_region",
+        )
+        assert_error_dict(
+            "count_discordant_pairs/beyond_end",
+            count_discordant_pairs(err_bam, "chr1", 999999999999),
+            "invalid_region",
+        )
+        print("  Position beyond end of chromosome: clean error dict — PASSED")
+
+        # -- Negative position / negative start --
+        assert_error_dict(
+            "get_bam_stats_at_locus/negative",
+            get_bam_stats_at_locus(err_bam, "chr1", -100, -50),
+            "invalid_parameters",
+        )
+        print("  Negative start/end: clean error dict — PASSED")
+
+        # -- start > end --
+        assert_error_dict(
+            "get_bam_stats_at_locus/start_gt_end",
+            get_bam_stats_at_locus(err_bam, "chr1", 1000, 500),
+            "invalid_parameters",
+        )
+        assert_error_dict(
+            "get_read_depth_profile/start_gt_end",
+            get_read_depth_profile(err_bam, "chr1", 1000, 500),
+            "invalid_parameters",
+        )
+        print("  start > end: clean error dict — PASSED")
+
+        # -- Empty bam_paths list for igv_screenshot: must not raise --
+        empty_bam_result = run_igv_screenshot(
+            bam_paths=[], chromosome="chr1", start=100, end=200,
+            output_path="/tmp/test_igv_empty_bams.png",
+            igv_path="/nonexistent/path/igv.sh",
+        )
+        assert isinstance(empty_bam_result, dict) and "error" in empty_bam_result, \
+            "Expected a clean error dict for empty bam_paths"
+        print("  Empty bam_paths list for igv_screenshot: clean error dict — PASSED")
+
+        print("  PASSED ✓\n")
+    finally:
+        os.unlink(tmp_path4)
+        if os.path.exists(err_bam):
+            os.unlink(err_bam)
+        if os.path.exists(err_bam + ".bai"):
+            os.unlink(err_bam + ".bai")
 
     print("=" * 60)
     print("ALL TESTS PASSED")
