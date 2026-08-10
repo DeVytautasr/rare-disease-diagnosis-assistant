@@ -1,5 +1,18 @@
 # Real-Data Validation Attempt — Balanced Translocation Search + Cross-Technology Comparison
 
+> **Vocabulary note (post applicable-layer normalisation, see AUDIT_2026_08.md
+> §5 / Critical Finding 5):** every `evidence_score` value in this document —
+> in the cross-technology table, the calibration-update table, and the
+> scoring-bug-fix table below — refers to what `bam_tools.py` now calls
+> `evidence_score_raw`: the direct sum over all 4 layers regardless of
+> whether a layer was structurally applicable to that data. This document
+> predates the later addition of a separate, normalised `evidence_score`
+> field (which divides only by the applicable-layer count via
+> `detect_applicable_layers`), so nothing here needed to change definition —
+> only the field name did. `signal_layers` values below are all "N/4" for
+> the same reason (M was always 4 before that change). Figures are kept
+> exactly as originally recorded; not recomputed.
+
 **Date:** 2026-08-09
 
 ## Goal
@@ -48,7 +61,7 @@ Since Attempt B gave us a genuine, working, real BAM, we ran the full tool suite
 | `split_reads` | 1/39 (2.6%), partner chr1:115,690,223 (near exact DEL end) | 0/853 — Novoalign emits no `SA` tags |
 | Depth ratio, ±500bp window (`summarize_breakpoint_evidence` default) | 0.618–0.707 (varies by exact window) → **misses** `<0.6` threshold | **0.662** → **misses** `<0.6` threshold |
 | Depth ratio, wide window (deletion span ± 2000bp flanking) | 0.618 (n/a, only tested at this width) | **0.496** → **correctly flags** `likely_deletion: True` |
-| `breakpoint_evidence_summary` | score 22.5, weak, 2/4 | score 15.0, weak, 2/4 |
+| `breakpoint_evidence_summary` (= today's `evidence_score_raw`) | score 22.5, weak, 2/4 | score 15.0, weak, 2/4 |
 
 ### Two things worth highlighting
 
@@ -66,12 +79,17 @@ No confirmed real balanced translocation or inversion BAM was found — this app
 
 Following calibration (window ±2kb, threshold 0.7), the depth layer correctly flags the GIAB deletion on both PacBio HiFi and Illumina 300x data. Verified end-to-end through `summarize_breakpoint_evidence` itself (not just the underlying `get_read_depth_profile` tool in isolation):
 
+*(`depth_score` here is still on the pre-"Scoring bug fix" 0-50/layer scale —
+see the "Scoring bug fix" section below, which rescales this same 30 to 15
+on the current 0-25/layer scale. `evidence_score` in this table = today's
+`evidence_score_raw`.)*
+
 | | PacBio HiFi | Illumina 300x |
 |---|---|---|
 | `depth_ratio_min_to_mean` (±2kb/200bp window) | 0.609 | 0.542 |
-| `depth_score` | 0 → **30** | 0 → **30** |
-| `signal_layers` | 2/4 → **3/4** | 2/4 → **3/4** |
-| `evidence_score` | 22.5 → **37.5** | 15.0 → **30.0** |
+| `depth_score` (0-50 scale, pre-rescale) | 0 → **30** | 0 → **30** |
+| `signal_layers` (N/4) | 2/4 → **3/4** | 2/4 → **3/4** |
+| `evidence_score` (= today's `evidence_score_raw`) | 22.5 → **37.5** | 15.0 → **30.0** |
 | `evidence_strength` | weak → **still weak** | weak → **still weak** |
 
 The tool is now validated on two independent real sequencing technologies for deletion detection via the depth layer specifically. Note precisely what changed and what didn't: the depth layer now correctly contributes signal on both real datasets (that was the calibration goal, and it's met), but `evidence_strength` stays "weak" on both — `discordant_pairs` and `split_reads` correctly contribute nothing to a plain deletion on either aligner (neither Novoalign nor this PacBio pipeline's alignment emits `SA` tags, and a deletion has no inter-chromosomal discordant signal to find), so 2 of 4 layers are structurally unavailable here regardless of window/threshold tuning. This isn't a shortfall in the fix — it's the expected behavior for this SV type on this data.
@@ -97,10 +115,29 @@ Re-validated at chr1:115,686,862 (Illumina 300x, this same locus) after the fix:
 | `split_read_score` | 0 | **0** |
 | `depth_score` | 30 | **15** |
 | component sum | 60 (≠ evidence_score) | **30 (= evidence_score)** |
-| `evidence_score` | 30.0 | **30.0 (unchanged)** |
+| `evidence_score` (= today's `evidence_score_raw`) | 30.0 | **30.0 (unchanged)** |
 | `evidence_strength` | weak | **weak (unchanged)** |
-| `signal_layers` | 3/4 | **3/4 (unchanged)** |
+| `signal_layers` (N/4) | 3/4 | **3/4 (unchanged)** |
 
 All 9 tests in `test_bam_tools.py` pass unchanged after the fix — none asserted on raw component-score magnitudes, only on `evidence_strength`/`signal_layers`, which are unaffected by the rescaling.
 
 Found by an LLM assistant during its first end-to-end MCP session (constrained to tool calls only, no source access) — see `LLM_SESSION_1.md` for the full session report that surfaced this. That the inconsistency was catchable purely from tool outputs, without reading `bam_tools.py`, is itself a small positive data point for the interpretability goals of this project.
+
+## Applicable-layer normalisation (post-audit addendum)
+
+The "corrected" `evidence_score: 30.0` / `evidence_strength: weak` above sits
+downstream of exactly the structural problem this whole document already
+identifies in the "Calibration update" section: `discordant_pairs` and
+`split_reads` "correctly contribute nothing... so 2 of 4 layers are
+structurally unavailable here regardless of window/threshold tuning" — yet
+`evidence_score` still divided by all 4. `summarize_breakpoint_evidence`
+later gained an `applicable_layers` parameter (and a `detect_applicable_layers`
+tool to infer it from the BAM) that normalises over only the applicable
+layers instead. Re-scoring this exact locus with that change (not part of
+this session's original findings — recorded here as a forward pointer, not
+a revision of the numbers above; see the Group 4 commit for the run): with
+`applicable_layers = [discordant_pairs, soft_clipped_reads, read_depth]`
+(Novoalign has no `SA` tags, confirmed repeatedly above), the same
+underlying component scores (7.5 + 7.5 + 0 + 15 = 30, unchanged) normalise
+to `evidence_score: 40.0` / `evidence_strength: moderate`, while
+`evidence_score_raw` stays `30.0` exactly as recorded in this document.
