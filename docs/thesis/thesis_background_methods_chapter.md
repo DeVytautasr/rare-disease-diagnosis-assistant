@@ -1,3 +1,10 @@
+<!-- 
+This file is a rendered copy of the thesis chapter, converted from the 
+master .docx. Formatting (bold/italic markers) may differ from the 
+original markdown source. Do not patch this file sentence-by-sentence — 
+replace it wholesale when the chapter is updated.
+-->
+
 # Background and Methodological Foundations
 
 ## Introduction and Motivation
