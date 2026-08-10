@@ -144,7 +144,8 @@ def reciprocal_breakpoint(bam_path: str, primary_chromosome: str, primary_positi
 @mcp.tool()
 def igv_screenshot(bam_paths: list, chromosome: str, start: int, end: int,
                    output_path: str, genome_build: str = "hg38",
-                   color_by: str = "MATE_CHROMOSOME") -> dict:
+                   color_by: str = "MATE_CHROMOSOME",
+                   max_coverage: int = None) -> dict:
     """
     Generate a visual IGV screenshot of a breakpoint region.
     Call this AFTER gathering evidence, to produce visual confirmation
@@ -156,11 +157,17 @@ def igv_screenshot(bam_paths: list, chromosome: str, start: int, end: int,
     - INSERT_SIZE for deletions and duplications
 
     Use a window of roughly 2-5kb around the breakpoint for readable output.
+    Set max_coverage slightly above the observed max_depth from
+    read_depth_profile so the coverage track is not clipped — clipping
+    hides deletions, since IGV otherwise autoscales the coverage track to
+    the tallest window in view, flattening a real depth dip elsewhere in
+    the region.
     Returns the path to the PNG image and the exact IGV batch script used,
     so the visualization is fully reproducible.
     """
     return run_igv_screenshot(bam_paths, chromosome, start, end,
-                              output_path, genome_build, color_by)
+                              output_path, genome_build, color_by,
+                              max_coverage=max_coverage)
 
 if __name__ == "__main__":
     mcp.run()

@@ -894,6 +894,8 @@ def run_igv_screenshot(
     genome_build: str = "hg38",
     color_by: str = "MATE_CHROMOSOME",
     show_soft_clips: bool = True,
+    max_coverage: int = None,
+    squish: bool = True,
     igv_path: str = None,
     timeout_sec: int = 180
 ) -> dict:
@@ -924,6 +926,13 @@ def run_igv_screenshot(
                          INSERT_SIZE (deletions/duplications),
                          NONE
         show_soft_clips: Display soft-clipped bases
+        max_coverage:    If set, fixes the coverage track's max value (via
+                         IGV's setDataRange) instead of autoscaling to the
+                         tallest window in view. Set this slightly above the
+                         observed max_depth from read_depth_profile so a
+                         depth dip elsewhere in the region isn't flattened
+                         by autoscaling to a taller peak.
+        squish:          Compress read rows into a denser view when True
         igv_path:        Path to igv.sh (auto-detected if None)
         timeout_sec:     Max seconds to wait for IGV
 
@@ -964,9 +973,21 @@ def run_igv_screenshot(
     if show_soft_clips:
         lines.append("preference SAM.SHOW_SOFT_CLIPPED true")
     lines.append("preference SAM.SHOW_CENTER_LINE true")
+    if max_coverage is not None:
+        lines.append("preference SAM.MAX_VISIBLE_RANGE 1000")
     lines.append(f"goto {chromosome}:{start}-{end}")
+    if max_coverage is not None:
+        for bam in bam_paths:
+            # The coverage sub-track's name is "<bam basename> Coverage" (with
+            # a literal space), distinct from the alignment track's own name.
+            # IGV's batch parser splits on unquoted spaces, so the track name
+            # must be quoted as one token or the match silently fails and
+            # autoscale stays on.
+            track_name = f"{_os.path.basename(bam)} Coverage"
+            lines.append(f'setDataRange 0,{max_coverage} "{track_name}"')
     lines.append("sort position")
-    lines.append("squish")
+    if squish:
+        lines.append("squish")
     lines.append(f"snapshot {_os.path.abspath(output_path)}")
     lines.append("exit")
 

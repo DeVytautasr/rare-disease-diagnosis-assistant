@@ -141,6 +141,8 @@ Called at chr1:115,686,862, label `chr1:115686862_candidate_deletion`:
 
 The tool's own composite score labels this "weak" overall. However, the tool's decomposition shows the **depth layer contributing the largest share (15/25, 60% of its max)** and the soft-clip layer contributing a clean, above-threshold pileup (7.5/25), while `split_read_score` is 0 only because this layer is inapplicable to this Novoalign-aligned BAM (Section 5), and the discordant-pair contribution (7.5/25) is drawn from a single, non-clustering read (Section 3) that is more consistent with noise than with a real second layer of positive signal. Weighting the three technology-applicable layers (depth, soft-clip, discordant-pairs) by what they actually test: depth and soft-clip layers **positively and concordantly** support a local structural change at this exact position; the discordant-pair layer's near-null result is expected for an intra-chromosomal deletion (it specifically tests for inter-chromosomal translocation signal) and is not evidence against an SV.
 
+**Note on the depth figures cited above:** the min/mean depth values in observation 3 (min 269 vs mean 495.95) are **not** the same numbers reported in Section 6. `breakpoint_evidence_summary` computes its own internal depth profile over a narrower ±2kb window at 200bp bins, whereas Section 6's `read_depth_profile` call queried the wider region chr1:115,685,862–115,691,222 at 100bp bins (min 175, mean 319.72). Both are correct for the window each call actually queried — they are not conflicting measurements of the same region, and neither should be read against the other as a discrepancy.
+
 ---
 
 ## 10. Visual evidence — `igv_screenshot`
@@ -148,11 +150,14 @@ The tool's own composite score labels this "weak" overall. However, the tool's d
 - `success`: true
 - `region`: chr1:115,685,862–115,691,222 (5,362 bp, per tool output)
 - `color_by`: INSERT_SIZE (deletion/duplication-appropriate coloring, per tool guidance)
-- `file_size_bytes`: 64,624
-- Saved to: `stage1_igv_assistant/screenshots/session2_chr1_deletion.png`
+- `max_coverage`: 550 (fixed coverage-track scale, per tool guidance to set this slightly above the observed max_depth from `read_depth_profile`, 518, so the track is not clipped)
+- `file_size_bytes`: 64,192
+- Saved to: `stage1_igv_assistant/screenshots/session2_chr1_deletion_v2.png`
+
+**Revision note:** an earlier version of this screenshot (`session2_chr1_deletion.png`) let the coverage track autoscale to the tallest window in view (325), which clipped the true regional max (518, per Section 6) and visually flattened the depth dip. This version fixes the coverage-track scale to 0–550 so the full dip is rendered proportionally to the surrounding coverage rather than compressed against a clipped ceiling.
 
 **What a reviewer should look for in this image:**
-- The gray coverage histogram at the top of the alignment track visibly dips in height across the middle portion of the window (roughly 115,687,000–115,690,000), flanked by taller coverage on both sides — matching the numeric depth drop reported in Section 6 (max 518 vs min 175).
+- The gray coverage histogram at the top of the alignment track visibly dips in height across the middle-to-right portion of the window (roughly 115,687,800–115,690,000), flanked by visibly taller coverage on both sides — now rendered against a fixed 0–550 scale rather than an autoscaled one, so the dip's proportions match the numeric depth drop reported in Section 6 (max 518 vs min 175) instead of being compressed by clipping.
 - Reads colored red/blue (abnormal insert size under INSERT_SIZE coloring) are visibly concentrated at the left edge of the window (near the queried breakpoint, ~115,686,000–115,687,200) and again at the right edge (~115,690,500–115,691,200), while reads in the low-coverage middle band are mostly gray (normal/unremarkable insert size for the reads present there).
 - No inter-chromosomal (MATE_CHROMOSOME-style) coloring pattern is present, consistent with the absence of translocation signal in Sections 3 and 7 — this screenshot was deliberately generated with INSERT_SIZE coloring rather than MATE_CHROMOSOME coloring for that reason.
 - The reviewer should confirm the visual coverage dip aligns with the exact coordinates reported numerically in Section 6, and that the flanking red/blue insert-size reads cluster near, rather than diffusely across, the window edges.
