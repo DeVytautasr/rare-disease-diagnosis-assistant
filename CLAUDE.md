@@ -34,13 +34,23 @@ This is a Master's thesis prototype, not a production system.
 - Use explicit evidence layers: variant-level, gene-level, phenotype-level, transcriptome-level, SV-level.
 - Write clean, documented, reproducible code.
 
-## Expected repository structure
+## Repository structure
 
-- `src/` for implementation
-- `docs/` for design notes and method descriptions
+Work is organized by stage, each in its own top-level folder (e.g.
+`stage1_igv_assistant/` for the Stage 1 SV/breakpoint module). Within a
+stage folder:
+
+- `tools/` for implementation
 - `tests/` for unit tests
-- `notebooks/` for exploratory work
-- `data/` for small synthetic or benchmark examples only
+- `data/` for small synthetic or benchmark examples only (large sequencing
+  files are gitignored, not committed)
+- `results/` for session reports, validation write-ups, and audits
+- `server.py` for the stage's MCP server entrypoint, if it has one
+
+`docs/` at the repo root holds cross-stage design notes and the thesis
+chapter drafts (`docs/thesis/`). There is no top-level `src/` or
+`notebooks/` — exploratory work and implementation both live inside the
+relevant stage folder.
 
 ## How Claude should help
 
