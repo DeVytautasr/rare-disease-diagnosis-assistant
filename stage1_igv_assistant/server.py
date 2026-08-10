@@ -234,31 +234,43 @@ def igv_screenshot(bam_paths: list, chromosome: str, start: int, end: int,
                               coverage_height=coverage_height)
 
 @mcp.tool()
-def evidence_panel(bam_paths: list, chromosome: str, start: int, end: int,
-                   output_dir: str, applicable_layers: list = None) -> dict:
+def evidence_panel(bam_paths: list, chromosome: str, position: int,
+                   output_dir: str, start: int = None, end: int = None,
+                   applicable_layers: list = None, windows: dict = None) -> dict:
     """
     Generates one screenshot PER evidence layer, instead of a single image
-    trying to show everything at once — each layer gets the IGV settings
-    that actually isolate it visually:
-      - discordant_pairs: UNEXPECTED_PAIR coloring (inter-chromosomal /
-        anomalous pairs highlighted red)
-      - split_reads: grouped by SA tag value — every chimeric read gets its
-        own labeled row showing the exact partner locus text (e.g.
-        "chr8,47000000,+,..."). This is the ONLY way to see split-read
-        evidence visually: ordinary pair coloring never reflects SA tags,
-        since IGV colors by the primary alignment's actual mate, not by
-        tag content.
-      - read_depth: alignment rows removed entirely, coverage track only,
-        tall, at a fixed scale auto-computed from this exact region's
-        observed max depth (+15% headroom) — not autoscaled, so a real dip
-        isn't flattened by a taller peak elsewhere in view.
-      - soft_clipped_reads: soft-clipped bases shown, sorted by base.
-        Caveat found during testing: at a wide region (the kind read_depth
-        needs to show a whole deletion span) individual soft-clip marks
-        are not legible — this layer specifically benefits from a much
-        narrower window (a few hundred bp) than the others. Consider
-        calling this tool twice with different windows if both a depth
-        overview and legible clip detail are needed.
+    trying to show everything at once. Each layer gets BOTH the IGV
+    settings that isolate it visually AND its own window around `position`
+    — a single shared window can't serve every layer (confirmed directly:
+    a region wide enough for a depth dip renders soft-clip marks
+    illegibly small, and vice versa):
+      - discordant_pairs (±1500bp default): UNEXPECTED_PAIR coloring
+        (inter-chromosomal / anomalous pairs highlighted red)
+      - split_reads (±1500bp default): grouped by SA tag value — every
+        chimeric read gets its own labeled row showing the exact partner
+        locus text (e.g. "chr8,47000000,+,..."). This is the ONLY way to
+        see split-read evidence visually: ordinary pair coloring never
+        reflects SA tags, since IGV colors by the primary alignment's
+        actual mate, not by tag content.
+      - read_depth (caller-supplied start/end if given, else ±3000bp):
+        alignment rows removed entirely, coverage track only, tall, at a
+        fixed scale auto-computed from that region's observed max depth
+        (+15% headroom) — not autoscaled, so a real dip isn't flattened
+        by a taller peak elsewhere in view.
+      - soft_clipped_reads (±150bp default, tight): soft-clipped bases
+        shown, sorted by RIGHT_CLIP or LEFT_CLIP — whichever side actually
+        has more clipped reads at this locus (from
+        count_soft_clipped_reads' dominant_clip_side), not a fixed choice.
+        Confirmed empirically this produces a clean staircase pileup at
+        the clip boundary. If the dominant side can't be determined,
+        defaults to LEFT_CLIP and says so in the panel's
+        "clip_side_determination" field.
+
+    Override any layer's half-window via windows={"soft_clipped_reads": 300}
+    (bp; keys from applicable_layers' vocabulary). The exact region used
+    per layer is in the returned "windows_used" dict — cite that rather
+    than assuming the defaults were used, since overrides and the
+    read_depth start/end special-case both change it.
 
     If applicable_layers isn't given, calls applicable_layers (the other
     tool) on bam_paths[0] first and uses its result — call that tool
@@ -269,13 +281,18 @@ def evidence_panel(bam_paths: list, chromosome: str, start: int, end: int,
     plain-language reason applicable_layers itself would give.
 
     Returns:
-      region, bam_paths, applicable_layers, applicable_layers_source, and
-      panels: a dict with one entry per evidence layer, each either a
-      run_igv_screenshot-shaped result (screenshot_path, success, etc.) or
-      a {"skipped": true, "reason": ...} entry.
+      position, chromosome, bam_paths, applicable_layers,
+      applicable_layers_source, windows_used (per-layer region actually
+      used, for all 4 layers regardless of skip status), and panels: a
+      dict with one entry per evidence layer, each either a
+      run_igv_screenshot-shaped result (screenshot_path, success, etc.,
+      plus window_bp and — for soft_clipped_reads — clip_side_determination)
+      or a {"skipped": true, "reason": ...} entry.
     """
-    return igv_evidence_panel(bam_paths, chromosome, start, end, output_dir,
-                              applicable_layers=applicable_layers)
+    return igv_evidence_panel(bam_paths, chromosome, position, output_dir,
+                              start=start, end=end,
+                              applicable_layers=applicable_layers,
+                              windows=windows)
 
 if __name__ == "__main__":
     mcp.run()

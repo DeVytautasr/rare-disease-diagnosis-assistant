@@ -28,6 +28,7 @@ from stage1_igv_assistant.tools.bam_tools import (
     igv_evidence_panel,
     EVIDENCE_LAYER_NAMES,
     DEPTH_RATIO_DELETION_THRESHOLD,
+    DEFAULT_PANEL_WINDOWS,
 )
 from stage1_igv_assistant.case_object import BamCase
 
@@ -908,17 +909,26 @@ def run_tests():
         # Unknown applicable_layers value must return a structured error,
         # not raise, and must not attempt to launch IGV at all.
         bad_layers_panel = igv_evidence_panel(
-            bam_paths=[panel_bam], chromosome="chr1", start=1000, end=2000,
+            bam_paths=[panel_bam], chromosome="chr1", position=1500,
             output_dir=panel_dir, applicable_layers=["not_a_real_layer"],
         )
         assert "error" in bad_layers_panel and bad_layers_panel.get("error_type") == "invalid_parameters", \
             f"Expected invalid_parameters error, got {bad_layers_panel}"
         print("  Unknown applicable_layers value rejected with structured error — PASSED")
 
+        # Unknown windows key must also return a structured error.
+        bad_windows_panel = igv_evidence_panel(
+            bam_paths=[panel_bam], chromosome="chr1", position=1500,
+            output_dir=panel_dir, windows={"not_a_real_layer": 300},
+        )
+        assert "error" in bad_windows_panel and bad_windows_panel.get("error_type") == "invalid_parameters", \
+            f"Expected invalid_parameters error for bad windows key, got {bad_windows_panel}"
+        print("  Unknown windows key rejected with structured error — PASSED")
+
         # A missing IGV binary must produce a clean per-layer error, not a
         # crash, and must not block on layers that ARE inapplicable.
         fake_igv_panel = igv_evidence_panel(
-            bam_paths=[panel_bam], chromosome="chr1", start=1000, end=2000,
+            bam_paths=[panel_bam], chromosome="chr1", position=1500,
             output_dir=panel_dir, applicable_layers=["read_depth"],
             igv_path="/nonexistent/path/igv.sh",
         )
@@ -929,6 +939,28 @@ def run_tests():
             assert fake_igv_panel["panels"][skipped_layer].get("skipped") is True, \
                 f"Expected {skipped_layer} to be skipped (not in applicable_layers)"
         print("  Missing IGV binary: clean per-layer error, other layers correctly skipped — PASSED")
+
+        # windows_used must reflect the caller-supplied start/end for
+        # read_depth specifically, and the default half-window otherwise —
+        # computed without needing to launch IGV.
+        window_check_panel = igv_evidence_panel(
+            bam_paths=[panel_bam], chromosome="chr1", position=1500,
+            output_dir=panel_dir, start=100, end=3000,
+            applicable_layers=["read_depth", "soft_clipped_reads"],
+            windows={"soft_clipped_reads": 75},
+            igv_path="/nonexistent/path/igv.sh",
+        )
+        wu = window_check_panel["windows_used"]
+        assert wu["read_depth"] == {
+            "start": 100, "end": 3000, "window_bp": None,
+            "source": "caller-supplied start/end",
+        }, f"Expected read_depth to use caller-supplied start/end, got {wu['read_depth']}"
+        assert wu["soft_clipped_reads"] == {
+            "start": 1425, "end": 1575, "window_bp": 75, "source": "override",
+        }, f"Expected soft_clipped_reads to use the 75bp override, got {wu['soft_clipped_reads']}"
+        assert wu["discordant_pairs"]["window_bp"] == DEFAULT_PANEL_WINDOWS["discordant_pairs"], \
+            f"Expected discordant_pairs to use the default window, got {wu['discordant_pairs']}"
+        print("  windows_used correctly reflects per-layer overrides and read_depth start/end — PASSED")
 
         # Real IGV, if this machine has it (and java) — exercises an actual
         # 4-panel run end-to-end on a BAM where all 4 layers are applicable.
@@ -953,7 +985,7 @@ def run_tests():
                 real_panel_bam = create_translocation_bam(tmp_path8)
                 real_panel = igv_evidence_panel(
                     bam_paths=[real_panel_bam], chromosome="chr1",
-                    start=1049000, end=1051500, output_dir=real_panel_dir,
+                    position=1050000, output_dir=real_panel_dir,
                     igv_path=real_igv_path, timeout_sec=120,
                 )
                 assert "error" not in real_panel, f"Unexpected top-level error: {real_panel}"
@@ -966,7 +998,21 @@ def run_tests():
                     path = panel.get("screenshot_path")
                     assert path and os.path.exists(path) and os.path.getsize(path) > 0, \
                         f"{layer}: expected a non-empty PNG at {path}"
-                print(f"  Real 4-layer panel: all layers succeeded with non-empty PNGs — PASSED")
+                    # Each layer must use its OWN window, not one shared region.
+                    expected_half = DEFAULT_PANEL_WINDOWS[layer]
+                    wu = real_panel["windows_used"][layer]
+                    assert wu["window_bp"] == expected_half, \
+                        f"{layer}: expected window_bp={expected_half}, got {wu}"
+                    assert wu["end"] - wu["start"] == 2 * expected_half, \
+                        f"{layer}: window span doesn't match window_bp: {wu}"
+                    assert panel["window_bp"] == expected_half, \
+                        f"{layer}: panel's own window_bp doesn't match windows_used: {panel.get('window_bp')}"
+                # soft_clipped_reads must record how its sort side was chosen.
+                clip_note = real_panel["panels"]["soft_clipped_reads"]["clip_side_determination"]
+                assert clip_note and ("LEFT_CLIP" in clip_note or "RIGHT_CLIP" in clip_note or "defaulted" in clip_note), \
+                    f"Expected a clip_side_determination note, got {clip_note!r}"
+                print(f"  Real 4-layer panel: all layers succeeded, each with its own window — PASSED")
+                print(f"  clip_side_determination: {clip_note}")
                 print("  PASSED ✓\n")
             finally:
                 os.unlink(tmp_path8)

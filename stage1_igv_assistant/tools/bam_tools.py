@@ -74,8 +74,19 @@ class SoftClipResult:
     total_reads_in_window: int
     soft_clipped_reads: int
     soft_clipped_fraction: float
-    consensus_clip_position: Optional[int]   # position with most clipping
+    consensus_clip_position: Optional[int]   # position with most clipping (left+right combined)
     max_clips_at_position: int
+    # Left (5') and right (3') clips are tracked separately so callers can
+    # tell which side actually dominates — the combined fields above alone
+    # can't distinguish this, since a left-clip's reference_start and a
+    # right-clip's reference_end can coincide at the same breakpoint.
+    left_clip_reads: int
+    right_clip_reads: int
+    left_consensus_position: Optional[int]
+    left_max_clips_at_position: int
+    right_consensus_position: Optional[int]
+    right_max_clips_at_position: int
+    dominant_clip_side: Optional[str]   # "left" | "right" | "tied" | None (no clips at all)
 
 @dataclass
 class SplitReadResult:
@@ -398,6 +409,17 @@ def count_soft_clipped_reads(
     A pileup of clipped reads at the same position narrows the breakpoint
     to near-nucleotide resolution.
 
+    consensus_clip_position/max_clips_at_position combine left-clips (5' end
+    clipped, reads approaching a breakpoint from the right) and right-clips
+    (3' end clipped, reads approaching from the left) into one count, since
+    both can genuinely cluster at nearly the same position for a single
+    clean breakpoint. left_/right_ prefixed fields report each side
+    separately (position, max count, and total reads), and
+    dominant_clip_side ("left" | "right" | "tied" | None) reports which
+    side has more total clipped reads — e.g. to decide whether a
+    visualization should sort by left-clip or right-clip length to make
+    the pileup legible (see igv_evidence_panel).
+
     Args:
         bam_path:        Path to indexed BAM file
         chromosome:      Chromosome of the candidate breakpoint
@@ -439,6 +461,8 @@ def count_soft_clipped_reads(
     total = 0
     clipped = 0
     clip_positions = {}
+    left_clip_positions = {}
+    right_clip_positions = {}
 
     for read in read_iter:
         if read.is_unmapped or read.is_secondary:
@@ -456,20 +480,42 @@ def count_soft_clipped_reads(
             clipped += 1
             clip_pos = read.reference_start
             clip_positions[clip_pos] = clip_positions.get(clip_pos, 0) + 1
+            left_clip_positions[clip_pos] = left_clip_positions.get(clip_pos, 0) + 1
 
         # Check for soft-clip at read end (right clip)
         elif cigar[-1][0] == 4 and cigar[-1][1] >= min_clip_bases:
             clipped += 1
             clip_pos = read.reference_end
             clip_positions[clip_pos] = clip_positions.get(clip_pos, 0) + 1
+            right_clip_positions[clip_pos] = right_clip_positions.get(clip_pos, 0) + 1
 
     bam.close()
 
-    consensus_pos = None
-    max_clips = 0
-    if clip_positions:
-        consensus_pos = max(clip_positions, key=clip_positions.get)
-        max_clips = clip_positions[consensus_pos]
+    def _consensus(positions):
+        if not positions:
+            return None, 0
+        pos = max(positions, key=positions.get)
+        return pos, positions[pos]
+
+    consensus_pos, max_clips = _consensus(clip_positions)
+    left_consensus_pos, left_max_clips = _consensus(left_clip_positions)
+    right_consensus_pos, right_max_clips = _consensus(right_clip_positions)
+
+    # Which side dominates overall (not just at the combined consensus
+    # position, since a left-clip cluster and a right-clip cluster from
+    # reads approaching a breakpoint from opposite directions can coincide
+    # at nearly the same position without either being individually
+    # dominant there) — compares total clipped-read counts per side.
+    left_total = sum(left_clip_positions.values())
+    right_total = sum(right_clip_positions.values())
+    if left_total == 0 and right_total == 0:
+        dominant_side = None
+    elif left_total > right_total:
+        dominant_side = "left"
+    elif right_total > left_total:
+        dominant_side = "right"
+    else:
+        dominant_side = "tied"
 
     result = SoftClipResult(
         chromosome=chromosome,
@@ -480,6 +526,13 @@ def count_soft_clipped_reads(
         soft_clipped_fraction=round(clipped / total, 3) if total > 0 else 0,
         consensus_clip_position=consensus_pos,
         max_clips_at_position=max_clips,
+        left_clip_reads=left_total,
+        right_clip_reads=right_total,
+        left_consensus_position=left_consensus_pos,
+        left_max_clips_at_position=left_max_clips,
+        right_consensus_position=right_consensus_pos,
+        right_max_clips_at_position=right_max_clips,
+        dominant_clip_side=dominant_side,
     )
     return asdict(result)
 
@@ -1658,27 +1711,43 @@ _PANEL_LAYER_SETTINGS = {
     "soft_clipped_reads": dict(
         color_by="NONE",
         show_soft_clips=True,
-        # "base" (SortOption.NUCLEOTIDE) is what IGV's own UI calls "sort by
-        # base" and is confirmed valid syntax, but in practice it sorts by
-        # the nucleotide at the center line — a SNP/mismatch view, not a
-        # clip-length view. SortOption.LEFT_CLIP/RIGHT_CLIP exist in this
-        # build and would likely cluster heavily-clipped reads together
-        # more usefully for this specific layer; kept as "base" here
-        # because that's what was specified, not because it's been found
-        # to be the most informative option for this layer — see the
-        # panel's own evaluation notes for how this looked in practice.
-        sort_by="base",
+        # sort_by is set dynamically per-call (LEFT_CLIP or RIGHT_CLIP,
+        # chosen from count_soft_clipped_reads' dominant_clip_side) rather
+        # than fixed here — see igv_evidence_panel. Confirmed empirically
+        # against real GIAB data that sort=LEFT_CLIP/RIGHT_CLIP genuinely
+        # reorders reads into a clean staircase pileup at the clip
+        # boundary, unlike sort=base (SortOption.NUCLEOTIDE), which sorts
+        # by the nucleotide at the center line — a SNP/mismatch view, not
+        # a clip-length one, and was the original (less effective) choice
+        # here before this was corrected.
     ),
+}
+
+# Per-layer window half-widths (position ± this many bp), used when the
+# caller doesn't override via igv_evidence_panel's windows= parameter.
+# discordant_pairs/split_reads need enough width to catch mate-pair/SA
+# evidence a few hundred bp out; soft_clipped_reads is kept tight so the
+# clip pileup itself isn't diluted by unrelated reads; read_depth is wide
+# enough to show a multi-kb deletion/duplication span in context (and is
+# overridden entirely by caller-supplied start/end when given, since a
+# known SV span from a VCF is more accurate than a fixed guess).
+DEFAULT_PANEL_WINDOWS = {
+    "discordant_pairs": 1500,
+    "split_reads": 1500,
+    "soft_clipped_reads": 150,
+    "read_depth": 3000,
 }
 
 
 def igv_evidence_panel(
     bam_paths: list,
     chromosome: str,
-    start: int,
-    end: int,
+    position: int,
     output_dir: str,
+    start: int = None,
+    end: int = None,
     applicable_layers: list = None,
+    windows: dict = None,
     genome_build: str = "hg38",
     igv_path: str = None,
     timeout_sec: int = 180,
@@ -1692,6 +1761,32 @@ def igv_evidence_panel(
     mate, never by SA tags) gets its own SA-tag-grouped view instead of
     being silently absent from a single combined screenshot.
 
+    Each layer also gets its OWN window around `position`, rather than one
+    shared region for all four — confirmed directly (not assumed) that a
+    single window can't serve every layer: a region wide enough to show a
+    multi-kb deletion's depth dip renders individual soft-clip marks
+    illegibly small, while a region tight enough for a clean clip pileup
+    would crop a wide depth dip entirely. Defaults (see
+    DEFAULT_PANEL_WINDOWS): discordant_pairs/split_reads ±1500bp,
+    soft_clipped_reads ±150bp (tight, to keep the pileup uncluttered),
+    read_depth uses the caller-supplied start/end if given (e.g. a known SV
+    span from a VCF) or position±3000bp otherwise. Override any of these
+    via windows={"soft_clipped_reads": 300, ...} (half-width in bp; keys
+    from EVIDENCE_LAYER_NAMES). The exact region used for each layer is
+    recorded in the returned "windows_used" dict (and echoed in each
+    panel's own "region" field), so it can be cited directly rather than
+    re-derived.
+
+    The soft_clipped_reads layer's sort order is chosen dynamically, not
+    fixed: calls count_soft_clipped_reads over that layer's own window and
+    sorts by RIGHT_CLIP or LEFT_CLIP according to whichever side has more
+    clipped reads (dominant_clip_side) — confirmed empirically against
+    real data that this produces a clean staircase pileup at the clip
+    boundary, unlike sorting by nucleotide/base. If the side can't be
+    determined (tied, no clips found, or the lookup itself errors),
+    defaults to LEFT_CLIP and records why in the panel's
+    "clip_side_determination" field.
+
     If applicable_layers isn't given, calls detect_applicable_layers on
     bam_paths[0] first (assumes all tracks share one sequencing technology —
     true for every BAM this project has validated against) and uses its
@@ -1703,8 +1798,8 @@ def igv_evidence_panel(
 
     For the read_depth layer, automatically computes a fixed coverage-track
     scale from get_read_depth_profile's observed max_depth (+15% headroom)
-    for this exact region, rather than requiring the caller to already know
-    a good max_coverage value — this is the same reasoning
+    for that layer's own region, rather than requiring the caller to
+    already know a good max_coverage value — this is the same reasoning
     run_igv_screenshot's own docstring already gives for setting
     max_coverage manually, done here automatically.
 
@@ -1712,34 +1807,58 @@ def igv_evidence_panel(
         bam_paths:         List of BAM file paths or URLs (same technology
                            assumed across all of them — see above)
         chromosome:        Chromosome of the region
-        start, end:        Region bounds — the same window is used for
-                           every layer's screenshot, so they're directly
-                           comparable side by side
+        position:          Candidate breakpoint — the center every layer's
+                           window is built around (except read_depth when
+                           start/end are both given)
         output_dir:        Directory to write "<layer>.png" files into
                            (created if it doesn't exist)
+        start, end:        Optional explicit region, used ONLY by the
+                           read_depth layer (e.g. a known deletion span
+                           from a VCF); other layers always use
+                           position ± their window regardless of these.
         applicable_layers: Optional list from EVIDENCE_LAYER_NAMES
                            ("discordant_pairs", "soft_clipped_reads",
                            "split_reads", "read_depth"). None (default)
                            auto-detects via detect_applicable_layers.
+        windows:           Optional dict overriding DEFAULT_PANEL_WINDOWS'
+                           half-widths per layer, e.g.
+                           {"soft_clipped_reads": 300}. Keys must be from
+                           EVIDENCE_LAYER_NAMES.
         genome_build:      IGV genome identifier, passed to every screenshot
         igv_path:          Path to igv.sh (auto-detected if None)
         timeout_sec:       Per-screenshot IGV timeout
 
     Returns:
         {
-          "region": "<chrom>:<start>-<end>",
+          "position": position, "chromosome": chromosome,
           "bam_paths": [...],
           "applicable_layers": [...],
           "applicable_layers_source": "detect_applicable_layers" | "caller-provided",
+          "windows_used": {
+            "<layer>": {"start": int, "end": int, "window_bp": int | None,
+                        "source": "default" | "override" | "caller-supplied start/end"}
+            for each of the 4 layers, regardless of skip status
+          },
           "panels": {
-            "<layer>": <run_igv_screenshot result dict>  # if applicable
-                       | {"skipped": True, "reason": "..."}  # if not
+            "<layer>": <run_igv_screenshot result dict, plus "window_bp"
+                        and, for soft_clipped_reads, "clip_side_determination">
+                       | {"skipped": True, "reason": "..."}  # if not applicable
             for each of the 4 layers
           }
         }
-        or a structured error dict if detect_applicable_layers / an
-        unrecognised applicable_layers value fails first.
+        or a structured error dict if detect_applicable_layers, an
+        unrecognised applicable_layers value, or an unrecognised windows
+        key fails first.
     """
+    if windows is not None:
+        unknown_window_keys = [l for l in windows if l not in EVIDENCE_LAYER_NAMES]
+        if unknown_window_keys:
+            return {
+                "error": f"Unknown windows keys: {unknown_window_keys}. "
+                         f"Valid values: {list(EVIDENCE_LAYER_NAMES)}",
+                "error_type": "invalid_parameters",
+            }
+
     if applicable_layers is None:
         detected = detect_applicable_layers(bam_paths[0])
         if "error" in detected:
@@ -1760,14 +1879,69 @@ def igv_evidence_panel(
 
     _os.makedirs(output_dir, exist_ok=True)
 
+    # ── Compute each layer's own region ──
+    windows_used = {}
+    for layer in EVIDENCE_LAYER_NAMES:
+        if layer == "read_depth" and start is not None and end is not None:
+            windows_used[layer] = {
+                "start": start, "end": end, "window_bp": None,
+                "source": "caller-supplied start/end",
+            }
+            continue
+        override = windows.get(layer) if windows else None
+        half = override if override is not None else DEFAULT_PANEL_WINDOWS[layer]
+        windows_used[layer] = {
+            "start": max(0, position - half), "end": position + half,
+            "window_bp": half,
+            "source": "override" if override is not None else "default",
+        }
+
     depth_max_coverage = None
     if "read_depth" in applicable_layers:
-        depth_profile = get_read_depth_profile(bam_paths[0], chromosome, start, end)
+        dw = windows_used["read_depth"]
+        depth_profile = get_read_depth_profile(bam_paths[0], chromosome, dw["start"], dw["end"])
         if "error" not in depth_profile:
             depth_max_coverage = int(depth_profile["summary"]["max_depth"] * 1.15) + 1
         # If this errors, fall through without a fixed scale rather than
         # failing the whole panel — the read_depth screenshot below will
         # just autoscale instead.
+
+    soft_clip_sort_by = "LEFT_CLIP"
+    clip_side_determination = None
+    if "soft_clipped_reads" in applicable_layers:
+        cw = windows_used["soft_clipped_reads"]
+        clip_check = count_soft_clipped_reads(
+            bam_paths[0], chromosome, position, window_bp=cw["window_bp"]
+        )
+        if "error" in clip_check:
+            clip_side_determination = (
+                f"Could not determine dominant clip side ({clip_check['error']}); "
+                f"defaulted to LEFT_CLIP."
+            )
+        else:
+            side = clip_check.get("dominant_clip_side")
+            if side == "right":
+                soft_clip_sort_by = "RIGHT_CLIP"
+                clip_side_determination = (
+                    f"Sorted by RIGHT_CLIP: {clip_check['right_clip_reads']} right-clipped "
+                    f"vs {clip_check['left_clip_reads']} left-clipped reads observed "
+                    f"in this window."
+                )
+            elif side == "left":
+                soft_clip_sort_by = "LEFT_CLIP"
+                clip_side_determination = (
+                    f"Sorted by LEFT_CLIP: {clip_check['left_clip_reads']} left-clipped "
+                    f"vs {clip_check['right_clip_reads']} right-clipped reads observed "
+                    f"in this window."
+                )
+            else:
+                clip_side_determination = (
+                    f"Could not determine a dominant clip side "
+                    f"(dominant_clip_side={side!r}: "
+                    f"{clip_check['left_clip_reads']} left vs "
+                    f"{clip_check['right_clip_reads']} right-clipped reads); "
+                    f"defaulted to LEFT_CLIP."
+                )
 
     panels = {}
     for layer in EVIDENCE_LAYER_NAMES:
@@ -1783,18 +1957,27 @@ def igv_evidence_panel(
         layer_kwargs = dict(_PANEL_LAYER_SETTINGS[layer])
         if layer == "read_depth" and depth_max_coverage is not None:
             layer_kwargs["max_coverage"] = depth_max_coverage
+        if layer == "soft_clipped_reads":
+            layer_kwargs["sort_by"] = soft_clip_sort_by
 
+        lw = windows_used[layer]
         output_path = _os.path.join(output_dir, f"{layer}.png")
-        panels[layer] = run_igv_screenshot(
-            bam_paths, chromosome, start, end, output_path,
+        result = run_igv_screenshot(
+            bam_paths, chromosome, lw["start"], lw["end"], output_path,
             genome_build=genome_build, igv_path=igv_path, timeout_sec=timeout_sec,
             **layer_kwargs,
         )
+        result["window_bp"] = lw["window_bp"]
+        if layer == "soft_clipped_reads":
+            result["clip_side_determination"] = clip_side_determination
+        panels[layer] = result
 
     return {
-        "region": f"{chromosome}:{start}-{end}",
+        "position": position,
+        "chromosome": chromosome,
         "bam_paths": bam_paths,
         "applicable_layers": applicable_layers,
         "applicable_layers_source": applicable_layers_source,
+        "windows_used": windows_used,
         "panels": panels,
     }
