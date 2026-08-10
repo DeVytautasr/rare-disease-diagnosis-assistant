@@ -20,6 +20,7 @@ from stage1_igv_assistant.tools.bam_tools import (
     summarize_breakpoint_evidence,
     get_gene_at_locus,
     check_reciprocal_breakpoint,
+    run_igv_screenshot,
 )
 from stage1_igv_assistant.case_object import BamCase
 
@@ -392,6 +393,66 @@ def run_tests():
         "Expected discordant_pairs in applicable_evidence_layers for paired short-read data"
     print(f"  applicable_evidence_layers: {loaded.sequencing.applicable_evidence_layers}")
     print("  PASSED ✓\n")
+
+    # ── TEST 10: run_igv_screenshot batch script generation ──────────────
+    print("TEST 10: run_igv_screenshot batch script generation")
+
+    # Fake igv_path: must fail cleanly, not crash, regardless of whether
+    # IGV happens to be installed on this machine.
+    fake_result = run_igv_screenshot(
+        bam_paths=["/tmp/does_not_matter.bam"],
+        chromosome="chr1", start=1000, end=2000,
+        output_path="/tmp/test_igv_screenshot_fake.png",
+        igv_path="/nonexistent/path/igv.sh",
+    )
+    assert "error" in fake_result, "Expected an error dict for a nonexistent igv_path"
+    assert "IGV not found" in fake_result["error"], \
+        f"Expected 'IGV not found' in error, got: {fake_result['error']}"
+    print(f"  Fake igv_path correctly reported: {fake_result['error']}")
+
+    # Real IGV, if this machine has it installed at the known location —
+    # exercises the actual batch-script content, not just the error path.
+    igv_candidates = [
+        os.path.expanduser("~/IGV_2.17.4/igv.sh"),
+        os.path.expanduser("~/igv/igv.sh"),
+        "/opt/igv/igv.sh",
+    ]
+    real_igv_path = next((c for c in igv_candidates if os.path.exists(c)), None)
+
+    if real_igv_path is None:
+        print("  IGV not installed on this machine — skipping batch-script-content check.")
+        print("  PASSED ✓ (error-path only)\n")
+    else:
+        with tempfile.NamedTemporaryFile(suffix=".bam", delete=False) as f:
+            tmp_path3 = f.name
+        try:
+            synthetic_bam = create_synthetic_bam(tmp_path3)
+            snapshot_out = "/tmp/test_igv_screenshot_synthetic.png"
+            real_result = run_igv_screenshot(
+                bam_paths=[synthetic_bam],
+                chromosome="chr1", start=1400, end=1600,
+                output_path=snapshot_out,
+                igv_path=real_igv_path,
+                color_by="MATE_CHROMOSOME",
+                timeout_sec=120,
+            )
+            assert "batch_script" in real_result, "Expected batch_script in result"
+            batch = real_result["batch_script"]
+            assert "goto" in batch, "Expected 'goto' command in batch script"
+            assert "snapshot" in batch, "Expected 'snapshot' command in batch script"
+            assert "MATE_CHROMOSOME" in batch, "Expected coloring mode in batch script"
+            print(f"  batch_script contains goto/snapshot/MATE_CHROMOSOME: confirmed")
+            print(f"  IGV run success={real_result.get('success')}, "
+                  f"file_size_bytes={real_result.get('file_size_bytes')}")
+            print("  PASSED ✓\n")
+        finally:
+            os.unlink(tmp_path3)
+            if os.path.exists(synthetic_bam):
+                os.unlink(synthetic_bam)
+            if os.path.exists(synthetic_bam + ".bai"):
+                os.unlink(synthetic_bam + ".bai")
+            if os.path.exists(snapshot_out):
+                os.unlink(snapshot_out)
 
     print("=" * 60)
     print("ALL TESTS PASSED")

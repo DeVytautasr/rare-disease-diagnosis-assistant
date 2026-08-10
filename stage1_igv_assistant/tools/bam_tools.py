@@ -10,6 +10,9 @@ that are not in the tool output.
 import pysam
 import requests as _requests
 import time as _time
+import subprocess as _subprocess
+import os as _os
+import tempfile as _tempfile
 from dataclasses import dataclass, asdict
 from typing import Optional
 
@@ -878,3 +881,135 @@ def check_reciprocal_breakpoint(
         "verdict": verdict,
         "is_balanced": primary_disc >= 3 and reciprocal_disc >= 3,
     }
+
+
+# ── Tool 9: IGV screenshot (visual evidence) ───────────────────────────────────
+
+def run_igv_screenshot(
+    bam_paths: list,
+    chromosome: str,
+    start: int,
+    end: int,
+    output_path: str,
+    genome_build: str = "hg38",
+    color_by: str = "MATE_CHROMOSOME",
+    show_soft_clips: bool = True,
+    igv_path: str = None,
+    timeout_sec: int = 180
+) -> dict:
+    """
+    Generate an IGV screenshot of a genomic region using headless batch mode.
+
+    Produces the visual evidence a clinician would inspect manually:
+    discordant pairs colored by mate chromosome, soft-clipped bases shown,
+    and the region centred on the candidate breakpoint.
+
+    Requires a usable display (real X11, or a Wayland/X compatibility layer
+    such as WSLg) for IGV's Swing UI to render into — it is not invoked with
+    an empty/overridden DISPLAY, since that crashes IGV's AWT event thread
+    before it can take the snapshot. On a machine with no display at all,
+    run this under `xvfb-run` (not handled internally, since that adds a
+    dependency this tool doesn't otherwise need).
+
+    Args:
+        bam_paths:       List of BAM file paths or URLs to load as tracks
+        chromosome:      Chromosome (e.g. "chr1")
+        start:           Region start position
+        end:             Region end position
+        output_path:     Where to save the PNG
+        genome_build:    IGV genome identifier ("hg38", "hg19")
+        color_by:        IGV coloring mode. Options:
+                         MATE_CHROMOSOME (translocations),
+                         PAIR_ORIENTATION (inversions),
+                         INSERT_SIZE (deletions/duplications),
+                         NONE
+        show_soft_clips: Display soft-clipped bases
+        igv_path:        Path to igv.sh (auto-detected if None)
+        timeout_sec:     Max seconds to wait for IGV
+
+    Returns:
+        dict with screenshot_path, batch_script used, and success status
+    """
+    # Auto-detect IGV
+    candidates = []
+    if igv_path is None:
+        candidates = [
+            _os.path.expanduser("~/IGV_2.17.4/igv.sh"),
+            _os.path.expanduser("~/igv/igv.sh"),
+            "/opt/igv/igv.sh",
+        ]
+        for c in candidates:
+            if _os.path.exists(c):
+                igv_path = c
+                break
+
+    if igv_path is None or not _os.path.exists(igv_path):
+        return {
+            "error": "IGV not found",
+            "searched": candidates if not igv_path else [igv_path],
+            "note": "Install IGV or pass igv_path explicitly"
+        }
+
+    # Ensure output directory exists
+    out_dir = _os.path.dirname(_os.path.abspath(output_path))
+    _os.makedirs(out_dir, exist_ok=True)
+
+    # Build IGV batch script
+    lines = ["new", f"genome {genome_build}"]
+    for bam in bam_paths:
+        lines.append(f"load {bam}")
+    lines.append("maxPanelHeight 600")
+    if color_by and color_by != "NONE":
+        lines.append(f"colorBy {color_by}")
+    if show_soft_clips:
+        lines.append("preference SAM.SHOW_SOFT_CLIPPED true")
+    lines.append("preference SAM.SHOW_CENTER_LINE true")
+    lines.append(f"goto {chromosome}:{start}-{end}")
+    lines.append("sort position")
+    lines.append("squish")
+    lines.append(f"snapshot {_os.path.abspath(output_path)}")
+    lines.append("exit")
+
+    batch_content = "\n".join(lines)
+
+    # Write batch script to temp file
+    with _tempfile.NamedTemporaryFile(mode="w", suffix=".bat",
+                                       delete=False) as f:
+        f.write(batch_content)
+        batch_path = f.name
+
+    try:
+        # No env= override here: this inherits the parent process's DISPLAY.
+        # Passing DISPLAY="" (rather than leaving it unset or omitting the
+        # override entirely) crashes IGV's AWT EventDispatchThread before
+        # the batch script runs, so no snapshot is ever produced — confirmed
+        # directly against this IGV build, not assumed.
+        result = _subprocess.run(
+            [igv_path, "--batch", batch_path],
+            capture_output=True,
+            text=True,
+            timeout=timeout_sec,
+        )
+
+        success = _os.path.exists(output_path)
+        file_size = _os.path.getsize(output_path) if success else 0
+
+        return {
+            "success": success,
+            "screenshot_path": _os.path.abspath(output_path) if success else None,
+            "file_size_bytes": file_size,
+            "region": f"{chromosome}:{start}-{end}",
+            "color_by": color_by,
+            "bam_tracks": len(bam_paths),
+            "batch_script": batch_content,
+            "igv_stdout": result.stdout[-500:] if result.stdout else "",
+            "igv_stderr": result.stderr[-500:] if result.stderr else "",
+        }
+    except _subprocess.TimeoutExpired:
+        return {"error": f"IGV timed out after {timeout_sec}s",
+                "batch_script": batch_content}
+    except Exception as e:
+        return {"error": str(e), "batch_script": batch_content}
+    finally:
+        if _os.path.exists(batch_path):
+            _os.unlink(batch_path)
