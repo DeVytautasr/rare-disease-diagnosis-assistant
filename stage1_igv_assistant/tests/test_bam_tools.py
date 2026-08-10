@@ -24,6 +24,8 @@ from stage1_igv_assistant.tools.bam_tools import (
     get_gene_at_locus,
     check_reciprocal_breakpoint,
     run_igv_screenshot,
+    detect_applicable_layers,
+    EVIDENCE_LAYER_NAMES,
 )
 from stage1_igv_assistant.case_object import BamCase
 
@@ -661,6 +663,102 @@ def run_tests():
             os.unlink(err_bam)
         if os.path.exists(err_bam + ".bai"):
             os.unlink(err_bam + ".bai")
+
+    # ── TEST 12: detect_applicable_layers + applicable-layer normalisation ─
+    print("TEST 12: detect_applicable_layers + applicable-layer normalisation")
+
+    # -- Paired, no SA tags (create_synthetic_bam): discordant_pairs
+    #    applicable, split_reads not — the same pattern found on the real
+    #    HCC1143 2018-pipeline BAM in this repo. --
+    with tempfile.NamedTemporaryFile(suffix=".bam", delete=False) as f:
+        tmp_path5 = f.name
+    try:
+        paired_no_sa_bam = create_synthetic_bam(tmp_path5)
+
+        detected = detect_applicable_layers(paired_no_sa_bam)
+        assert "error" not in detected, f"Unexpected error: {detected}"
+        assert detected["reads_sampled"] > 0, "Expected at least one sampled read"
+        assert set(detected["applicable_layers"]) == {
+            "discordant_pairs", "soft_clipped_reads", "read_depth"
+        }, f"Expected 3 applicable layers (no SA tags in this fixture), got {detected['applicable_layers']}"
+        print(f"  Paired/no-SA-tag BAM: applicable_layers={detected['applicable_layers']} — PASSED")
+
+        # Unrecognised layer name must return a structured error, not raise.
+        bad_layers_result = summarize_breakpoint_evidence(
+            paired_no_sa_bam, "chr1", 1500, applicable_layers=["not_a_real_layer"]
+        )
+        assert "error" in bad_layers_result and bad_layers_result.get("error_type") == "invalid_parameters", \
+            f"Expected invalid_parameters error, got {bad_layers_result}"
+        print("  Unknown applicable_layers name rejected with structured error — PASSED")
+
+        # Empty list must also be rejected (ambiguous: 0 applicable layers
+        # would divide by zero if silently accepted).
+        empty_layers_result = summarize_breakpoint_evidence(
+            paired_no_sa_bam, "chr1", 1500, applicable_layers=[]
+        )
+        assert "error" in empty_layers_result and empty_layers_result.get("error_type") == "invalid_parameters", \
+            f"Expected invalid_parameters error for empty applicable_layers, got {empty_layers_result}"
+        print("  Empty applicable_layers list rejected with structured error — PASSED")
+    finally:
+        os.unlink(tmp_path5)
+        if os.path.exists(paired_no_sa_bam):
+            os.unlink(paired_no_sa_bam)
+        if os.path.exists(paired_no_sa_bam + ".bai"):
+            os.unlink(paired_no_sa_bam + ".bai")
+
+    # -- Paired + SA tags (create_translocation_bam): all 4 layers
+    #    applicable, and evidence_score should equal evidence_score_raw
+    #    when applicable_layers covers all 4 (backward-compatible default). --
+    with tempfile.NamedTemporaryFile(suffix=".bam", delete=False) as f:
+        tmp_path6 = f.name
+    try:
+        all_layers_bam = create_translocation_bam(tmp_path6)
+
+        detected_all = detect_applicable_layers(all_layers_bam)
+        assert set(detected_all["applicable_layers"]) == set(EVIDENCE_LAYER_NAMES), \
+            f"Expected all 4 layers applicable, got {detected_all['applicable_layers']}"
+
+        default_summary = summarize_breakpoint_evidence(all_layers_bam, "chr1", 1050000)
+        all4_summary = summarize_breakpoint_evidence(
+            all_layers_bam, "chr1", 1050000, applicable_layers=detected_all["applicable_layers"]
+        )
+        assert default_summary["evidence_score"] == default_summary["evidence_score_raw"], \
+            "Expected evidence_score == evidence_score_raw when applicable_layers defaults to all 4"
+        assert all4_summary["evidence_score"] == default_summary["evidence_score"], \
+            "Explicitly passing all 4 applicable layers should match the default"
+        print(f"  All-4-applicable BAM: evidence_score == evidence_score_raw == "
+              f"{default_summary['evidence_score']} — PASSED")
+
+        # -- Restricting to a subset (e.g. as if split_reads/discordant_pairs
+        #    were inapplicable) must raise evidence_score relative to
+        #    evidence_score_raw when the applicable layers scored well,
+        #    demonstrating the normalisation actually changes the number. --
+        partial_summary = summarize_breakpoint_evidence(
+            all_layers_bam, "chr1", 1050000,
+            applicable_layers=["soft_clipped_reads", "read_depth"]
+        )
+        assert partial_summary["applicable_layers"] == ["soft_clipped_reads", "read_depth"]
+        assert partial_summary["signal_layers"].endswith("/2"), \
+            f"Expected signal_layers denominator of 2, got {partial_summary['signal_layers']}"
+        expected_partial_score = round(
+            (partial_summary["soft_clip_score"] + partial_summary["depth_score"]) * 100.0 / 50.0, 1
+        )
+        assert partial_summary["evidence_score"] == expected_partial_score, (
+            f"Expected evidence_score={expected_partial_score} when normalised over "
+            f"2 applicable layers, got {partial_summary['evidence_score']}"
+        )
+        assert partial_summary["evidence_score_raw"] == default_summary["evidence_score_raw"], \
+            "evidence_score_raw must stay the same regardless of applicable_layers"
+        print(f"  2-applicable-layer normalisation: evidence_score="
+              f"{partial_summary['evidence_score']} vs evidence_score_raw="
+              f"{partial_summary['evidence_score_raw']} — PASSED")
+        print("  PASSED ✓\n")
+    finally:
+        os.unlink(tmp_path6)
+        if os.path.exists(all_layers_bam):
+            os.unlink(all_layers_bam)
+        if os.path.exists(all_layers_bam + ".bai"):
+            os.unlink(all_layers_bam + ".bai")
 
     print("=" * 60)
     print("ALL TESTS PASSED")

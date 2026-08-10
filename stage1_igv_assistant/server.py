@@ -1,6 +1,6 @@
 """
 server.py
-FastMCP server exposing 9 BAM/breakpoint inspection tools to an LLM.
+FastMCP server exposing 10 BAM/breakpoint inspection tools to an LLM.
 Anti-hallucination design: the LLM reads only tool output,
 never adds genomic facts from its own training data.
 
@@ -18,6 +18,7 @@ from stage1_igv_assistant.tools.bam_tools import (
     get_gene_at_locus,
     check_reciprocal_breakpoint,
     run_igv_screenshot,
+    detect_applicable_layers,
 )
 
 mcp = FastMCP(
@@ -26,13 +27,23 @@ mcp = FastMCP(
 You are a structural variant breakpoint inspection assistant.
 
 RULES:
-1. Call bam_stats_at_locus FIRST to check data quality.
-2. Call tools in order: stats → discordant_pairs → soft_clips → split_reads → depth_profile → summarize.
-3. Your final report must cite ONLY values the tools returned in this session.
-4. Do NOT use prior knowledge about genes, cell lines, or variants.
-5. If all evidence types return 0, state that clearly. Do not invent signal.
-6. State the sequencing technology at the start — it determines which evidence layers apply.
-7. For balanced translocations: flat depth is EXPECTED. Do not interpret it as negative evidence.
+1. Call applicable_layers FIRST, once per BAM, to learn which of the
+   4 evidence layers can structurally produce signal for this data (pairing,
+   SA-tag support). Pass its applicable_layers field straight through to
+   every breakpoint_evidence_summary call at that BAM's loci.
+2. Call bam_stats_at_locus next, per locus, to check data quality.
+3. Call tools in order: stats → discordant_pairs → soft_clips → split_reads → depth_profile → summarize.
+4. Your final report must cite ONLY values the tools returned in this session.
+5. Do NOT use prior knowledge about genes, cell lines, or variants.
+6. If all evidence types return 0, state that clearly. Do not invent signal.
+7. State the sequencing technology at the start — it determines which evidence layers apply.
+8. For balanced translocations: flat depth is EXPECTED. Do not interpret it as negative evidence.
+9. breakpoint_evidence_summary returns both evidence_score (normalised over
+   applicable_layers) and evidence_score_raw (always over all 4 layers).
+   Report evidence_score/evidence_strength as the primary finding — it's the
+   one that isn't artificially capped by layers this data could never
+   produce — but evidence_score_raw is available if asked for the
+   unnormalised view.
 """,
 )
 
@@ -95,24 +106,63 @@ def read_depth_profile(bam_path: str, chromosome: str, start: int,
     return get_read_depth_profile(bam_path, chromosome, start, end, window_size)
 
 @mcp.tool()
-def breakpoint_evidence_summary(bam_path: str, chromosome: str,
-                                 position: int, label: str = "") -> dict:
+def breakpoint_evidence_summary(bam_path: str, chromosome: str, position: int,
+                                 label: str = "", applicable_layers: list = None) -> dict:
     """
-    Integrates all 4 evidence layers into one structured report. Call this LAST.
+    Integrates evidence layers into one structured report. Call this LAST.
+
+    Pass applicable_layers (from detect_applicable_layers, called once per
+    BAM) so the composite score isn't penalised by layers that can't
+    structurally produce signal for this data — e.g. discordant_pairs on
+    unpaired long reads, or split_reads on an aligner with no SA-tag
+    support. Without it, evidence_score is capped well below "strong" for
+    any technology missing a layer, even when the applicable evidence is
+    overwhelming.
 
     Returns exactly these fields:
       label, chromosome, position — echoed back from the call
-      evidence_score (float, 0-100), evidence_strength ("none"|"weak"|"moderate"|"strong")
-      signal_layers (str, "N/4" — how many of the 4 layers showed any signal)
+      evidence_score (float, 0-100, normalised over applicable_layers only —
+        this is the primary score; report this one)
+      evidence_score_raw (float, 0-100, direct sum over all 4 layers
+        regardless of applicability — always ≤ evidence_score)
+      evidence_strength ("none"|"weak"|"moderate"|"strong", derived from
+        evidence_score, not evidence_score_raw)
+      applicable_layers (list[str] — which layers evidence_score was
+        normalised over; defaults to all 4 if not passed)
+      signal_layers (str, "N/M" — M is len(applicable_layers), N is how many
+        of those showed any signal)
       discordant_pair_score, soft_clip_score, split_read_score, depth_score (each 0-25,
-        the decomposed per-layer scores — these always sum exactly to evidence_score)
+        the decomposed per-layer scores — these always sum exactly to evidence_score_raw,
+        and to evidence_score only when all 4 layers are applicable)
       locus_stats, discordant_pairs, soft_clips, split_reads, depth_profile
         (the full raw dict returned by each underlying tool, for inspection)
       supporting_observations (list[str] — plain-language notes on what fired)
       interpretation_template (str — one sentence restating the above fields;
         adds no new facts, only recombines values already in this same dict)
     """
-    return summarize_breakpoint_evidence(bam_path, chromosome, position, label)
+    return summarize_breakpoint_evidence(bam_path, chromosome, position, label,
+                                         applicable_layers=applicable_layers)
+
+@mcp.tool()
+def applicable_layers(bam_path: str, sample_reads: int = 1000) -> dict:
+    """
+    Samples reads from a BAM to determine which of the 4 evidence layers can
+    structurally produce signal for this data — without needing to already
+    know the sequencing technology or aligner. Call this FIRST, once per
+    BAM, before breakpoint_evidence_summary.
+
+    discordant_pairs requires paired reads (false for unpaired long reads:
+    PacBio HiFi, ONT). split_reads requires at least one SA (supplementary
+    alignment) tag anywhere in the sample (false for aligners that don't
+    emit chimeric alignments). soft_clipped_reads and read_depth are always
+    applicable.
+
+    Returns applicable_layers (list[str], pass this straight through to
+    breakpoint_evidence_summary's applicable_layers parameter),
+    reads_sampled (int), and evidence (dict explaining each layer's
+    determination in plain language).
+    """
+    return detect_applicable_layers(bam_path, sample_reads)
 
 @mcp.tool()
 def gene_at_locus(chromosome: str, position: int, genome_build: str = "GRCh38") -> dict:

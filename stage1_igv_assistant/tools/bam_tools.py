@@ -35,6 +35,12 @@ from typing import Optional
 # point, not a validated general threshold.
 DEPTH_RATIO_DELETION_THRESHOLD = 0.7
 
+# Canonical evidence-layer names, shared between summarize_breakpoint_evidence's
+# applicable_layers parameter, detect_applicable_layers' return value, and
+# case_object.py's SequencingInfo.applicable_evidence_layers property (which
+# uses this exact vocabulary already).
+EVIDENCE_LAYER_NAMES = ("discordant_pairs", "soft_clipped_reads", "split_reads", "read_depth")
+
 
 # ── Data structures ──────────────────────────────────────────────────────────
 
@@ -104,9 +110,11 @@ class BreakpointEvidenceSummary:
     label: str
     chromosome: str
     position: int
-    evidence_score: float          # 0-100, direct sum of the 4 components below
-    evidence_strength: str         # "none" | "weak" | "moderate" | "strong"
-    signal_layers: str             # e.g. "3/4" — how many of the 4 layers show any signal
+    evidence_score: float          # 0-100, normalised over applicable_layers only
+    evidence_score_raw: float      # 0-100, direct sum of all 4 components regardless of applicability
+    evidence_strength: str         # "none" | "weak" | "moderate" | "strong" — based on evidence_score
+    signal_layers: str             # e.g. "2/3" — signal-showing / total applicable layers
+    applicable_layers: list        # which of the 4 layers were counted in evidence_score's denominator
     discordant_pair_score: float   # 0-25
     soft_clip_score: float         # 0-25
     split_read_score: float        # 0-25
@@ -693,26 +701,44 @@ def summarize_breakpoint_evidence(
     position: int,
     label: str = "",
     window_bp: int = 500,
-    min_mapq: int = 20
+    min_mapq: int = 20,
+    applicable_layers: list = None
 ) -> dict:
     """
     Combines discordant-pair, soft-clip, split-read, and read-depth evidence
     into a single interpretable breakpoint evidence summary. Each of the 4
     evidence layers is scored independently on a 0-25 scale (tiers: 0 / 7.5 /
     15 / 25 for discordant-pair, soft-clip, and split-read; 0 / 15 / 25 for
-    depth, which has 3 tiers instead of 4). evidence_score is the direct,
-    unweighted sum of the four component scores — discordant_pair_score +
-    soft_clip_score + split_read_score + depth_score always equals
-    evidence_score exactly, so the contribution of each layer stays visible
-    rather than collapsed into a black-box number. signal_layers reports how
-    many of the 4 layers show any signal at all (e.g. "3/4").
+    depth, which has 3 tiers instead of 4).
+
+    evidence_score_raw is the direct, unweighted sum of all four component
+    scores (0-100) regardless of whether a layer could possibly apply to this
+    data — discordant_pair_score + soft_clip_score + split_read_score +
+    depth_score always equals evidence_score_raw exactly.
+
+    evidence_score is evidence_score_raw's sibling, normalised over only the
+    layers listed in applicable_layers (all 4, by default). This matters
+    because two of the four layers are structurally inapplicable to whole
+    classes of real data — discordant_pairs is always 0 on unpaired
+    long-read data, split_reads is always 0 on aligners that don't emit SA
+    tags (e.g. Novoalign) — and scoring those as 0 while still dividing by
+    100 systematically caps evidence_score_raw at 50-75 for those datasets
+    regardless of how strong the applicable evidence actually is. Pass
+    applicable_layers (e.g. from detect_applicable_layers) to exclude
+    structurally-inapplicable layers from both the numerator and the
+    denominator, so a real deletion on a Novoalign BAM (2 applicable layers:
+    soft_clipped_reads, read_depth) can still reach "strong" on its own
+    terms rather than being capped at "weak" by two layers that were never
+    going to fire. evidence_strength and signal_layers are both derived from
+    evidence_score (the normalised one), not evidence_score_raw.
 
     This tool does not infer disease relevance — it only summarizes read-level
     structural-variant evidence at a candidate breakpoint.
 
     Depth profile uses a 4kb window (±2kb from position) to capture
     deletions larger than the short-read fragment size. Threshold 0.7
-    calibrated against GIAB HG002 Illumina 300x validation.
+    (DEPTH_RATIO_DELETION_THRESHOLD) calibrated against GIAB HG002 Illumina
+    300x validation.
 
     Args:
         bam_path:   Path to indexed BAM file
@@ -724,10 +750,32 @@ def summarize_breakpoint_evidence(
                     affect the depth-profile window, which is fixed at ±2kb
                     (see above) regardless of this value.
         min_mapq:   Minimum mapping quality to include a read (default 20)
+        applicable_layers: Optional list of layer names to normalise
+                    evidence_score over, drawn from EVIDENCE_LAYER_NAMES
+                    ("discordant_pairs", "soft_clipped_reads", "split_reads",
+                    "read_depth"). Defaults to all 4 (matching prior
+                    behavior: evidence_score == evidence_score_raw). Get
+                    this from detect_applicable_layers() rather than
+                    guessing.
 
     Returns:
-        BreakpointEvidenceSummary as dict, or error dict if underlying tools fail
+        BreakpointEvidenceSummary as dict, or error dict if underlying tools
+        fail or applicable_layers contains an unrecognised name
+        (error_type "invalid_parameters").
     """
+    if applicable_layers is not None:
+        unknown = [l for l in applicable_layers if l not in EVIDENCE_LAYER_NAMES]
+        if unknown:
+            return {
+                "error": f"Unknown applicable_layers: {unknown}. "
+                         f"Valid values: {list(EVIDENCE_LAYER_NAMES)}",
+                "error_type": "invalid_parameters",
+            }
+        if not applicable_layers:
+            return {
+                "error": "applicable_layers must not be empty — pass None to use all 4 layers.",
+                "error_type": "invalid_parameters",
+            }
     stats = get_bam_stats_at_locus(
         bam_path, chromosome, max(0, position - window_bp), position + window_bp
     )
@@ -841,13 +889,27 @@ def summarize_breakpoint_evidence(
             f"consistent with a possible deletion."
         )
 
-    # ── Combine: each component is already 0-25, so evidence_score is their
-    # direct sum (0-100) — no separate normalization step. This means
-    # discordant_pair_score + soft_clip_score + split_read_score + depth_score
-    # always equals evidence_score exactly. ──
-    component_scores = (discordant_pair_score, soft_clip_score, split_read_score, depth_score)
-    evidence_score = round(sum(component_scores), 1)
-    signal_layers = f"{sum(1 for s in component_scores if s > 0)}/4"
+    # ── Combine: each component is already 0-25. evidence_score_raw is
+    # their direct sum over all 4 layers (0-100), unconditionally — this
+    # means discordant_pair_score + soft_clip_score + split_read_score +
+    # depth_score always equals evidence_score_raw exactly, regardless of
+    # applicable_layers. evidence_score normalises the same components over
+    # only the applicable layers, so it isn't penalised by layers that were
+    # never going to fire for this data. ──
+    scores_by_layer = {
+        "discordant_pairs": discordant_pair_score,
+        "soft_clipped_reads": soft_clip_score,
+        "split_reads": split_read_score,
+        "read_depth": depth_score,
+    }
+    all_component_scores = tuple(scores_by_layer[layer] for layer in EVIDENCE_LAYER_NAMES)
+    evidence_score_raw = round(sum(all_component_scores), 1)
+
+    layers_used = list(applicable_layers) if applicable_layers is not None else list(EVIDENCE_LAYER_NAMES)
+    applicable_scores = [scores_by_layer[layer] for layer in layers_used]
+    applicable_max = len(layers_used) * 25.0
+    evidence_score = round(sum(applicable_scores) * (100.0 / applicable_max), 1)
+    signal_layers = f"{sum(1 for s in applicable_scores if s > 0)}/{len(layers_used)}"
 
     if evidence_score >= 70:
         evidence_strength = "strong"
@@ -865,10 +927,13 @@ def summarize_breakpoint_evidence(
     interpretation_template = (
         f"Breakpoint {label} at {chromosome}:{position}. "
         f"Evidence strength: {evidence_strength}. "
-        f"Score: {evidence_score}/100 ({signal_layers} evidence layers showing signal). "
+        f"Score: {evidence_score}/100 normalised over {len(layers_used)} applicable "
+        f"layer(s) ({signal_layers} showing signal); raw score over all 4 layers "
+        f"was {evidence_score_raw}/100. "
         f"Observations: {'; '.join(observations) if observations else 'none'}. "
         f"Technology note: discordant_pairs only valid for paired-end data; "
-        f"split_reads only valid for modern-alignment BAMs with SA tags. "
+        f"split_reads only valid for modern-alignment BAMs with SA tags — use "
+        f"detect_applicable_layers() to determine which apply to this BAM. "
         f"All values in this template come from tool outputs only."
     )
 
@@ -877,8 +942,10 @@ def summarize_breakpoint_evidence(
         chromosome=chromosome,
         position=position,
         evidence_score=evidence_score,
+        evidence_score_raw=evidence_score_raw,
         evidence_strength=evidence_strength,
         signal_layers=signal_layers,
+        applicable_layers=layers_used,
         discordant_pair_score=discordant_pair_score,
         soft_clip_score=soft_clip_score,
         split_read_score=split_read_score,
@@ -892,6 +959,118 @@ def summarize_breakpoint_evidence(
         interpretation_template=interpretation_template,
     )
     return asdict(result)
+
+
+# ── Tool 10: Detect applicable evidence layers ─────────────────────────────────
+
+def detect_applicable_layers(bam_path: str, sample_reads: int = 1000) -> dict:
+    """
+    Samples reads from a BAM to infer which of summarize_breakpoint_evidence's
+    4 evidence layers can structurally produce signal in this data, without
+    needing to already know the sequencing technology or aligner.
+
+    soft_clipped_reads and read_depth are always applicable (any aligned BAM
+    can show clipping and depth variation). discordant_pairs requires paired
+    reads (false for single-molecule long reads: PacBio HiFi, ONT). split_reads
+    requires at least one SA (supplementary alignment) tag anywhere in the
+    sample (false for aligners that don't emit chimeric alignments, e.g. the
+    2018-era Novoalign pipeline used for the HCC1143 validation BAM in this
+    repo — see RESULTS_HCC1143.md).
+
+    Call this once per BAM (not per locus) at the start of a session, before
+    summarize_breakpoint_evidence, and pass its applicable_layers straight
+    through so the composite score isn't penalised by layers that were never
+    going to fire for this data.
+
+    Args:
+        bam_path:     Path to indexed BAM file
+        sample_reads: Number of mapped, non-secondary/supplementary reads to
+                      inspect before concluding (default 1000). Reads are
+                      sampled in on-disk file order starting from the
+                      beginning, not from a specific locus — this assumes a
+                      technology/aligner is uniform across the whole BAM,
+                      which holds for every BAM this project has validated
+                      against.
+
+    Returns:
+        dict with applicable_layers (list, ready to pass to
+        summarize_breakpoint_evidence), reads_sampled, and evidence (dict
+        explaining each layer's determination), or a structured error dict
+        ({"error", "error_type": "bam_access"}) if the BAM cannot be read.
+    """
+    try:
+        bam = pysam.AlignmentFile(bam_path, "rb")
+    except Exception as e:
+        return {"error": str(e), "error_type": "bam_access", "bam_path": bam_path}
+
+    sampled = 0
+    any_paired = False
+    any_sa_tag = False
+    try:
+        for read in bam.fetch(until_eof=True):
+            if read.is_unmapped or read.is_secondary or read.is_supplementary:
+                continue
+            sampled += 1
+            if read.is_paired:
+                any_paired = True
+            if read.has_tag("SA"):
+                any_sa_tag = True
+            if sampled >= sample_reads:
+                break
+    finally:
+        bam.close()
+
+    if sampled == 0:
+        # No mapped reads to sample at all — can't positively confirm or
+        # rule out pairing/SA-tag support, so don't assert either way.
+        # soft_clipped_reads/read_depth are kept applicable since they
+        # require no reads to be structurally valid to attempt (they'd
+        # just report zero signal), consistent with how those two tools
+        # already behave on an empty window.
+        return {
+            "bam_path": bam_path,
+            "reads_sampled": 0,
+            "applicable_layers": ["read_depth", "soft_clipped_reads"],
+            "evidence": {
+                "soft_clipped_reads": "always applicable — any aligned BAM can show soft-clipping.",
+                "read_depth": "always applicable — any aligned BAM can show a coverage drop.",
+                "discordant_pairs": "inconclusive — no mapped reads found in the sample to check pairing.",
+                "split_reads": "inconclusive — no mapped reads found in the sample to check for SA tags.",
+            },
+        }
+
+    applicable_layers = ["soft_clipped_reads", "read_depth"]
+    if any_paired:
+        applicable_layers.append("discordant_pairs")
+    if any_sa_tag:
+        applicable_layers.append("split_reads")
+    # Keep canonical ordering regardless of the order layers were appended above.
+    applicable_layers = [l for l in EVIDENCE_LAYER_NAMES if l in applicable_layers]
+
+    evidence = {
+        "soft_clipped_reads": "always applicable — any aligned BAM can show soft-clipping.",
+        "read_depth": "always applicable — any aligned BAM can show a coverage drop.",
+        "discordant_pairs": (
+            f"applicable — at least one paired read observed in {sampled} sampled reads."
+            if any_paired else
+            f"not applicable — no paired reads observed in {sampled} sampled reads "
+            f"(consistent with unpaired long-read data, e.g. PacBio HiFi or ONT)."
+        ),
+        "split_reads": (
+            f"applicable — at least one SA (supplementary alignment) tag observed "
+            f"in {sampled} sampled reads."
+            if any_sa_tag else
+            f"not applicable — no SA tags observed in {sampled} sampled reads "
+            f"(consistent with an aligner that doesn't emit chimeric alignments)."
+        ),
+    }
+
+    return {
+        "bam_path": bam_path,
+        "reads_sampled": sampled,
+        "applicable_layers": applicable_layers,
+        "evidence": evidence,
+    }
 
 
 # ── Tool 7: Gene lookup at a locus ─────────────────────────────────────────────

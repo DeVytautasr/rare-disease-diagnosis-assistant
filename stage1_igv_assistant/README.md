@@ -13,17 +13,21 @@ python -m stage1_igv_assistant.server
 python stage1_igv_assistant/tests/test_bam_tools.py
 ```
 
-## Tools available (9 total)
-1. bam_stats_at_locus — quality check, always call first
-2. discordant_pairs — inter-chromosomal translocation signal
-3. soft_clipped_reads — breakpoint precision
-4. split_reads — chimeric junction evidence
-5. read_depth_profile — copy-number changes
-6. breakpoint_evidence_summary — integrated 4-layer report
-7. gene_at_locus — which gene is disrupted (Ensembl REST)
-8. reciprocal_breakpoint — both sides of a balanced translocation
-9. igv_screenshot — headless IGV batch mode, generates PNG visual 
-   evidence of the breakpoint region
+## Tools available (10 total)
+1. applicable_layers — samples the BAM to determine which evidence layers
+   apply (pairing, SA-tag support); call once per BAM, first
+2. bam_stats_at_locus — quality check, call first per locus
+3. discordant_pairs — inter-chromosomal translocation signal
+4. soft_clipped_reads — breakpoint precision
+5. split_reads — chimeric junction evidence
+6. read_depth_profile — copy-number changes
+7. breakpoint_evidence_summary — integrated evidence report, normalised
+   over applicable_layers (evidence_score) with the unnormalised sum also
+   available (evidence_score_raw)
+8. gene_at_locus — which gene is disrupted (Ensembl REST)
+9. reciprocal_breakpoint — both sides of a balanced translocation
+10. igv_screenshot — headless IGV batch mode, generates PNG visual 
+    evidence of the breakpoint region
 
 ## Anti-hallucination design
 The LLM receives only tool output. It cannot add genomic claims
