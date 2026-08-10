@@ -70,7 +70,7 @@ def soft_clipped_reads(bam_path: str, chromosome: str, position: int,
 
 @mcp.tool()
 def split_reads(bam_path: str, chromosome: str, position: int,
-                window_bp: int = 300, min_mapq: int = 20) -> dict:
+                window_bp: int = 200, min_mapq: int = 0) -> dict:
     """
     Find reads with supplementary SA tags spanning a breakpoint junction.
     Most direct evidence of a structural variant. Works best with long reads
@@ -88,13 +88,15 @@ def read_depth_profile(bam_path: str, chromosome: str, start: int,
     Deletions: ~50% depth drop inside deleted region (heterozygous).
     Duplications: depth rises.
     Balanced translocations: depth stays FLAT — this is expected and correct.
-    depth_ratio_min_to_mean < 0.6 suggests deletion.
+    depth_ratio_min_to_mean < 0.7 suggests deletion (summary.likely_deletion
+    reflects this same threshold — see bam_tools.DEPTH_RATIO_DELETION_THRESHOLD,
+    shared with breakpoint_evidence_summary's depth_score).
     """
     return get_read_depth_profile(bam_path, chromosome, start, end, window_size)
 
 @mcp.tool()
 def breakpoint_evidence_summary(bam_path: str, chromosome: str,
-                                 position: int, label: str = "candidate_BP") -> dict:
+                                 position: int, label: str = "") -> dict:
     """
     Integrates all 4 evidence layers into one structured report. Call this LAST.
 

@@ -18,6 +18,24 @@ from dataclasses import dataclass, asdict
 from typing import Optional
 
 
+# ── Calibrated constants ────────────────────────────────────────────────────────
+#
+# Single source of truth for "does this depth_ratio_min_to_mean look like a
+# deletion" — used identically by get_read_depth_profile's own
+# `likely_deletion` flag and by summarize_breakpoint_evidence's depth_score.
+# These used to be two independently hardcoded values (0.6 and 0.7) that
+# drifted out of sync when only one was recalibrated, producing
+# contradictory fields in the same summarize_breakpoint_evidence response.
+#
+# Calibrated against the real GIAB HG002 deletion at chr1:115,686,862,
+# which measured 0.609 (PacBio HiFi) and 0.542 (Illumina 300x) using this
+# tool's ±2kb/200bp-window depth profile — see REAL_DATA_VALIDATION.md.
+# Calibrated against a single confirmed locus (replicated across 2
+# sequencing technologies, not 2 independent loci) — treat as a starting
+# point, not a validated general threshold.
+DEPTH_RATIO_DELETION_THRESHOLD = 0.7
+
+
 # ── Data structures ──────────────────────────────────────────────────────────
 
 @dataclass
@@ -653,7 +671,7 @@ def get_read_depth_profile(
         "max_depth": max_depth,
         "mean_depth": mean_depth,
         "depth_ratio_min_to_mean": depth_ratio_min_to_mean,
-        "likely_deletion": depth_ratio_min_to_mean < 0.6,
+        "likely_deletion": depth_ratio_min_to_mean < DEPTH_RATIO_DELETION_THRESHOLD,
     }
 
     result = ReadDepthProfile(
@@ -801,18 +819,16 @@ def summarize_breakpoint_evidence(
         )
 
     # ── Read-depth component (0-25) ──
-    # depth_ratio_min_to_mean < 0.7 flags a possible deletion (coverage drop);
-    # the lower the ratio, the more pronounced the drop. 0.7 (raised from an
-    # initial 0.6) is calibrated against the real GIAB HG002 deletion at
-    # chr1:115,686,862, which measured 0.609 (PacBio HiFi) and 0.542
-    # (Illumina 300x) using this tool's ±2kb/200bp-window depth profile —
-    # see REAL_DATA_VALIDATION.md. Calibrated against a single confirmed
-    # locus (replicated across 2 sequencing technologies, not 2 independent
-    # loci) — treat as a starting point, not a validated general threshold.
+    # depth_ratio < DEPTH_RATIO_DELETION_THRESHOLD flags a possible deletion
+    # (coverage drop) — see the module-level constant's docstring for
+    # calibration provenance. This is the same threshold
+    # get_read_depth_profile's own `likely_deletion` flag uses, so the two
+    # never disagree. 0.3 is a separate, stricter cutoff for the "strong"
+    # scoring tier within this composite only.
     depth_ratio = depth_profile["summary"]["depth_ratio_min_to_mean"]
     if depth_ratio < 0.3:
         depth_score = 25.0
-    elif depth_ratio < 0.7:
+    elif depth_ratio < DEPTH_RATIO_DELETION_THRESHOLD:
         depth_score = 15.0
     else:
         depth_score = 0.0

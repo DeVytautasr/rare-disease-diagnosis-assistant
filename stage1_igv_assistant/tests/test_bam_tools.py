@@ -330,6 +330,23 @@ def run_tests():
         # also trip the depth-drop threshold — an artifact of test construction, not a
         # real deletion signal. See TEST 6 output above: min depth is 0 reads/window.
         assert summary["signal_layers"] == "4/4", "Expected all 4 evidence layers to show signal"
+        # Regression test for the bug in commit c093ed4: the 4 component
+        # scores must always sum exactly to evidence_score. This broke in
+        # production once (found by an LLM session, not by this test suite)
+        # and there was no test that would have caught it.
+        component_sum = (
+            summary["discordant_pair_score"] + summary["soft_clip_score"]
+            + summary["split_read_score"] + summary["depth_score"]
+        )
+        assert component_sum == summary["evidence_score"], (
+            f"Component scores ({summary['discordant_pair_score']} + "
+            f"{summary['soft_clip_score']} + {summary['split_read_score']} + "
+            f"{summary['depth_score']} = {component_sum}) must sum exactly to "
+            f"evidence_score ({summary['evidence_score']})"
+        )
+        print(f"  Component sum check: {summary['discordant_pair_score']} + "
+              f"{summary['soft_clip_score']} + {summary['split_read_score']} + "
+              f"{summary['depth_score']} == {summary['evidence_score']} — confirmed")
 
         print("  PASSED ✓\n")
 
