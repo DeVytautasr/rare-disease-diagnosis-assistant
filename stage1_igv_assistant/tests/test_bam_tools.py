@@ -25,6 +25,7 @@ from stage1_igv_assistant.tools.bam_tools import (
     check_reciprocal_breakpoint,
     run_igv_screenshot,
     detect_applicable_layers,
+    igv_evidence_panel,
     EVIDENCE_LAYER_NAMES,
     DEPTH_RATIO_DELETION_THRESHOLD,
 )
@@ -894,6 +895,93 @@ def run_tests():
             os.unlink(all_layers_bam)
         if os.path.exists(all_layers_bam + ".bai"):
             os.unlink(all_layers_bam + ".bai")
+
+    # ── TEST 13: igv_evidence_panel ────────────────────────────────────────
+    print("TEST 13: igv_evidence_panel")
+
+    with tempfile.NamedTemporaryFile(suffix=".bam", delete=False) as f:
+        tmp_path7 = f.name
+    panel_dir = tempfile.mkdtemp(prefix="igv_evidence_panel_test_")
+    try:
+        panel_bam = create_synthetic_bam(tmp_path7)
+
+        # Unknown applicable_layers value must return a structured error,
+        # not raise, and must not attempt to launch IGV at all.
+        bad_layers_panel = igv_evidence_panel(
+            bam_paths=[panel_bam], chromosome="chr1", start=1000, end=2000,
+            output_dir=panel_dir, applicable_layers=["not_a_real_layer"],
+        )
+        assert "error" in bad_layers_panel and bad_layers_panel.get("error_type") == "invalid_parameters", \
+            f"Expected invalid_parameters error, got {bad_layers_panel}"
+        print("  Unknown applicable_layers value rejected with structured error — PASSED")
+
+        # A missing IGV binary must produce a clean per-layer error, not a
+        # crash, and must not block on layers that ARE inapplicable.
+        fake_igv_panel = igv_evidence_panel(
+            bam_paths=[panel_bam], chromosome="chr1", start=1000, end=2000,
+            output_dir=panel_dir, applicable_layers=["read_depth"],
+            igv_path="/nonexistent/path/igv.sh",
+        )
+        assert "error" not in fake_igv_panel, f"Unexpected top-level error: {fake_igv_panel}"
+        assert fake_igv_panel["panels"]["read_depth"].get("error") == "IGV not found", \
+            f"Expected 'IGV not found' for the read_depth panel, got {fake_igv_panel['panels']['read_depth']}"
+        for skipped_layer in ("discordant_pairs", "soft_clipped_reads", "split_reads"):
+            assert fake_igv_panel["panels"][skipped_layer].get("skipped") is True, \
+                f"Expected {skipped_layer} to be skipped (not in applicable_layers)"
+        print("  Missing IGV binary: clean per-layer error, other layers correctly skipped — PASSED")
+
+        # Real IGV, if this machine has it (and java) — exercises an actual
+        # 4-panel run end-to-end on a BAM where all 4 layers are applicable.
+        igv_candidates = [
+            os.path.expanduser("~/IGV_2.17.4/igv.sh"),
+            os.path.expanduser("~/igv/igv.sh"),
+            "/opt/igv/igv.sh",
+        ]
+        real_igv_path = next((c for c in igv_candidates if os.path.exists(c)), None)
+        java_available = shutil.which("java") is not None
+
+        if real_igv_path is None or not java_available:
+            reason = "IGV not installed" if real_igv_path is None else \
+                "java not on PATH (IGV requires it — e.g. present in the 'rda' conda env)"
+            print(f"  {reason} on this machine — skipping real 4-panel generation check.")
+            print("  PASSED ✓ (error-path only)\n")
+        else:
+            with tempfile.NamedTemporaryFile(suffix=".bam", delete=False) as f:
+                tmp_path8 = f.name
+            real_panel_dir = tempfile.mkdtemp(prefix="igv_evidence_panel_real_")
+            try:
+                real_panel_bam = create_translocation_bam(tmp_path8)
+                real_panel = igv_evidence_panel(
+                    bam_paths=[real_panel_bam], chromosome="chr1",
+                    start=1049000, end=1051500, output_dir=real_panel_dir,
+                    igv_path=real_igv_path, timeout_sec=120,
+                )
+                assert "error" not in real_panel, f"Unexpected top-level error: {real_panel}"
+                assert set(real_panel["applicable_layers"]) == set(EVIDENCE_LAYER_NAMES), \
+                    f"Expected all 4 layers applicable on this fixture, got {real_panel['applicable_layers']}"
+                for layer in EVIDENCE_LAYER_NAMES:
+                    panel = real_panel["panels"][layer]
+                    assert panel.get("skipped") is not True, f"{layer} unexpectedly skipped: {panel}"
+                    assert panel.get("success") is True, f"{layer} did not succeed: {panel}"
+                    path = panel.get("screenshot_path")
+                    assert path and os.path.exists(path) and os.path.getsize(path) > 0, \
+                        f"{layer}: expected a non-empty PNG at {path}"
+                print(f"  Real 4-layer panel: all layers succeeded with non-empty PNGs — PASSED")
+                print("  PASSED ✓\n")
+            finally:
+                os.unlink(tmp_path8)
+                if os.path.exists(real_panel_bam):
+                    os.unlink(real_panel_bam)
+                if os.path.exists(real_panel_bam + ".bai"):
+                    os.unlink(real_panel_bam + ".bai")
+                shutil.rmtree(real_panel_dir, ignore_errors=True)
+    finally:
+        os.unlink(tmp_path7)
+        if os.path.exists(panel_bam):
+            os.unlink(panel_bam)
+        if os.path.exists(panel_bam + ".bai"):
+            os.unlink(panel_bam + ".bai")
+        shutil.rmtree(panel_dir, ignore_errors=True)
 
     print("=" * 60)
     print("ALL TESTS PASSED")

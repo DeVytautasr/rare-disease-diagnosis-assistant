@@ -19,7 +19,7 @@ base env) — run under `conda run -n rda python ...` or
 `conda activate rda` first to exercise those paths; both test files skip
 or fail cleanly rather than hanging if Java/IGV aren't available.
 
-## Tools available (10 total)
+## Tools available (11 total)
 1. applicable_layers — samples the BAM to determine which evidence layers
    apply (pairing, SA-tag support); call once per BAM, first
 2. bam_stats_at_locus — quality check, call first per locus
@@ -32,8 +32,12 @@ or fail cleanly rather than hanging if Java/IGV aren't available.
    available (evidence_score_raw)
 8. gene_at_locus — which gene is disrupted (Ensembl REST)
 9. reciprocal_breakpoint — both sides of a balanced translocation
-10. igv_screenshot — headless IGV batch mode, generates PNG visual 
-    evidence of the breakpoint region
+10. igv_screenshot — headless IGV batch mode, generates a single PNG with
+    the requested coloring/window
+11. evidence_panel — one PNG per informative evidence layer (discordant
+    pairs, split reads, read depth, soft clips), each with the IGV
+    settings that actually isolate that layer visually; skips and
+    explains layers detect_applicable_layers finds inapplicable
 
 ## Anti-hallucination design
 The LLM receives only tool output. It cannot add genomic claims

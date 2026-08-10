@@ -1,6 +1,6 @@
 """
 server.py
-FastMCP server exposing 10 BAM/breakpoint inspection tools to an LLM.
+FastMCP server exposing 11 BAM/breakpoint inspection tools to an LLM.
 Anti-hallucination design: the LLM reads only tool output,
 never adds genomic facts from its own training data.
 
@@ -19,6 +19,7 @@ from stage1_igv_assistant.tools.bam_tools import (
     check_reciprocal_breakpoint,
     run_igv_screenshot,
     detect_applicable_layers,
+    igv_evidence_panel,
 )
 
 mcp = FastMCP(
@@ -231,6 +232,50 @@ def igv_screenshot(bam_paths: list, chromosome: str, start: int, end: int,
                               output_path, genome_build, color_by,
                               max_coverage=max_coverage,
                               coverage_height=coverage_height)
+
+@mcp.tool()
+def evidence_panel(bam_paths: list, chromosome: str, start: int, end: int,
+                   output_dir: str, applicable_layers: list = None) -> dict:
+    """
+    Generates one screenshot PER evidence layer, instead of a single image
+    trying to show everything at once — each layer gets the IGV settings
+    that actually isolate it visually:
+      - discordant_pairs: UNEXPECTED_PAIR coloring (inter-chromosomal /
+        anomalous pairs highlighted red)
+      - split_reads: grouped by SA tag value — every chimeric read gets its
+        own labeled row showing the exact partner locus text (e.g.
+        "chr8,47000000,+,..."). This is the ONLY way to see split-read
+        evidence visually: ordinary pair coloring never reflects SA tags,
+        since IGV colors by the primary alignment's actual mate, not by
+        tag content.
+      - read_depth: alignment rows removed entirely, coverage track only,
+        tall, at a fixed scale auto-computed from this exact region's
+        observed max depth (+15% headroom) — not autoscaled, so a real dip
+        isn't flattened by a taller peak elsewhere in view.
+      - soft_clipped_reads: soft-clipped bases shown, sorted by base.
+        Caveat found during testing: at a wide region (the kind read_depth
+        needs to show a whole deletion span) individual soft-clip marks
+        are not legible — this layer specifically benefits from a much
+        narrower window (a few hundred bp) than the others. Consider
+        calling this tool twice with different windows if both a depth
+        overview and legible clip detail are needed.
+
+    If applicable_layers isn't given, calls applicable_layers (the other
+    tool) on bam_paths[0] first and uses its result — call that tool
+    yourself first if you want to inspect the reasoning before generating
+    screenshots. A layer found inapplicable (e.g. split_reads on a BAM with
+    no SA tags) is not screenshotted — its entry in the result is
+    {"skipped": true, "reason": "..."} instead of a PNG path, with the same
+    plain-language reason applicable_layers itself would give.
+
+    Returns:
+      region, bam_paths, applicable_layers, applicable_layers_source, and
+      panels: a dict with one entry per evidence layer, each either a
+      run_igv_screenshot-shaped result (screenshot_path, success, etc.) or
+      a {"skipped": true, "reason": ...} entry.
+    """
+    return igv_evidence_panel(bam_paths, chromosome, start, end, output_dir,
+                              applicable_layers=applicable_layers)
 
 if __name__ == "__main__":
     mcp.run()

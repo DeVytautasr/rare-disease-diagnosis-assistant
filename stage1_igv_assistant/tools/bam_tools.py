@@ -1314,6 +1314,9 @@ def run_igv_screenshot(
     max_coverage: int = None,
     coverage_height: int = 120,
     squish: bool = True,
+    group_by: str = None,
+    sort_by: str = "position",
+    hide_alignment_tracks: bool = False,
     igv_path: str = None,
     timeout_sec: int = 180
 ) -> dict:
@@ -1365,6 +1368,32 @@ def run_igv_screenshot(
         coverage_height: Coverage track height in pixels (IGV default is ~50px,
                          too short to render a depth dip legibly).
         squish:          Compress read rows into a denser view when True
+        group_by:        IGV batch `group` argument, verified against this
+                         build's AlignmentTrack$GroupOption menu (a
+                         *different* enum from ColorOption — e.g. "TAG SA"
+                         groups reads by their SA tag's value, putting every
+                         split/chimeric read into its own labeled row group
+                         showing the exact partner locus; not validated
+                         against a fixed list the way color_by is, since
+                         GroupOption also accepts free-form tag names).
+                         None (default) skips the `group` command.
+        sort_by:         IGV batch `sort` argument (default "position").
+                         Verified values for this build include "base"
+                         (SortOption.NUCLEOTIDE — sorts by the nucleotide at
+                         the center line, useful for SNP/mismatch patterns,
+                         less so for clip evidence specifically),
+                         "insertSize", "strand", and others — see
+                         org.broad.igv.sam.SortOption in igv.jar for the
+                         full enum if a value here doesn't behave as
+                         expected; unlike color_by this isn't validated
+                         against a hardcoded list before launch.
+        hide_alignment_tracks: If True, removes each bam_paths track's
+                         alignment rows after loading (IGV batch `remove
+                         <basename>`), leaving only its coverage sub-track
+                         visible — confirmed empirically that IGV's
+                         SAM.SHOW_ALIGNMENT_TRACK preference does NOT do
+                         this despite the name (tested directly: reads stay
+                         fully rendered), so `remove` is used instead.
         igv_path:        Path to igv.sh (auto-detected if None)
         timeout_sec:     Max seconds to wait for IGV
 
@@ -1412,10 +1441,34 @@ def run_igv_screenshot(
     lines = ["new", f"genome {genome_build}"]
     for bam in bam_paths:
         lines.append(f"load {bam}")
+    if hide_alignment_tracks:
+        # `remove <track name>` deletes the alignment track but leaves its
+        # "<basename> Coverage" sub-track untouched — confirmed empirically
+        # this is the only way to get a coverage-only view (see docstring).
+        for bam in bam_paths:
+            lines.append(f"remove {_os.path.basename(bam)}")
     lines.append(f"preference SAM.COVERAGE_TRACK_HEIGHT {coverage_height}")
     lines.append("maxPanelHeight 600")
-    if color_by and color_by != "NONE":
+    if color_by:
+        # Always issue this explicitly, including for "NONE", so the batch
+        # script never silently depends on whatever colorBy state a
+        # previous invocation happened to leave behind.
+        #
+        # IMPORTANT, confirmed empirically (not assumed): colorBy="NONE"
+        # does NOT produce neutral/uncolored reads. Tested with a brand-new
+        # BAM, an explicit track-name argument, and multiple colorBy values
+        # (NONE, READ_STRAND) side by side — anomalous pairs (inter-
+        # chromosomal mate, improper orientation) still render in their
+        # characteristic red/orange/blue regardless of colorBy. This
+        # appears to be baseline IGV behavior independent of the colorBy
+        # selection, not a bug in this tool or evidence of a stale
+        # preference — colorBy controls an *additional* coloring scheme on
+        # top of that baseline, not a replacement for it. Anything relying
+        # on a "clean, uncolored" screenshot of anomalous-pair data should
+        # not assume color_by="NONE" achieves that.
         lines.append(f"colorBy {color_by}")
+    if group_by:
+        lines.append(f"group {group_by}")
     if show_soft_clips:
         lines.append("preference SAM.SHOW_SOFT_CLIPPED true")
     lines.append("preference SAM.SHOW_CENTER_LINE true")
@@ -1431,7 +1484,8 @@ def run_igv_screenshot(
             # autoscale stays on.
             track_name = f"{_os.path.basename(bam)} Coverage"
             lines.append(f'setDataRange 0,{max_coverage} "{track_name}"')
-    lines.append("sort position")
+    if sort_by:
+        lines.append(f"sort {sort_by}")
     if squish:
         lines.append("squish")
     lines.append(f"snapshot {_os.path.abspath(output_path)}")
@@ -1550,3 +1604,197 @@ def run_igv_screenshot(
         for p in (stdout_path, stderr_path):
             if p and _os.path.exists(p):
                 _os.unlink(p)
+
+
+# ── Tool 11: Per-layer visual evidence panel ────────────────────────────────
+
+# Each entry: the run_igv_screenshot kwargs that isolate that one evidence
+# layer visually, verified empirically against the installed IGV build
+# (not assumed from option names — see the individual comments below and
+# AUDIT_2026_08.md's follow-up on the color_by bug for why that verification
+# step matters here specifically).
+_PANEL_LAYER_SETTINGS = {
+    "discordant_pairs": dict(
+        color_by="UNEXPECTED_PAIR",   # confirmed valid ColorOption (Group 2)
+        show_soft_clips=False,
+    ),
+    "split_reads": dict(
+        # color_by is deliberately omitted (left as None, not "NONE") for
+        # this layer: confirmed empirically that colorBy has NO effect at
+        # all once `group TAG SA` is active — a screenshot with
+        # color_by="NONE" and one with color_by="READ_STRAND" rendered
+        # byte-for-byte the same colors (still pair-anomaly-style
+        # red/orange/blue) under this grouping mode. This is a genuine IGV
+        # behavior, not a bug in this tool — grouping-by-tag appears to
+        # override colorBy rather than the reverse. Left unset rather than
+        # forced to "NONE" so the batch script doesn't claim a setting that
+        # has no effect.
+        show_soft_clips=False,
+        # Groups reads by their SA tag's literal value — confirmed
+        # empirically this puts every SA-tagged (chimeric) read into its
+        # own labeled row group showing the exact partner locus, visually
+        # separating split-read evidence from ordinary pairs with no
+        # equivalent color-by option (MATE_CHROMOSOME is a GroupOption,
+        # not a ColorOption — see run_igv_screenshot's docstring).
+        group_by="TAG SA",
+        # squish (the default everywhere else) hides each group row's text
+        # label — confirmed empirically the "chr8,47000000,+,..." partner-
+        # locus label per group only renders in expanded mode. That label
+        # is the single most informative part of this layer, so squish is
+        # disabled here specifically even though it means fewer reads fit
+        # in view.
+        squish=False,
+    ),
+    "read_depth": dict(
+        color_by="NONE",
+        show_soft_clips=False,
+        # SAM.SHOW_ALIGNMENT_TRACK=false does NOT hide the alignment rows
+        # despite the name — confirmed empirically (reads stayed fully
+        # rendered). `remove <track>` is the verified way to get a
+        # coverage-only view; hide_alignment_tracks wraps that.
+        hide_alignment_tracks=True,
+        coverage_height=200,
+    ),
+    "soft_clipped_reads": dict(
+        color_by="NONE",
+        show_soft_clips=True,
+        # "base" (SortOption.NUCLEOTIDE) is what IGV's own UI calls "sort by
+        # base" and is confirmed valid syntax, but in practice it sorts by
+        # the nucleotide at the center line — a SNP/mismatch view, not a
+        # clip-length view. SortOption.LEFT_CLIP/RIGHT_CLIP exist in this
+        # build and would likely cluster heavily-clipped reads together
+        # more usefully for this specific layer; kept as "base" here
+        # because that's what was specified, not because it's been found
+        # to be the most informative option for this layer — see the
+        # panel's own evaluation notes for how this looked in practice.
+        sort_by="base",
+    ),
+}
+
+
+def igv_evidence_panel(
+    bam_paths: list,
+    chromosome: str,
+    start: int,
+    end: int,
+    output_dir: str,
+    applicable_layers: list = None,
+    genome_build: str = "hg38",
+    igv_path: str = None,
+    timeout_sec: int = 180,
+) -> dict:
+    """
+    Generates one IGV screenshot per informative evidence layer, instead of
+    a single image trying to show everything at once — each layer gets the
+    coloring/grouping/sorting that actually isolates it visually (see
+    _PANEL_LAYER_SETTINGS), so e.g. split-read evidence (invisible under
+    plain pair coloring, since IGV colors by the primary alignment's actual
+    mate, never by SA tags) gets its own SA-tag-grouped view instead of
+    being silently absent from a single combined screenshot.
+
+    If applicable_layers isn't given, calls detect_applicable_layers on
+    bam_paths[0] first (assumes all tracks share one sequencing technology —
+    true for every BAM this project has validated against) and uses its
+    result. Layers found inapplicable are not screenshotted at all — each
+    gets a {"skipped": True, "reason": ...} entry instead, using the same
+    plain-language reason detect_applicable_layers already produces, so the
+    caller (or the LLM) knows *why* a PNG is missing rather than just that
+    it is.
+
+    For the read_depth layer, automatically computes a fixed coverage-track
+    scale from get_read_depth_profile's observed max_depth (+15% headroom)
+    for this exact region, rather than requiring the caller to already know
+    a good max_coverage value — this is the same reasoning
+    run_igv_screenshot's own docstring already gives for setting
+    max_coverage manually, done here automatically.
+
+    Args:
+        bam_paths:         List of BAM file paths or URLs (same technology
+                           assumed across all of them — see above)
+        chromosome:        Chromosome of the region
+        start, end:        Region bounds — the same window is used for
+                           every layer's screenshot, so they're directly
+                           comparable side by side
+        output_dir:        Directory to write "<layer>.png" files into
+                           (created if it doesn't exist)
+        applicable_layers: Optional list from EVIDENCE_LAYER_NAMES
+                           ("discordant_pairs", "soft_clipped_reads",
+                           "split_reads", "read_depth"). None (default)
+                           auto-detects via detect_applicable_layers.
+        genome_build:      IGV genome identifier, passed to every screenshot
+        igv_path:          Path to igv.sh (auto-detected if None)
+        timeout_sec:       Per-screenshot IGV timeout
+
+    Returns:
+        {
+          "region": "<chrom>:<start>-<end>",
+          "bam_paths": [...],
+          "applicable_layers": [...],
+          "applicable_layers_source": "detect_applicable_layers" | "caller-provided",
+          "panels": {
+            "<layer>": <run_igv_screenshot result dict>  # if applicable
+                       | {"skipped": True, "reason": "..."}  # if not
+            for each of the 4 layers
+          }
+        }
+        or a structured error dict if detect_applicable_layers / an
+        unrecognised applicable_layers value fails first.
+    """
+    if applicable_layers is None:
+        detected = detect_applicable_layers(bam_paths[0])
+        if "error" in detected:
+            return detected
+        applicable_layers = detected["applicable_layers"]
+        applicable_layers_source = "detect_applicable_layers"
+        layer_evidence = detected["evidence"]
+    else:
+        unknown = [l for l in applicable_layers if l not in EVIDENCE_LAYER_NAMES]
+        if unknown:
+            return {
+                "error": f"Unknown applicable_layers: {unknown}. "
+                         f"Valid values: {list(EVIDENCE_LAYER_NAMES)}",
+                "error_type": "invalid_parameters",
+            }
+        applicable_layers_source = "caller-provided"
+        layer_evidence = {}
+
+    _os.makedirs(output_dir, exist_ok=True)
+
+    depth_max_coverage = None
+    if "read_depth" in applicable_layers:
+        depth_profile = get_read_depth_profile(bam_paths[0], chromosome, start, end)
+        if "error" not in depth_profile:
+            depth_max_coverage = int(depth_profile["summary"]["max_depth"] * 1.15) + 1
+        # If this errors, fall through without a fixed scale rather than
+        # failing the whole panel — the read_depth screenshot below will
+        # just autoscale instead.
+
+    panels = {}
+    for layer in EVIDENCE_LAYER_NAMES:
+        if layer not in applicable_layers:
+            panels[layer] = {
+                "skipped": True,
+                "reason": layer_evidence.get(
+                    layer, "excluded by caller-provided applicable_layers"
+                ),
+            }
+            continue
+
+        layer_kwargs = dict(_PANEL_LAYER_SETTINGS[layer])
+        if layer == "read_depth" and depth_max_coverage is not None:
+            layer_kwargs["max_coverage"] = depth_max_coverage
+
+        output_path = _os.path.join(output_dir, f"{layer}.png")
+        panels[layer] = run_igv_screenshot(
+            bam_paths, chromosome, start, end, output_path,
+            genome_build=genome_build, igv_path=igv_path, timeout_sec=timeout_sec,
+            **layer_kwargs,
+        )
+
+    return {
+        "region": f"{chromosome}:{start}-{end}",
+        "bam_paths": bam_paths,
+        "applicable_layers": applicable_layers,
+        "applicable_layers_source": applicable_layers_source,
+        "panels": panels,
+    }

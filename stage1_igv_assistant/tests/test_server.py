@@ -18,6 +18,7 @@ EXPECTED_TOOL_NAMES = {
     "bam_stats_at_locus",
     "breakpoint_evidence_summary",
     "discordant_pairs",
+    "evidence_panel",
     "gene_at_locus",
     "igv_screenshot",
     "read_depth_profile",
