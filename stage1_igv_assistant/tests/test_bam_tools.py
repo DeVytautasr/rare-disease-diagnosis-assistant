@@ -8,7 +8,9 @@ our tools return the expected numbers.
 
 import os
 import pysam
+import shutil
 import tempfile
+import time
 import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -395,8 +397,8 @@ def run_tests():
     print(f"  applicable_evidence_layers: {loaded.sequencing.applicable_evidence_layers}")
     print("  PASSED ✓\n")
 
-    # ── TEST 10: run_igv_screenshot batch script generation ──────────────
-    print("TEST 10: run_igv_screenshot batch script generation")
+    # ── TEST 10: run_igv_screenshot ───────────────────────────────────────
+    print("TEST 10: run_igv_screenshot")
 
     # Fake igv_path: must fail cleanly, not crash, regardless of whether
     # IGV happens to be installed on this machine.
@@ -411,17 +413,46 @@ def run_tests():
         f"Expected 'IGV not found' in error, got: {fake_result['error']}"
     print(f"  Fake igv_path correctly reported: {fake_result['error']}")
 
-    # Real IGV, if this machine has it installed at the known location —
-    # exercises the actual batch-script content, not just the error path.
+    # Invalid color_by must be rejected immediately (well under a second),
+    # not discovered only after IGV hangs for the full timeout. This must
+    # hold regardless of whether IGV/java are actually installed, since the
+    # validation happens before IGV is ever launched.
+    t0 = time.time()
+    bad_color_result = run_igv_screenshot(
+        bam_paths=["/tmp/does_not_matter.bam"],
+        chromosome="chr1", start=1000, end=2000,
+        output_path="/tmp/test_igv_bad_color.png",
+        igv_path="/nonexistent/path/igv.sh",
+        color_by="MATE_CHROMOSOME",  # not a valid ColorOption in this IGV build
+    )
+    elapsed = time.time() - t0
+    assert "error" in bad_color_result, "Expected an error dict for an invalid color_by"
+    assert bad_color_result.get("error_type") == "invalid_parameters", \
+        f"Expected error_type='invalid_parameters', got {bad_color_result.get('error_type')}"
+    assert "UNEXPECTED_PAIR" in bad_color_result.get("valid_options", []), \
+        "Expected the valid_options list to include UNEXPECTED_PAIR"
+    assert elapsed < 5, f"color_by validation should fail fast, took {elapsed:.1f}s"
+    print(f"  Invalid color_by 'MATE_CHROMOSOME' rejected in {elapsed:.2f}s "
+          f"with valid_options listed")
+
+    # Real IGV + java, if this machine has both — exercises an actual
+    # screenshot run and asserts on success, not just batch-script content.
+    # TEST 10 previously asserted only on the batch script's text, so it
+    # kept reporting PASSED while every real run was silently failing
+    # (color_by="MATE_CHROMOSOME" crashed IGV's batch executor). That is
+    # worse than no test at all, so this now asserts on the real outcome.
     igv_candidates = [
         os.path.expanduser("~/IGV_2.17.4/igv.sh"),
         os.path.expanduser("~/igv/igv.sh"),
         "/opt/igv/igv.sh",
     ]
     real_igv_path = next((c for c in igv_candidates if os.path.exists(c)), None)
+    java_available = shutil.which("java") is not None
 
-    if real_igv_path is None:
-        print("  IGV not installed on this machine — skipping batch-script-content check.")
+    if real_igv_path is None or not java_available:
+        reason = "IGV not installed" if real_igv_path is None else \
+            "java not on PATH (IGV requires it — e.g. present in the 'rda' conda env)"
+        print(f"  {reason} on this machine — skipping real-screenshot check.")
         print("  PASSED ✓ (error-path only)\n")
     else:
         with tempfile.NamedTemporaryFile(suffix=".bam", delete=False) as f:
@@ -434,17 +465,20 @@ def run_tests():
                 chromosome="chr1", start=1400, end=1600,
                 output_path=snapshot_out,
                 igv_path=real_igv_path,
-                color_by="MATE_CHROMOSOME",
+                color_by="UNEXPECTED_PAIR",
                 timeout_sec=120,
             )
-            assert "batch_script" in real_result, "Expected batch_script in result"
+            assert real_result.get("success") is True, \
+                f"Expected success=True, got: {real_result}"
+            assert os.path.exists(snapshot_out) and os.path.getsize(snapshot_out) > 0, \
+                "Expected a non-empty PNG at the output path"
             batch = real_result["batch_script"]
             assert "goto" in batch, "Expected 'goto' command in batch script"
             assert "snapshot" in batch, "Expected 'snapshot' command in batch script"
-            assert "MATE_CHROMOSOME" in batch, "Expected coloring mode in batch script"
-            print(f"  batch_script contains goto/snapshot/MATE_CHROMOSOME: confirmed")
-            print(f"  IGV run success={real_result.get('success')}, "
-                  f"file_size_bytes={real_result.get('file_size_bytes')}")
+            assert "UNEXPECTED_PAIR" in batch, "Expected coloring mode in batch script"
+            print(f"  Real IGV run: success=True, "
+                  f"file_size_bytes={real_result.get('file_size_bytes')}, "
+                  f"shutdown_method={real_result.get('shutdown_method')}")
             print("  PASSED ✓\n")
         finally:
             os.unlink(tmp_path3)

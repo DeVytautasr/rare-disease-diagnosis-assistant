@@ -144,7 +144,7 @@ def reciprocal_breakpoint(bam_path: str, primary_chromosome: str, primary_positi
 @mcp.tool()
 def igv_screenshot(bam_paths: list, chromosome: str, start: int, end: int,
                    output_path: str, genome_build: str = "hg38",
-                   color_by: str = "MATE_CHROMOSOME",
+                   color_by: str = "UNEXPECTED_PAIR",
                    max_coverage: int = None,
                    coverage_height: int = 120) -> dict:
     """
@@ -153,9 +153,16 @@ def igv_screenshot(bam_paths: list, chromosome: str, start: int, end: int,
     a clinician can review.
 
     Choose color_by based on the suspected event:
-    - MATE_CHROMOSOME for translocations (shows inter-chromosomal pairs)
+    - UNEXPECTED_PAIR for translocations (shows inter-chromosomal pairs,
+      plus anomalous insert size/orientation — this is the default)
     - PAIR_ORIENTATION for inversions
     - INSERT_SIZE for deletions and duplications
+
+    color_by is validated against this IGV build's actual coloring options
+    before launch; an invalid value returns a structured error listing the
+    valid options immediately rather than hanging until timeout. Note there
+    is no "MATE_CHROMOSOME" coloring option in this IGV build — that name
+    only exists as a "group by" option, not a "color by" one.
 
     Use a window of roughly 2-5kb around the breakpoint for readable output.
     Set max_coverage slightly above the observed max_depth from

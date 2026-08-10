@@ -1088,6 +1088,25 @@ def _signal_igv_process_group(proc, sig):
 
 # ── Tool 9: IGV screenshot (visual evidence) ───────────────────────────────────
 
+# IGV's AlignmentTrack$ColorOption enum, as shipped in IGV desktop (verified
+# against the installed IGV_2.17.4/lib/igv.jar via javap — this is NOT the
+# same enum as AlignmentTrack$GroupOption, which is what "group by" batch
+# commands use). MATE_CHROMOSOME is a GroupOption value, not a ColorOption
+# value — it was never valid here, despite being a very natural name to
+# reach for. UNEXPECTED_PAIR is the ColorOption that actually flags
+# inter-chromosomal / anomalous-orientation / anomalous-insert-size pairs
+# (labelled "insert size and pair orientation" in the IGV UI) and is the
+# correct choice for translocation coloring.
+VALID_COLOR_BY_OPTIONS = {
+    "INSERT_SIZE", "READ_STRAND", "FIRST_OF_PAIR_STRAND", "PAIR_ORIENTATION",
+    "READ_ORDER", "SAMPLE", "READ_GROUP", "LIBRARY", "MOVIE", "ZMW",
+    "BISULFITE", "NOMESEQ", "TAG", "NONE", "UNEXPECTED_PAIR", "MAPPED_SIZE",
+    "LINK_STRAND", "YC_TAG", "BASE_MODIFICATION", "BASE_MODIFICATION_2COLOR",
+    "SMRT_SUBREAD_IPD", "SMRT_SUBREAD_PW", "SMRT_CCS_FWD_IPD",
+    "SMRT_CCS_FWD_PW", "SMRT_CCS_REV_IPD", "SMRT_CCS_REV_PW",
+}
+
+
 def run_igv_screenshot(
     bam_paths: list,
     chromosome: str,
@@ -1095,7 +1114,7 @@ def run_igv_screenshot(
     end: int,
     output_path: str,
     genome_build: str = "hg38",
-    color_by: str = "MATE_CHROMOSOME",
+    color_by: str = "UNEXPECTED_PAIR",
     show_soft_clips: bool = True,
     max_coverage: int = None,
     coverage_height: int = 120,
@@ -1107,8 +1126,8 @@ def run_igv_screenshot(
     Generate an IGV screenshot of a genomic region using headless batch mode.
 
     Produces the visual evidence a clinician would inspect manually:
-    discordant pairs colored by mate chromosome, soft-clipped bases shown,
-    and the region centred on the candidate breakpoint.
+    discordant/anomalous pairs colored, soft-clipped bases shown, and the
+    region centred on the candidate breakpoint.
 
     Requires a usable display (real X11, or a Wayland/X compatibility layer
     such as WSLg) for IGV's Swing UI to render into — it is not invoked with
@@ -1124,11 +1143,23 @@ def run_igv_screenshot(
         end:             Region end position
         output_path:     Where to save the PNG
         genome_build:    IGV genome identifier ("hg38", "hg19")
-        color_by:        IGV coloring mode. Options:
-                         MATE_CHROMOSOME (translocations),
+        color_by:        IGV coloring mode, validated against this IGV
+                         build's actual AlignmentTrack$ColorOption enum
+                         before launching (an invalid value returns a
+                         structured error immediately rather than hanging
+                         IGV until timeout_sec). Recommended values:
+                         UNEXPECTED_PAIR (translocations — flags
+                         inter-chromosomal mates, and anomalous insert
+                         size/orientation, in one coloring mode; this is
+                         the default),
                          PAIR_ORIENTATION (inversions),
                          INSERT_SIZE (deletions/duplications),
-                         NONE
+                         NONE.
+                         There is no "MATE_CHROMOSOME" ColorOption in this
+                         IGV build — that name exists only as a *grouping*
+                         option (AlignmentTrack$GroupOption), not a
+                         coloring one. See VALID_COLOR_BY_OPTIONS in this
+                         module for the full list this build supports.
         show_soft_clips: Display soft-clipped bases
         max_coverage:    If set, fixes the coverage track's max value (via
                          IGV's setDataRange) instead of autoscaling to the
@@ -1145,6 +1176,19 @@ def run_igv_screenshot(
     Returns:
         dict with screenshot_path, batch_script used, and success status
     """
+    # Validate color_by before doing anything else — an invalid value
+    # crashes IGV's batch executor with an IllegalArgumentException that
+    # hangs the AWT thread rather than exiting, so this must be caught here
+    # (fails in well under a second) rather than left to be discovered after
+    # burning the full timeout_sec.
+    if color_by and color_by not in VALID_COLOR_BY_OPTIONS:
+        return {
+            "error": f"'{color_by}' is not a valid color_by option for this IGV build.",
+            "error_type": "invalid_parameters",
+            "color_by": color_by,
+            "valid_options": sorted(VALID_COLOR_BY_OPTIONS),
+        }
+
     # Auto-detect IGV
     candidates = []
     if igv_path is None:
