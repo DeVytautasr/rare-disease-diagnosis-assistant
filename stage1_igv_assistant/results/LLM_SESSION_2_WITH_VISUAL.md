@@ -151,16 +151,17 @@ The tool's own composite score labels this "weak" overall. However, the tool's d
 - `region`: chr1:115,685,862–115,691,222 (5,362 bp, per tool output)
 - `color_by`: INSERT_SIZE (deletion/duplication-appropriate coloring, per tool guidance)
 - `max_coverage`: 550 (fixed coverage-track scale, per tool guidance to set this slightly above the observed max_depth from `read_depth_profile`, 518, so the track is not clipped)
-- `file_size_bytes`: 64,192
-- Saved to: `stage1_igv_assistant/screenshots/session2_chr1_deletion_v2.png`
+- `coverage_height`: 120 (coverage track pixel height; IGV's ~50px default was too short to render the depth dip legibly at this scale)
+- `file_size_bytes`: 64,288
+- Saved to: `stage1_igv_assistant/screenshots/session2_chr1_deletion_v3.png`
 
-**Revision note:** an earlier version of this screenshot (`session2_chr1_deletion.png`) let the coverage track autoscale to the tallest window in view (325), which clipped the true regional max (518, per Section 6) and visually flattened the depth dip. This version fixes the coverage-track scale to 0–550 so the full dip is rendered proportionally to the surrounding coverage rather than compressed against a clipped ceiling.
+**Revision note:** an earlier version of this screenshot (`session2_chr1_deletion.png`) let the coverage track autoscale to the tallest window in view (325), which clipped the true regional max (518, per Section 6) and visually flattened the depth dip. A second version (`session2_chr1_deletion_v2.png`) fixed the coverage-track scale to 0–550 so the full dip would be rendered proportionally rather than compressed against a clipped ceiling, but at IGV's default ~50px track height the dip was still hard to make out. This version additionally raises the coverage track to 120px, making the dip clearly legible at a glance.
 
 **What a reviewer should look for in this image:**
-- The gray coverage histogram at the top of the alignment track visibly dips in height across the middle-to-right portion of the window (roughly 115,687,800–115,690,000), flanked by visibly taller coverage on both sides — now rendered against a fixed 0–550 scale rather than an autoscaled one, so the dip's proportions match the numeric depth drop reported in Section 6 (max 518 vs min 175) instead of being compressed by clipping.
-- Reads colored red/blue (abnormal insert size under INSERT_SIZE coloring) are visibly concentrated at the left edge of the window (near the queried breakpoint, ~115,686,000–115,687,200) and again at the right edge (~115,690,500–115,691,200), while reads in the low-coverage middle band are mostly gray (normal/unremarkable insert size for the reads present there).
+- The read track (alignment rows below the coverage histogram) shows dense, unbroken stacks of reads flanking both sides of the window, thinning sharply to a visibly sparser band in the middle-to-right portion (roughly 115,687,800–115,690,000) — with reads colored red/blue (abnormal insert size under INSERT_SIZE coloring) clustered tightly at the left edge (near the queried breakpoint, ~115,686,000–115,687,200) and again at the right edge (~115,690,500–115,691,200), while the thin middle band is mostly gray (normal/unremarkable insert size for the few reads present there). Dense flanking blocks + a thinning middle + red/blue reads clustered at both edges is the classic short-read deletion signature, and is the stronger visual evidence in this image.
+- The gray coverage histogram at the top, now rendered at 120px height against a fixed 0–550 scale, visibly dips across the same middle-to-right portion of the window, flanked by visibly taller coverage on both sides — supporting evidence that the dip's proportions match the numeric depth drop reported in Section 6 (max 518 vs min 175) rather than being an autoscale artifact.
 - No inter-chromosomal (MATE_CHROMOSOME-style) coloring pattern is present, consistent with the absence of translocation signal in Sections 3 and 7 — this screenshot was deliberately generated with INSERT_SIZE coloring rather than MATE_CHROMOSOME coloring for that reason.
-- The reviewer should confirm the visual coverage dip aligns with the exact coordinates reported numerically in Section 6, and that the flanking red/blue insert-size reads cluster near, rather than diffusely across, the window edges.
+- The reviewer should confirm the read-track thinning and edge-clustered red/blue reads line up with the coverage dip, and that both align with the exact coordinates reported numerically in Section 6.
 
 ---
 

@@ -48,3 +48,20 @@ produced it.
 - run_igv_screenshot requires a working X display. On WSL2 this is 
   provided by WSLg (DISPLAY=:0). Do not override DISPLAY — IGV's 
   AWT thread will crash before rendering.
+- run_igv_screenshot: after the batch script's `snapshot` command 
+  writes the PNG, IGV's JVM/AWT thread has been observed to hang on 
+  the following `exit` command instead of terminating (not yet 
+  root-caused; may be related to the genome re-download timing 
+  above). The tool handles this itself: it polls for the output file 
+  and, once its size is stable across two checks 1s apart, terminates 
+  IGV directly (SIGTERM, then SIGKILL after 5s if needed) rather than 
+  waiting for `exit` to work. Because igv.sh runs `java` as its last 
+  command without `exec`, the shell stays alive as java's parent — the 
+  tool signals the whole process group (`start_new_session=True` + 
+  `killpg`), not just that wrapper shell, so the actual IGV/java GUI 
+  process is reliably killed too. No manual window closing is needed. 
+  The returned dict's `shutdown_method` field records what happened: 
+  `"clean_exit"` (IGV exited on its own), `"terminated_after_snapshot"` 
+  (the tool had to kill it after confirming the PNG was written), or 
+  `"timeout"` (no output file appeared within `timeout_sec`, which 
+  still acts as a hard ceiling and kills the process either way).

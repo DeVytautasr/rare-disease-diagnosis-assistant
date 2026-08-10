@@ -12,6 +12,7 @@ import requests as _requests
 import time as _time
 import subprocess as _subprocess
 import os as _os
+import signal as _signal
 import tempfile as _tempfile
 from dataclasses import dataclass, asdict
 from typing import Optional
@@ -883,6 +884,23 @@ def check_reciprocal_breakpoint(
     }
 
 
+def _signal_igv_process_group(proc, sig):
+    """
+    Send a signal to proc's whole process group, not just proc itself.
+
+    igv.sh is a shell script that runs `java ...` as its last command
+    without `exec`, so the shell stays alive as java's parent. Signaling
+    proc.pid alone (as proc.terminate()/kill() do) only reaches that
+    wrapper shell — the real IGV/java GUI process is a separate PID and
+    is left running. proc is started with start_new_session=True so its
+    pid is also its process group id, and killpg reaches both.
+    """
+    try:
+        _os.killpg(_os.getpgid(proc.pid), sig)
+    except ProcessLookupError:
+        pass
+
+
 # ── Tool 9: IGV screenshot (visual evidence) ───────────────────────────────────
 
 def run_igv_screenshot(
@@ -895,6 +913,7 @@ def run_igv_screenshot(
     color_by: str = "MATE_CHROMOSOME",
     show_soft_clips: bool = True,
     max_coverage: int = None,
+    coverage_height: int = 120,
     squish: bool = True,
     igv_path: str = None,
     timeout_sec: int = 180
@@ -932,6 +951,8 @@ def run_igv_screenshot(
                          observed max_depth from read_depth_profile so a
                          depth dip elsewhere in the region isn't flattened
                          by autoscaling to a taller peak.
+        coverage_height: Coverage track height in pixels (IGV default is ~50px,
+                         too short to render a depth dip legibly).
         squish:          Compress read rows into a denser view when True
         igv_path:        Path to igv.sh (auto-detected if None)
         timeout_sec:     Max seconds to wait for IGV
@@ -967,6 +988,7 @@ def run_igv_screenshot(
     lines = ["new", f"genome {genome_build}"]
     for bam in bam_paths:
         lines.append(f"load {bam}")
+    lines.append(f"preference SAM.COVERAGE_TRACK_HEIGHT {coverage_height}")
     lines.append("maxPanelHeight 600")
     if color_by and color_by != "NONE":
         lines.append(f"colorBy {color_by}")
@@ -999,23 +1021,87 @@ def run_igv_screenshot(
         f.write(batch_content)
         batch_path = f.name
 
+    stdout_path = None
+    stderr_path = None
     try:
         # No env= override here: this inherits the parent process's DISPLAY.
         # Passing DISPLAY="" (rather than leaving it unset or omitting the
         # override entirely) crashes IGV's AWT EventDispatchThread before
         # the batch script runs, so no snapshot is ever produced — confirmed
         # directly against this IGV build, not assumed.
-        result = _subprocess.run(
-            [igv_path, "--batch", batch_path],
-            capture_output=True,
-            text=True,
-            timeout=timeout_sec,
-        )
+        #
+        # stdout/stderr go to temp files rather than PIPE: IGV logs steadily
+        # while we poll below, and an unread PIPE fills its OS buffer and
+        # blocks IGV's write — a second hang on top of the one this whole
+        # poll loop exists to work around.
+        stdout_f = _tempfile.NamedTemporaryFile(mode="w+", suffix=".igvout",
+                                                  delete=False)
+        stderr_f = _tempfile.NamedTemporaryFile(mode="w+", suffix=".igverr",
+                                                  delete=False)
+        stdout_path, stderr_path = stdout_f.name, stderr_f.name
 
-        success = _os.path.exists(output_path)
+        proc = _subprocess.Popen([igv_path, "--batch", batch_path],
+                                  stdout=stdout_f, stderr=stderr_f,
+                                  start_new_session=True)
+
+        # IGV's `exit` batch command reliably writes the snapshot first but
+        # has been observed to hang the AWT/JVM shutdown afterward, so we
+        # don't wait for the process to exit on its own — we confirm the
+        # PNG is fully written (two size checks, 1s apart, agreeing on a
+        # non-zero size) and then terminate IGV ourselves.
+        deadline = _time.time() + timeout_sec
+        shutdown_method = None
+        last_size = None
+
+        while True:
+            if proc.poll() is not None:
+                shutdown_method = "clean_exit"
+                break
+
+            if _time.time() >= deadline:
+                _signal_igv_process_group(proc, _signal.SIGTERM)
+                try:
+                    proc.wait(timeout=5)
+                except _subprocess.TimeoutExpired:
+                    _signal_igv_process_group(proc, _signal.SIGKILL)
+                    try:
+                        proc.wait(timeout=5)
+                    except _subprocess.TimeoutExpired:
+                        pass
+                shutdown_method = "timeout"
+                break
+
+            if _os.path.exists(output_path):
+                size = _os.path.getsize(output_path)
+                if size > 0 and size == last_size:
+                    _signal_igv_process_group(proc, _signal.SIGTERM)
+                    try:
+                        proc.wait(timeout=5)
+                    except _subprocess.TimeoutExpired:
+                        _signal_igv_process_group(proc, _signal.SIGKILL)
+                        try:
+                            proc.wait(timeout=5)
+                        except _subprocess.TimeoutExpired:
+                            pass
+                    shutdown_method = "terminated_after_snapshot"
+                    break
+                last_size = size if size > 0 else None
+                _time.sleep(1.0)
+                continue
+
+            _time.sleep(0.5)
+
+        stdout_f.flush(); stderr_f.flush()
+        stdout_f.seek(0); stderr_f.seek(0)
+        stdout_text = stdout_f.read()
+        stderr_text = stderr_f.read()
+        stdout_f.close()
+        stderr_f.close()
+
+        success = _os.path.exists(output_path) and _os.path.getsize(output_path) > 0
         file_size = _os.path.getsize(output_path) if success else 0
 
-        return {
+        result = {
             "success": success,
             "screenshot_path": _os.path.abspath(output_path) if success else None,
             "file_size_bytes": file_size,
@@ -1023,14 +1109,20 @@ def run_igv_screenshot(
             "color_by": color_by,
             "bam_tracks": len(bam_paths),
             "batch_script": batch_content,
-            "igv_stdout": result.stdout[-500:] if result.stdout else "",
-            "igv_stderr": result.stderr[-500:] if result.stderr else "",
+            "shutdown_method": shutdown_method,
+            "igv_stdout": stdout_text[-500:] if stdout_text else "",
+            "igv_stderr": stderr_text[-500:] if stderr_text else "",
         }
-    except _subprocess.TimeoutExpired:
-        return {"error": f"IGV timed out after {timeout_sec}s",
-                "batch_script": batch_content}
+        if not success:
+            result["error"] = (f"IGV timed out after {timeout_sec}s"
+                                if shutdown_method == "timeout" else
+                                "IGV exited without producing a screenshot")
+        return result
     except Exception as e:
         return {"error": str(e), "batch_script": batch_content}
     finally:
         if _os.path.exists(batch_path):
             _os.unlink(batch_path)
+        for p in (stdout_path, stderr_path):
+            if p and _os.path.exists(p):
+                _os.unlink(p)
