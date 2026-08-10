@@ -36,3 +36,13 @@ produced it.
   may be slow. Retry logic added (see bam_tools.py).
 - Real balanced translocation BAM not yet found for validation.
   Demo used synthetic data. See DEMO_END_TO_END.md.
+- run_igv_screenshot: IGV re-downloads genome annotation from igv.org 
+  on every invocation, causing variable startup time and occasional 
+  failures on repeated rapid calls. Observed non-deterministic 
+  success/failure on the synthetic-BAM test case across repeated runs. 
+  For batch use, consider pre-downloading the genome with IGV's 
+  genome cache or calling with retries. Single interactive calls 
+  are reliable.
+- run_igv_screenshot requires a working X display. On WSL2 this is 
+  provided by WSLg (DISPLAY=:0). Do not override DISPLAY — IGV's 
+  AWT thread will crash before rendering.
