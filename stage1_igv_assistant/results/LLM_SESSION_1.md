@@ -1,7 +1,7 @@
 # LLM Session 1 — First End-to-End MCP Assistant Demonstration
 
 **Date:** 2026-08-10
-**Mode:** LLM assistant using ONLY the `igv-breakpoint-assistant` MCP server's 8 tools — no Python source access, no scripts, no prior knowledge of this sample/region/gene permitted. This is the first documented end-to-end run of the Stage 1 assistant architecture (MCP tools → LLM interpretation → cited report), as opposed to a direct-code demo.
+**Mode:** LLM assistant using ONLY the `igv-breakpoint-assistant` MCP server's 8 tools [server now exposes 10 — see README.md] — no Python source access, no scripts, no prior knowledge of this sample/region/gene permitted. This is the first documented end-to-end run of the Stage 1 assistant architecture (MCP tools → LLM interpretation → cited report), as opposed to a direct-code demo.
 
 **Case details supplied to the assistant:**
 - BAM URL: `https://ftp-trace.ncbi.nlm.nih.gov/ReferenceSamples/giab/data/AshkenazimTrio/HG002_NA24385_son/NIST_HiSeq_HG002_Homogeneity-10953946/NHGRI_Illumina300X_AJtrio_novoalign_bams/HG002.GRCh38.300x.bam`

@@ -11,7 +11,13 @@ python -m stage1_igv_assistant.server
 ## Running all tests
 ```
 python stage1_igv_assistant/tests/test_bam_tools.py
+python stage1_igv_assistant/tests/test_server.py
 ```
+`test_bam_tools.py`'s real-IGV assertions and `igv_screenshot`'s
+functionality both require Java (present in the `rda` conda env, not the
+base env) — run under `conda run -n rda python ...` or
+`conda activate rda` first to exercise those paths; both test files skip
+or fail cleanly rather than hanging if Java/IGV aren't available.
 
 ## Tools available (10 total)
 1. applicable_layers — samples the BAM to determine which evidence layers

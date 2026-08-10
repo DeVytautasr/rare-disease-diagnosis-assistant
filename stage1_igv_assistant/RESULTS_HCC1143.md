@@ -1,5 +1,18 @@
 # HCC1143 chr21 Breakpoint Evidence — Tool Validation Results
 
+> **SUPERSEDED — scoring scheme has changed since this was written.**
+> This file documents `summarize_breakpoint_evidence` scoring each layer
+> 0–50, normalised to a 0–100 composite over 3 layers (`signal_layers:
+> "3/3"`). The current implementation scores each of 4 layers 0–25,
+> summed directly to `evidence_score_raw` (0–100), and additionally
+> normalises over only the technology-applicable layers into
+> `evidence_score` (see `bam_tools.summarize_breakpoint_evidence` and
+> `AUDIT_2026_08.md` §5). The raw tool outputs and locus findings below
+> are still accurate; the scoring-scheme narrative and the specific
+> score values are not. See `REAL_DATA_VALIDATION.md` and
+> `docs/thesis/thesis_background_methods_chapter.md` for the current
+> scoring model.
+
 **Date:** 2026-08-08
 **BAM:** `stage1_igv_assistant/data/bam/HCC1143.normal.21.19M-20M.bam`
 **Sample:** HCC1143 normal (germline) — no matched tumor BAM exists for this dataset (confirmed via directory listing of `genomedata.org/gen-viz-workshop/IGV/`; only the normal BAM was ever published there).

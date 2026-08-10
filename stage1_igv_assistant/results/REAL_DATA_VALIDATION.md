@@ -82,7 +82,7 @@ Balanced translocation validation on real data remains outstanding — no public
 
 ## Scoring bug fix (2026-08-10)
 
-An LLM assistant session using only the 8 MCP tools (no source access) on this same locus (chr1:115,686,862, Illumina 300x) surfaced a genuine inconsistency in `summarize_breakpoint_evidence`'s output: `discordant_pair_score=15, soft_clip_score=15, split_read_score=0, depth_score=30` sum to 60, but the returned `evidence_score` was 30 — contradicting the tool's own docstring/description, which claimed the components "sum into evidence_score."
+An LLM assistant session using only the 8 MCP tools [now 10 — see README.md] (no source access) on this same locus (chr1:115,686,862, Illumina 300x) surfaced a genuine inconsistency in `summarize_breakpoint_evidence`'s output: `discordant_pair_score=15, soft_clip_score=15, split_read_score=0, depth_score=30` sum to 60, but the returned `evidence_score` was 30 — contradicting the tool's own docstring/description, which claimed the components "sum into evidence_score."
 
 **Root cause:** `discordant_pair_score`, `soft_clip_score`, `split_read_score`, and `depth_score` were each tiered on a 0-50 scale, but the combination step computed `evidence_score = round(sum(component_scores) / 2.0, 1)` — silently halving the total without that division being reflected anywhere in the returned component values. `evidence_score` itself was arithmetically correct as a normalized composite; the component scores were mislabeled relative to their real contribution.
 

@@ -26,6 +26,7 @@ from stage1_igv_assistant.tools.bam_tools import (
     run_igv_screenshot,
     detect_applicable_layers,
     EVIDENCE_LAYER_NAMES,
+    DEPTH_RATIO_DELETION_THRESHOLD,
 )
 from stage1_igv_assistant.case_object import BamCase
 
@@ -240,6 +241,43 @@ def create_translocation_bam(path: str):
     return sorted_path
 
 
+def create_depth_dropout_bam(path: str):
+    """
+    Creates a synthetic BAM purpose-built for exercising get_read_depth_profile
+    directly: dense, uniform tiled coverage on chr1:0-1100 and chr1:2000-3100,
+    with a deliberate zero-read gap across chr1:1100-2000 in between. This is
+    a pure depth-profile fixture — it makes no claim about representing any
+    specific SV type (unlike create_translocation_bam's incidental read-free
+    gaps, which TEST 6 already notes are a construction artifact, not a
+    depth-profile test in their own right).
+    """
+    header = pysam.AlignmentHeader.from_dict({
+        "HD": {"VN": "1.6", "SO": "coordinate"},
+        "SQ": [{"SN": "chr1", "LN": 248956422}],
+    })
+    with pysam.AlignmentFile(path, "wb", header=header) as bam:
+        read_idx = 0
+        for region_start in (0, 2000):
+            for offset in range(0, 1000, 20):   # 50 tiled start positions
+                for _ in range(5):               # 5x overlapping coverage each
+                    read = pysam.AlignedSegment(header)
+                    read.query_name = f"flank_read_{read_idx}"
+                    read_idx += 1
+                    read.query_sequence = "A" * 100
+                    read.flag = 0
+                    read.reference_id = 0
+                    read.reference_start = region_start + offset
+                    read.mapping_quality = 60
+                    read.cigar = [(0, 100)]
+                    read.query_qualities = pysam.qualitystring_to_array("I" * 100)
+                    bam.write(read)
+
+    sorted_path = path.replace(".bam", ".sorted.bam")
+    pysam.sort("-o", sorted_path, path)
+    pysam.index(sorted_path)
+    return sorted_path
+
+
 def run_tests():
     print("=" * 60)
     print("BAM TOOLS TEST SUITE")
@@ -293,6 +331,63 @@ def run_tests():
             os.unlink(bam_path)
         if os.path.exists(bam_path + ".bai"):
             os.unlink(bam_path + ".bai")
+
+    # get_read_depth_profile previously had zero direct test coverage — not
+    # even imported in this file, only exercised indirectly (and unasserted
+    # on its own fields) as a sub-call inside summarize_breakpoint_evidence.
+    # TEST 4 and TEST 5 fill that gap directly, using a fixture with a real,
+    # deliberate depth dropout rather than piggybacking on another test's BAM.
+    with tempfile.NamedTemporaryFile(suffix=".bam", delete=False) as f:
+        tmp_path_depth = f.name
+    try:
+        depth_bam = create_depth_dropout_bam(tmp_path_depth)
+        print(f"Depth-dropout BAM created: {depth_bam}\n")
+
+        # ── TEST 4: get_read_depth_profile on a uniform (no-dropout) region ──
+        print("TEST 4: get_read_depth_profile (uniform region, no dropout)")
+        flat_profile = get_read_depth_profile(depth_bam, "chr1", 0, 1000, window_size=200)
+        assert "error" not in flat_profile, f"Unexpected error: {flat_profile}"
+        assert len(flat_profile["windows"]) == 5, f"Expected 5 windows, got {len(flat_profile['windows'])}"
+        assert flat_profile["summary"]["min_depth"] > 0, "Expected nonzero depth throughout this region"
+        assert flat_profile["summary"]["depth_ratio_min_to_mean"] >= DEPTH_RATIO_DELETION_THRESHOLD, \
+            f"Expected ratio >= {DEPTH_RATIO_DELETION_THRESHOLD} for a uniform region, " \
+            f"got {flat_profile['summary']['depth_ratio_min_to_mean']}"
+        assert flat_profile["summary"]["likely_deletion"] is False, \
+            "Expected likely_deletion=False for a uniform-depth region"
+        print(f"  min_depth={flat_profile['summary']['min_depth']} "
+              f"mean_depth={flat_profile['summary']['mean_depth']} "
+              f"ratio={flat_profile['summary']['depth_ratio_min_to_mean']} "
+              f"likely_deletion={flat_profile['summary']['likely_deletion']}")
+        print("  PASSED ✓\n")
+
+        # ── TEST 5: get_read_depth_profile across the engineered dropout ──
+        print("TEST 5: get_read_depth_profile (region spanning the depth dropout)")
+        dropout_profile = get_read_depth_profile(depth_bam, "chr1", 0, 3000, window_size=200)
+        assert "error" not in dropout_profile, f"Unexpected error: {dropout_profile}"
+        assert len(dropout_profile["windows"]) == 15, f"Expected 15 windows, got {len(dropout_profile['windows'])}"
+        assert dropout_profile["summary"]["min_depth"] == 0, \
+            f"Expected min_depth=0 inside the engineered gap, got {dropout_profile['summary']['min_depth']}"
+        # Every window fully inside chr1:1100-2000 should read exactly 0.
+        zero_windows = [w for w in dropout_profile["windows"]
+                         if w["window_start"] >= 1200 and w["window_end"] <= 2000]
+        assert zero_windows and all(w["depth"] == 0 for w in zero_windows), \
+            f"Expected all windows strictly inside the gap to have depth 0, got {zero_windows}"
+        assert dropout_profile["summary"]["depth_ratio_min_to_mean"] < DEPTH_RATIO_DELETION_THRESHOLD, \
+            f"Expected ratio < {DEPTH_RATIO_DELETION_THRESHOLD} across the dropout, " \
+            f"got {dropout_profile['summary']['depth_ratio_min_to_mean']}"
+        assert dropout_profile["summary"]["likely_deletion"] is True, \
+            "Expected likely_deletion=True across the engineered dropout"
+        print(f"  min_depth={dropout_profile['summary']['min_depth']} "
+              f"mean_depth={dropout_profile['summary']['mean_depth']} "
+              f"ratio={dropout_profile['summary']['depth_ratio_min_to_mean']} "
+              f"likely_deletion={dropout_profile['summary']['likely_deletion']}")
+        print("  PASSED ✓\n")
+    finally:
+        os.unlink(tmp_path_depth)
+        if os.path.exists(depth_bam):
+            os.unlink(depth_bam)
+        if os.path.exists(depth_bam + ".bai"):
+            os.unlink(depth_bam + ".bai")
 
     # ── TEST 6: full 5-tool pipeline on a synthetic translocation ──────────
     with tempfile.NamedTemporaryFile(suffix=".bam", delete=False) as f:
@@ -396,10 +491,20 @@ def run_tests():
     assert intergenic_result["is_intergenic"] is True, "Expected is_intergenic == True"
     print("  PASSED ✓\n")
 
-    # ── TEST 9: BamCase object ───────────────────────────────────────────
+    # ── TEST 9: BamCase object — save/load round-trip ─────────────────────
     print("TEST 9: BamCase object")
     case = BamCase.new("test_case_009", "test.bam")
-    case.add_breakpoint("BP1", "chr1", 1050000)
+    case.clinical.hpo_terms = ["HP:0001250", "HP:0000486"]
+    case.clinical.suspected_sv_type = "balanced_translocation"
+    case.clinical.cytogenetic_result = "t(1;8)(p36;q24)"
+    bp1 = case.add_breakpoint("BP1", "chr1", 1050000)
+    bp1.evidence_strength = "strong"
+    bp1.evidence_score = 87.5
+    bp1.signal_layers = "3/4"
+    bp1.supporting_observations = [
+        "12 discordant pairs (all mates on chr8)",
+        "6 soft-clipped reads (consensus position 1050002)",
+    ]
     case.add_breakpoint("BP2", "chr8", 47000000)
     assert len(case.breakpoints) == 2, "Expected 2 breakpoints"
 
@@ -408,12 +513,42 @@ def run_tests():
     loaded = BamCase.load(case_path)
     assert loaded.case_id == "test_case_009", "Expected case_id to match after reload"
     assert len(loaded.breakpoints) == 2, "Expected 2 breakpoints after reload"
+
+    # Clinical fields must round-trip, not just the identity fields.
+    assert loaded.clinical.hpo_terms == ["HP:0001250", "HP:0000486"], \
+        "Expected hpo_terms to survive save/load"
+    assert loaded.clinical.suspected_sv_type == "balanced_translocation"
+    assert loaded.clinical.cytogenetic_result == "t(1;8)(p36;q24)"
+
+    # Breakpoint evidence fields (not just label/chromosome/position) must
+    # also survive round-trip, including the supporting_observations list.
+    loaded_bp1 = loaded.get_breakpoint("BP1")
+    assert loaded_bp1 is not None, "Expected to retrieve BP1 by label after reload"
+    assert loaded_bp1.evidence_strength == "strong"
+    assert loaded_bp1.evidence_score == 87.5
+    assert loaded_bp1.signal_layers == "3/4"
+    assert loaded_bp1.supporting_observations == [
+        "12 discordant pairs (all mates on chr8)",
+        "6 soft-clipped reads (consensus position 1050002)",
+    ], "Expected supporting_observations list to survive save/load exactly"
     os.unlink(case_path)
 
     assert loaded.sequencing.is_paired is True, "Default is_paired should be True"
     assert "discordant_pairs" in loaded.sequencing.applicable_evidence_layers, \
         "Expected discordant_pairs in applicable_evidence_layers for paired short-read data"
-    print(f"  applicable_evidence_layers: {loaded.sequencing.applicable_evidence_layers}")
+    print(f"  applicable_evidence_layers (default, paired short-read): "
+          f"{loaded.sequencing.applicable_evidence_layers}")
+
+    # Technology-dependent branch: unpaired long-read data should drop
+    # discordant_pairs and pick up split_reads via has_sa_tags.
+    loaded.sequencing.is_paired = False
+    loaded.sequencing.technology = "pacbio_hifi"
+    long_read_layers = loaded.sequencing.applicable_evidence_layers
+    assert "discordant_pairs" not in long_read_layers, \
+        "Expected discordant_pairs excluded for unpaired long-read data"
+    assert "split_reads" in long_read_layers, \
+        "Expected split_reads included for pacbio_hifi (has_sa_tags)"
+    print(f"  applicable_evidence_layers (unpaired PacBio HiFi): {long_read_layers}")
     print("  PASSED ✓\n")
 
     # ── TEST 10: run_igv_screenshot ───────────────────────────────────────

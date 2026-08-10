@@ -18,7 +18,7 @@ This directory contains the thesis background and methods chapter.
 9. Concluding Remarks
 10. References (47 total)
 
-## Stage 1 implementation summary (as of d5fef9f)
+## Stage 1 implementation summary (as of d5fef9f — see stage1_igv_assistant/README.md for current counts, now 10 tools)
 - 8 tools in bam_tools.py (873 lines)
 - MCP server in server.py
 - BamCase schema in case_object.py
