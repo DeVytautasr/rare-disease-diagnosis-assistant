@@ -108,9 +108,20 @@ def read_depth_profile(bam_path: str, chromosome: str, start: int,
 
 @mcp.tool()
 def breakpoint_evidence_summary(bam_path: str, chromosome: str, position: int,
-                                 label: str = "", applicable_layers: list = None) -> dict:
+                                 label: str = "", applicable_layers: list = None,
+                                 window_bp: int = 500, min_mapq: int = 20) -> dict:
     """
     Integrates evidence layers into one structured report. Call this LAST.
+
+    THRESHOLD PROVENANCE — state this plainly in any report citing
+    evidence_strength, don't present it as calibrated: of the 7 tier
+    cutoffs behind the 4 component scores, only ONE (the read-depth
+    layer's 0.7 moderate-tier threshold) is empirically calibrated, and
+    against a single confirmed real locus. The other 6 (discordant-pair
+    0.2/0.5, soft-clip 0.1/0.3, split-read 0.1/0.3, and read-depth's own
+    0.3 strong-tier threshold) are heuristic judgement calls, never
+    validated against real data. evidence_strength is an interpretable
+    decomposition of what fired, not a calibrated probability.
 
     Pass applicable_layers (from detect_applicable_layers, called once per
     BAM) so the composite score isn't penalised by layers that can't
@@ -140,9 +151,19 @@ def breakpoint_evidence_summary(bam_path: str, chromosome: str, position: int,
       supporting_observations (list[str] — plain-language notes on what fired)
       interpretation_template (str — one sentence restating the above fields;
         adds no new facts, only recombines values already in this same dict)
+
+    window_bp (default 500) sets the half-width for the discordant-pair /
+    soft-clip / split-read windows — narrow it (e.g. 150-200) for a tight,
+    precisely-localized breakpoint, widen it if the exact position is
+    uncertain. Does NOT affect the depth-profile window, which is always a
+    fixed ±2kb regardless of this value. min_mapq (default 20) sets the
+    minimum mapping quality across all layers — lower it for regions with
+    known poor mappability (check low_mapq_fraction from bam_stats_at_locus
+    first) rather than silently accepting an all-zero result there.
     """
     return summarize_breakpoint_evidence(bam_path, chromosome, position, label,
-                                         applicable_layers=applicable_layers)
+                                         applicable_layers=applicable_layers,
+                                         window_bp=window_bp, min_mapq=min_mapq)
 
 @mcp.tool()
 def applicable_layers(bam_path: str, sample_reads: int = 1000) -> dict:

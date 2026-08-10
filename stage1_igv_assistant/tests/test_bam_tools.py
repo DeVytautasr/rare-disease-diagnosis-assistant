@@ -783,15 +783,28 @@ def run_tests():
         )
         print("  start > end: clean error dict — PASSED")
 
-        # -- Empty bam_paths list for igv_screenshot: must not raise --
+        # -- Empty bam_paths list for igv_screenshot: must fail fast, not
+        #    launch IGV with zero load lines and wait out the full timeout.
+        #    igv_path deliberately omitted (not pointed at a fake path) so
+        #    this exercises the real "IGV is installed, bam_paths is just
+        #    empty" scenario, not the separate "IGV not found" fast-path. --
+        t0 = time.time()
         empty_bam_result = run_igv_screenshot(
             bam_paths=[], chromosome="chr1", start=100, end=200,
             output_path="/tmp/test_igv_empty_bams.png",
-            igv_path="/nonexistent/path/igv.sh",
+            timeout_sec=15,
         )
+        empty_bam_elapsed = time.time() - t0
         assert isinstance(empty_bam_result, dict) and "error" in empty_bam_result, \
             "Expected a clean error dict for empty bam_paths"
-        print("  Empty bam_paths list for igv_screenshot: clean error dict — PASSED")
+        assert empty_bam_result.get("error_type") == "invalid_parameters", \
+            f"Expected error_type='invalid_parameters', got {empty_bam_result.get('error_type')}"
+        assert empty_bam_elapsed < 5, \
+            f"Empty bam_paths should fail fast, took {empty_bam_elapsed:.1f}s " \
+            f"(regression: this used to launch IGV with nothing loaded and " \
+            f"wait out the full timeout)"
+        print(f"  Empty bam_paths list for igv_screenshot: clean error dict "
+              f"in {empty_bam_elapsed:.2f}s — PASSED")
 
         print("  PASSED ✓\n")
     finally:

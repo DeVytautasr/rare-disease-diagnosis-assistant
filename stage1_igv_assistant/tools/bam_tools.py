@@ -746,6 +746,69 @@ def get_read_depth_profile(
     return asdict(result)
 
 
+# ── Composite scoring thresholds for summarize_breakpoint_evidence ────────────
+#
+# Each of the 4 evidence layers is scored 0/7.5/15/25 from a fraction cutoff
+# (read-depth: 0/15/25, 3 tiers not 4, from a ratio cutoff). Honest
+# accounting of where each number came from — "the numbers looked
+# reasonable" is not the same as "the numbers were validated":
+#
+# DISCORDANT-PAIR (discordant_fraction cutoffs: 0.2, 0.5)              HEURISTIC
+#   Chosen by judgement, not fit to data. No confirmed real balanced
+#   translocation BAM was ever found to validate against (see
+#   REAL_DATA_VALIDATION.md, "Bottom line") — every real BAM tested against
+#   this tool was a deletion, not a translocation. The synthetic
+#   translocation fixture in test_bam_tools.py hits the top tier by
+#   construction (its discordant fraction was built to be clean), which
+#   confirms the arithmetic works, not that 0.2/0.5 are correctly placed
+#   for real data.
+#
+# SOFT-CLIP (soft_clipped_fraction cutoffs: 0.1, 0.3)                  HEURISTIC
+#   Same story: no calibration data. The two real numbers on record — HCC1143
+#   7.7% (22/287) and GIAB PacBio HiFi 10% (4/40) — sit just below/at the 0.1
+#   floor respectively; that's coincidence, not confirmation these cutoffs
+#   are correctly placed. Neither locus was a known true-negative or a
+#   locus with an independently confirmed "this fraction should score X"
+#   expectation.
+#
+# SPLIT-READ (split_read_fraction cutoffs: 0.1, 0.3)                   HEURISTIC
+#   Same cutoff values as soft-clip, same lack of calibration, but weaker
+#   evidence even than that: no real split-read-positive locus with known
+#   ground truth has been tested at all. Every real BAM checked against
+#   split_reads so far (HCC1143, GIAB Illumina 300x/Novoalign) happened to
+#   have zero SA tags anywhere in the file, so these fraction cutoffs above
+#   0 have never actually fired on real data — only on the synthetic
+#   fixture, again by construction.
+#
+# READ-DEPTH (depth_ratio_min_to_mean cutoffs: 0.3, and
+#             DEPTH_RATIO_DELETION_THRESHOLD=0.7)                       MIXED
+#   The two cutoffs have different provenance:
+#   - 0.7 (moderate/15pt tier boundary):                               EMPIRICAL
+#     Calibrated against a real confirmed GIAB HG002 deletion
+#     (chr1:115,686,862), replicated across 2 sequencing technologies —
+#     PacBio HiFi measured a ratio of 0.609, Illumina 300x measured 0.542,
+#     both correctly below 0.7. Still only 1 confirmed locus (not 2
+#     independent loci), and not checked against true-negative/normal-
+#     coverage regions for a false-positive rate — see
+#     REAL_DATA_VALIDATION.md's "Calibration update" section and this
+#     module's DEPTH_RATIO_DELETION_THRESHOLD docstring for the full caveat.
+#   - 0.3 (strong/25pt tier boundary):                                 HEURISTIC
+#     Never actually confirmed by real data: BOTH real ratios above (0.609,
+#     0.542) land in the 0.7 tier, not the 0.3 one — nothing has ever
+#     validated that 0.3 is where "strong" should start, because no
+#     confirmed-real locus has ever scored there.
+#
+# The scale itself — 0-25 per layer, tiers of 0/7.5/15/25 (0/15/25 for
+# depth) summing cleanly to a 0-100 composite — is also a HEURISTIC design
+# choice (round numbers picked for readability), not derived from any
+# statistical model, ROC analysis, or optimization against labeled data.
+#
+# Net: of the 7 distinct cutoff values used below, 1 (the depth layer's 0.7
+# threshold) is empirically grounded against a real confirmed-positive
+# locus. The other 6 are unvalidated judgement calls. Treat evidence_score/
+# evidence_strength as an interpretable, decomposed summary of what each
+# tool found — not a calibrated probability of a true structural variant.
+
 # ── Tool 6: Combined breakpoint evidence summary ──────────────────────────────
 
 def summarize_breakpoint_evidence(
@@ -792,6 +855,20 @@ def summarize_breakpoint_evidence(
     deletions larger than the short-read fragment size. Threshold 0.7
     (DEPTH_RATIO_DELETION_THRESHOLD) calibrated against GIAB HG002 Illumina
     300x validation.
+
+    THRESHOLD PROVENANCE — read before trusting evidence_strength as more
+    than a decomposed summary (full detail in the comment block immediately
+    above this function): of the 7 tier-cutoff values used across all 4
+    layers, only ONE — the read-depth layer's 0.7 moderate-tier threshold —
+    is empirically calibrated, and against a single confirmed real locus
+    (GIAB HG002 deletion, replicated across 2 technologies, not 2
+    independent loci). The other 6 — discordant-pair's 0.2/0.5, soft-clip's
+    0.1/0.3, split-read's 0.1/0.3, and the read-depth layer's own 0.3
+    strong-tier threshold — are HEURISTIC: chosen by judgement, never
+    validated against real confirmed-positive or true-negative data. This
+    is not a defect to work around silently — state it plainly in any
+    report that cites evidence_strength: it reflects what fired, weighted
+    by mostly-unvalidated cutoffs, not a calibrated probability.
 
     Args:
         bam_path:   Path to indexed BAM file
@@ -1453,11 +1530,17 @@ def run_igv_screenshot(
     Returns:
         dict with screenshot_path, batch_script used, and success status
     """
-    # Validate color_by before doing anything else — an invalid value
-    # crashes IGV's batch executor with an IllegalArgumentException that
-    # hangs the AWT thread rather than exiting, so this must be caught here
-    # (fails in well under a second) rather than left to be discovered after
-    # burning the full timeout_sec.
+    # Validate inputs before doing anything else — both of these previously
+    # only surfaced after IGV was launched and either crashed (bad
+    # color_by) or sat with nothing loaded until timeout_sec (empty
+    # bam_paths), confirmed directly: an empty bam_paths list produced a
+    # batch script with zero `load` lines and burned the full timeout
+    # before returning an error.
+    if not bam_paths:
+        return {
+            "error": "bam_paths is empty — at least one BAM path or URL is required.",
+            "error_type": "invalid_parameters",
+        }
     if color_by and color_by not in VALID_COLOR_BY_OPTIONS:
         return {
             "error": f"'{color_by}' is not a valid color_by option for this IGV build.",
