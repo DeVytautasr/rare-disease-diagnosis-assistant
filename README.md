@@ -35,8 +35,11 @@ linux-64 development environment exactly, build hashes included, use
 An MCP server exposing 11 tools for interpretable breakpoint evidence
 (discordant pairs, soft clips, split reads, depth, gene lookup, IGV
 screenshots) over BAM files. Validated on synthetic translocation data,
-HCC1143 (real short-read), and GIAB HG002 (real long-read). See
-`stage1_igv_assistant/README.md` for tool details and
-`stage1_igv_assistant/results/` for validation write-ups.
+HCC1143 (real short-read, 2018 pipeline), and GIAB HG002 — cross-technology,
+on both real PacBio HiFi (long-read) and real Illumina 300x (short-read)
+alignments of the same confirmed deletion. See
+`stage1_igv_assistant/README.md` for tool details,
+`stage1_igv_assistant/results/` for validation write-ups, and
+`TUTORIAL.md` for a guided walkthrough (written for external reviewers).
 
 Stage 2 (variant/gene + phenotype prioritization) has not been started.

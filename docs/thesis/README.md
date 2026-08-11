@@ -18,7 +18,7 @@ This directory contains the thesis background and methods chapter.
 9. Concluding Remarks
 10. References (47 total)
 
-## Stage 1 implementation summary (as of dec56c5 — see stage1_igv_assistant/README.md for current counts)
+## Stage 1 implementation summary (as of 9dce3bc — see stage1_igv_assistant/README.md for current counts)
 - 11 tools in bam_tools.py, including the applicable-layers normalisation
   (`applicable_layers`) and the per-layer `evidence_panel` screenshot tool
   added 2026-08-11
@@ -28,11 +28,14 @@ This directory contains the thesis background and methods chapter.
   stage1_igv_assistant/results/AUDIT_2026_08.md for a reproduced run)
 - Validated: synthetic translocation (4/4 STRONG), HCC1143 2018 BAM
   (pipeline limitation documented), GIAB HG002 deletion on PacBio HiFi
-  and Illumina 300x (depth threshold calibrated, 3/4 layers)
+  and Illumina 300x (depth threshold calibrated; normalised over
+  applicable layers, e.g. 3/3 on Illumina 300x — evidence_score
+  63.3/100, split_reads structurally excluded since novoalign emits no
+  SA tags)
 - Outstanding: real balanced translocation BAM not found. Real
   balanced translocation validation data (e.g. a known patient case)
   needed to complete this validation. `evidence_panel` (added
-  2026-08-11) is now validated end-to-end on the HCC1143 locus — see
-  `stage1_igv_assistant/results/EVIDENCE_PANEL_VALIDATION.md` — but
-  only on a weak/no-signal locus; a demo on a true-signal case (e.g.
-  the synthetic translocation BAM) is still outstanding.
+  2026-08-11) is now validated end-to-end across all three cases that
+  matter — synthetic positive control, HCC1143 real negative control,
+  and the real confirmed GIAB deletion — see
+  `stage1_igv_assistant/results/EVIDENCE_PANEL_VALIDATION.md` §§1–3.
