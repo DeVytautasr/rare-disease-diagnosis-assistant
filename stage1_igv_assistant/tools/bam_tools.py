@@ -63,8 +63,10 @@ class DiscordantPairResult:
     window_bp: int
     total_reads_in_window: int
     discordant_pairs: int
-    discordant_fraction: float
+    discordant_fraction: Optional[float]   # None when total_reads_in_window == 0 (undefined, not 0)
     mate_chromosomes: dict     # {chr_name: count}
+    assessable: bool           # False when total_reads_in_window == 0
+    reason: Optional[str]      # explains why, when assessable is False
 
 @dataclass
 class SoftClipResult:
@@ -73,7 +75,7 @@ class SoftClipResult:
     window_bp: int
     total_reads_in_window: int
     soft_clipped_reads: int
-    soft_clipped_fraction: float
+    soft_clipped_fraction: Optional[float]   # None when total_reads_in_window == 0 (undefined, not 0)
     consensus_clip_position: Optional[int]   # position with most clipping (left+right combined)
     max_clips_at_position: int
     # Left (5') and right (3') clips are tracked separately so callers can
@@ -87,6 +89,8 @@ class SoftClipResult:
     right_consensus_position: Optional[int]
     right_max_clips_at_position: int
     dominant_clip_side: Optional[str]   # "left" | "right" | "tied" | None (no clips at all)
+    assessable: bool           # False when total_reads_in_window == 0
+    reason: Optional[str]      # explains why, when assessable is False
 
 @dataclass
 class SplitReadResult:
@@ -95,9 +99,11 @@ class SplitReadResult:
     window_bp: int
     total_reads_in_window: int
     split_reads: int
-    split_read_fraction: float
+    split_read_fraction: Optional[float]   # None when total_reads_in_window == 0 (undefined, not 0)
     partner_chromosomes: dict     # {chr_name: count}, parsed from SA tags
     example_partner_loci: list    # up to 5 "chrom:pos" strings for inspection
+    assessable: bool           # False when total_reads_in_window == 0
+    reason: Optional[str]      # explains why, when assessable is False
 
 @dataclass
 class ReadDepthProfile:
@@ -121,15 +127,21 @@ class BreakpointEvidenceSummary:
     label: str
     chromosome: str
     position: int
-    evidence_score: float          # 0-100, normalised over applicable_layers only
-    evidence_score_raw: float      # 0-100, direct sum of all 4 components regardless of applicability
-    evidence_strength: str         # "none" | "weak" | "moderate" | "strong" — based on evidence_score
-    signal_layers: str             # e.g. "2/3" — signal-showing / total applicable layers
+    evidence_score: Optional[float]  # 0-100, normalised over applicable+assessable layers;
+                                      # None when no layer could be scored at all (see evidence_strength)
+    evidence_score_raw: float      # 0-100, direct sum of all 4 components regardless of applicability;
+                                    # unassessable/inapplicable layers contribute 0, never None
+    evidence_strength: str         # "none" | "weak" | "moderate" | "strong" | "NOT ASSESSABLE"
+    signal_layers: str             # e.g. "2/3" — signal-showing / total applicable+assessable layers;
+                                    # "0/0" when evidence_strength is "NOT ASSESSABLE"
     applicable_layers: list        # which of the 4 layers were counted in evidence_score's denominator
-    discordant_pair_score: float   # 0-25
-    soft_clip_score: float         # 0-25
-    split_read_score: float        # 0-25
-    depth_score: float             # 0-25
+                                    # (caller-supplied applicable_layers, before assessability filtering)
+    unassessable_layers: dict      # {layer_name: reason} for layers with zero reads in their window —
+                                    # excluded from both evidence_score's numerator and denominator
+    discordant_pair_score: Optional[float]   # 0-25, or None if discordant_pairs was unassessable
+    soft_clip_score: Optional[float]         # 0-25, or None if soft_clipped_reads was unassessable
+    split_read_score: Optional[float]        # 0-25, or None if split_reads was unassessable
+    depth_score: Optional[float]             # 0-25, or None if read_depth was unassessable
     locus_stats: dict
     discordant_pairs: dict
     soft_clips: dict
@@ -155,6 +167,30 @@ def _resolve_contig(bam, chromosome: str) -> Optional[str]:
     if alt in refs:
         return alt
     return None
+
+
+def _normalize_chrom(chromosome: str) -> str:
+    """
+    Canonical form for chromosome-name comparisons and dict keys: always
+    chr-prefixed. This is the pure-string counterpart to _resolve_contig
+    above — that one resolves a name against a specific BAM's header (and
+    needs a bam handle to do it); this one has no header to check against,
+    so it just picks one fixed convention (chr-prefixed, matching every
+    BAM/header this project has used) and applies it to both sides of a
+    comparison. Applying it identically to both operands makes "1" and
+    "chr1" compare equal regardless of which convention either string
+    happens to use — that's the property that matters here, not whether
+    chr-prefixed is objectively "more correct".
+
+    Use this wherever a chromosome name is compared, counted, or used as a
+    dict key WITHOUT a bam handle available to resolve it properly (e.g.
+    read.next_reference_name vs a caller-supplied chromosome string, or an
+    SA-tag partner rname used as a dict key). Do NOT use this as a
+    replacement for _resolve_contig when a bam handle IS available (e.g.
+    before bam.fetch()) — that function checks the real header and can
+    catch genuinely-invalid contig names, which this cannot.
+    """
+    return chromosome if chromosome.startswith("chr") else f"chr{chromosome}"
 
 
 def _contig_not_found_error(bam, chromosome: str) -> dict:
@@ -350,6 +386,7 @@ def count_discordant_pairs(
     total = 0
     discordant = 0
     mate_chroms = {}
+    norm_chromosome = _normalize_chrom(chromosome)
 
     for read in read_iter:
         if read.is_unmapped:
@@ -368,10 +405,18 @@ def count_discordant_pairs(
 
         total += 1
 
-        # Discordant = mate on a different chromosome
-        if read.next_reference_name != chromosome:
+        # Discordant = mate on a different chromosome. Both sides are
+        # normalised (chr-prefix-insensitive) before comparing: the mate's
+        # name comes straight from the BAM header's own convention, while
+        # `chromosome` is whatever convention the caller used — comparing
+        # them raw silently downgrades every call where the two differ
+        # (e.g. caller passes "1" against a "chr1"-header BAM, and every
+        # same-chromosome mate gets miscounted as discordant).
+        mate_name = read.next_reference_name
+        mate_norm = _normalize_chrom(mate_name) if mate_name is not None else None
+        if mate_norm != norm_chromosome:
             discordant += 1
-            mate_chr = read.next_reference_name or "unknown"
+            mate_chr = mate_norm if mate_norm is not None else "unknown"
             mate_chroms[mate_chr] = mate_chroms.get(mate_chr, 0) + 1
 
     bam.close()
@@ -381,14 +426,20 @@ def count_discordant_pairs(
         sorted(mate_chroms.items(), key=lambda x: x[1], reverse=True)
     )
 
+    # total == 0 means the fraction is undefined, not 0 — a locus with no
+    # reads at all is not the same claim as "reads present, none discordant".
+    assessable = total > 0
+
     result = DiscordantPairResult(
         chromosome=chromosome,
         position=position,
         window_bp=window_bp,
         total_reads_in_window=total,
         discordant_pairs=discordant,
-        discordant_fraction=round(discordant / total, 3) if total > 0 else 0,
+        discordant_fraction=round(discordant / total, 3) if assessable else None,
         mate_chromosomes=mate_chroms_sorted,
+        assessable=assessable,
+        reason=None if assessable else "no reads in window",
     )
     return asdict(result)
 
@@ -501,6 +552,9 @@ def count_soft_clipped_reads(
     left_consensus_pos, left_max_clips = _consensus(left_clip_positions)
     right_consensus_pos, right_max_clips = _consensus(right_clip_positions)
 
+    # total == 0 means the fraction is undefined, not 0.
+    assessable = total > 0
+
     # Which side dominates overall (not just at the combined consensus
     # position, since a left-clip cluster and a right-clip cluster from
     # reads approaching a breakpoint from opposite directions can coincide
@@ -523,7 +577,7 @@ def count_soft_clipped_reads(
         window_bp=window_bp,
         total_reads_in_window=total,
         soft_clipped_reads=clipped,
-        soft_clipped_fraction=round(clipped / total, 3) if total > 0 else 0,
+        soft_clipped_fraction=round(clipped / total, 3) if assessable else None,
         consensus_clip_position=consensus_pos,
         max_clips_at_position=max_clips,
         left_clip_reads=left_total,
@@ -533,6 +587,8 @@ def count_soft_clipped_reads(
         right_consensus_position=right_consensus_pos,
         right_max_clips_at_position=right_max_clips,
         dominant_clip_side=dominant_side,
+        assessable=assessable,
+        reason=None if assessable else "no reads in window",
     )
     return asdict(result)
 
@@ -617,9 +673,15 @@ def get_split_reads(
             rname, pos_str = fields[0], fields[1]
             if first_rname is None:
                 first_rname, first_pos = rname, pos_str
-            partner_chroms[rname] = partner_chroms.get(rname, 0) + 1
+            # Normalised so an aligner that writes "8" and one that writes
+            # "chr8" for the same physical partner don't split into two
+            # separate dict keys/counts.
+            norm_rname = _normalize_chrom(rname)
+            partner_chroms[norm_rname] = partner_chroms.get(norm_rname, 0) + 1
 
         if first_rname is not None:
+            # Display string keeps the SA tag's own original text (not
+            # normalised) — this is for human inspection, not comparison.
             locus = f"{first_rname}:{first_pos}"
             if locus not in example_loci and len(example_loci) < 5:
                 example_loci.append(locus)
@@ -630,15 +692,20 @@ def get_split_reads(
         sorted(partner_chroms.items(), key=lambda x: x[1], reverse=True)
     )
 
+    # total == 0 means the fraction is undefined, not 0.
+    assessable = total > 0
+
     result = SplitReadResult(
         chromosome=chromosome,
         position=position,
         window_bp=window_bp,
         total_reads_in_window=total,
         split_reads=split,
-        split_read_fraction=round(split / total, 3) if total > 0 else 0,
+        split_read_fraction=round(split / total, 3) if assessable else None,
         partner_chromosomes=partner_chroms_sorted,
         example_partner_loci=example_loci,
+        assessable=assessable,
+        reason=None if assessable else "no reads in window",
     )
     return asdict(result)
 
@@ -666,6 +733,14 @@ def get_read_depth_profile(
     deletion is correctly NOT counted as covering the deleted region it
     spans but has no sequence in — this is exactly the case that matters
     for spotting a deletion inside a long read.
+
+    summary["assessable"] is False when mean_depth is 0 (no reads touched
+    any window in the queried region) — in that case
+    depth_ratio_min_to_mean and likely_deletion are both None, not 0.0/True.
+    A 0/0 ratio previously defaulted to 0.0, which reads as "depth dropped
+    to 0% of the mean" — the strongest possible deletion signal — for a
+    region that was never actually sequenced there. summary["reason"] is
+    "no reads in queried region" when assessable is False, else None.
 
     Args:
         bam_path:    Path to indexed BAM file
@@ -725,14 +800,34 @@ def get_read_depth_profile(
     min_depth = min(counts) if counts else 0
     max_depth = max(counts) if counts else 0
     mean_depth = round(sum(counts) / len(counts), 2) if counts else 0.0
-    depth_ratio_min_to_mean = round(min_depth / mean_depth, 3) if mean_depth > 0 else 0.0
+
+    # A region with zero reads (mean_depth == 0, whether from an empty
+    # window list or windows that all read 0) has an UNDEFINED depth
+    # ratio, not a ratio of 0. Previously depth_ratio_min_to_mean defaulted
+    # to 0.0 here, which reads as 0/mean == 0% of mean depth — the single
+    # most extreme possible "this looks like a deletion" value — and
+    # likely_deletion (and downstream depth_score) took that at face
+    # value, fabricating the strongest possible depth evidence from a
+    # region with no data at all. assessable=False stops that: no ratio,
+    # no likely_deletion verdict, and (in summarize_breakpoint_evidence)
+    # no depth_score — a distinct "cannot be assessed" state rather than
+    # a score.
+    assessable = mean_depth > 0
+    if assessable:
+        depth_ratio_min_to_mean = round(min_depth / mean_depth, 3)
+        likely_deletion = depth_ratio_min_to_mean < DEPTH_RATIO_DELETION_THRESHOLD
+    else:
+        depth_ratio_min_to_mean = None
+        likely_deletion = None
 
     summary = {
         "min_depth": min_depth,
         "max_depth": max_depth,
         "mean_depth": mean_depth,
         "depth_ratio_min_to_mean": depth_ratio_min_to_mean,
-        "likely_deletion": depth_ratio_min_to_mean < DEPTH_RATIO_DELETION_THRESHOLD,
+        "likely_deletion": likely_deletion,
+        "assessable": assessable,
+        "reason": None if assessable else "no reads in queried region",
     }
 
     result = ReadDepthProfile(
@@ -848,6 +943,29 @@ def summarize_breakpoint_evidence(
     going to fire. evidence_strength and signal_layers are both derived from
     evidence_score (the normalised one), not evidence_score_raw.
 
+    ASSESSABILITY (distinct from applicability): a layer can be structurally
+    applicable to this technology but still have zero reads in its own
+    window at this specific locus (e.g. a low-coverage region). That case
+    used to default straight to a 0.0 fraction/ratio — which for the
+    read-depth layer meant a 0/0 ratio silently read as "depth dropped to
+    0% of the mean", awarding the single highest possible depth_score from
+    a region with no data at all. Each layer's own tool now reports
+    "assessable": false (with a "reason") when it has zero reads to work
+    with, and this function:
+      - never assigns that layer a component score (None, not 0.0 — "not
+        scored" is a different claim from "scored 0")
+      - excludes it from both evidence_score's numerator and denominator,
+        exactly like a structurally-inapplicable layer
+      - lists it in unassessable_layers (dict, {layer_name: reason})
+      - still folds it into evidence_score_raw as a 0 contribution, since
+        raw is deliberately the uncorrected, always-out-of-100 number —
+        cite evidence_score for the corrected view
+    If every layer this call would otherwise score is unassessable or
+    inapplicable, evidence_score is None and evidence_strength is the
+    distinct value "NOT ASSESSABLE" — never "none" (which means "we looked
+    and found nothing", not "we couldn't look at all") and never a
+    fabricated 0/100.
+
     This tool does not infer disease relevance — it only summarizes read-level
     structural-variant evidence at a candidate breakpoint.
 
@@ -938,60 +1056,95 @@ def summarize_breakpoint_evidence(
     if stats["total_reads"] == 0:
         observations.append("No reads found in the inspection window — evidence cannot be assessed.")
 
+    # ── Assessability: a layer with zero reads in its own window has an
+    # undefined fraction/ratio, not a 0 one — see the "zero-coverage false
+    # positive" note on get_read_depth_profile. Treated identically to a
+    # structurally-inapplicable layer for scoring purposes: excluded from
+    # both evidence_score's numerator and denominator, and never assigned
+    # a component score (None, not 0.0) — a distinct "cannot be assessed"
+    # state rather than a fabricated score. ──
+    layer_assessable = {
+        "discordant_pairs": disc["assessable"],
+        "soft_clipped_reads": clips["assessable"],
+        "split_reads": split["assessable"],
+        "read_depth": depth_profile["summary"]["assessable"],
+    }
+    layer_reason = {
+        "discordant_pairs": disc.get("reason"),
+        "soft_clipped_reads": clips.get("reason"),
+        "split_reads": split.get("reason"),
+        "read_depth": depth_profile["summary"].get("reason"),
+    }
+    unassessable_layers = {
+        layer: layer_reason[layer]
+        for layer in EVIDENCE_LAYER_NAMES if not layer_assessable[layer]
+    }
+    for layer, reason in unassessable_layers.items():
+        observations.append(f"{layer} could not be assessed: {reason}.")
+
     # ── Discordant-pair component (0-25) ──
-    disc_fraction = disc["discordant_fraction"]
-    if disc_fraction >= 0.5:
-        discordant_pair_score = 25.0
-    elif disc_fraction >= 0.2:
-        discordant_pair_score = 15.0
-    elif disc_fraction > 0:
-        discordant_pair_score = 7.5
+    if not layer_assessable["discordant_pairs"]:
+        discordant_pair_score = None
     else:
-        discordant_pair_score = 0.0
+        disc_fraction = disc["discordant_fraction"]
+        if disc_fraction >= 0.5:
+            discordant_pair_score = 25.0
+        elif disc_fraction >= 0.2:
+            discordant_pair_score = 15.0
+        elif disc_fraction > 0:
+            discordant_pair_score = 7.5
+        else:
+            discordant_pair_score = 0.0
 
     if disc["discordant_pairs"] > 0:
         top_mate_chrom = next(iter(disc["mate_chromosomes"]))
         observations.append(
             f"{disc['discordant_pairs']} discordant pair(s) "
-            f"({disc_fraction:.0%} of reads in window) with mates mapping "
+            f"({disc['discordant_fraction']:.0%} of reads in window) with mates mapping "
             f"predominantly to {top_mate_chrom}."
         )
 
     # ── Soft-clip component (0-25) ──
-    clip_fraction = clips["soft_clipped_fraction"]
-    if clip_fraction >= 0.3:
-        soft_clip_score = 25.0
-    elif clip_fraction >= 0.1:
-        soft_clip_score = 15.0
-    elif clip_fraction > 0:
-        soft_clip_score = 7.5
+    if not layer_assessable["soft_clipped_reads"]:
+        soft_clip_score = None
     else:
-        soft_clip_score = 0.0
+        clip_fraction = clips["soft_clipped_fraction"]
+        if clip_fraction >= 0.3:
+            soft_clip_score = 25.0
+        elif clip_fraction >= 0.1:
+            soft_clip_score = 15.0
+        elif clip_fraction > 0:
+            soft_clip_score = 7.5
+        else:
+            soft_clip_score = 0.0
 
     if clips["soft_clipped_reads"] > 0:
         observations.append(
             f"{clips['soft_clipped_reads']} soft-clipped read(s) "
-            f"({clip_fraction:.0%} of reads in window), "
+            f"({clips['soft_clipped_fraction']:.0%} of reads in window), "
             f"consensus clip position at {clips['consensus_clip_position']} "
             f"({clips['max_clips_at_position']} reads)."
         )
 
     # ── Split-read component (0-25) ──
-    split_fraction = split["split_read_fraction"]
-    if split_fraction >= 0.3:
-        split_read_score = 25.0
-    elif split_fraction >= 0.1:
-        split_read_score = 15.0
-    elif split_fraction > 0:
-        split_read_score = 7.5
+    if not layer_assessable["split_reads"]:
+        split_read_score = None
     else:
-        split_read_score = 0.0
+        split_fraction = split["split_read_fraction"]
+        if split_fraction >= 0.3:
+            split_read_score = 25.0
+        elif split_fraction >= 0.1:
+            split_read_score = 15.0
+        elif split_fraction > 0:
+            split_read_score = 7.5
+        else:
+            split_read_score = 0.0
 
     if split["split_reads"] > 0:
         top_partner_chrom = next(iter(split["partner_chromosomes"]))
         observations.append(
             f"{split['split_reads']} split read(s) "
-            f"({split_fraction:.0%} of reads in window) with supplementary "
+            f"({split['split_read_fraction']:.0%} of reads in window) with supplementary "
             f"alignments mapping predominantly to {top_partner_chrom} "
             f"(e.g. {split['example_partner_loci'][:1]})."
         )
@@ -1003,29 +1156,35 @@ def summarize_breakpoint_evidence(
     # get_read_depth_profile's own `likely_deletion` flag uses, so the two
     # never disagree. 0.3 is a separate, stricter cutoff for the "strong"
     # scoring tier within this composite only.
-    depth_ratio = depth_profile["summary"]["depth_ratio_min_to_mean"]
-    if depth_ratio < 0.3:
-        depth_score = 25.0
-    elif depth_ratio < DEPTH_RATIO_DELETION_THRESHOLD:
-        depth_score = 15.0
+    if not layer_assessable["read_depth"]:
+        depth_score = None
     else:
-        depth_score = 0.0
+        depth_ratio = depth_profile["summary"]["depth_ratio_min_to_mean"]
+        if depth_ratio < 0.3:
+            depth_score = 25.0
+        elif depth_ratio < DEPTH_RATIO_DELETION_THRESHOLD:
+            depth_score = 15.0
+        else:
+            depth_score = 0.0
 
-    if depth_score > 0:
+    if depth_score is not None and depth_score > 0:
         observations.append(
-            f"Read depth drops to {depth_ratio:.0%} of the window mean "
-            f"(min {depth_profile['summary']['min_depth']} vs mean "
+            f"Read depth drops to {depth_profile['summary']['depth_ratio_min_to_mean']:.0%} "
+            f"of the window mean (min {depth_profile['summary']['min_depth']} vs mean "
             f"{depth_profile['summary']['mean_depth']} reads/window) — "
             f"consistent with a possible deletion."
         )
 
-    # ── Combine: each component is already 0-25. evidence_score_raw is
-    # their direct sum over all 4 layers (0-100), unconditionally — this
-    # means discordant_pair_score + soft_clip_score + split_read_score +
-    # depth_score always equals evidence_score_raw exactly, regardless of
-    # applicable_layers. evidence_score normalises the same components over
-    # only the applicable layers, so it isn't penalised by layers that were
-    # never going to fire for this data. ──
+    # ── Combine. evidence_score_raw is the direct sum over all 4 layers
+    # (0-100), treating any unassessable/None component as a 0 contribution
+    # — same convention it already used for structurally-inapplicable
+    # layers, now extended to "no reads to assess" for the same reason:
+    # raw is deliberately the uncorrected, always-out-of-100 number: The
+    # individual component fields themselves stay None (never scored),
+    # only the sum folds them in as 0. evidence_score normalises over only
+    # the layers that are BOTH caller-applicable AND assessable, so it
+    # isn't penalised by layers that were never going to fire, or that
+    # happened to have no reads at this specific locus. ──
     scores_by_layer = {
         "discordant_pairs": discordant_pair_score,
         "soft_clipped_reads": soft_clip_score,
@@ -1033,33 +1192,54 @@ def summarize_breakpoint_evidence(
         "read_depth": depth_score,
     }
     all_component_scores = tuple(scores_by_layer[layer] for layer in EVIDENCE_LAYER_NAMES)
-    evidence_score_raw = round(sum(all_component_scores), 1)
+    evidence_score_raw = round(sum(s for s in all_component_scores if s is not None), 1)
 
     layers_used = list(applicable_layers) if applicable_layers is not None else list(EVIDENCE_LAYER_NAMES)
-    applicable_scores = [scores_by_layer[layer] for layer in layers_used]
-    applicable_max = len(layers_used) * 25.0
-    evidence_score = round(sum(applicable_scores) * (100.0 / applicable_max), 1)
-    signal_layers = f"{sum(1 for s in applicable_scores if s > 0)}/{len(layers_used)}"
+    scoreable_layers = [l for l in layers_used if layer_assessable[l]]
 
-    if evidence_score >= 70:
-        evidence_strength = "strong"
-    elif evidence_score >= 40:
-        evidence_strength = "moderate"
-    elif evidence_score > 0:
-        evidence_strength = "weak"
+    if scoreable_layers:
+        applicable_scores = [scores_by_layer[layer] for layer in scoreable_layers]
+        applicable_max = len(scoreable_layers) * 25.0
+        evidence_score = round(sum(applicable_scores) * (100.0 / applicable_max), 1)
+        signal_layers = f"{sum(1 for s in applicable_scores if s > 0)}/{len(scoreable_layers)}"
+
+        if evidence_score >= 70:
+            evidence_strength = "strong"
+        elif evidence_score >= 40:
+            evidence_strength = "moderate"
+        elif evidence_score > 0:
+            evidence_strength = "weak"
+        else:
+            evidence_strength = "none"
+            if stats["total_reads"] > 0:
+                observations.append("No discordant pairs, soft-clipping, split reads, or depth changes detected near this position.")
     else:
-        evidence_strength = "none"
-        if stats["total_reads"] > 0:
-            observations.append("No discordant pairs, soft-clipping, split reads, or depth changes detected near this position.")
+        # Every caller-applicable layer had zero reads to assess. A score
+        # of 0/100 and "cannot be assessed" are different claims — this
+        # must not collapse into evidence_strength == "none", which means
+        # "we looked and found nothing", not "we couldn't look at all".
+        evidence_score = None
+        signal_layers = "0/0"
+        evidence_strength = "NOT ASSESSABLE"
 
     # interpretation_template is built ONLY from values already computed above —
     # it adds no new facts, just restates them as one plain-language sentence.
+    if evidence_score is not None:
+        score_line = (
+            f"Score: {evidence_score}/100 normalised over {len(scoreable_layers)} applicable "
+            f"layer(s) ({signal_layers} showing signal); raw score over all 4 layers "
+            f"was {evidence_score_raw}/100. "
+        )
+    else:
+        score_line = (
+            f"Score: not assessable — no applicable layer had any reads to evaluate at this "
+            f"locus (raw score over all 4 layers was {evidence_score_raw}/100, shown for "
+            f"reference only, since it treats unassessable layers as 0). "
+        )
     interpretation_template = (
         f"Breakpoint {label} at {chromosome}:{position}. "
         f"Evidence strength: {evidence_strength}. "
-        f"Score: {evidence_score}/100 normalised over {len(layers_used)} applicable "
-        f"layer(s) ({signal_layers} showing signal); raw score over all 4 layers "
-        f"was {evidence_score_raw}/100. "
+        f"{score_line}"
         f"Observations: {'; '.join(observations) if observations else 'none'}. "
         f"Technology note: discordant_pairs only valid for paired-end data; "
         f"split_reads only valid for modern-alignment BAMs with SA tags — use "
@@ -1076,6 +1256,7 @@ def summarize_breakpoint_evidence(
         evidence_strength=evidence_strength,
         signal_layers=signal_layers,
         applicable_layers=layers_used,
+        unassessable_layers=unassessable_layers,
         discordant_pair_score=discordant_pair_score,
         soft_clip_score=soft_clip_score,
         split_read_score=split_read_score,
@@ -1315,6 +1496,13 @@ def check_reciprocal_breakpoint(
     True balanced translocation: both sides show reciprocal discordant signal.
     One-sided signal only: artifact or unbalanced event.
 
+    primary_chromosome/partner_chromosome may be given in either naming
+    convention ("chr1" or "1") regardless of which one the BAM header
+    itself uses — every chromosome comparison here (including matching a
+    reciprocal read's mate back to primary_chromosome) is done on the
+    normalised, chr-prefixed form of both sides, so the verdict does not
+    depend on which convention the caller happened to use.
+
     Args:
         bam_path:           Path to indexed BAM
         primary_chromosome: First breakpoint chromosome (e.g. "chr1")
@@ -1362,9 +1550,16 @@ def check_reciprocal_breakpoint(
     primary_disc = primary.get("discordant_pairs", 0)
     reciprocal_disc = reciprocal.get("discordant_pairs", 0)
 
-    # Check if reciprocal mates point back to primary chromosome
+    # Check if reciprocal mates point back to primary chromosome.
+    # mate_chromosomes' keys are already normalised (chr-prefixed) by
+    # count_discordant_pairs, so primary_chromosome — whatever convention
+    # the caller happened to use — must be normalised the same way before
+    # this lookup, or a caller using the opposite convention to the BAM's
+    # own header (e.g. "1" against a "chr1"-header BAM) silently gets
+    # back_pointing=0 here even when the real count is nonzero, downgrading
+    # the verdict below for no genomic reason.
     reciprocal_mate_chroms = reciprocal.get("mate_chromosomes", {})
-    back_pointing = reciprocal_mate_chroms.get(primary_chromosome, 0)
+    back_pointing = reciprocal_mate_chroms.get(_normalize_chrom(primary_chromosome), 0)
 
     if primary_disc >= 5 and reciprocal_disc >= 5 and back_pointing >= 3:
         verdict = "RECIPROCAL CONFIRMED — both breakpoints show concordant inter-chromosomal signal"

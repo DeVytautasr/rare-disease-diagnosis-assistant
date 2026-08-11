@@ -298,7 +298,21 @@ def run_tests():
         print(f"  Total reads: {stats['total_reads']}")
         print(f"  Mean depth:  {stats['mean_depth']}")
         print(f"  Mean MAPQ:   {stats['mean_mapq']}")
+        print(f"  Low-MAPQ fraction: {stats['low_mapq_fraction']}")
+        print(f"  Forward/reverse:   {stats['forward_reads']}/{stats['reverse_reads']}")
         assert stats["total_reads"] >= 20, "Expected at least 20 reads"
+        # Exact values for this fixture (28 reads: 20 normal @ MAPQ 60,
+        # 5 discordant @ MAPQ 55, 3 clipped @ MAPQ 50; none reverse-strand,
+        # none below MAPQ 20) — previously only total_reads was asserted,
+        # so a regression in mean_depth/mean_mapq/low_mapq_fraction/strand
+        # counting would have passed silently.
+        assert stats["total_reads"] == 28, f"Expected exactly 28 reads, got {stats['total_reads']}"
+        assert stats["mean_depth"] == 2.71, f"Expected mean_depth=2.71, got {stats['mean_depth']}"
+        assert stats["mean_mapq"] == 58.04, f"Expected mean_mapq=58.04, got {stats['mean_mapq']}"
+        assert stats["low_mapq_fraction"] == 0.0, \
+            f"Expected low_mapq_fraction=0.0 (no reads below MAPQ 20), got {stats['low_mapq_fraction']}"
+        assert stats["forward_reads"] == 28, f"Expected all 28 reads forward, got {stats['forward_reads']}"
+        assert stats["reverse_reads"] == 0, f"Expected 0 reverse reads, got {stats['reverse_reads']}"
         print("  PASSED ✓\n")
 
         # ── Test 2: count_discordant_pairs ───────────────────────────
@@ -324,7 +338,30 @@ def run_tests():
         print(f"  Soft-clipped reads:     {clips['soft_clipped_reads']}")
         print(f"  Clip fraction:          {clips['soft_clipped_fraction']}")
         print(f"  Consensus clip pos:     {clips['consensus_clip_position']}")
+        print(f"  Dominant clip side:     {clips['dominant_clip_side']}")
         assert clips["soft_clipped_reads"] >= 3, "Expected 3 clipped reads"
+        # Exact values for this fixture: 3 reads, all left-clipped (15S85M),
+        # all at the same reference_start (1490) — previously only the
+        # raw count was asserted, so consensus_clip_position,
+        # max_clips_at_position, and the left/right split could silently
+        # regress (e.g. a left/right mixup, or a broken tie-break) without
+        # failing this test.
+        assert clips["consensus_clip_position"] == 1490, \
+            f"Expected consensus_clip_position=1490, got {clips['consensus_clip_position']}"
+        assert clips["max_clips_at_position"] == 3, \
+            f"Expected max_clips_at_position=3 (all 3 reads pile up at 1490), got {clips['max_clips_at_position']}"
+        assert clips["left_clip_reads"] == 3, f"Expected 3 left-clipped reads, got {clips['left_clip_reads']}"
+        assert clips["right_clip_reads"] == 0, f"Expected 0 right-clipped reads, got {clips['right_clip_reads']}"
+        assert clips["left_consensus_position"] == 1490, \
+            f"Expected left_consensus_position=1490, got {clips['left_consensus_position']}"
+        assert clips["left_max_clips_at_position"] == 3, \
+            f"Expected left_max_clips_at_position=3, got {clips['left_max_clips_at_position']}"
+        assert clips["right_consensus_position"] is None, \
+            f"Expected right_consensus_position=None (no right clips), got {clips['right_consensus_position']}"
+        assert clips["right_max_clips_at_position"] == 0, \
+            f"Expected right_max_clips_at_position=0, got {clips['right_max_clips_at_position']}"
+        assert clips["dominant_clip_side"] == "left", \
+            f"Expected dominant_clip_side='left', got {clips['dominant_clip_side']}"
         print("  PASSED ✓\n")
 
     finally:
@@ -1041,6 +1078,103 @@ def run_tests():
         if os.path.exists(panel_bam + ".bai"):
             os.unlink(panel_bam + ".bai")
         shutil.rmtree(panel_dir, ignore_errors=True)
+
+    # ── TEST 14: summarize_breakpoint_evidence at a zero-read locus ──────
+    # Regression test for the zero-coverage false-positive bug: a locus
+    # with no reads at all must report NOT ASSESSABLE, never a fabricated
+    # score (0 or otherwise) on any of the 4 components.
+    print("TEST 14: summarize_breakpoint_evidence at a zero-read locus — must be NOT ASSESSABLE")
+    with tempfile.NamedTemporaryFile(suffix=".bam", delete=False) as f:
+        tmp_path9 = f.name
+    try:
+        zero_reads_bam = create_translocation_bam(tmp_path9)
+        # chr1:5,000,000 is far outside every read group this fixture
+        # places (all on chr1:1,000,000-1,051,320ish or chr8:47,000,000+),
+        # so every layer's own window (±500bp default, ±2kb for depth)
+        # is genuinely empty — not technologically inapplicable, just
+        # nothing sequenced there.
+        empty_locus_summary = summarize_breakpoint_evidence(zero_reads_bam, "chr1", 5000000)
+        assert "error" not in empty_locus_summary, f"Unexpected error: {empty_locus_summary}"
+        assert empty_locus_summary["evidence_strength"] == "NOT ASSESSABLE", \
+            f"Expected NOT ASSESSABLE at a zero-read locus, got {empty_locus_summary['evidence_strength']!r}"
+        assert empty_locus_summary["evidence_score"] is None, \
+            f"Expected evidence_score=None (not 0) when nothing is assessable, got {empty_locus_summary['evidence_score']}"
+        assert empty_locus_summary["signal_layers"] == "0/0", \
+            f"Expected signal_layers='0/0', got {empty_locus_summary['signal_layers']!r}"
+        assert set(empty_locus_summary["unassessable_layers"].keys()) == set(EVIDENCE_LAYER_NAMES), \
+            f"Expected all 4 layers unassessable, got {empty_locus_summary['unassessable_layers']}"
+        for component_field in ("discordant_pair_score", "soft_clip_score",
+                                 "split_read_score", "depth_score"):
+            assert empty_locus_summary[component_field] is None, \
+                f"Expected {component_field}=None (never scored) at a zero-read locus, " \
+                f"got {empty_locus_summary[component_field]}"
+        # evidence_score_raw stays a plain number (unassessable layers
+        # contribute 0), so it's still safely inspectable even though the
+        # primary evidence_score field is None.
+        assert empty_locus_summary["evidence_score_raw"] == 0.0, \
+            f"Expected evidence_score_raw=0.0, got {empty_locus_summary['evidence_score_raw']}"
+        print(f"  unassessable_layers: {empty_locus_summary['unassessable_layers']}")
+        print(f"  evidence_score={empty_locus_summary['evidence_score']!r} "
+              f"evidence_strength={empty_locus_summary['evidence_strength']!r} "
+              f"evidence_score_raw={empty_locus_summary['evidence_score_raw']}")
+        print("  PASSED ✓\n")
+    finally:
+        os.unlink(tmp_path9)
+        if os.path.exists(zero_reads_bam):
+            os.unlink(zero_reads_bam)
+        if os.path.exists(zero_reads_bam + ".bai"):
+            os.unlink(zero_reads_bam + ".bai")
+
+    # ── TEST 15: check_reciprocal_breakpoint — naming-convention independence ─
+    # Regression test for the contig-normalisation bug: mate_chromosomes'
+    # keys come straight from the BAM header's own convention, so looking
+    # them up with a caller-supplied chromosome string in the OPPOSITE
+    # convention (bare digit vs chr-prefixed) must not silently zero out
+    # back_pointing_to_primary and downgrade the verdict.
+    print("TEST 15: check_reciprocal_breakpoint — contig-naming-convention independence")
+    with tempfile.NamedTemporaryFile(suffix=".bam", delete=False) as f:
+        tmp_path10 = f.name
+    try:
+        recip_bam = create_translocation_bam(tmp_path10)  # header uses "chr1"/"chr8"
+
+        prefixed = check_reciprocal_breakpoint(recip_bam, "chr1", 1050000, "chr8", 47000000)
+        bare = check_reciprocal_breakpoint(recip_bam, "1", 1050000, "8", 47000000)
+
+        assert "error" not in prefixed, f"Unexpected error: {prefixed}"
+        assert "error" not in bare, f"Unexpected error: {bare}"
+
+        assert bare["verdict"] == prefixed["verdict"], (
+            f"Expected identical verdict regardless of chr-prefix convention, got "
+            f"bare={bare['verdict']!r} vs prefixed={prefixed['verdict']!r}"
+        )
+        assert bare["is_balanced"] == prefixed["is_balanced"], \
+            "Expected is_balanced to match regardless of naming convention"
+        assert bare["primary"]["discordant_pairs"] == prefixed["primary"]["discordant_pairs"] == 15, (
+            f"Expected primary discordant_pairs=15 regardless of naming convention "
+            f"(bare's local-mate split/clip reads must not be miscounted as discordant "
+            f"just because '1' was compared against the header's 'chr1'), got "
+            f"bare={bare['primary']['discordant_pairs']} vs prefixed={prefixed['primary']['discordant_pairs']}"
+        )
+        assert (
+            bare["reciprocal"]["back_pointing_to_primary"]
+            == prefixed["reciprocal"]["back_pointing_to_primary"]
+            == 15
+        ), (
+            f"Expected back_pointing_to_primary=15 regardless of naming convention, got "
+            f"bare={bare['reciprocal']['back_pointing_to_primary']} vs "
+            f"prefixed={prefixed['reciprocal']['back_pointing_to_primary']}"
+        )
+        print(f"  Bare ('1'/'8') and chr-prefixed ('chr1'/'chr8') calls agree exactly: "
+              f"verdict={bare['verdict']!r}, "
+              f"primary_disc={bare['primary']['discordant_pairs']}, "
+              f"back_pointing_to_primary={bare['reciprocal']['back_pointing_to_primary']}")
+        print("  PASSED ✓\n")
+    finally:
+        os.unlink(tmp_path10)
+        if os.path.exists(recip_bam):
+            os.unlink(recip_bam)
+        if os.path.exists(recip_bam + ".bai"):
+            os.unlink(recip_bam + ".bai")
 
     print("=" * 60)
     print("ALL TESTS PASSED")

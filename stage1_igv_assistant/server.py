@@ -66,6 +66,9 @@ def discordant_pairs(bam_path: str, chromosome: str, position: int,
     NOT applicable to unpaired long reads (PacBio HiFi, Oxford Nanopore).
     Real translocation = many discordant pairs clustering on ONE partner chromosome.
     Mates scattered across many different chromosomes = background noise.
+    "assessable": false (with a "reason") and discordant_fraction: null mean
+    zero reads fell in this window — a different claim from "0 discordant
+    pairs found among reads that were there".
     """
     return count_discordant_pairs(bam_path, chromosome, position, window_bp, min_mapq)
 
@@ -77,6 +80,9 @@ def soft_clipped_reads(bam_path: str, chromosome: str, position: int,
     Count reads with soft-clipped overhangs near a breakpoint.
     A pileup at the SAME position (consensus_clip_position) narrows the breakpoint precisely.
     max_clips_at_position < 3 = no real pileup, treat as noise.
+    "assessable": false (with a "reason") and soft_clipped_fraction: null mean
+    zero reads fell in this window — a different claim from "0 clipped reads
+    found among reads that were there".
     """
     return count_soft_clipped_reads(bam_path, chromosome, position, window_bp, min_clip_bases, min_mapq)
 
@@ -89,6 +95,9 @@ def split_reads(bam_path: str, chromosome: str, position: int,
     and modern BWA-MEM alignments. If the whole BAM has zero SA tags
     (2018-era pipelines), this tool cannot contribute regardless of locus.
     Partner positions in SA tags reveal the other side of the breakpoint.
+    "assessable": false (with a "reason") and split_read_fraction: null mean
+    zero reads fell in this window — a different claim from "0 split reads
+    found among reads that were there".
     """
     return get_split_reads(bam_path, chromosome, position, window_bp, min_mapq)
 
@@ -103,6 +112,9 @@ def read_depth_profile(bam_path: str, chromosome: str, start: int,
     depth_ratio_min_to_mean < 0.7 suggests deletion (summary.likely_deletion
     reflects this same threshold — see bam_tools.DEPTH_RATIO_DELETION_THRESHOLD,
     shared with breakpoint_evidence_summary's depth_score).
+    If summary.assessable is false, the region had zero reads at all —
+    depth_ratio_min_to_mean and likely_deletion are both null, not 0.0/true.
+    A 0/0 ratio is undefined, not "depth dropped to 0% of the mean".
     """
     return get_read_depth_profile(bam_path, chromosome, start, end, window_size)
 
@@ -131,24 +143,48 @@ def breakpoint_evidence_summary(bam_path: str, chromosome: str, position: int,
     any technology missing a layer, even when the applicable evidence is
     overwhelming.
 
+    ASSESSABILITY: a layer with zero reads in its own window at this locus
+    (distinct from being structurally inapplicable to the technology) is
+    never assigned a component score — None, not 0.0, since "not scored"
+    and "scored 0" are different claims — and is excluded from
+    evidence_score's numerator/denominator the same way an inapplicable
+    layer is. It still contributes 0 to evidence_score_raw (which stays a
+    plain number, never None). If every layer this call would otherwise
+    score turns out unassessable or inapplicable, evidence_score is None
+    and evidence_strength is the distinct value "NOT ASSESSABLE" — never
+    "none" (which means real evidence was checked and found absent) and
+    never a bare 0/100.
+
     Returns exactly these fields:
       label, chromosome, position — echoed back from the call
-      evidence_score (float, 0-100, normalised over applicable_layers only —
-        this is the primary score; report this one)
+      evidence_score (float 0-100, or None if NOT ASSESSABLE — normalised
+        over applicable AND assessable layers only; this is the primary
+        score when not None; report this one)
       evidence_score_raw (float, 0-100, direct sum over all 4 layers
-        regardless of applicability — always ≤ evidence_score)
-      evidence_strength ("none"|"weak"|"moderate"|"strong", derived from
-        evidence_score, not evidence_score_raw)
-      applicable_layers (list[str] — which layers evidence_score was
-        normalised over; defaults to all 4 if not passed)
-      signal_layers (str, "N/M" — M is len(applicable_layers), N is how many
-        of those showed any signal)
-      discordant_pair_score, soft_clip_score, split_read_score, depth_score (each 0-25,
-        the decomposed per-layer scores — these always sum exactly to evidence_score_raw,
-        and to evidence_score only when all 4 layers are applicable)
+        regardless of applicability/assessability, treating any excluded
+        layer as a 0 contribution — never None, but see ASSESSABILITY
+        above before treating a low raw score as informative on its own)
+      evidence_strength ("none"|"weak"|"moderate"|"strong"|"NOT ASSESSABLE",
+        derived from evidence_score, not evidence_score_raw)
+      applicable_layers (list[str] — which layers were candidates for
+        evidence_score's denominator, before assessability filtering;
+        defaults to all 4 if not passed)
+      unassessable_layers (dict[str, str] — {layer_name: reason} for any
+        layer excluded for having zero reads in its window; empty dict
+        when every applicable layer had reads to assess)
+      signal_layers (str, "N/M" — M is the count of applicable-AND-assessable
+        layers, N is how many of those showed any signal; "0/0" when
+        evidence_strength is "NOT ASSESSABLE")
+      discordant_pair_score, soft_clip_score, split_read_score, depth_score
+        (each 0-25, or None for a layer in unassessable_layers — the
+        non-None ones always sum exactly to evidence_score_raw's
+        corresponding contribution, and to evidence_score only when all 4
+        layers are both applicable and assessable)
       locus_stats, discordant_pairs, soft_clips, split_reads, depth_profile
-        (the full raw dict returned by each underlying tool, for inspection)
-      supporting_observations (list[str] — plain-language notes on what fired)
+        (the full raw dict returned by each underlying tool, for inspection —
+        each of the latter 4 carries its own "assessable"/"reason" fields)
+      supporting_observations (list[str] — plain-language notes on what fired,
+        including a note for each unassessable layer)
       interpretation_template (str — one sentence restating the above fields;
         adds no new facts, only recombines values already in this same dict)
 
@@ -192,9 +228,23 @@ def gene_at_locus(chromosome: str, position: int, genome_build: str = "GRCh38") 
     Look up which gene (if any) is at a breakpoint position using Ensembl.
     This answers the key clinical question: does the breakpoint disrupt a gene?
     Call this after finding strong discordant/split-read evidence.
-    Returns gene name, biotype (protein_coding / lncRNA / etc), strand,
-    and whether the position is intergenic.
-    Requires internet access to query the Ensembl REST API.
+    Requires internet access to query the Ensembl REST API. Retries on
+    HTTP 429 (rate-limited) and transient network errors before giving up.
+
+    Returns exactly these fields on success:
+      chromosome, position, genome_build — echoed back from the call
+      gene_count (int — number of genes overlapping this exact position)
+      is_intergenic (bool — True iff gene_count == 0)
+      genes (list[dict] — one entry per overlapping gene, each with
+        gene_id, gene_name, biotype (protein_coding / lncRNA / etc),
+        strand ("+"|"-"), gene_start, gene_end)
+      clinical_note (str — plain-language recap: how many genes are
+        directly disrupted, or a prompt to check nearby genes if
+        intergenic)
+
+    On failure (Ensembl unreachable after retries), returns instead:
+      error (str), chromosome, position,
+      note ("Ensembl unavailable — gene annotation skipped")
     """
     return get_gene_at_locus(chromosome, position, genome_build)
 
