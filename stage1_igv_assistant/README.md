@@ -1,5 +1,18 @@
 # Stage 1 IGV Breakpoint Assistant
 
+## Installing IGV
+
+`igv_screenshot` and `evidence_panel` need the IGV desktop app, which is
+not a conda package. Install it with:
+```
+bash scripts/install_igv.sh
+```
+This downloads IGV 2.17.4 to `~/IGV_2.17.4` (the default path
+`run_igv_screenshot` auto-detects) and checks that `java` and `DISPLAY`
+are set up correctly, warning clearly if not. Safe to re-run. To point
+the tools at a different IGV install instead, set `IGV_PATH=/path/to/igv.sh`
+(checked before the hardcoded fallback locations).
+
 ## Running the MCP server
 
 From the repo root with rda environment active:
@@ -49,7 +62,10 @@ produced it.
   environment's `bin` directory. IGV requires `java`, which is only present
   in the `rda` environment. A server registered with an empty `env` will
   report screenshot failures with no clear cause — the tools work when
-  called directly from an activated shell but not through MCP.
+  called directly from an activated shell but not through MCP. The same
+  applies to `IGV_PATH` if you're using it to point at a non-default IGV
+  install: it must be set in whatever `env` the MCP server is registered
+  with, not just in your interactive shell.
 - discordant_pairs: only valid for paired-end data (not PacBio HiFi)
 - split_reads: requires modern aligner (BWA-MEM, minimap2). Zero SA
   tags in 2018-era BAMs means this tool cannot contribute.

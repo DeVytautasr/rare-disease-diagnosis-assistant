@@ -1959,7 +1959,9 @@ def run_igv_screenshot(
                          SAM.SHOW_ALIGNMENT_TRACK preference does NOT do
                          this despite the name (tested directly: reads stay
                          fully rendered), so `remove` is used instead.
-        igv_path:        Path to igv.sh (auto-detected if None)
+        igv_path:        Path to igv.sh (auto-detected if None). Auto-detection
+                         checks the IGV_PATH environment variable first, then
+                         falls back to the hardcoded candidates below.
         timeout_sec:     Max seconds to wait for IGV
 
     Returns:
@@ -1984,10 +1986,12 @@ def run_igv_screenshot(
             "valid_options": sorted(VALID_COLOR_BY_OPTIONS),
         }
 
-    # Auto-detect IGV
+    # Auto-detect IGV. IGV_PATH, if set, is checked before the hardcoded
+    # fallback locations.
     candidates = []
     if igv_path is None:
-        candidates = [
+        env_igv_path = _os.environ.get("IGV_PATH")
+        candidates = ([env_igv_path] if env_igv_path else []) + [
             _os.path.expanduser("~/IGV_2.17.4/igv.sh"),
             _os.path.expanduser("~/igv/igv.sh"),
             "/opt/igv/igv.sh",

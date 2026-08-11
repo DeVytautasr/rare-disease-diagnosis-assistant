@@ -1,110 +1,147 @@
+# Portable environment spec. Only the packages actually needed directly are
+# version-pinned: python, samtools, openjdk, pip, sra-tools (bumped from
+# the dev environment's 2.9.6 -- see note below), plus every package in the
+# pip: section (PyPI wheels are properly platform-tagged, so exact pins
+# there are safe across platforms).
+#
+# Everything else below is a transitive C-library dependency (of openjdk's
+# GUI/font stack, of samtools/htslib, or of gettext/glib) that conda's
+# export pulled in as part of the installed closure, not something this
+# project calls directly. These are left UNPINNED on purpose: hard-pinning
+# them to the exact versions solved for linux-64 repeatedly produced
+# real cross-platform conflicts on macOS during testing --
+#   - alsa-lib, libgcc-ng, libstdcxx-ng, _libgcc_mutex, _openmp_mutex,
+#     keyutils, libcups, libnsl, libstdcxx: no macOS build exists at all
+#     for these package names.
+#   - libxml2=2.15.3 pinned exactly conflicted with sra-tools' own
+#     transitive requirement (via perl-xml-libxml) for libxml2 <2.15 on
+#     macOS -- two explicit exact pins that can't both hold at once.
+# Leaving them unpinned lets each platform's solver pick its own mutually
+# consistent set, which is what actually solves. If you need to reproduce
+# an exact transitive-library version for debugging, cross-check
+# environment-linux64-exact.yml.
+#
+# sra-tools: bumped 2.9.6 -> 3.4.1. bioconda never built 2.9.6 (2018) for
+# any macOS arch (oldest osx-64 build is 3.1.1; osx-arm64 only has
+# 3.2.1/3.4.1). Nothing in this repo currently calls sra-tools directly,
+# so the bump carries no known behavioural risk today -- but note it if
+# you add code that depends on its exact CLI behaviour.
+#
+# Verified with `conda create --dry-run` against the real conda-forge/
+# bioconda/defaults indices (not just channeldata.json) under
+# CONDA_SUBDIR=osx-arm64, osx-64, and linux-64 -- osx runs also needed
+# CONDA_OVERRIDE_OSX set, since a Linux host has no macOS version of its
+# own to check the packages' __osx constraints against. All three solved
+# cleanly (exit 0, no unsatisfiable/not-found errors), with python,
+# samtools, sra-tools, and openjdk all resolving at the exact pinned
+# versions on every platform. This is not the same as an actual install
+# on macOS hardware, since none was available here.
+# Windows is NOT supported at any pin: bioconda doesn't publish win-64
+# builds of samtools/htslib/sra-tools.
+#
+# For an exact reproduction of the linux-64 development environment (down
+# to the conda build hash), use environment-linux64-exact.yml instead.
+#
+# IGV itself (the desktop app used for screenshots) is not a conda
+# package and is not included here -- see scripts/install_igv.sh.
 name: rda
 channels:
   - defaults
   - conda-forge
   - bioconda
 dependencies:
-  - _libgcc_mutex=0.1=main
-  - _openmp_mutex=5.1=52_gnu
-  - alsa-lib=1.2.16.1=hb03c661_0
-  - bzip2=1.0.8=h5eee18b_6
-  - c-ares=1.34.7=hd44998d_0
-  - ca-certificates=2026.7.22=hbd8a1cb_0
-  - cairo=1.18.4=he90730b_1
-  - font-ttf-dejavu-sans-mono=2.37=hab24e00_0
-  - font-ttf-inconsolata=3.000=h77eed37_0
-  - font-ttf-source-code-pro=2.038=h77eed37_0
-  - font-ttf-ubuntu=0.83=h77eed37_3
-  - fontconfig=2.18.2=h4dd9078_0
-  - fonts-conda-ecosystem=1=0
-  - fonts-conda-forge=1=hc364b38_1
-  - freetype=2.14.3=ha770c72_1
-  - gettext=0.25.1=hd8bbc44_2
-  - gettext-tools=0.25.1=hc68a75d_2
-  - giflib=5.2.2=ha257d8a_1
-  - graphite2=1.3.15=h54a6638_1
-  - harfbuzz=14.3.0=ha770c72_0
-  - htslib=1.21=h5efdd21_0
-  - icu=78.3=h53478e7_1
-  - jansson=2.15.0=hbcba0ee_0
-  - keyutils=1.6.3=hb9d3cd8_0
-  - krb5=1.22.2=hbde042b_1
-  - lcms2=2.19.1=h0c24ade_1
-  - ld_impl_linux-64=2.44=h9e0c5a2_3
-  - lerc=4.1.0=hdb68285_0
-  - libasprintf=0.25.1=ha6c9436_2
-  - libasprintf-devel=0.25.1=ha6c9436_2
-  - libbrotlicommon=1.2.0=h32cd6e7_0
-  - libbrotlidec=1.2.0=ha2c5f68_0
-  - libbrotlienc=1.2.0=h2e96acb_0
-  - libcups=2.3.3=h7a8fb5f_6
-  - libcurl=8.21.0=hd8fa685_0
-  - libdeflate=1.22=h5eee18b_0
-  - libedit=3.1.20250104=pl5321h7949ede_0
-  - libev=4.33=h7f8727e_1
-  - libexpat=2.8.2=h7354ed3_1
-  - libffi=3.4.8=h06d3fd0_3
-  - libfreetype=2.14.3=ha770c72_1
-  - libfreetype6=2.14.3=h73754d4_1
-  - libgcc=15.2.0=h69a1729_8
-  - libgcc-ng=15.2.0=h166f726_8
-  - libgettextpo=0.25.1=h64fc44f_2
-  - libgettextpo-devel=0.25.1=h64fc44f_2
-  - libglib=2.88.3=ha16e27a_0
-  - libharfbuzz=14.3.0=h17a8019_0
-  - libharfbuzz-devel=14.3.0=h17a8019_0
-  - libiconv=1.18=h75a1612_0
-  - libidn2=2.3.8=hf80d704_0
-  - libjpeg-turbo=3.2.0=hb03c661_1
-  - libkrb5=1.22.2=hbd13c29_0
-  - libnghttp2=1.69.0=h8214106_1
-  - libnsl=2.0.0=h5eee18b_0
-  - libpng=1.6.58=h421ea60_0
-  - libssh2=1.11.1=hfbabe93_1
-  - libstdcxx=15.2.0=h39759b7_8
-  - libstdcxx-ng=15.2.0=hc03a8fd_8
-  - libtiff=4.7.2=h2b43d3b_0
-  - libunistring=1.4.2=h34b0ebb_0
-  - libuuid=1.41.5=h5eee18b_0
-  - libwebp-base=1.6.0=hd42ef1d_1
-  - libxcb=1.17.0=h9b100fa_0
-  - libxml2=2.15.3=he45aeb6_0
-  - libzlib=1.3.2=h47b2149_0
-  - lmdb=1.0.0=hfe55579_0
-  - lz4-c=1.9.4=h7354ed3_5
-  - ncurses=6.5=h7934f7d_0
-  - openjdk=25.0.1=h5755bd7_0
-  - openssl=3.6.3=h35e630c_1
-  - packaging=26.1=py311h06a4308_0
-  - pcre2=10.46=h1321c63_0
-  - pip=26.1.2=pyhc872135_0
-  - pixman=0.46.4=h54a6638_3
-  - pthread-stubs=0.3=h47b2149_2
-  - python=3.11.15=h17756b0_1
-  - readline=8.3=hc2a1206_0
-  - samtools=1.21=h96c455f_1
-  - setuptools=83.0.0=py311h06a4308_0
-  - sqlite=3.53.2=h795bf6d_0
-  - sra-tools=2.9.6=hf484d3e_0
-  - tk=8.6.15=h54e0aa7_0
-  - tzdata=2026c=he532380_0
-  - wheel=0.47.0=py311h06a4308_0
-  - xorg-libice=1.1.2=hb9d3cd8_0
-  - xorg-libsm=1.2.6=h9b100fa_0
-  - xorg-libx11=1.8.12=h9b100fa_1
-  - xorg-libxau=1.0.12=h9b100fa_0
-  - xorg-libxdmcp=1.1.5=h9b100fa_0
-  - xorg-libxext=1.3.7=hb03c661_0
-  - xorg-libxfixes=6.0.2=hb03c661_0
-  - xorg-libxi=1.8.2=hb9d3cd8_0
-  - xorg-libxrandr=1.5.5=hb03c661_0
-  - xorg-libxrender=0.9.12=hb9d3cd8_0
-  - xorg-libxt=1.3.1=hb9d3cd8_0
-  - xorg-libxtst=1.2.5=hb9d3cd8_3
-  - xorg-xorgproto=2024.1=h47b2149_2
-  - xz=5.8.2=h448239c_0
-  - zlib=1.3.2=h47b2149_0
-  - zstd=1.5.7=h11fc155_0
+  - bzip2
+  - c-ares
+  - ca-certificates
+  - cairo
+  - font-ttf-dejavu-sans-mono
+  - font-ttf-inconsolata
+  - font-ttf-source-code-pro
+  - font-ttf-ubuntu
+  - fontconfig
+  - fonts-conda-ecosystem
+  - fonts-conda-forge
+  - freetype
+  - gettext
+  - gettext-tools
+  - giflib
+  - graphite2
+  - harfbuzz
+  - htslib
+  - icu
+  - jansson
+  - krb5
+  - lcms2
+  - ld_impl_linux-64
+  - lerc
+  - libasprintf
+  - libasprintf-devel
+  - libbrotlicommon
+  - libbrotlidec
+  - libbrotlienc
+  - libcurl
+  - libdeflate
+  - libedit
+  - libev
+  - libexpat
+  - libffi
+  - libfreetype
+  - libfreetype6
+  - libgcc
+  - libgettextpo
+  - libgettextpo-devel
+  - libglib
+  - libharfbuzz
+  - libharfbuzz-devel
+  - libiconv
+  - libidn2
+  - libjpeg-turbo
+  - libkrb5
+  - libnghttp2
+  - libpng
+  - libssh2
+  - libtiff
+  - libunistring
+  - libuuid
+  - libwebp-base
+  - libxcb
+  - libxml2
+  - libzlib
+  - lmdb
+  - lz4-c
+  - ncurses
+  - openjdk=25.0.1
+  - openssl
+  - packaging
+  - pcre2
+  - pip=26.1.2
+  - pixman
+  - pthread-stubs
+  - python=3.11.15
+  - readline
+  - samtools=1.21
+  - setuptools
+  - sqlite
+  - sra-tools=3.4.1
+  - tk
+  - tzdata
+  - wheel
+  - xorg-libice
+  - xorg-libsm
+  - xorg-libx11
+  - xorg-libxau
+  - xorg-libxdmcp
+  - xorg-libxext
+  - xorg-libxfixes
+  - xorg-libxi
+  - xorg-libxrandr
+  - xorg-libxrender
+  - xorg-libxt
+  - xorg-libxtst
+  - xorg-xorgproto
+  - xz
+  - zlib
+  - zstd
   - pip:
       - aiofile==3.12.3
       - annotated-types==0.8.0
@@ -182,4 +219,3 @@ dependencies:
       - watchfiles==1.2.0
       - websockets==17.0.1
       - zipp==4.1.0
-prefix: /home/ecovytis/miniconda3/envs/rda
