@@ -45,6 +45,11 @@ from training data. Evidence must be stated with the tool that
 produced it.
 
 ## Known limitations
+- The MCP server must be registered with a `PATH` that includes the conda
+  environment's `bin` directory. IGV requires `java`, which is only present
+  in the `rda` environment. A server registered with an empty `env` will
+  report screenshot failures with no clear cause — the tools work when
+  called directly from an activated shell but not through MCP.
 - discordant_pairs: only valid for paired-end data (not PacBio HiFi)
 - split_reads: requires modern aligner (BWA-MEM, minimap2). Zero SA
   tags in 2018-era BAMs means this tool cannot contribute.
