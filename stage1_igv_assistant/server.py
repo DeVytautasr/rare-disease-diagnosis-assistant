@@ -79,7 +79,10 @@ def soft_clipped_reads(bam_path: str, chromosome: str, position: int,
     """
     Count reads with soft-clipped overhangs near a breakpoint.
     A pileup at the SAME position (consensus_clip_position) narrows the breakpoint precisely.
-    max_clips_at_position < 3 = no real pileup, treat as noise.
+    max_clips_at_position < 3 = no real pileup, treat as noise. This is also
+    exactly what breakpoint_evidence_summary's soft_clip_score now tiers on
+    (3-9 = partial, >=10 = full) instead of soft_clipped_fraction, since
+    fraction alone can't tell a genuine pileup from scattered clipping.
     "assessable": false (with a "reason") and soft_clipped_fraction: null mean
     zero reads fell in this window — a different claim from "0 clipped reads
     found among reads that were there".
@@ -103,9 +106,14 @@ def split_reads(bam_path: str, chromosome: str, position: int,
 
 @mcp.tool()
 def read_depth_profile(bam_path: str, chromosome: str, start: int,
-                       end: int, window_size: int = 100) -> dict:
+                       end: int, window_size: int = 100,
+                       focus_position: int = None,
+                       dip_tolerance_bp: int = 1000) -> dict:
     """
-    Sliding-window read depth across a region.
+    Sliding-window TRUE per-base read depth across a region (each window's
+    "depth" is aligned bases summed into that bin, divided by bin width —
+    not a read count; confirmed bin-size invariant to within ~1-2% on real
+    data, unlike the pre-2026-08-11 implementation).
     Deletions: ~50% depth drop inside deleted region (heterozygous).
     Duplications: depth rises.
     Balanced translocations: depth stays FLAT — this is expected and correct.
@@ -115,8 +123,23 @@ def read_depth_profile(bam_path: str, chromosome: str, start: int,
     If summary.assessable is false, the region had zero reads at all —
     depth_ratio_min_to_mean and likely_deletion are both null, not 0.0/true.
     A 0/0 ratio is undefined, not "depth dropped to 0% of the mean".
+
+    Pass focus_position (a candidate breakpoint within [start, end)) to
+    localize depth_ratio_min_to_mean/likely_deletion to the depth AROUND
+    that position instead of the region's global minimum, which can sit
+    anywhere in a wide scan — including nowhere near the position actually
+    being investigated. When set, the response also adds dip_position
+    (where the region's true minimum actually is), dip_distance_from_focus,
+    and dip_is_at_focus (true when the minimum is within dip_tolerance_bp,
+    default 1000bp — HEURISTIC, see the function's own docstring for
+    calibration provenance) — use these to tell "real signal at this
+    position" apart from "an unrelated dip elsewhere dragged the ratio
+    down", which breakpoint_evidence_summary's depth_score now requires
+    before awarding points.
     """
-    return get_read_depth_profile(bam_path, chromosome, start, end, window_size)
+    return get_read_depth_profile(bam_path, chromosome, start, end, window_size,
+                                  focus_position=focus_position,
+                                  dip_tolerance_bp=dip_tolerance_bp)
 
 @mcp.tool()
 def breakpoint_evidence_summary(bam_path: str, chromosome: str, position: int,
@@ -126,14 +149,26 @@ def breakpoint_evidence_summary(bam_path: str, chromosome: str, position: int,
     Integrates evidence layers into one structured report. Call this LAST.
 
     THRESHOLD PROVENANCE — state this plainly in any report citing
-    evidence_strength, don't present it as calibrated: of the 7 tier
+    evidence_strength, don't present it as calibrated: of the 9 tier
     cutoffs behind the 4 component scores, only ONE (the read-depth
     layer's 0.7 moderate-tier threshold) is empirically calibrated, and
-    against a single confirmed real locus. The other 6 (discordant-pair
-    0.2/0.5, soft-clip 0.1/0.3, split-read 0.1/0.3, and read-depth's own
-    0.3 strong-tier threshold) are heuristic judgement calls, never
-    validated against real data. evidence_strength is an interpretable
-    decomposition of what fired, not a calibrated probability.
+    against a single confirmed real locus. The other 8 (discordant-pair
+    0.2/0.5, soft-clip 3/10 — on max_clips_at_position, not fraction —,
+    split-read 0.1/0.3, read-depth's own 0.3 strong-tier threshold, and
+    the depth layer's dip_tolerance_bp=1000bp localization radius) are
+    heuristic judgement calls, never validated against real data beyond a
+    handful of loci. evidence_strength is an interpretable decomposition
+    of what fired, not a calibrated probability.
+
+    DEPTH SCORING is now two-part: depth_ratio_min_to_mean (localized to
+    focus_position=position, not the window's global minimum — see
+    read_depth_profile) must cross the tier threshold, AND dip_is_at_focus
+    must be True — the region's actual lowest point, not just a nearby
+    one, has to be near the breakpoint. A dip that fails the second check
+    is reported in supporting_observations as off-position, not scored.
+    This closes a real false positive: a locus at a local peak ~1500bp
+    from an unrelated real dip elsewhere in the window used to score full
+    depth points for a deletion that wasn't there.
 
     Pass applicable_layers (from detect_applicable_layers, called once per
     BAM) so the composite score isn't penalised by layers that can't

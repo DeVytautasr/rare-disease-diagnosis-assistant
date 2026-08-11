@@ -141,3 +141,57 @@ a revision of the numbers above; see the Group 4 commit for the run): with
 underlying component scores (7.5 + 7.5 + 0 + 15 = 30, unchanged) normalise
 to `evidence_score: 40.0` / `evidence_strength: moderate`, while
 `evidence_score_raw` stays `30.0` exactly as recorded in this document.
+
+## Post-fix re-validation (2026-08-11) — correction notice, not a revision
+
+**Every `depth_ratio_min_to_mean` / `mean_depth` / `min_depth` / `max_depth`
+figure in this document computed before 2026-08-11 — the 0.609 (PacBio HiFi)
+and 0.542 (Illumina 300x) calibration ratios in "Calibration update", the
+0.618–0.707 / 0.662 / 0.496 ratios in the cross-technology table, and
+`depth_score`'s 0→30 progression in that same table — was computed by
+`get_read_depth_profile`'s pre-2026-08-11 implementation, which counted
+DISTINCT READS touching each sliding window, not true per-base coverage. It
+ran ~1.5–1.7x higher than true depth and was not invariant to the chosen
+`window_size`. The "Mean depth (±500bp)" row (30.5x / 226.77x) is
+unaffected — that came from `get_bam_stats_at_locus`, which always computed
+true per-base depth correctly and was never part of this bug. Figures above
+are kept exactly as originally recorded, per this document's own established
+convention (see the vocabulary note at the top) — not recomputed. See
+`bam_tools.py`'s `get_read_depth_profile` docstring and
+`DEPTH_RATIO_DELETION_THRESHOLD`'s comment for the in-code version of this
+same note.
+
+Two further bugs were fixed alongside the depth-computation one, both found
+by the same kind of blind LLM-assistant session that found the "Scoring bug
+fix" above (`results/LLM_SESSION_3_BLIND.md`): the depth ratio used the
+queried region's global minimum rather than depth local to the candidate
+breakpoint (a real but unrelated dip elsewhere in the ±2kb window could
+drive a positive call at a flat position); and `soft_clip_score` was tiered
+on `soft_clipped_fraction` rather than `max_clips_at_position`, so a
+scattered-clipping locus and a genuine-pileup locus could score identically.
+
+Re-measured at this document's calibration locus (chr1:115,686,862,
+Illumina 300x, `summarize_breakpoint_evidence`'s own internal ±2kb/200bp-bin
+depth query, `applicable_layers` = `[discordant_pairs, soft_clipped_reads,
+read_depth]`):
+
+| | Before fix | After fix |
+|---|---|---|
+| `depth_ratio_min_to_mean` | 0.542 | **0.502** |
+| `likely_deletion` | true | **true (unchanged)** |
+| `dip_is_at_focus` | *(field didn't exist)* | **true** — global minimum is 800bp from the breakpoint, within the 1000bp default tolerance |
+| `depth_score` | 15 | **15 (unchanged — still lands in the 0.3–0.7 tier)** |
+| `max_clips_at_position` | 13 (recorded above, not previously scored on) | **13 — now the soft-clip scoring basis** |
+| `soft_clip_score` | 7.5 (from fraction 0.027 — same 0.1-floor tier as this session's background-noise loci) | **25 (full — genuine pileup now separated from noise)** |
+| `evidence_score` (3 applicable layers) | 40.0 | **63.3** |
+| `evidence_strength` | moderate | **moderate (label unchanged, score up ~58%)** |
+
+`DEPTH_RATIO_DELETION_THRESHOLD=0.7`'s calibration **conclusion is
+unchanged**: the corrected ratio (0.502) is comfortably below 0.7, same as
+the uncorrected one (0.542) — only the intermediate ratio value was wrong,
+not the calibration's outcome. The same locus's two background-noise
+comparison points (chr1:16,890,000 and chr2:96,300,000, from the blind
+session) fell from `evidence_score: 20.0` to `10.0` under the same fixes —
+no verdict flipped at any of the three positions checked. Full three-way
+comparison in `results/LLM_SESSION_3_BLIND.md`'s "Post-fix re-verification"
+section.

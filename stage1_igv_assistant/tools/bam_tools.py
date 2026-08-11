@@ -33,6 +33,20 @@ from typing import Optional
 # Calibrated against a single confirmed locus (replicated across 2
 # sequencing technologies, not 2 independent loci) — treat as a starting
 # point, not a validated general threshold.
+#
+# 2026-08-11 note: the 0.609/0.542 figures above were measured with
+# get_read_depth_profile's pre-FIX-1 implementation, which computed a
+# per-bin read count (inflated ~1.5-1.7x true depth, not bin-size
+# invariant), not true per-base depth, and used the region's GLOBAL
+# minimum rather than a focus-position-localized one (pre-FIX-2). Both
+# bugs are now fixed. Re-measured at the same locus with the corrected
+# tool (true depth, focus_position=115686862, dip_tolerance_bp=1000):
+# 0.472 (window_size=100) / 0.502 (window_size=200) — still comfortably
+# below 0.7, so THIS threshold's conclusion is unchanged; only the
+# intermediate ratio values were ever wrong. The 0.609/0.542 numbers are
+# left here as the historical calibration record, not rewritten — see
+# REAL_DATA_VALIDATION.md's "Post-fix re-validation" addendum for the full
+# before/after comparison.
 DEPTH_RATIO_DELETION_THRESHOLD = 0.7
 
 # Canonical evidence-layer names, shared between summarize_breakpoint_evidence's
@@ -717,22 +731,41 @@ def get_read_depth_profile(
     chromosome: str,
     start: int,
     end: int,
-    window_size: int = 100
+    window_size: int = 100,
+    focus_position: Optional[int] = None,
+    dip_tolerance_bp: int = 1000,
 ) -> dict:
     """
-    Computes mean read depth in sliding windows across a region.
+    Computes true mean per-base read depth in sliding windows across a region.
     Useful for detecting copy-number changes at SV breakpoints:
     - Deletions: depth drops inside the deleted region
     - Duplications: depth rises
     - Balanced events: depth stays flat (use other evidence layers)
 
-    Depth here is approximated as the number of reads with actual aligned
-    sequence in each window (not per-base pileup depth). Overlap is judged
+    Depth per window is the sum of aligned reference bases every read
+    contributes within that window, divided by the window's actual width —
+    the same true per-base coverage get_bam_stats_at_locus already computes
+    (via the identical get_reference_positions() accumulation), just
+    binned instead of averaged over one flat region. Overlap is judged
     from each read's aligned reference positions rather than its
     reference_start/reference_end span, so a read carrying an internal CIGAR
     deletion is correctly NOT counted as covering the deleted region it
     spans but has no sequence in — this is exactly the case that matters
     for spotting a deletion inside a long read.
+
+    Before 2026-08-11 this instead counted the number of DISTINCT READS
+    touching each bin (a read contributed a flat "+1" to every bin it had
+    even one aligned base in, regardless of how much of it actually fell
+    there). That is a read-count, not a depth: it scales with window_size
+    (a read spanning a bin boundary gets double-counted more often in
+    narrow bins) and runs systematically higher than true per-base
+    coverage (confirmed on real data: ~1.5-1.7x bam_stats_at_locus's
+    mean_depth for the same region, and not bin-size invariant — e.g.
+    976.98 at window_size=100 vs 1354.25 at window_size=200 for the same
+    span). See FIX 1 in git history / results/LLM_SESSION_3_BLIND.md for
+    the worked example that surfaced this, and results docs predating this
+    fix for numbers recorded under the old (read-count) implementation —
+    those are annotated, not rewritten.
 
     summary["assessable"] is False when mean_depth is 0 (no reads touched
     any window in the queried region) — in that case
@@ -742,12 +775,78 @@ def get_read_depth_profile(
     region that was never actually sequenced there. summary["reason"] is
     "no reads in queried region" when assessable is False, else None.
 
+    focus_position (optional): when given, depth_ratio_min_to_mean (and so
+    likely_deletion) is computed from the LOCAL depth around focus_position
+    — the minimum across every bin within dip_tolerance_bp of it — against
+    the window mean, instead of from the region's GLOBAL minimum. This
+    matters because the global minimum of a wide scan can sit anywhere in
+    the queried region, not necessarily anywhere near the position
+    actually being investigated: a real but unrelated dip elsewhere in the
+    window used to be indistinguishable from a dip AT the focus position
+    (confirmed on real data: a dip ~1500bp from a queried position
+    previously drove likely_deletion=True for a locus that was itself
+    flat/at a local peak — see FIX 2 in results docs). The local search
+    uses dip_tolerance_bp rather than a fixed one-bin neighborhood for the
+    same reason dip_is_at_focus does (see that parameter's provenance note
+    below) — a real transition's lowest sampled bin isn't always adjacent
+    to where it starts. When given, the response also adds:
+      dip_position:            window_start of the bin holding the
+                                region's GLOBAL minimum depth (independent
+                                of focus_position — always "where the
+                                minimum actually is", for transparency)
+      dip_distance_from_focus: abs(dip_position - focus_position)
+      dip_is_at_focus:         True iff dip_distance_from_focus <=
+                                dip_tolerance_bp
+
+    dip_tolerance_bp (default 1000) — HEURISTIC, calibrated against exactly
+    2 real loci, not validated beyond them: a real deletion breakpoint's
+    depth transition is not always a clean step — it can decline gradually
+    over several hundred bp past the breakpoint before reaching its lowest
+    sampled bin, so requiring the global minimum to fall within a single
+    bin (window_size, ~100-200bp) of focus_position is too strict and
+    would wrongly zero out real signal. Calibrated against: chr1:16,890,000
+    (a locus with NO real signal at the query position — the region's
+    actual minimum is an unrelated fluctuation 1400bp away — correctly
+    stays dip_is_at_focus=False at this tolerance) and chr1:115,686,862 (a
+    real confirmed GIAB HG002 deletion breakpoint — the transition's
+    steepest single-bin drop, -31%, is exactly at the query position, but
+    its lowest sampled bin is 800-900bp downstream — correctly becomes
+    dip_is_at_focus=True at this tolerance). 1000bp sits in the gap
+    between those two real measurements with margin on both sides, but it
+    is still only 2 data points: a real dip between roughly 1000-1400bp
+    from a true breakpoint would currently be missed (dip_is_at_focus
+    wrongly False), and an unrelated fluctuation within 1000bp of a flat
+    locus would currently be miscounted as on-target (dip_is_at_focus
+    wrongly True). Override via this parameter if a specific locus needs
+    a different radius; revisit the default with more real loci if this
+    becomes a bottleneck.
+
+    All three dip_* fields are None when focus_position isn't given, or
+    when the region isn't assessable (mirroring depth_ratio_min_to_mean/
+    likely_deletion — an all-empty region has no meaningful dip location
+    either). likely_deletion still compares against the same
+    DEPTH_RATIO_DELETION_THRESHOLD; only its ratio's numerator changes.
+
     Args:
-        bam_path:    Path to indexed BAM file
-        chromosome:  Chromosome of the region
-        start:       Region start (0-based)
-        end:         Region end
-        window_size: Width of each sliding window in bp (default 100bp)
+        bam_path:       Path to indexed BAM file
+        chromosome:     Chromosome of the region
+        start:          Region start (0-based)
+        end:            Region end
+        window_size:    Width of each sliding window in bp (default 100bp)
+        focus_position: Optional genomic position to localize
+                        depth_ratio_min_to_mean/likely_deletion/dip_* around,
+                        instead of using the region's global minimum. Should
+                        fall within [start, end) — outside that range it's
+                        still accepted (clamped to the nearest scanned bin
+                        for the local-ratio search) but dip_is_at_focus can
+                        never be True, since no bin there was scanned.
+        dip_tolerance_bp: Radius (bp) around focus_position used two ways:
+                        (1) depth_ratio_min_to_mean's numerator is the
+                        minimum depth among bins within this radius, and
+                        (2) dip_is_at_focus is True iff the region's global
+                        minimum also falls within this radius. Default
+                        1000bp — see provenance note above. Ignored when
+                        focus_position isn't given.
 
     Returns:
         ReadDepthProfile as dict, or a structured error dict
@@ -777,29 +876,33 @@ def get_read_depth_profile(
         return fetch_error
 
     window_starts = list(range(start, end, window_size))
-    counts = [0] * len(window_starts)
+    base_counts = [0] * len(window_starts)
 
     for read in read_iter:
         if read.is_unmapped or read.is_secondary or read.is_supplementary:
             continue
 
-        touched_windows = set()
         for pos in read.get_reference_positions():
             if start <= pos < end:
-                touched_windows.add((pos - start) // window_size)
-        for idx in touched_windows:
-            counts[idx] += 1
+                base_counts[(pos - start) // window_size] += 1
 
     bam.close()
 
-    windows = [
-        {"window_start": w_start, "window_end": min(w_start + window_size, end), "depth": depth}
-        for w_start, depth in zip(window_starts, counts)
-    ]
+    # True per-base depth per bin: aligned bases summed into that bin,
+    # divided by the bin's actual width — not window_size, since the last
+    # bin in a region that doesn't divide evenly is narrower than the rest.
+    windows = []
+    depths = []
+    for w_start, base_count in zip(window_starts, base_counts):
+        w_end = min(w_start + window_size, end)
+        bin_width = w_end - w_start
+        depth = round(base_count / bin_width, 2) if bin_width > 0 else 0.0
+        windows.append({"window_start": w_start, "window_end": w_end, "depth": depth})
+        depths.append(depth)
 
-    min_depth = min(counts) if counts else 0
-    max_depth = max(counts) if counts else 0
-    mean_depth = round(sum(counts) / len(counts), 2) if counts else 0.0
+    min_depth = min(depths) if depths else 0
+    max_depth = max(depths) if depths else 0
+    mean_depth = round(sum(depths) / len(depths), 2) if depths else 0.0
 
     # A region with zero reads (mean_depth == 0, whether from an empty
     # window list or windows that all read 0) has an UNDEFINED depth
@@ -813,9 +916,43 @@ def get_read_depth_profile(
     # no depth_score — a distinct "cannot be assessed" state rather than
     # a score.
     assessable = mean_depth > 0
+
+    dip_position = None
+    dip_distance_from_focus = None
+    dip_is_at_focus = None
+
     if assessable:
-        depth_ratio_min_to_mean = round(min_depth / mean_depth, 3)
+        if focus_position is not None:
+            # Same radius as dip_is_at_focus below (dip_tolerance_bp), not
+            # just the single bin on either side of focus_position: a real
+            # breakpoint's depth transition can decline gradually rather
+            # than stepping cleanly, so its lowest sampled bin can sit
+            # several hundred bp past the breakpoint itself (see
+            # dip_tolerance_bp's provenance note above) — an immediate-
+            # neighbor-only search would miss that real signal the same
+            # way dip_is_at_focus would, for the same underlying reason,
+            # so both use one consistent notion of "local".
+            local_indices = [
+                i for i, w_start in enumerate(window_starts)
+                if abs(w_start - focus_position) <= dip_tolerance_bp
+            ]
+            if not local_indices:
+                # focus_position farther than dip_tolerance_bp from every
+                # scanned bin (e.g. outside [start, end) entirely) — fall
+                # back to the single nearest bin so this never raises.
+                nearest = (focus_position - start) // window_size
+                local_indices = [max(0, min(nearest, len(depths) - 1))]
+            local_min_depth = min(depths[i] for i in local_indices)
+            depth_ratio_min_to_mean = round(local_min_depth / mean_depth, 3)
+        else:
+            depth_ratio_min_to_mean = round(min_depth / mean_depth, 3)
         likely_deletion = depth_ratio_min_to_mean < DEPTH_RATIO_DELETION_THRESHOLD
+
+        min_idx = depths.index(min_depth)
+        dip_position = windows[min_idx]["window_start"]
+        if focus_position is not None:
+            dip_distance_from_focus = abs(dip_position - focus_position)
+            dip_is_at_focus = dip_distance_from_focus <= dip_tolerance_bp
     else:
         depth_ratio_min_to_mean = None
         likely_deletion = None
@@ -826,6 +963,9 @@ def get_read_depth_profile(
         "mean_depth": mean_depth,
         "depth_ratio_min_to_mean": depth_ratio_min_to_mean,
         "likely_deletion": likely_deletion,
+        "dip_position": dip_position,
+        "dip_distance_from_focus": dip_distance_from_focus,
+        "dip_is_at_focus": dip_is_at_focus,
         "assessable": assessable,
         "reason": None if assessable else "no reads in queried region",
     }
@@ -843,10 +983,12 @@ def get_read_depth_profile(
 
 # ── Composite scoring thresholds for summarize_breakpoint_evidence ────────────
 #
-# Each of the 4 evidence layers is scored 0/7.5/15/25 from a fraction cutoff
-# (read-depth: 0/15/25, 3 tiers not 4, from a ratio cutoff). Honest
-# accounting of where each number came from — "the numbers looked
-# reasonable" is not the same as "the numbers were validated":
+# discordant-pair and split-read are scored 0/7.5/15/25 from a fraction
+# cutoff; soft-clip is scored 0/15/25 (3 tiers, from 2026-08-11 — see below)
+# from a max_clips_at_position cutoff; read-depth is scored 0/15/25 from a
+# ratio cutoff, gated by a separate localization check. Honest accounting
+# of where each number came from — "the numbers looked reasonable" is not
+# the same as "the numbers were validated":
 #
 # DISCORDANT-PAIR (discordant_fraction cutoffs: 0.2, 0.5)              HEURISTIC
 #   Chosen by judgement, not fit to data. No confirmed real balanced
@@ -858,22 +1000,32 @@ def get_read_depth_profile(
 #   confirms the arithmetic works, not that 0.2/0.5 are correctly placed
 #   for real data.
 #
-# SOFT-CLIP (soft_clipped_fraction cutoffs: 0.1, 0.3)                  HEURISTIC
-#   Same story: no calibration data. The two real numbers on record — HCC1143
-#   7.7% (22/287) and GIAB PacBio HiFi 10% (4/40) — sit just below/at the 0.1
-#   floor respectively; that's coincidence, not confirmation these cutoffs
-#   are correctly placed. Neither locus was a known true-negative or a
-#   locus with an independently confirmed "this fraction should score X"
-#   expectation.
+# SOFT-CLIP (max_clips_at_position cutoffs: 3, 10)                     HEURISTIC
+#   Scored on max_clips_at_position — how many reads pile up at the SAME
+#   position, i.e. count_soft_clipped_reads' own documented "< 3 = no real
+#   pileup, treat as noise" line — not on soft_clipped_fraction (changed
+#   2026-08-11). Fraction alone can't distinguish a genuine pileup from
+#   scattered clipping: on real HG002 Illumina 300x data, three loci with
+#   fraction 0.006 (max_clips=1), 0.008 (max_clips=2), and 0.027 WITH a
+#   genuine 13-read pileup all sat under the old scheme's 0.1 floor and
+#   scored identically — only the third was real signal by the tool's own
+#   noise cutoff. max_clips-based tiers fix that specific failure, but 3
+#   and 10 themselves are still chosen by judgement: the only real numbers
+#   on record are HCC1143 (max_clips unrecorded, fraction 7.7%/22/287),
+#   GIAB PacBio HiFi (max_clips=3, right at the new floor), and this same
+#   GIAB Illumina 300x locus (max_clips=13, comfortably in the top tier) —
+#   3 real data points, 2 of them the same underlying deletion on different
+#   technologies, not an independently confirmed "pileup of size N should
+#   score X" calibration.
 #
 # SPLIT-READ (split_read_fraction cutoffs: 0.1, 0.3)                   HEURISTIC
-#   Same cutoff values as soft-clip, same lack of calibration, but weaker
-#   evidence even than that: no real split-read-positive locus with known
-#   ground truth has been tested at all. Every real BAM checked against
-#   split_reads so far (HCC1143, GIAB Illumina 300x/Novoalign) happened to
-#   have zero SA tags anywhere in the file, so these fraction cutoffs above
-#   0 have never actually fired on real data — only on the synthetic
-#   fixture, again by construction.
+#   Same cutoff values as soft-clip used to have, same lack of calibration,
+#   but weaker evidence even than that: no real split-read-positive locus
+#   with known ground truth has been tested at all. Every real BAM checked
+#   against split_reads so far (HCC1143, GIAB Illumina 300x/Novoalign)
+#   happened to have zero SA tags anywhere in the file, so these fraction
+#   cutoffs above 0 have never actually fired on real data — only on the
+#   synthetic fixture, again by construction.
 #
 # READ-DEPTH (depth_ratio_min_to_mean cutoffs: 0.3, and
 #             DEPTH_RATIO_DELETION_THRESHOLD=0.7)                       MIXED
@@ -881,28 +1033,50 @@ def get_read_depth_profile(
 #   - 0.7 (moderate/15pt tier boundary):                               EMPIRICAL
 #     Calibrated against a real confirmed GIAB HG002 deletion
 #     (chr1:115,686,862), replicated across 2 sequencing technologies —
-#     PacBio HiFi measured a ratio of 0.609, Illumina 300x measured 0.542,
-#     both correctly below 0.7. Still only 1 confirmed locus (not 2
-#     independent loci), and not checked against true-negative/normal-
-#     coverage regions for a false-positive rate — see
-#     REAL_DATA_VALIDATION.md's "Calibration update" section and this
-#     module's DEPTH_RATIO_DELETION_THRESHOLD docstring for the full caveat.
+#     PacBio HiFi and Illumina 300x both measured ratios below 0.7. The
+#     exact ratio values on record from before 2026-08-11 (0.609, 0.542)
+#     were computed with get_read_depth_profile's pre-FIX-1 read-count
+#     implementation, not true per-base depth — see that function's
+#     docstring and results/LLM_SESSION_3_BLIND.md. Re-measured after FIX
+#     1+2 (true depth, focus-position-localized): 0.472 (window_size=100)
+#     / 0.502 (window_size=200) at this same locus, still comfortably below
+#     0.7. Still only 1 confirmed locus (not 2 independent loci), and not
+#     checked against true-negative/normal-coverage regions for a
+#     false-positive rate — see REAL_DATA_VALIDATION.md's "Calibration
+#     update" section and this module's DEPTH_RATIO_DELETION_THRESHOLD
+#     docstring for the full caveat.
 #   - 0.3 (strong/25pt tier boundary):                                 HEURISTIC
-#     Never actually confirmed by real data: BOTH real ratios above (0.609,
-#     0.542) land in the 0.7 tier, not the 0.3 one — nothing has ever
-#     validated that 0.3 is where "strong" should start, because no
-#     confirmed-real locus has ever scored there.
+#     Never actually confirmed by real data: the real ratios above land in
+#     the 0.7 tier, not the 0.3 one — nothing has ever validated that 0.3
+#     is where "strong" should start, because no confirmed-real locus has
+#     ever scored there.
+#   Since 2026-08-11 (FIX 2), a ratio below either cutoff is necessary but
+#   not sufficient to score: get_read_depth_profile is now called with
+#   focus_position=position, so depth_ratio_min_to_mean's numerator is
+#   already restricted to bins within dip_tolerance_bp — but that alone
+#   doesn't guarantee the region's actual lowest point (not just a nearby
+#   one) is near the breakpoint. depth_score additionally requires
+#   dip_is_at_focus (same dip_tolerance_bp radius, default 1000bp,
+#   HEURISTIC — calibrated against exactly 2 real loci, see
+#   get_read_depth_profile's docstring) before awarding points; otherwise
+#   the dip is reported in supporting_observations as off-position, not
+#   scored. This closes a real false-positive: a locus at a local peak
+#   ~1500bp from an unrelated real dip elsewhere in the ±2kb window used to
+#   score depth_score=15 for a deletion that wasn't there.
 #
 # The scale itself — 0-25 per layer, tiers of 0/7.5/15/25 (0/15/25 for
-# depth) summing cleanly to a 0-100 composite — is also a HEURISTIC design
-# choice (round numbers picked for readability), not derived from any
-# statistical model, ROC analysis, or optimization against labeled data.
+# soft-clip and depth) summing cleanly to a 0-100 composite — is also a
+# HEURISTIC design choice (round numbers picked for readability), not
+# derived from any statistical model, ROC analysis, or optimization
+# against labeled data.
 #
-# Net: of the 7 distinct cutoff values used below, 1 (the depth layer's 0.7
-# threshold) is empirically grounded against a real confirmed-positive
-# locus. The other 6 are unvalidated judgement calls. Treat evidence_score/
-# evidence_strength as an interpretable, decomposed summary of what each
-# tool found — not a calibrated probability of a true structural variant.
+# Net: of the 9 distinct cutoff values used below (discordant-pair 0.2/0.5,
+# soft-clip 3/10, split-read 0.1/0.3, depth 0.3/0.7, dip_tolerance_bp
+# 1000), 1 (the depth layer's 0.7 threshold) is empirically grounded
+# against a real confirmed-positive locus. The other 8 are unvalidated
+# judgement calls. Treat evidence_score/evidence_strength as an
+# interpretable, decomposed summary of what each tool found — not a
+# calibrated probability of a true structural variant.
 
 # ── Tool 6: Combined breakpoint evidence summary ──────────────────────────────
 
@@ -918,9 +1092,13 @@ def summarize_breakpoint_evidence(
     """
     Combines discordant-pair, soft-clip, split-read, and read-depth evidence
     into a single interpretable breakpoint evidence summary. Each of the 4
-    evidence layers is scored independently on a 0-25 scale (tiers: 0 / 7.5 /
-    15 / 25 for discordant-pair, soft-clip, and split-read; 0 / 15 / 25 for
-    depth, which has 3 tiers instead of 4).
+    evidence layers is scored independently on a 0-25 scale: 0 / 7.5 / 15 /
+    25 (4 tiers, from a fraction cutoff) for discordant-pair and split-read;
+    0 / 15 / 25 (3 tiers) for soft-clip (from max_clips_at_position — how
+    many reads pile up at the SAME position, not soft_clipped_fraction —
+    see the provenance comment above this function) and for depth (from
+    depth_ratio_min_to_mean, additionally gated on dip_is_at_focus — see
+    below).
 
     evidence_score_raw is the direct, unweighted sum of all four component
     scores (0-100) regardless of whether a layer could possibly apply to this
@@ -970,23 +1148,41 @@ def summarize_breakpoint_evidence(
     structural-variant evidence at a candidate breakpoint.
 
     Depth profile uses a 4kb window (±2kb from position) to capture
-    deletions larger than the short-read fragment size. Threshold 0.7
+    deletions larger than the short-read fragment size, and is queried with
+    focus_position=position (see get_read_depth_profile) so
+    depth_ratio_min_to_mean reflects depth near the breakpoint, not
+    whatever the window's global minimum happens to be. Threshold 0.7
     (DEPTH_RATIO_DELETION_THRESHOLD) calibrated against GIAB HG002 Illumina
     300x validation.
 
+    DEPTH LOCALIZATION: a ratio below threshold is necessary but not
+    sufficient for depth_score > 0 — it also requires dip_is_at_focus
+    (from the same get_read_depth_profile call) to be True. Without this,
+    a real but unrelated dip elsewhere in the ±2kb window can pull the
+    local ratio down even though the region's actual lowest point is
+    nowhere near the queried position — this previously produced a
+    concrete false positive (a locus at a local peak, ~1500bp from an
+    unrelated real dip, scored depth_score=15 for a deletion that wasn't
+    there). When the gate suppresses a would-be score, the dip is still
+    surfaced in supporting_observations as an off-position depth feature,
+    not silently dropped.
+
     THRESHOLD PROVENANCE — read before trusting evidence_strength as more
     than a decomposed summary (full detail in the comment block immediately
-    above this function): of the 7 tier-cutoff values used across all 4
+    above this function): of the 9 tier-cutoff values used across all 4
     layers, only ONE — the read-depth layer's 0.7 moderate-tier threshold —
     is empirically calibrated, and against a single confirmed real locus
     (GIAB HG002 deletion, replicated across 2 technologies, not 2
-    independent loci). The other 6 — discordant-pair's 0.2/0.5, soft-clip's
-    0.1/0.3, split-read's 0.1/0.3, and the read-depth layer's own 0.3
-    strong-tier threshold — are HEURISTIC: chosen by judgement, never
-    validated against real confirmed-positive or true-negative data. This
-    is not a defect to work around silently — state it plainly in any
-    report that cites evidence_strength: it reflects what fired, weighted
-    by mostly-unvalidated cutoffs, not a calibrated probability.
+    independent loci). The other 8 — discordant-pair's 0.2/0.5, soft-clip's
+    3/10 (on max_clips_at_position, not fraction — changed 2026-08-11),
+    split-read's 0.1/0.3, the read-depth layer's own 0.3 strong-tier
+    threshold, and dip_tolerance_bp's 1000bp localization radius — are
+    HEURISTIC: chosen by judgement, never validated against real
+    confirmed-positive or true-negative data beyond the 2-3 real loci noted
+    in the comment block above this function. This is not a defect to work
+    around silently — state it plainly in any report that cites
+    evidence_strength: it reflects what fired, weighted by mostly-
+    unvalidated cutoffs, not a calibrated probability.
 
     Args:
         bam_path:   Path to indexed BAM file
@@ -1040,7 +1236,7 @@ def summarize_breakpoint_evidence(
     )
     depth_profile = get_read_depth_profile(
         bam_path, chromosome, max(0, position - 2000), position + 2000,
-        window_size=200
+        window_size=200, focus_position=position
     )
 
     for result in (stats, disc, clips, split, depth_profile):
@@ -1105,16 +1301,26 @@ def summarize_breakpoint_evidence(
         )
 
     # ── Soft-clip component (0-25) ──
+    # Scored on max_clips_at_position — how many reads actually pile up at
+    # the SAME position — not soft_clipped_fraction. fraction alone can't
+    # tell a genuine pileup from scattered clipping: on real HG002 data, a
+    # locus with fraction=0.006/max_clips=1, one with fraction=0.008/
+    # max_clips=2, and one with fraction=0.027 AND a genuine 13-read pileup
+    # all fell under the old fraction-only scheme's 0.1 tier and scored
+    # identically, even though only the third was a real pileup by
+    # count_soft_clipped_reads' own documented threshold (max_clips_at_
+    # position < 3 = noise). Tiers below are HEURISTIC — chosen by
+    # judgement (matching the depth layer's existing 0/15/25, 3-tier
+    # shape), never validated against real confirmed-positive/negative
+    # data; see the provenance comment above summarize_breakpoint_evidence.
     if not layer_assessable["soft_clipped_reads"]:
         soft_clip_score = None
     else:
-        clip_fraction = clips["soft_clipped_fraction"]
-        if clip_fraction >= 0.3:
+        max_clips = clips["max_clips_at_position"]
+        if max_clips >= 10:
             soft_clip_score = 25.0
-        elif clip_fraction >= 0.1:
+        elif max_clips >= 3:
             soft_clip_score = 15.0
-        elif clip_fraction > 0:
-            soft_clip_score = 7.5
         else:
             soft_clip_score = 0.0
 
@@ -1152,27 +1358,61 @@ def summarize_breakpoint_evidence(
     # ── Read-depth component (0-25) ──
     # depth_ratio < DEPTH_RATIO_DELETION_THRESHOLD flags a possible deletion
     # (coverage drop) — see the module-level constant's docstring for
-    # calibration provenance. This is the same threshold
-    # get_read_depth_profile's own `likely_deletion` flag uses, so the two
-    # never disagree. 0.3 is a separate, stricter cutoff for the "strong"
-    # scoring tier within this composite only.
+    # calibration provenance. depth_ratio here is already focus_position-
+    # localized (get_read_depth_profile was called with focus_position=
+    # position above), so it never disagrees with get_read_depth_profile's
+    # own `likely_deletion` flag for this same call. 0.3 is a separate,
+    # stricter cutoff for the "strong" scoring tier within this composite
+    # only.
+    #
+    # A ratio below threshold is still gated on dip_is_at_focus before it's
+    # allowed to score: depth_ratio's numerator is already restricted to
+    # bins within dip_tolerance_bp of position (see get_read_depth_profile),
+    # so a low ratio here means SOME nearby bin is low, but the region's
+    # actual global minimum could still sit further out and dominate the
+    # local mean/shape for reasons unrelated to this breakpoint. Requiring
+    # dip_is_at_focus too means the region's single lowest point — not just
+    # a nearby one — is within reach of the queried position before this
+    # counts as evidence for THIS breakpoint. This is exactly the case that
+    # produced a false positive before dip_is_at_focus existed: a locus
+    # sitting at a local peak, ~1500bp from an unrelated real dip elsewhere
+    # in the ±2kb window, previously scored depth_score=15 for a deletion
+    # that wasn't there. When the gate suppresses a would-be score, the dip
+    # is still surfaced in supporting_observations — off-position, not
+    # absent.
+    off_position_dip = False
     if not layer_assessable["read_depth"]:
         depth_score = None
     else:
         depth_ratio = depth_profile["summary"]["depth_ratio_min_to_mean"]
+        dip_is_at_focus = depth_profile["summary"]["dip_is_at_focus"]
         if depth_ratio < 0.3:
-            depth_score = 25.0
+            candidate_score = 25.0
         elif depth_ratio < DEPTH_RATIO_DELETION_THRESHOLD:
-            depth_score = 15.0
+            candidate_score = 15.0
         else:
+            candidate_score = 0.0
+
+        if candidate_score > 0 and dip_is_at_focus is False:
             depth_score = 0.0
+            off_position_dip = True
+        else:
+            depth_score = candidate_score
 
     if depth_score is not None and depth_score > 0:
         observations.append(
             f"Read depth drops to {depth_profile['summary']['depth_ratio_min_to_mean']:.0%} "
-            f"of the window mean (min {depth_profile['summary']['min_depth']} vs mean "
-            f"{depth_profile['summary']['mean_depth']} reads/window) — "
+            f"of the window mean near the queried position (min {depth_profile['summary']['min_depth']} "
+            f"vs mean {depth_profile['summary']['mean_depth']} reads/window) — "
             f"consistent with a possible deletion."
+        )
+    elif off_position_dip:
+        observations.append(
+            f"Read depth dips to {depth_profile['summary']['min_depth']} "
+            f"(mean {depth_profile['summary']['mean_depth']}) at "
+            f"{chromosome}:{depth_profile['summary']['dip_position']}, "
+            f"{depth_profile['summary']['dip_distance_from_focus']}bp from the queried position — "
+            f"an off-position depth feature, not counted as evidence for this breakpoint."
         )
 
     # ── Combine. evidence_score_raw is the direct sum over all 4 layers

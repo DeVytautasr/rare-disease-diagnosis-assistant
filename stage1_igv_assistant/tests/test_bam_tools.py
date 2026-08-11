@@ -446,8 +446,18 @@ def run_tests():
         assert set(disc["mate_chromosomes"].keys()) == {"chr8"}, "Expected all mates on chr8"
 
         clips = count_soft_clipped_reads(translocation_bam, chrom, pos)
-        print(f"  Soft-clipped reads: {clips['soft_clipped_reads']} / {clips['total_reads_in_window']}")
+        print(f"  Soft-clipped reads: {clips['soft_clipped_reads']} / {clips['total_reads_in_window']}"
+              f"  max_clips_at_position={clips['max_clips_at_position']}")
         assert clips["soft_clipped_reads"] == 5, "Expected exactly 5 soft-clipped reads"
+        # This fixture's 5 clipped reads each start 3bp apart (reference_start =
+        # 1049950 + i*3) rather than piling up at one position like
+        # create_synthetic_bam's clip fixture does — so max_clips_at_position
+        # is 1, not 5. That matters below: it's below count_soft_clipped_reads'
+        # own documented "< 3 = no real pileup" cutoff, which
+        # summarize_breakpoint_evidence's soft_clip_score now scores on
+        # directly (FIX 3) instead of soft_clipped_fraction.
+        assert clips["max_clips_at_position"] == 1, \
+            f"Expected max_clips_at_position=1 (reads staggered, no real pileup), got {clips['max_clips_at_position']}"
 
         split = get_split_reads(translocation_bam, chrom, pos)
         print(f"  Split reads: {split['split_reads']} / {split['total_reads_in_window']}"
@@ -460,12 +470,37 @@ def run_tests():
               f"  signal_layers: {summary['signal_layers']}")
         for obs in summary["supporting_observations"]:
             print(f"    - {obs}")
-        assert summary["evidence_strength"] == "strong", "Expected STRONG evidence"
-        # signal_layers is 4/4 here rather than 3/4: the read-free gaps deliberately
-        # built into this synthetic BAM (to keep discordant/clip/split fractions clean)
-        # also trip the depth-drop threshold — an artifact of test construction, not a
-        # real deletion signal. See TEST 6 output above: min depth is 0 reads/window.
-        assert summary["signal_layers"] == "4/4", "Expected all 4 evidence layers to show signal"
+        # discordant_pairs and split_reads are the only layers that score here:
+        # discordant_fraction and split_read_fraction both clear the top
+        # (0.5/0.3) tier, so both score 25 full points — real, intentional
+        # signal, unaffected by FIX 2/FIX 3.
+        assert summary["discordant_pair_score"] == 25.0, \
+            f"Expected discordant_pair_score=25.0, got {summary['discordant_pair_score']}"
+        assert summary["split_read_score"] == 25.0, \
+            f"Expected split_read_score=25.0, got {summary['split_read_score']}"
+        # soft_clip_score is 0 (FIX 3): max_clips_at_position=1 (see above) is
+        # below the pileup cutoff, regardless of soft_clipped_fraction being
+        # high — this fixture never simulated a genuine same-position pileup,
+        # it just happened to score full credit under the old fraction-only
+        # scoring, which is exactly the failure mode FIX 3 closes.
+        assert summary["soft_clip_score"] == 0.0, \
+            f"Expected soft_clip_score=0.0 (no real pileup — max_clips_at_position=1), " \
+            f"got {summary['soft_clip_score']}"
+        # depth_score is 0 (FIX 2): the read-free gaps deliberately built into
+        # this synthetic BAM (to keep discordant/clip/split fractions clean)
+        # trip the depth-ratio threshold, but that dip sits well outside
+        # dip_tolerance_bp of the queried position — an off-position depth
+        # feature, not a signal AT this breakpoint. Confirm it's surfaced as
+        # an observation instead of silently dropped.
+        assert summary["depth_score"] == 0.0, \
+            f"Expected depth_score=0.0 (off-position dip, gated by dip_is_at_focus), " \
+            f"got {summary['depth_score']}"
+        assert any("off-position depth feature" in obs for obs in summary["supporting_observations"]), \
+            "Expected an off-position depth feature observation, got: " + repr(summary["supporting_observations"])
+        assert summary["evidence_strength"] == "moderate", \
+            f"Expected MODERATE evidence (25 discordant + 25 split only), got {summary['evidence_strength']!r}"
+        assert summary["signal_layers"] == "2/4", \
+            f"Expected 2/4 (discordant_pairs, split_reads only), got {summary['signal_layers']!r}"
         # Regression test for the bug in commit c093ed4: the 4 component
         # scores must always sum exactly to evidence_score. This broke in
         # production once (found by an LLM session, not by this test suite)
@@ -1175,6 +1210,173 @@ def run_tests():
             os.unlink(recip_bam)
         if os.path.exists(recip_bam + ".bai"):
             os.unlink(recip_bam + ".bai")
+
+    # ── TEST 16: get_read_depth_profile bin-size invariance (FIX 1) ───────
+    # Regression test for the read-count-vs-depth bug: before FIX 1,
+    # get_read_depth_profile counted DISTINCT READS touching each bin
+    # rather than true per-base depth, so mean_depth scaled with
+    # window_size instead of being invariant to it (confirmed on real
+    # HG002 data: 976.98 at window_size=100 vs 1354.25 at window_size=200
+    # for the identical chr1:16,890,000 region — a ~39% difference for
+    # nothing but a binning choice). True per-base depth must not depend
+    # on how it's binned.
+    print("TEST 16: get_read_depth_profile bin-size invariance (FIX 1)")
+    with tempfile.NamedTemporaryFile(suffix=".bam", delete=False) as f:
+        tmp_path11 = f.name
+    try:
+        invariance_bam = create_depth_dropout_bam(tmp_path11)
+        # chr1:0-1000 is the uniform flank TEST 4 already confirmed has no
+        # dropout — same region, three window_size values.
+        means = {}
+        for ws in (50, 100, 200):
+            profile = get_read_depth_profile(invariance_bam, "chr1", 0, 1000, window_size=ws)
+            assert "error" not in profile, f"Unexpected error at window_size={ws}: {profile}"
+            means[ws] = profile["summary"]["mean_depth"]
+        print(f"  mean_depth by window_size: {means}")
+        baseline = means[100]
+        for ws, m in means.items():
+            pct_diff = abs(m - baseline) / baseline * 100
+            assert pct_diff <= 5.0, (
+                f"window_size={ws} mean_depth={m} differs from window_size=100's "
+                f"{baseline} by {pct_diff:.1f}% (>5%) — depth must be bin-size invariant"
+            )
+        print(f"  All window sizes agree with window_size=100 within 5% — PASSED")
+        print("  PASSED ✓\n")
+    finally:
+        os.unlink(tmp_path11)
+        if os.path.exists(invariance_bam):
+            os.unlink(invariance_bam)
+        if os.path.exists(invariance_bam + ".bai"):
+            os.unlink(invariance_bam + ".bai")
+
+    # ── TEST 17/18: real HG002 BAM — FIX 1/2/3 verification ────────────────
+    # These two tests hit a real, public, remote GIAB BAM over HTTPS (same
+    # network-dependency precedent as TEST 7's Ensembl calls) at the exact
+    # 3 coordinates from results/LLM_SESSION_3_BLIND.md, the blind session
+    # that surfaced all 3 bugs these fixes address. Position A and B are
+    # background/no-signal loci; position C is the real, GIAB-confirmed
+    # HG002 deletion breakpoint at chr1:115,686,862 (VANGL1) also used
+    # in TEST 7 and results/REAL_DATA_VALIDATION.md.
+    REAL_HG002_BAM = (
+        "https://ftp-trace.ncbi.nlm.nih.gov/ReferenceSamples/giab/data/"
+        "AshkenazimTrio/HG002_NA24385_son/NIST_HiSeq_HG002_Homogeneity-10953946/"
+        "NHGRI_Illumina300X_AJtrio_novoalign_bams/HG002.GRCh38.300x.bam"
+    )
+    POSITION_A = ("chr1", 16890000)   # background — no real signal at this exact position
+    POSITION_B = ("chr2", 96300000)   # background — cleanest of the 3, no nearby dip either
+    POSITION_C = ("chr1", 115686862)  # real GIAB HG002 deletion breakpoint (VANGL1)
+
+    print("TEST 17: get_read_depth_profile focus_position/dip_* on real HG002 BAM (FIX 1+2)")
+    try:
+        for label, (chrom, pos), expect_deletion, expect_dip_at_focus in (
+            ("A", POSITION_A, False, False),
+            ("C", POSITION_C, True, True),
+        ):
+            profile = get_read_depth_profile(
+                REAL_HG002_BAM, chrom, pos - 3000, pos + 3000,
+                window_size=100, focus_position=pos,
+            )
+            assert "error" not in profile, f"Unexpected error at position {label}: {profile}"
+            s = profile["summary"]
+            print(f"  Position {label} ({chrom}:{pos}): ratio={s['depth_ratio_min_to_mean']} "
+                  f"likely_deletion={s['likely_deletion']} dip_position={s['dip_position']} "
+                  f"dip_distance_from_focus={s['dip_distance_from_focus']} "
+                  f"dip_is_at_focus={s['dip_is_at_focus']}")
+            assert s["likely_deletion"] is expect_deletion, (
+                f"Position {label}: expected likely_deletion={expect_deletion}, got {s['likely_deletion']}"
+            )
+            assert s["dip_is_at_focus"] is expect_dip_at_focus, (
+                f"Position {label}: expected dip_is_at_focus={expect_dip_at_focus}, got {s['dip_is_at_focus']}"
+            )
+            if label == "A":
+                # "Roughly 1500" per the FIX 2 spec; real measured value is
+                # ~1400bp — asserted as a range, not pinned to the exact
+                # integer, since the point being tested is "far enough to
+                # correctly stay off-focus", not the precise offset.
+                assert 1000 <= s["dip_distance_from_focus"] <= 2000, (
+                    f"Position A: expected dip_distance_from_focus roughly 1500, "
+                    f"got {s['dip_distance_from_focus']}"
+                )
+
+        # Bin-size invariance on real data too (window_size=100 vs 200,
+        # ±2kb around position A, matching summarize_breakpoint_evidence's
+        # own internal window) — before FIX 1: 976.98 vs 1354.25 (~39%
+        # apart) for this same region.
+        chrom, pos = POSITION_A
+        p100 = get_read_depth_profile(REAL_HG002_BAM, chrom, pos - 2000, pos + 2000, window_size=100)
+        p200 = get_read_depth_profile(REAL_HG002_BAM, chrom, pos - 2000, pos + 2000, window_size=200)
+        m100, m200 = p100["summary"]["mean_depth"], p200["summary"]["mean_depth"]
+        pct_diff = abs(m100 - m200) / m100 * 100
+        print(f"  Real-data bin-size invariance at position A: window_size=100 mean_depth={m100}, "
+              f"window_size=200 mean_depth={m200} ({pct_diff:.2f}% apart)")
+        assert pct_diff <= 5.0, (
+            f"Real-data mean_depth differs by {pct_diff:.1f}% between window sizes (>5%)"
+        )
+        # ...and consistent with bam_stats_at_locus's independently-computed
+        # true per-base depth for a comparable span (500bp centered on A).
+        stats_a = get_bam_stats_at_locus(REAL_HG002_BAM, chrom, pos - 250, pos + 250)
+        assert "error" not in stats_a, f"Unexpected error: {stats_a}"
+        pct_vs_stats = abs(m100 - stats_a["mean_depth"]) / stats_a["mean_depth"] * 100
+        print(f"  vs bam_stats_at_locus mean_depth={stats_a['mean_depth']} ({pct_vs_stats:.2f}% apart)")
+        assert pct_vs_stats <= 5.0, (
+            f"read_depth_profile disagrees with bam_stats_at_locus by {pct_vs_stats:.1f}% (>5%)"
+        )
+        print("  PASSED ✓\n")
+    except Exception as e:
+        if "getaddrinfo" in str(e) or "Connection" in str(e) or "Network" in str(e):
+            print(f"  SKIPPED — no network access to real GIAB BAM ({e})\n")
+        else:
+            raise
+
+    print("TEST 18: soft-clip max_clips_at_position scoring on real HG002 BAM (FIX 3)")
+    try:
+        results = {}
+        for label, (chrom, pos) in (("A", POSITION_A), ("B", POSITION_B), ("C", POSITION_C)):
+            clips = count_soft_clipped_reads(REAL_HG002_BAM, chrom, pos)
+            assert "error" not in clips, f"Unexpected error at position {label}: {clips}"
+            results[label] = clips
+            print(f"  Position {label}: soft_clipped_fraction={clips['soft_clipped_fraction']} "
+                  f"max_clips_at_position={clips['max_clips_at_position']}")
+
+        # The whole point of FIX 3: A and B have LOW max_clips_at_position
+        # (no real pileup) despite nonzero fraction; C has a genuine pileup.
+        assert results["A"]["max_clips_at_position"] < 3, \
+            f"Expected position A max_clips_at_position < 3 (no pileup), got {results['A']['max_clips_at_position']}"
+        assert results["B"]["max_clips_at_position"] < 3, \
+            f"Expected position B max_clips_at_position < 3 (no pileup), got {results['B']['max_clips_at_position']}"
+        assert results["C"]["max_clips_at_position"] >= 10, \
+            f"Expected position C max_clips_at_position >= 10 (genuine pileup), got {results['C']['max_clips_at_position']}"
+
+        # And the composite score reflects it: A/B score 0 on this layer, C scores full (25).
+        applicable = detect_applicable_layers(REAL_HG002_BAM)["applicable_layers"]
+        for label, (chrom, pos), expected_score in (
+            ("A", POSITION_A, 0.0), ("B", POSITION_B, 0.0), ("C", POSITION_C, 25.0)
+        ):
+            summary = summarize_breakpoint_evidence(
+                REAL_HG002_BAM, chrom, pos, label=f"position_{label}",
+                applicable_layers=applicable,
+            )
+            assert "error" not in summary, f"Unexpected error at position {label}: {summary}"
+            print(f"  Position {label}: soft_clip_score={summary['soft_clip_score']} "
+                  f"depth_score={summary['depth_score']} evidence_score={summary['evidence_score']} "
+                  f"strength={summary['evidence_strength']}")
+            assert summary["soft_clip_score"] == expected_score, (
+                f"Position {label}: expected soft_clip_score={expected_score}, "
+                f"got {summary['soft_clip_score']}"
+            )
+        # C should also now score on depth (FIX 2's dip_is_at_focus gate
+        # passes here — the real deletion's dip IS near the focus).
+        summary_c = summarize_breakpoint_evidence(
+            REAL_HG002_BAM, *POSITION_C, label="position_C", applicable_layers=applicable
+        )
+        assert summary_c["depth_score"] > 0, \
+            f"Expected position C depth_score > 0 (real, on-position deletion signal), got {summary_c['depth_score']}"
+        print("  PASSED ✓\n")
+    except Exception as e:
+        if "getaddrinfo" in str(e) or "Connection" in str(e) or "Network" in str(e):
+            print(f"  SKIPPED — no network access to real GIAB BAM ({e})\n")
+        else:
+            raise
 
     print("=" * 60)
     print("ALL TESTS PASSED")

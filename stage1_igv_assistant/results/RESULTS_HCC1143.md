@@ -130,3 +130,17 @@ To move beyond synthetic data, we validated the tools against a real modern long
 `get_read_depth_profile`'s `likely_deletion` flag and
 `summarize_breakpoint_evidence`'s `depth_score` — see `REAL_DATA_VALIDATION.md`'s
 "Calibration update" section and `AUDIT_2026_08.md` Critical Finding 4.)*
+
+*(Correction, 2026-08-11: the 0.618–0.707 figures above were computed by
+`get_read_depth_profile`'s pre-fix implementation, which counted reads
+touching each window rather than true per-base depth — see that function's
+docstring. The "diluted by flanking sequence" diagnosis in this paragraph
+is still correct and independent of that bug (a global-window-mean
+denominator dilutes the ratio regardless of how per-window depth is
+computed) — `get_read_depth_profile` gained a `focus_position` parameter
+for exactly this reason, so a caller can localize the ratio to depth near
+the breakpoint rather than the whole scanned window. The ~41x/36x→~20x
+flanking-vs-inside comparison in this paragraph came from
+`get_bam_stats_at_locus`, which was never part of either bug, and is
+unaffected. See `REAL_DATA_VALIDATION.md`'s "Post-fix re-validation"
+section for corrected numbers at the equivalent Illumina locus.)*
