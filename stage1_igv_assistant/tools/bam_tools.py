@@ -1105,7 +1105,7 @@ def detect_applicable_layers(bam_path: str, sample_reads: int = 1000) -> dict:
     requires at least one SA (supplementary alignment) tag anywhere in the
     sample (false for aligners that don't emit chimeric alignments, e.g. the
     2018-era Novoalign pipeline used for the HCC1143 validation BAM in this
-    repo — see RESULTS_HCC1143.md).
+    repo — see results/RESULTS_HCC1143.md).
 
     Call this once per BAM (not per locus) at the start of a session, before
     summarize_breakpoint_evidence, and pass its applicable_layers straight
