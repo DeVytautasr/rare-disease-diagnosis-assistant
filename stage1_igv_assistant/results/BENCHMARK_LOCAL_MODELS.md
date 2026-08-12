@@ -43,7 +43,7 @@ citable numbers at all.
 |---|---|:-:|:-:|:-:|:-:|:-:|
 | qwen2.5:7b | POSITIVE | 3/3 | 3/3 | 2/3 | 3/3 | **3/3** |
 | qwen2.5:7b | NEGATIVE | 3/3 | 2/3 | 0/3 | 3/3 | **3/3** |
-| qwen2.5:7b | ADVERSARIAL | 2/3 | 1/3 | 1/3 | 1/3 | **0/3** |
+| qwen2.5:7b | ADVERSARIAL | 2/3 | 3/3 | 1/3 | 1/3 | **0/3** |
 | llama3.1:8b | POSITIVE | 0/3 | 0/3 | 1/3 (n/a=2) | 2/3 | **0/3** |
 | llama3.1:8b | NEGATIVE | 0/3 | 0/3 | 2/3 | 1/3 | **0/3** |
 | llama3.1:8b | ADVERSARIAL | 1/3 | 0/3 | 0/3 (n/a=2) | 2/3 | **0/3** |
@@ -156,16 +156,23 @@ capability gap). qwen2.5:7b, given the identical harness, prompt, tools, and
 hardware, reliably completes 6-10 well-formed sequential tool calls in every
 run. That contrast is itself one of this benchmark's findings.
 
-## Known limitation in the mechanical criteria (applies to all models, visible here because these models fail differently)
+## `all_layers_queried` was fixed, not just annotated
 
-`all_layers_queried` requires a literal call to all four evidence-layer tools
-regardless of whether `applicable_layers` says a layer can produce signal for
-this data. On this BAM (Illumina, Novoalign-aligned, no SA tags), `split_reads`
-is structurally inapplicable, and both the system prompt and the case's own
-expected verdict say the correct behavior is to skip it, not force a call. A
-model that does the methodologically correct thing therefore fails this
-mechanical check by design. See `results/BENCHMARK_CLAUDE_BASELINE.md` for a
-worked example on a run that otherwise reads as a high-quality report. Treat
-`all_layers_queried` as "did the model query at least the layers that could
-possibly matter," not "did it get everything," and weight `correct_verdict`
-and a manual read of `final_report` more heavily than this one criterion.
+An earlier version of this document flagged `all_layers_queried` as
+penalizing correct behavior: it originally required a literal call to all
+four evidence-layer tools regardless of whether `applicable_layers` said a
+layer could produce signal for this data, so a model that correctly skipped
+a structurally inapplicable `split_reads` (as the system prompt itself
+instructs) failed the check by design. Since a criterion that penalizes
+methodologically correct behavior is a bug in the criterion, `score.py` was
+fixed rather than left annotated: `score_all_layers_queried` now reads the
+run's own `applicable_layers` call and only requires the tools covering
+layers that call actually reported as applicable, falling back to requiring
+all four only when `applicable_layers` was never called successfully (in
+which case there's no basis to excuse anything, and `tool_sequence_valid`
+penalizes the missing call separately). All tables in this document reflect
+the fixed criterion. The only score this changed for the local models was
+qwen2.5:7b's ADVERSARIAL case, from 1/3 to 3/3 -- see
+`results/BENCHMARK_CLAUDE_BASELINE.md` for the larger effect on Claude's
+numbers, and `score.py`'s `score_all_layers_queried` docstring for the exact
+fallback logic.

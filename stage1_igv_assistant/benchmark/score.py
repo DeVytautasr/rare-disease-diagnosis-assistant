@@ -2,9 +2,10 @@
 score.py
 
 Five binary criteria applied to one run log (as saved by ollama_harness.py
-or claude_harness.py). Two are fully mechanical (tool_sequence_valid,
-all_layers_queried -- they only look at which tools were called, in what
-order). The other three (citation_fidelity, no_hallucination,
+or claude_harness.py). Two are fully mechanical (tool_sequence_valid, which
+tools were called in what order; all_layers_queried, which tools were
+called plus which layers applicable_layers reported as applicable -- see
+its docstring). The other three (citation_fidelity, no_hallucination,
 correct_verdict) involve matching free text in the model's final report
 against tool output, which cannot be done with full precision by regex
 alone. Each of those returns not just a pass/fail bool but a `detail`
@@ -28,6 +29,18 @@ from stage1_igv_assistant.benchmark.cases import CASES
 REQUIRED_LAYER_TOOLS = {"discordant_pairs", "soft_clipped_reads", "split_reads", "read_depth_profile"}
 FIRST_TOOL_OPTIONS = {"applicable_layers", "bam_stats_at_locus"}
 LAST_TOOL_EXPECTED = "breakpoint_evidence_summary"
+
+# detect_applicable_layers (bam_tools.py, EVIDENCE_LAYER_NAMES) reports the
+# depth layer as "read_depth" while the MCP tool that actually queries it is
+# read_depth_profile -- the other three layer names match their tool names
+# exactly. Used by score_all_layers_queried to map applicable_layers' result
+# onto REQUIRED_LAYER_TOOLS.
+APPLICABLE_LAYER_TO_TOOL = {
+    "discordant_pairs": "discordant_pairs",
+    "soft_clipped_reads": "soft_clipped_reads",
+    "split_reads": "split_reads",
+    "read_depth": "read_depth_profile",
+}
 
 # gene_at_locus, igv_screenshot, evidence_panel, and reciprocal_breakpoint are
 # documented as follow-ups to breakpoint_evidence_summary ("Call this AFTER
@@ -118,11 +131,55 @@ def score_tool_sequence_valid(run: dict) -> dict:
 
 
 def score_all_layers_queried(run: dict) -> dict:
+    """
+    Requires a call to every REQUIRED_LAYER_TOOLS entry that applicable_layers
+    (called earlier in the same run) actually reported as applicable to this
+    BAM -- not all four unconditionally. A model that correctly skips a
+    structurally inapplicable layer (e.g. split_reads on an aligner that
+    never emits SA tags, per this project's own applicable-layers design)
+    should pass this check, not be penalised for following it; see
+    results/BENCHMARK_LOCAL_MODELS.md and BENCHMARK_CLAUDE_BASELINE.md for
+    the runs that motivated this fix.
+
+    Falls back to requiring all four layers if applicable_layers was never
+    called successfully in this run -- with no applicability result to
+    consult there's no basis for excusing any layer, and
+    score_tool_sequence_valid separately penalises not calling it first.
+    """
     called = {c["tool_name"] for c in run["tool_calls"]}
-    missing = REQUIRED_LAYER_TOOLS - called
+
+    applicable_call = next(
+        (
+            c
+            for c in run["tool_calls"]
+            if c["tool_name"] == "applicable_layers" and not c["result"].get("is_error")
+        ),
+        None,
+    )
+    applicable_layer_names = None
+    if applicable_call is not None:
+        raw = applicable_call["result"].get("payload", {}).get("applicable_layers")
+        if isinstance(raw, list):
+            applicable_layer_names = raw
+
+    if applicable_layer_names is None:
+        required = set(REQUIRED_LAYER_TOOLS)
+    else:
+        required = {
+            APPLICABLE_LAYER_TO_TOOL[name]
+            for name in applicable_layer_names
+            if name in APPLICABLE_LAYER_TO_TOOL
+        } & REQUIRED_LAYER_TOOLS
+
+    missing = required - called
     return {
         "passed": not missing,
-        "detail": {"called": sorted(called & REQUIRED_LAYER_TOOLS), "missing": sorted(missing)},
+        "detail": {
+            "applicable_layers_reported": applicable_layer_names,
+            "required": sorted(required),
+            "called": sorted(called & REQUIRED_LAYER_TOOLS),
+            "missing": sorted(missing),
+        },
     }
 
 
