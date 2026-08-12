@@ -1,0 +1,727 @@
+{
+  "model": "claude-sonnet-5",
+  "backend": "anthropic-instruction-blind",
+  "case_id": "NEGATIVE",
+  "run_index": 3,
+  "timestamp": "2026-08-11T22:55:43.127001+00:00",
+  "system_prompt": "(not captured verbatim for this arm -- the subagent was instructed to use ONLY the igv-breakpoint-assistant MCP tools, not read source files, and not rely on prior knowledge; see cases.py's prompt template)",
+  "messages": [
+    {
+      "role": "agent_id",
+      "content": "a276c0760fd47c5e5"
+    }
+  ],
+  "tool_calls": [
+    {
+      "turn": 1,
+      "tool_name": "applicable_layers",
+      "arguments": {
+        "bam_path": "https://ftp-trace.ncbi.nlm.nih.gov/ReferenceSamples/giab/data/AshkenazimTrio/HG002_NA24385_son/NIST_HiSeq_HG002_Homogeneity-10953946/NHGRI_Illumina300X_AJtrio_novoalign_bams/HG002.GRCh38.300x.bam"
+      },
+      "result": {
+        "is_error": false,
+        "payload": {
+          "bam_path": "https://ftp-trace.ncbi.nlm.nih.gov/ReferenceSamples/giab/data/AshkenazimTrio/HG002_NA24385_son/NIST_HiSeq_HG002_Homogeneity-10953946/NHGRI_Illumina300X_AJtrio_novoalign_bams/HG002.GRCh38.300x.bam",
+          "reads_sampled": 1000,
+          "applicable_layers": [
+            "discordant_pairs",
+            "soft_clipped_reads",
+            "read_depth"
+          ],
+          "evidence": {
+            "soft_clipped_reads": "always applicable \u2014 any aligned BAM can show soft-clipping.",
+            "read_depth": "always applicable \u2014 any aligned BAM can show a coverage drop.",
+            "discordant_pairs": "applicable \u2014 at least one paired read observed in 1000 sampled reads.",
+            "split_reads": "not applicable \u2014 no SA tags observed in 1000 sampled reads (consistent with an aligner that doesn't emit chimeric alignments)."
+          }
+        }
+      },
+      "wall_clock_seconds": 0.0,
+      "malformed": false,
+      "malformed_reason": null
+    },
+    {
+      "turn": 2,
+      "tool_name": "bam_stats_at_locus",
+      "arguments": {
+        "bam_path": "https://ftp-trace.ncbi.nlm.nih.gov/ReferenceSamples/giab/data/AshkenazimTrio/HG002_NA24385_son/NIST_HiSeq_HG002_Homogeneity-10953946/NHGRI_Illumina300X_AJtrio_novoalign_bams/HG002.GRCh38.300x.bam",
+        "chromosome": "chr2",
+        "start": 96299500,
+        "end": 96300500
+      },
+      "result": {
+        "is_error": false,
+        "payload": {
+          "chromosome": "chr2",
+          "start": 96299500,
+          "end": 96300500,
+          "total_reads": 2346,
+          "mean_depth": 302.74,
+          "mean_mapq": 70,
+          "low_mapq_fraction": 0,
+          "forward_reads": 1212,
+          "reverse_reads": 1134
+        }
+      },
+      "wall_clock_seconds": 0.0,
+      "malformed": false,
+      "malformed_reason": null
+    },
+    {
+      "turn": 3,
+      "tool_name": "discordant_pairs",
+      "arguments": {
+        "bam_path": "https://ftp-trace.ncbi.nlm.nih.gov/ReferenceSamples/giab/data/AshkenazimTrio/HG002_NA24385_son/NIST_HiSeq_HG002_Homogeneity-10953946/NHGRI_Illumina300X_AJtrio_novoalign_bams/HG002.GRCh38.300x.bam",
+        "chromosome": "chr2",
+        "position": 96300000
+      },
+      "result": {
+        "is_error": false,
+        "payload": {
+          "chromosome": "chr2",
+          "position": 96300000,
+          "window_bp": 500,
+          "total_reads_in_window": 2323,
+          "discordant_pairs": 5,
+          "discordant_fraction": 0.002,
+          "mate_chromosomes": {
+            "chr9": 2,
+            "chr11": 1,
+            "chr5": 1,
+            "chr1": 1
+          },
+          "assessable": true,
+          "reason": null
+        }
+      },
+      "wall_clock_seconds": 0.0,
+      "malformed": false,
+      "malformed_reason": null
+    },
+    {
+      "turn": 4,
+      "tool_name": "soft_clipped_reads",
+      "arguments": {
+        "bam_path": "https://ftp-trace.ncbi.nlm.nih.gov/ReferenceSamples/giab/data/AshkenazimTrio/HG002_NA24385_son/NIST_HiSeq_HG002_Homogeneity-10953946/NHGRI_Illumina300X_AJtrio_novoalign_bams/HG002.GRCh38.300x.bam",
+        "chromosome": "chr2",
+        "position": 96300000
+      },
+      "result": {
+        "is_error": false,
+        "payload": {
+          "chromosome": "chr2",
+          "position": 96300000,
+          "window_bp": 200,
+          "total_reads_in_window": 1057,
+          "soft_clipped_reads": 6,
+          "soft_clipped_fraction": 0.006,
+          "consensus_clip_position": 96299688,
+          "max_clips_at_position": 1,
+          "left_clip_reads": 5,
+          "right_clip_reads": 1,
+          "left_consensus_position": 96299688,
+          "left_max_clips_at_position": 1,
+          "right_consensus_position": 96300093,
+          "right_max_clips_at_position": 1,
+          "dominant_clip_side": "left",
+          "assessable": true,
+          "reason": null
+        }
+      },
+      "wall_clock_seconds": 0.0,
+      "malformed": false,
+      "malformed_reason": null
+    },
+    {
+      "turn": 5,
+      "tool_name": "split_reads",
+      "arguments": {
+        "bam_path": "https://ftp-trace.ncbi.nlm.nih.gov/ReferenceSamples/giab/data/AshkenazimTrio/HG002_NA24385_son/NIST_HiSeq_HG002_Homogeneity-10953946/NHGRI_Illumina300X_AJtrio_novoalign_bams/HG002.GRCh38.300x.bam",
+        "chromosome": "chr2",
+        "position": 96300000
+      },
+      "result": {
+        "is_error": false,
+        "payload": {
+          "chromosome": "chr2",
+          "position": 96300000,
+          "window_bp": 200,
+          "total_reads_in_window": 1057,
+          "split_reads": 0,
+          "split_read_fraction": 0,
+          "partner_chromosomes": {},
+          "example_partner_loci": [],
+          "assessable": true,
+          "reason": null
+        }
+      },
+      "wall_clock_seconds": 0.0,
+      "malformed": false,
+      "malformed_reason": null
+    },
+    {
+      "turn": 6,
+      "tool_name": "read_depth_profile",
+      "arguments": {
+        "bam_path": "https://ftp-trace.ncbi.nlm.nih.gov/ReferenceSamples/giab/data/AshkenazimTrio/HG002_NA24385_son/NIST_HiSeq_HG002_Homogeneity-10953946/NHGRI_Illumina300X_AJtrio_novoalign_bams/HG002.GRCh38.300x.bam",
+        "chromosome": "chr2",
+        "start": 96297000,
+        "end": 96303000,
+        "focus_position": 96300000
+      },
+      "result": {
+        "is_error": false,
+        "payload": {
+          "chromosome": "chr2",
+          "start": 96297000,
+          "end": 96303000,
+          "window_size": 100,
+          "windows": [
+            {
+              "window_start": 96297000,
+              "window_end": 96297100,
+              "depth": 263.14
+            },
+            {
+              "window_start": 96297100,
+              "window_end": 96297200,
+              "depth": 291.77
+            },
+            {
+              "window_start": 96297200,
+              "window_end": 96297300,
+              "depth": 326.17
+            },
+            {
+              "window_start": 96297300,
+              "window_end": 96297400,
+              "depth": 310.44
+            },
+            {
+              "window_start": 96297400,
+              "window_end": 96297500,
+              "depth": 298.01
+            },
+            {
+              "window_start": 96297500,
+              "window_end": 96297600,
+              "depth": 294.17
+            },
+            {
+              "window_start": 96297600,
+              "window_end": 96297700,
+              "depth": 324.77
+            },
+            {
+              "window_start": 96297700,
+              "window_end": 96297800,
+              "depth": 307.59
+            },
+            {
+              "window_start": 96297800,
+              "window_end": 96297900,
+              "depth": 315.41
+            },
+            {
+              "window_start": 96297900,
+              "window_end": 96298000,
+              "depth": 307.93
+            },
+            {
+              "window_start": 96298000,
+              "window_end": 96298100,
+              "depth": 319.44
+            },
+            {
+              "window_start": 96298100,
+              "window_end": 96298200,
+              "depth": 312.18
+            },
+            {
+              "window_start": 96298200,
+              "window_end": 96298300,
+              "depth": 310
+            },
+            {
+              "window_start": 96298300,
+              "window_end": 96298400,
+              "depth": 294.48
+            },
+            {
+              "window_start": 96298400,
+              "window_end": 96298500,
+              "depth": 274.12
+            },
+            {
+              "window_start": 96298500,
+              "window_end": 96298600,
+              "depth": 258.46
+            },
+            {
+              "window_start": 96298600,
+              "window_end": 96298700,
+              "depth": 260.11
+            },
+            {
+              "window_start": 96298700,
+              "window_end": 96298800,
+              "depth": 253.97
+            },
+            {
+              "window_start": 96298800,
+              "window_end": 96298900,
+              "depth": 215.24
+            },
+            {
+              "window_start": 96298900,
+              "window_end": 96299000,
+              "depth": 223.32
+            },
+            {
+              "window_start": 96299000,
+              "window_end": 96299100,
+              "depth": 240.76
+            },
+            {
+              "window_start": 96299100,
+              "window_end": 96299200,
+              "depth": 242.23
+            },
+            {
+              "window_start": 96299200,
+              "window_end": 96299300,
+              "depth": 255.95
+            },
+            {
+              "window_start": 96299300,
+              "window_end": 96299400,
+              "depth": 258.56
+            },
+            {
+              "window_start": 96299400,
+              "window_end": 96299500,
+              "depth": 270.66
+            },
+            {
+              "window_start": 96299500,
+              "window_end": 96299600,
+              "depth": 282.98
+            },
+            {
+              "window_start": 96299600,
+              "window_end": 96299700,
+              "depth": 263.64
+            },
+            {
+              "window_start": 96299700,
+              "window_end": 96299800,
+              "depth": 293.04
+            },
+            {
+              "window_start": 96299800,
+              "window_end": 96299900,
+              "depth": 325.65
+            },
+            {
+              "window_start": 96299900,
+              "window_end": 96300000,
+              "depth": 289.68
+            },
+            {
+              "window_start": 96300000,
+              "window_end": 96300100,
+              "depth": 266.38
+            },
+            {
+              "window_start": 96300100,
+              "window_end": 96300200,
+              "depth": 265.76
+            },
+            {
+              "window_start": 96300200,
+              "window_end": 96300300,
+              "depth": 321.04
+            },
+            {
+              "window_start": 96300300,
+              "window_end": 96300400,
+              "depth": 380.71
+            },
+            {
+              "window_start": 96300400,
+              "window_end": 96300500,
+              "depth": 338.51
+            },
+            {
+              "window_start": 96300500,
+              "window_end": 96300600,
+              "depth": 280.08
+            },
+            {
+              "window_start": 96300600,
+              "window_end": 96300700,
+              "depth": 255.12
+            },
+            {
+              "window_start": 96300700,
+              "window_end": 96300800,
+              "depth": 320.48
+            },
+            {
+              "window_start": 96300800,
+              "window_end": 96300900,
+              "depth": 336.33
+            },
+            {
+              "window_start": 96300900,
+              "window_end": 96301000,
+              "depth": 287.25
+            },
+            {
+              "window_start": 96301000,
+              "window_end": 96301100,
+              "depth": 284.69
+            },
+            {
+              "window_start": 96301100,
+              "window_end": 96301200,
+              "depth": 271.36
+            },
+            {
+              "window_start": 96301200,
+              "window_end": 96301300,
+              "depth": 261.85
+            },
+            {
+              "window_start": 96301300,
+              "window_end": 96301400,
+              "depth": 302.44
+            },
+            {
+              "window_start": 96301400,
+              "window_end": 96301500,
+              "depth": 310.94
+            },
+            {
+              "window_start": 96301500,
+              "window_end": 96301600,
+              "depth": 295.34
+            },
+            {
+              "window_start": 96301600,
+              "window_end": 96301700,
+              "depth": 271.27
+            },
+            {
+              "window_start": 96301700,
+              "window_end": 96301800,
+              "depth": 277.28
+            },
+            {
+              "window_start": 96301800,
+              "window_end": 96301900,
+              "depth": 255.02
+            },
+            {
+              "window_start": 96301900,
+              "window_end": 96302000,
+              "depth": 259.4
+            },
+            {
+              "window_start": 96302000,
+              "window_end": 96302100,
+              "depth": 256.5
+            },
+            {
+              "window_start": 96302100,
+              "window_end": 96302200,
+              "depth": 288.15
+            },
+            {
+              "window_start": 96302200,
+              "window_end": 96302300,
+              "depth": 262.9
+            },
+            {
+              "window_start": 96302300,
+              "window_end": 96302400,
+              "depth": 255.45
+            },
+            {
+              "window_start": 96302400,
+              "window_end": 96302500,
+              "depth": 296.59
+            },
+            {
+              "window_start": 96302500,
+              "window_end": 96302600,
+              "depth": 298.06
+            },
+            {
+              "window_start": 96302600,
+              "window_end": 96302700,
+              "depth": 255.86
+            },
+            {
+              "window_start": 96302700,
+              "window_end": 96302800,
+              "depth": 277.28
+            },
+            {
+              "window_start": 96302800,
+              "window_end": 96302900,
+              "depth": 276.34
+            },
+            {
+              "window_start": 96302900,
+              "window_end": 96303000,
+              "depth": 300.22
+            }
+          ],
+          "summary": {
+            "min_depth": 215.24,
+            "max_depth": 380.71,
+            "mean_depth": 284.87,
+            "depth_ratio_min_to_mean": 0.845,
+            "likely_deletion": false,
+            "dip_position": 96298800,
+            "dip_distance_from_focus": 1200,
+            "dip_is_at_focus": false,
+            "assessable": true,
+            "reason": null
+          }
+        }
+      },
+      "wall_clock_seconds": 0.0,
+      "malformed": false,
+      "malformed_reason": null
+    },
+    {
+      "turn": 7,
+      "tool_name": "breakpoint_evidence_summary",
+      "arguments": {
+        "bam_path": "https://ftp-trace.ncbi.nlm.nih.gov/ReferenceSamples/giab/data/AshkenazimTrio/HG002_NA24385_son/NIST_HiSeq_HG002_Homogeneity-10953946/NHGRI_Illumina300X_AJtrio_novoalign_bams/HG002.GRCh38.300x.bam",
+        "chromosome": "chr2",
+        "position": 96300000,
+        "applicable_layers": [
+          "discordant_pairs",
+          "soft_clipped_reads",
+          "read_depth"
+        ],
+        "label": "chr2:96,300,000 candidate breakpoint"
+      },
+      "result": {
+        "is_error": false,
+        "payload": {
+          "label": "chr2:96,300,000 candidate breakpoint",
+          "chromosome": "chr2",
+          "position": 96300000,
+          "evidence_score": 10,
+          "evidence_score_raw": 7.5,
+          "evidence_strength": "weak",
+          "signal_layers": "1/3",
+          "applicable_layers": [
+            "discordant_pairs",
+            "soft_clipped_reads",
+            "read_depth"
+          ],
+          "unassessable_layers": {},
+          "discordant_pair_score": 7.5,
+          "soft_clip_score": 0,
+          "split_read_score": 0,
+          "depth_score": 0,
+          "locus_stats": {
+            "chromosome": "chr2",
+            "start": 96299500,
+            "end": 96300500,
+            "total_reads": 2346,
+            "mean_depth": 302.74,
+            "mean_mapq": 70,
+            "low_mapq_fraction": 0,
+            "forward_reads": 1212,
+            "reverse_reads": 1134
+          },
+          "discordant_pairs": {
+            "chromosome": "chr2",
+            "position": 96300000,
+            "window_bp": 500,
+            "total_reads_in_window": 2323,
+            "discordant_pairs": 5,
+            "discordant_fraction": 0.002,
+            "mate_chromosomes": {
+              "chr9": 2,
+              "chr11": 1,
+              "chr5": 1,
+              "chr1": 1
+            },
+            "assessable": true,
+            "reason": null
+          },
+          "soft_clips": {
+            "chromosome": "chr2",
+            "position": 96300000,
+            "window_bp": 200,
+            "total_reads_in_window": 1057,
+            "soft_clipped_reads": 6,
+            "soft_clipped_fraction": 0.006,
+            "consensus_clip_position": 96299688,
+            "max_clips_at_position": 1,
+            "left_clip_reads": 5,
+            "right_clip_reads": 1,
+            "left_consensus_position": 96299688,
+            "left_max_clips_at_position": 1,
+            "right_consensus_position": 96300093,
+            "right_max_clips_at_position": 1,
+            "dominant_clip_side": "left",
+            "assessable": true,
+            "reason": null
+          },
+          "split_reads": {
+            "chromosome": "chr2",
+            "position": 96300000,
+            "window_bp": 200,
+            "total_reads_in_window": 1057,
+            "split_reads": 0,
+            "split_read_fraction": 0,
+            "partner_chromosomes": {},
+            "example_partner_loci": [],
+            "assessable": true,
+            "reason": null
+          },
+          "depth_profile": {
+            "chromosome": "chr2",
+            "start": 96298000,
+            "end": 96302000,
+            "window_size": 200,
+            "windows": [
+              {
+                "window_start": 96298000,
+                "window_end": 96298200,
+                "depth": 315.81
+              },
+              {
+                "window_start": 96298200,
+                "window_end": 96298400,
+                "depth": 302.24
+              },
+              {
+                "window_start": 96298400,
+                "window_end": 96298600,
+                "depth": 266.29
+              },
+              {
+                "window_start": 96298600,
+                "window_end": 96298800,
+                "depth": 257.04
+              },
+              {
+                "window_start": 96298800,
+                "window_end": 96299000,
+                "depth": 219.28
+              },
+              {
+                "window_start": 96299000,
+                "window_end": 96299200,
+                "depth": 241.5
+              },
+              {
+                "window_start": 96299200,
+                "window_end": 96299400,
+                "depth": 257.25
+              },
+              {
+                "window_start": 96299400,
+                "window_end": 96299600,
+                "depth": 276.82
+              },
+              {
+                "window_start": 96299600,
+                "window_end": 96299800,
+                "depth": 278.34
+              },
+              {
+                "window_start": 96299800,
+                "window_end": 96300000,
+                "depth": 307.67
+              },
+              {
+                "window_start": 96300000,
+                "window_end": 96300200,
+                "depth": 266.07
+              },
+              {
+                "window_start": 96300200,
+                "window_end": 96300400,
+                "depth": 350.88
+              },
+              {
+                "window_start": 96300400,
+                "window_end": 96300600,
+                "depth": 309.3
+              },
+              {
+                "window_start": 96300600,
+                "window_end": 96300800,
+                "depth": 287.8
+              },
+              {
+                "window_start": 96300800,
+                "window_end": 96301000,
+                "depth": 311.79
+              },
+              {
+                "window_start": 96301000,
+                "window_end": 96301200,
+                "depth": 278.02
+              },
+              {
+                "window_start": 96301200,
+                "window_end": 96301400,
+                "depth": 282.14
+              },
+              {
+                "window_start": 96301400,
+                "window_end": 96301600,
+                "depth": 303.14
+              },
+              {
+                "window_start": 96301600,
+                "window_end": 96301800,
+                "depth": 274.27
+              },
+              {
+                "window_start": 96301800,
+                "window_end": 96302000,
+                "depth": 257.21
+              }
+            ],
+            "summary": {
+              "min_depth": 219.28,
+              "max_depth": 350.88,
+              "mean_depth": 282.14,
+              "depth_ratio_min_to_mean": 0.856,
+              "likely_deletion": false,
+              "dip_position": 96298800,
+              "dip_distance_from_focus": 1200,
+              "dip_is_at_focus": false,
+              "assessable": true,
+              "reason": null
+            }
+          },
+          "supporting_observations": [
+            "5 discordant pair(s) (0% of reads in window) with mates mapping predominantly to chr9.",
+            "6 soft-clipped read(s) (1% of reads in window), consensus clip position at 96299688 (1 reads)."
+          ],
+          "interpretation_template": "Breakpoint chr2:96,300,000 candidate breakpoint at chr2:96300000. Evidence strength: weak. Score: 10.0/100 normalised over 3 applicable layer(s) (1/3 showing signal); raw score over all 4 layers was 7.5/100. Observations: 5 discordant pair(s) (0% of reads in window) with mates mapping predominantly to chr9.; 6 soft-clipped read(s) (1% of reads in window), consensus clip position at 96299688 (1 reads).. Technology note: discordant_pairs only valid for paired-end data; split_reads only valid for modern-alignment BAMs with SA tags \u2014 use detect_applicable_layers() to determine which apply to this BAM. All values in this template come from tool outputs only."
+        }
+      },
+      "wall_clock_seconds": 0.0,
+      "malformed": false,
+      "malformed_reason": null
+    }
+  ],
+  "final_report": "## Structural Variant Investigation: chr2:96,300,000\n\n**BAM (as specified for this session):** `https://ftp-trace.ncbi.nlm.nih.gov/ReferenceSamples/giab/data/AshkenazimTrio/HG002_NA24385_son/NIST_HiSeq_HG002_Homogeneity-10953946/NHGRI_Illumina300X_AJtrio_novoalign_bams/HG002.GRCh38.300x.bam`\n**Build (as specified):** GRCh38\n**Technology (as specified):** Illumina 300x paired-end, Novoalign aligner \u2014 this determines which evidence layers can apply (see `applicable_layers` result below, which independently confirmed data characteristics consistent with this).\n**Candidate breakpoint:** chr2:96,300,000\n\nAll findings below come only from `igv-breakpoint-assistant` MCP tool calls made in this session. Tool call order followed the MCP server's stated rules: `applicable_layers` \u2192 `bam_stats_at_locus` \u2192 `discordant_pairs` \u2192 `soft_clipped_reads` \u2192 `split_reads` \u2192 `read_depth_profile` \u2192 `breakpoint_evidence_summary`.\n\n### 1. Applicable evidence layers (`applicable_layers`)\nSampled 1000 reads from the BAM. Result: `applicable_layers = [\"discordant_pairs\", \"soft_clipped_reads\", \"read_depth\"]`. `split_reads` was found **not applicable** \u2014 \"no SA tags observed in 1000 sampled reads (consistent with an aligner that doesn't emit chimeric alignments),\" matching the stated Novoalign aligner.\n\n### 2. Locus quality check (`bam_stats_at_locus`, chr2:96,299,500\u201396,300,500)\n`total_reads=2346`, `mean_depth=302.74`, `mean_mapq=70`, `low_mapq_fraction=0`, `forward_reads=1212`, `reverse_reads=1134`. Low-MAPQ fraction of 0 is far below the tool's 0.4 repetitive-region caution threshold, so this is not a repetitive/low-confidence region \u2014 signals below can be read at face value. Depth (~303x) and roughly balanced strand counts are consistent with the stated 300x nominal coverage.\n\n### 3. Discordant pairs (`discordant_pairs`, chr2:96,300,000, \u00b1500bp)\n`total_reads_in_window=2323`, `discordant_pairs=5`, `discordant_fraction=0.002` (0.2%). Mates land on `{\"chr9\": 2, \"chr11\": 1, \"chr5\": 1, \"chr1\": 1}` \u2014 scattered across four different partner chromosomes, no more than 2 on any single one. Per the tool's own criterion (\"Real translocation = many discordant pairs clustering on ONE partner chromosome. Mates scattered across many different chromosomes = background noise\"), this pattern reads as background noise, not translocation signal.\n\n### 4. Soft-clipped reads (`soft_clipped_reads`, chr2:96,300,000, \u00b1200bp)\n`total_reads_in_window=1057`, `soft_clipped_reads=6`, `soft_clipped_fraction=0.006` (0.6%), `max_clips_at_position=1`, `dominant_clip_side=\"left\"` (`left_clip_reads=5`, `right_clip_reads=1`), consensus positions 96,299,688 (left) / 96,300,093 (right). The tool's own threshold states `max_clips_at_position < 3` = \"no real pileup, treat as noise\" \u2014 at 1, this is well below that, i.e., scattered clipping, not a breakpoint pileup.\n\n### 5. Split reads (`split_reads`, chr2:96,300,000, \u00b1200bp)\n`total_reads_in_window=1057`, `split_reads=0`, `split_read_fraction=0`, `partner_chromosomes={}`, `assessable=true` (reads were present in the window; zero of them were SA-tagged). This locus-level result is consistent with the whole-BAM `applicable_layers` finding that this aligner produced no SA tags anywhere.\n\n### 6. Read depth profile (`read_depth_profile`, chr2:96,297,000\u201396,303,000, 100bp bins, `focus_position=96300000`)\n`min_depth=215.24`, `max_depth=380.71`, `mean_depth=284.87`, `depth_ratio_min_to_mean=0.845`, `likely_deletion=false`. The region's true minimum (`dip_position=96,298,800`) is `dip_distance_from_focus=1200`bp from the candidate breakpoint, giving `dip_is_at_focus=false` (outside the tool's 1000bp default localization tolerance). So depth near 96,300,000 itself is unremarkable \u2014 the one real dip in the window belongs to a different, unrelated position.\n\n### 7. Composite summary (`breakpoint_evidence_summary`, passing `applicable_layers=[\"discordant_pairs\",\"soft_clipped_reads\",\"read_depth\"]`)\n- `evidence_score = 10` / 100 (normalized over the 3 applicable layers) \u2014 **primary finding per MCP server instructions**\n- `evidence_score_raw = 7.5` / 100 (over all 4 layers, unnormalized)\n- `evidence_strength = \"weak\"`, `signal_layers = \"1/3\"`\n- Component scores: `discordant_pair_score=7.5`, `soft_clip_score=0`, `split_read_score=0`, `depth_score=0`\n- `unassessable_layers = {}` (every applicable layer had reads to evaluate; nothing was skipped for lack of data)\n- Internally re-ran `read_depth_profile` at \u00b12000bp/200bp bins: `min_depth=219.28`, `max_depth=350.88`, `mean_depth=282.14`, `depth_ratio_min_to_mean=0.856`, same off-position dip at 96,298,800 (1200bp away, `dip_is_at_focus=false`) \u2014 corroborates step 6.\n- `supporting_observations`: \"5 discordant pair(s) (0% of reads in window) with mates mapping predominantly to chr9.\" and \"6 soft-clipped read(s) (1% of reads in window), consensus clip position at 96299688 (1 reads).\" \u2014 the depth dip is not listed as a supporting observation, consistent with `depth_score=0`.\n\n**Threshold provenance caveat (per the tool's own documentation, stated plainly as required):** of the 9 tier cutoffs behind these 4 component scores, only the read-depth layer's 0.7 moderate-tier threshold is empirically calibrated, and that only against a single confirmed real locus elsewhere. The other 8 thresholds (including the discordant-pair and soft-clip cutoffs applied above) are heuristic judgement calls not validated against real data beyond a handful of loci. `evidence_strength` is therefore an interpretable decomposition of what fired, not a calibrated probability.\n\n### Conclusion\nAcross all three layers this BAM can structurally produce signal for (discordant pairs, soft clips, read depth \u2014 `split_reads` is not applicable to this Novoalign-aligned data), the values at chr2:96,300,000 are consistent with normal high-coverage background noise rather than a structural variant:\n- Discordant pairs: 0.2% fraction, scattered across 4 chromosomes, no clustering on a single partner.\n- Soft clips: 0.6% fraction, max 1 read sharing any clip position (below the pileup threshold of 3).\n- Split reads: 0 (and the whole aligner produces no SA tags).\n- Depth: ratio 0.845\u20130.856 (above the 0.7 deletion threshold anyway), and the only real dip in the surrounding region is 1200bp away, not localized to this position.\n\nComposite `evidence_score = 10/100` (\"weak\"), with only 1 of 3 applicable layers contributing any nonzero score. **No credible evidence of a structural variant was found at chr2:96,300,000 in this session's tool outputs.**\n\nTwo conditional tools were deliberately **not** called, per their own stated trigger conditions: `gene_at_locus` (\"Call this after finding strong discordant/split-read evidence\" \u2014 not met here) and `reciprocal_breakpoint` (requires a clustering discordant-pair partner chromosome to verify \u2014 mates were scattered across 4 chromosomes with no dominant partner, so there was no candidate partner locus to check). `igv_screenshot`/`evidence_panel` were not generated as they fall outside the MCP server's required stats\u2192discordant\u2192soft_clips\u2192split_reads\u2192depth_profile\u2192summarize sequence and were not needed to answer the evidence question numerically.",
+  "hit_max_turns": false,
+  "wall_clock_seconds": 298.397,
+  "error": null
+}

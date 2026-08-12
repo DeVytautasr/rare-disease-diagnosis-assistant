@@ -21,6 +21,7 @@ import json
 import time
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Optional
 
 import ollama
 
@@ -42,6 +43,50 @@ from stage1_igv_assistant.benchmark.mcp_client import (
 NUM_CTX = 16384
 
 
+def _extract_first_json_object(text: str) -> Optional[dict]:
+    """Brace-matching extraction of the first top-level {...} in text -- handles
+    nested objects, unlike a non-greedy regex."""
+    start = text.find("{")
+    if start == -1:
+        return None
+    depth = 0
+    for i, ch in enumerate(text[start:], start=start):
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                try:
+                    obj = json.loads(text[start : i + 1])
+                except json.JSONDecodeError:
+                    return None
+                return obj if isinstance(obj, dict) else None
+    return None
+
+
+def _fallback_tool_call_from_text(content: str, valid_tool_names: set[str]) -> Optional[tuple[str, dict]]:
+    """
+    llama3.1:8b via Ollama sometimes writes its tool call as
+    {"name": ..., "parameters"/"arguments": {...}} directly in the assistant
+    message content instead of the structured tool_calls field -- observed in
+    9/9 runs during the first benchmark pass (see BENCHMARK_LOCAL_MODELS.md).
+    Recovers that intent so the run measures task completion rather than
+    strict adherence to Ollama's tool-calling wire format, while every call
+    recovered this way is flagged via_text_fallback=True so scoring and the
+    writeup can still report the native tool-calling failure honestly.
+    """
+    obj = _extract_first_json_object(content)
+    if not obj:
+        return None
+    name = obj.get("name")
+    if not isinstance(name, str) or name not in valid_tool_names:
+        return None
+    args = obj.get("parameters") or obj.get("arguments") or {}
+    if not isinstance(args, dict):
+        return None
+    return name, args
+
+
 async def run_once(model: str, case_id: str, run_index: int) -> RunLog:
     case = CASES[case_id]
     start = time.monotonic()
@@ -56,6 +101,7 @@ async def run_once(model: str, case_id: str, run_index: int) -> RunLog:
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": case.prompt},
         ]
+        valid_tool_names = {t["function"]["name"] for t in ollama_tools}
         tool_call_log: list[ToolCallRecord] = []
         hit_max_turns = True
         final_report: str | None = None
@@ -73,6 +119,16 @@ async def run_once(model: str, case_id: str, run_index: int) -> RunLog:
                 break
 
             msg = response.message
+            # llama3.1:8b sometimes writes its tool call as JSON inside
+            # msg.content instead of the structured tool_calls field (see
+            # _fallback_tool_call_from_text docstring) -- try to recover it
+            # before concluding the model is done.
+            fallback_call = (
+                _fallback_tool_call_from_text(msg.content, valid_tool_names)
+                if not msg.tool_calls and msg.content
+                else None
+            )
+
             assistant_entry: dict = {"role": "assistant", "content": msg.content or ""}
             if msg.tool_calls:
                 assistant_entry["tool_calls"] = [
@@ -84,16 +140,23 @@ async def run_once(model: str, case_id: str, run_index: int) -> RunLog:
                     }
                     for tc in msg.tool_calls
                 ]
+            elif fallback_call:
+                assistant_entry["tool_calls"] = [
+                    {"function": {"name": fallback_call[0], "arguments": fallback_call[1]}}
+                ]
             messages.append(assistant_entry)
 
-            if not msg.tool_calls:
+            if not msg.tool_calls and not fallback_call:
                 final_report = msg.content or ""
                 hit_max_turns = False
                 break
 
-            for tc in msg.tool_calls:
-                name = tc.function.name
-                args = dict(tc.function.arguments)
+            calls: list[tuple[str, dict, bool]] = (
+                [(tc.function.name, dict(tc.function.arguments), False) for tc in msg.tool_calls]
+                if msg.tool_calls
+                else [(fallback_call[0], fallback_call[1], True)]
+            )
+            for name, args, via_fallback in calls:
                 call_start = time.monotonic()
                 malformed = False
                 malformed_reason = None
@@ -113,6 +176,7 @@ async def run_once(model: str, case_id: str, run_index: int) -> RunLog:
                         wall_clock_seconds=round(call_elapsed, 3),
                         malformed=malformed,
                         malformed_reason=malformed_reason,
+                        via_text_fallback=via_fallback,
                     )
                 )
                 messages.append(

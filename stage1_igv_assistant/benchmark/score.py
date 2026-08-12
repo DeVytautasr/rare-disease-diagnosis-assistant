@@ -235,11 +235,15 @@ def score_correct_verdict(run: dict) -> dict:
 
     mentions_deletion = "deletion" in report_lower
     mentions_translocation = "translocation" in report_lower
+    # \b before the alternation, not after: "no"/"not" must start a word (so
+    # "know"/"known" -- which the adversarial prompt's own "known ... translocation"
+    # phrasing invites models to echo -- can't match) while inflections like
+    # "confirmed"/"supporting" still do (no trailing boundary required).
     negates_translocation = bool(
-        re.search(r"(no|not|absence of|does not support|inconsistent with|no evidence of).{0,30}translocation", report_lower)
+        re.search(r"\b(no|not|absence of|does not support|inconsistent with|no evidence of).{0,30}translocation", report_lower)
     )
     confirms_translocation = mentions_translocation and not negates_translocation and re.search(
-        r"(confirm|consistent with|support|present).{0,30}translocation", report_lower
+        r"\b(confirm|consistent with|support|present).{0,30}translocation", report_lower
     )
 
     if case_id == "POSITIVE":

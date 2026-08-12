@@ -48,6 +48,20 @@ load_dotenv(REPO_ROOT / ".env")
 
 MAX_TOKENS = 8192
 
+# claude-sonnet-5 runs adaptive thinking by default when `thinking` is
+# omitted (unlike Opus 4.8/4.7, where omitting it meant no thinking) --
+# thinking tokens bill as output at the same rate as the response text.
+# This task is a bounded tool-call sequence + evidence-cited report, not
+# open-ended reasoning, so thinking is turned off to keep the API-metered
+# arm's cost predictable; see results/BENCHMARK_CLAUDE_BASELINE.md for the
+# rationale and the actual measured cost this produced.
+THINKING: dict = {"type": "disabled"}
+
+# Sonnet 5 pricing as of 2026-08 (introductory, through 2026-08-31):
+# $2.00 / MTok input, $10.00 / MTok output. Update if pricing changes.
+PRICE_PER_MTOK_INPUT_USD = 2.00
+PRICE_PER_MTOK_OUTPUT_USD = 10.00
+
 
 async def run_once(client, model: str, case_id: str, run_index: int) -> RunLog:
     case = CASES[case_id]
@@ -63,6 +77,8 @@ async def run_once(client, model: str, case_id: str, run_index: int) -> RunLog:
         tool_call_log: list[ToolCallRecord] = []
         hit_max_turns = True
         final_report: str | None = None
+        input_tokens_total = 0
+        output_tokens_total = 0
 
         for turn in range(1, MAX_TURNS + 1):
             try:
@@ -72,10 +88,14 @@ async def run_once(client, model: str, case_id: str, run_index: int) -> RunLog:
                     system=system_prompt,
                     messages=messages,
                     tools=anthropic_tools,
+                    thinking=THINKING,
                 )
             except Exception as exc:  # noqa: BLE001 -- record and stop, don't crash the sweep
                 error = f"messages.create failed on turn {turn}: {exc}"
                 break
+
+            input_tokens_total += response.usage.input_tokens
+            output_tokens_total += response.usage.output_tokens
 
             assistant_blocks = [block.model_dump() for block in response.content]
             messages.append({"role": "assistant", "content": assistant_blocks})
@@ -123,6 +143,10 @@ async def run_once(client, model: str, case_id: str, run_index: int) -> RunLog:
             messages.append({"role": "user", "content": tool_result_blocks})
 
         elapsed = time.monotonic() - start
+        estimated_cost_usd = (
+            input_tokens_total * PRICE_PER_MTOK_INPUT_USD
+            + output_tokens_total * PRICE_PER_MTOK_OUTPUT_USD
+        ) / 1_000_000
         return RunLog(
             model=model,
             backend="anthropic",
@@ -136,6 +160,11 @@ async def run_once(client, model: str, case_id: str, run_index: int) -> RunLog:
             hit_max_turns=hit_max_turns,
             wall_clock_seconds=round(elapsed, 3),
             error=error,
+            usage={
+                "input_tokens": input_tokens_total,
+                "output_tokens": output_tokens_total,
+                "estimated_cost_usd": round(estimated_cost_usd, 4),
+            },
         )
 
 
@@ -151,6 +180,7 @@ async def run_sweep(model: str, case_ids: list[str], runs: int, output_dir: Path
     client = anthropic.Anthropic(api_key=api_key)
 
     saved: list[Path] = []
+    running_cost_usd = 0.0
     for case_id in case_ids:
         for run_index in range(1, runs + 1):
             print(f"[{model}] {case_id} run {run_index}/{runs} ...", flush=True)
@@ -161,9 +191,12 @@ async def run_sweep(model: str, case_ids: list[str], runs: int, output_dir: Path
             saved.append(path)
             status = "MAX_TURNS" if log.hit_max_turns else "done"
             n_tools = len(log.tool_calls)
+            run_cost = (log.usage or {}).get("estimated_cost_usd", 0.0)
+            running_cost_usd += run_cost
             print(
                 f"    -> {status} in {log.wall_clock_seconds:.1f}s, "
-                f"{n_tools} tool calls, saved to {path}",
+                f"{n_tools} tool calls, ${run_cost:.4f} this run "
+                f"(${running_cost_usd:.4f} running total), saved to {path}",
                 flush=True,
             )
     return saved

@@ -111,6 +111,7 @@ class ToolCallRecord:
     wall_clock_seconds: float
     malformed: bool = False
     malformed_reason: Optional[str] = None
+    via_text_fallback: bool = False
 
     def to_dict(self) -> dict:
         return dataclasses.asdict(self)
@@ -130,6 +131,7 @@ class RunLog:
     hit_max_turns: bool
     wall_clock_seconds: float
     error: Optional[str] = None
+    usage: Optional[dict] = None  # {"input_tokens", "output_tokens", "estimated_cost_usd"} -- Anthropic backend only
 
     def to_dict(self) -> dict:
         return dataclasses.asdict(self)
