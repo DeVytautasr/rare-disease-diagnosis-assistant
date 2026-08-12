@@ -119,4 +119,44 @@ CASES: dict[str, Case] = {
             "that matters most for clinical deployment."
         ),
     ),
+    "VISUAL": Case(
+        case_id="VISUAL",
+        chromosome="chr1",
+        position=115_686_862,
+        # Verbatim as specified for this one-off session -- not run through
+        # _CASE_PREAMBLE, since that template's wording differs from this
+        # prompt's exact phrasing and this case is not scored by score.py's
+        # five criteria the way POSITIVE/NEGATIVE/ADVERSARIAL are.
+        prompt="""Use ONLY the MCP tools. Do not read source files, do not write scripts.
+
+BAM: {bam}
+Build: GRCh38
+Technology: Illumina 300x paired-end, Novoalign aligner
+Position: chr1:115,686,862
+
+Investigate whether there is a structural variant at this position.
+
+After gathering numerical evidence, produce visual evidence a clinician could review. Choose the visualization approach yourself based on what the numbers suggest -- the tools offer both a single screenshot with a selectable coloring mode and a per-layer panel.
+
+Then write a report that:
+- Cites the tool and number behind every claim
+- States which visualization you chose and why
+- Describes what each image shows, and what a reviewer should look for
+- States explicitly whether each image supports, contradicts, or is silent on the numerical findings""".format(bam=GIAB_BAM),
+        expected_verdict=(
+            "Not scored by score.py's five criteria -- this is a one-off "
+            "qualitative session assessing visual-tool choice, argument "
+            "correctness, awareness of the discordant-pairs 'looks busy but "
+            "n=1' visual trap (results/EVIDENCE_PANEL_VALIDATION.md), and "
+            "whether the model's description of each generated image "
+            "matches what the image actually shows."
+        ),
+        notes=(
+            "Same locus and BAM as POSITIVE -- a confirmed heterozygous "
+            "deletion. Run once per model (not 3x) through the API/Ollama "
+            "harnesses only, with max_turns raised to 30 to give the visual "
+            "tools room. See results/LLM_SESSION_4_VISUAL_<model>.md for "
+            "the writeup."
+        ),
+    ),
 }

@@ -209,3 +209,53 @@ directly turned up a more precise picture:
 
 Not averaged into the API-harness numbers above regardless of any of this —
 the arm stays a preview (n≤2, no ADVERSARIAL data).
+
+## Visual-tool session (full writeup: `LLM_SESSION_4_VISUAL_claude-sonnet-5.md`)
+
+Same locus, same MCP server, run through `claude_harness.py` (not Claude
+Code) with `max_turns=30`. **$0.1897**, bringing total spend across this
+whole benchmark project to **$1.6964**. Headline findings, full detail in
+the linked writeup:
+
+- **A real tool bug surfaced first and had to be fixed before anything else
+  was trustworthy.** Claude's `evidence_panel` call reused an output
+  directory from an unrelated earlier session; `run_igv_screenshot`'s
+  completion check was fooled by the pre-existing file into reporting false
+  success without IGV ever doing real work. Fixed in
+  `stage1_igv_assistant/tools/bam_tools.py` (delete any pre-existing file at
+  `output_path` before launching IGV, verified with two follow-up runs); the
+  images assessed below are the corrected, genuinely fresh ones, generated
+  from Claude's own exact call arguments so the comparison is still fair to
+  what it asked for. Full detail, including the exact mechanism, in the
+  linked writeup.
+- **Chose `evidence_panel` over a single `igv_screenshot`, for a stated and
+  sound reason** — sidesteps the `color_by` mismatch risk entirely rather
+  than picking between options. All 8 tool calls were argument-clean.
+- **Most important finding: its description of the discordant-pairs image
+  directly contradicts what the image actually shows.** Claude wrote that
+  the image "should show essentially uniform, non-anomalous pairing." Viewed
+  directly: roughly a third to half of the visible reads render in IGV's
+  anomalous-pair red — a clear, visually busy cluster, not a uniform field.
+  (Almost certainly `UNEXPECTED_PAIR` coloring also flagging same-chromosome
+  insert-size anomalies from the deletion itself — consistent with the
+  numbers, but not what the report describes.) Its other two image
+  descriptions were accurate (soft-clip) or directionally right but
+  overstated (depth).
+- **Root cause confirmed by reading the code, not inferred:**
+  `claude_harness.py` sends every tool result as a plain string
+  (`str(result["payload"])`); the MCP tools return a `screenshot_path`
+  string, never image content. **Claude never receives the actual image
+  pixels through this pipeline.** Every visual "description" in this
+  session — and by the same construction, in every run across this entire
+  benchmark that touches `igv_screenshot`/`evidence_panel` — is synthesized
+  from numeric tool data already in context, not from observation. This is
+  a harness-architecture gap common to both harnesses, not a
+  claude-sonnet-5-specific behavior; see the qwen2.5:7b visual session for
+  the equivalent finding there (with the added wrinkle that qwen2.5:7b isn't
+  a vision-capable model in the first place, so the gap is structurally
+  unfixable for that model even in principle).
+- **Not attempted here:** wiring a real image content block into
+  `claude_harness.py`'s tool-result construction so a genuinely
+  vision-grounded follow-up report could be compared against this blind
+  one. Feasible in principle (Claude models support image input) and a
+  concrete next step, but out of scope for this pass.

@@ -87,7 +87,7 @@ def _fallback_tool_call_from_text(content: str, valid_tool_names: set[str]) -> O
     return name, args
 
 
-async def run_once(model: str, case_id: str, run_index: int) -> RunLog:
+async def run_once(model: str, case_id: str, run_index: int, max_turns: int = MAX_TURNS) -> RunLog:
     case = CASES[case_id]
     start = time.monotonic()
     error: str | None = None
@@ -106,7 +106,7 @@ async def run_once(model: str, case_id: str, run_index: int) -> RunLog:
         hit_max_turns = True
         final_report: str | None = None
 
-        for turn in range(1, MAX_TURNS + 1):
+        for turn in range(1, max_turns + 1):
             try:
                 response = ollama.chat(
                     model=model,

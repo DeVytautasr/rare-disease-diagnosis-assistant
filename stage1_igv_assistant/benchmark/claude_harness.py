@@ -63,7 +63,7 @@ PRICE_PER_MTOK_INPUT_USD = 2.00
 PRICE_PER_MTOK_OUTPUT_USD = 10.00
 
 
-async def run_once(client, model: str, case_id: str, run_index: int) -> RunLog:
+async def run_once(client, model: str, case_id: str, run_index: int, max_turns: int = MAX_TURNS) -> RunLog:
     case = CASES[case_id]
     start = time.monotonic()
     error: str | None = None
@@ -80,7 +80,7 @@ async def run_once(client, model: str, case_id: str, run_index: int) -> RunLog:
         input_tokens_total = 0
         output_tokens_total = 0
 
-        for turn in range(1, MAX_TURNS + 1):
+        for turn in range(1, max_turns + 1):
             try:
                 response = client.messages.create(
                     model=model,

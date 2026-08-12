@@ -2012,6 +2012,20 @@ def run_igv_screenshot(
     out_dir = _os.path.dirname(_os.path.abspath(output_path))
     _os.makedirs(out_dir, exist_ok=True)
 
+    # Remove any pre-existing file at output_path before launching IGV.
+    # Confirmed directly as a real bug, not a hypothetical: the completion
+    # check below polls for output_path's size to be stable across two 1s
+    # checks, then kills IGV. If a file already exists there (e.g. this
+    # same locus was screenshotted in an earlier session), that condition
+    # is trivially true from the first poll -- IGV gets SIGTERM'd before it
+    # has done more than start the JVM, and the stale file's size is
+    # reported back as if it were a fresh snapshot. On a remote-BAM-over-
+    # HTTPS load this cuts a ~2-minute genuine render down to ~1 second
+    # while still returning success=True. Deleting first means the file's
+    # mere existence during polling is unambiguous proof of a fresh write.
+    if _os.path.exists(output_path):
+        _os.remove(output_path)
+
     # Build IGV batch script
     lines = ["new", f"genome {genome_build}"]
     for bam in bam_paths:

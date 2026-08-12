@@ -12,6 +12,29 @@ as exact.** Three of the five criteria (`citation_fidelity`, `no_hallucination`,
 verification — every run below was scored programmatically and spot-checked,
 not independently re-read line by line.
 
+## Scope
+
+This document covers both the three-case scored benchmark (below) and a
+one-off qualitative visual-tool session (`LLM_SESSION_4_VISUAL_qwen2.5-7b.md`).
+
+llama3.1:8b was excluded from the visual-tool session. Its documented
+failure mode is argument malformation on the numerical tools — inventing
+parameter names, passing arguments to tools that do not accept them, and
+failing to self-correct from validation errors that name the problem
+explicitly, reaching the 20-turn cap in 3 of 9 runs. The visual tools take
+more parameters and more complex ones than the numerical tools do —
+`breakpoint_evidence_summary` takes 7; `igv_screenshot` takes 9
+(`color_by` validated against an IGV-build-specific enumeration,
+independent `max_coverage`/`coverage_height` scaling controls) and
+`evidence_panel` takes 8 (per-layer window overrides via a nested dict,
+not a flat scalar). Testing them would produce a fourth demonstration of
+the same capability gap rather than new information. The exclusion is
+itself a result: a model that cannot reliably format arguments for a
+seven-parameter tool cannot be assessed on an eight- or nine-parameter
+one, and no amount of harness accommodation changes that — the
+text-fallback parser already recovers malformed call *shape*, but argument
+correctness is a model capability, not a parsing problem.
+
 ## Hardware and models
 
 | | |
@@ -176,3 +199,51 @@ qwen2.5:7b's ADVERSARIAL case, from 1/3 to 3/3 -- see
 `results/BENCHMARK_CLAUDE_BASELINE.md` for the larger effect on Claude's
 numbers, and `score.py`'s `score_all_layers_queried` docstring for the exact
 fallback logic.
+
+## Visual-tool session: qwen2.5:7b (full writeup: `LLM_SESSION_4_VISUAL_qwen2.5-7b.md`)
+
+Same locus, same MCP server, run through `ollama_harness.py` with
+`max_turns=30`. Full detail in the linked writeup; headline findings:
+
+- **Coloring mode mismatched to its own conclusion.** Left `igv_screenshot`
+  at the default `color_by="UNEXPECTED_PAIR"` (documented for
+  translocations) while its own text concluded "possible deletion" --
+  never engaged with `INSERT_SIZE`, the tool's documented recommendation
+  for exactly that case.
+- **A false "predominant chromosome" claim, verified against its own raw
+  data.** Its `discordant_pairs` call returned one mate on each of seven
+  different chromosomes -- textbook scattered noise -- but its report
+  claimed mates "predominantly" map to chr4 and used that to suggest "a
+  possible inter-chromosomal translocation." This is the same
+  over-reading-weak-signal pattern documented for the ADVERSARIAL case
+  above, except here it appears unprompted, with no false premise in the
+  prompt pushing toward that conclusion -- a more concerning version of the
+  same failure mode.
+- **Tool arguments were correct on the first try, across all 9 calls** --
+  worth stating plainly next to the llama3.1:8b exclusion above: reliable
+  argument formatting on this schema is not a general property of "local
+  model via Ollama," it's specific to qwen2.5:7b having it and
+  llama3.1:8b not.
+- **Its image descriptions never commit to anything a real look would have
+  produced** -- written as generic predictions ("the screenshot should
+  show...") rather than descriptions of the actual generated images, which
+  turned out (checked directly) to not straightforwardly show what those
+  predictions implied.
+
+## A second real bug this pass found: stale-file false success in `run_igv_screenshot`
+
+While preparing the visual-tool session, `run_igv_screenshot`
+(`stage1_igv_assistant/tools/bam_tools.py`) turned out to report false
+success when a file already existed at the target `output_path`: its
+completion check polls for the file's size to be stable across two 1-second
+checks, which a pre-existing file satisfies immediately, so IGV gets killed
+before it has done any real work and the stale file's stats are returned as
+if fresh. Confirmed directly (the same call took 123.5s with a genuine
+render against an empty directory, vs. a near-instant false "success"
+against one with a leftover file from an unrelated earlier session) and
+fixed by deleting any pre-existing file at `output_path` before IGV
+launches. Full detail, including why this specifically corrupted the
+claude-sonnet-5 visual session's first `evidence_panel` attempt, is in
+`LLM_SESSION_4_VISUAL_claude-sonnet-5.md`. This bug predates this benchmark
+pass -- any earlier session that re-screenshotted a previously-used locus
+was at risk of the same false positive.
