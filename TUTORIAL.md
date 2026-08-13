@@ -241,7 +241,13 @@ itself, after it had already produced published results. None was caught by unit
 
 **Balanced translocations are not validated on real data.** No public BAM with a confirmed germline balanced translocation and modern alignment could be located, despite searching HGSVC2, multiple SRA accessions, and both GIAB SV benchmarks — GIAB curates no inversion or breakend calls. The translocation-specific tools are tested on synthetic data only. **This is the largest gap in the project, and real patient data would close it.**
 
-**Only one of seven scoring thresholds is empirically calibrated.** The depth-ratio cutoff of 0.7 was derived from a single confirmed locus, replicated across two sequencing technologies but not across two independent genomic positions. The remaining six are heuristic judgements, documented as such in the code. The composite score should be read as an interpretable decomposition of what fired, not as a calibrated probability.
+**Two of fourteen thresholds are empirically derived.** *Threshold* here means any numeric cutoff that changes what the assistant reports — whether by altering a component score or by altering the prose a model reads and may quote. Strength bands are excluded, since they only rename an already-computed score. On that convention there are 14: **11 scoring** (three discordant-pair tiers, two soft-clip tiers, three split-read tiers, two depth-ratio tiers, and the localisation tolerance that zeroes an unlocalised depth score) and **3 text-only** (the two-part predominance gate, and the pileup cutoff that decides between "consensus clip position" and "no clip pileup").
+
+The two empirical ones are `DEPTH_RATIO_DELETION_THRESHOLD = 0.7`, from one confirmed locus replicated across two sequencing technologies but not across two independent positions, and `dip_tolerance_bp = 1000`, from two real loci with margin documented on both sides. The remaining twelve are the author's judgement, documented as such in the code. The composite score should be read as an interpretable decomposition of what fired, not as a calibrated probability.
+
+The text-only gates are counted deliberately, and the reason is the most useful thing in this section. The predominance gate changed no score and still caused a retraction: it made the tool assert a dominant translocation partner from a single read, a model quoted that sentence rather than the number behind it, and the published finding blamed the model. A convention counting only scored outcomes would have excluded the cutoff that did the most documented damage.
+
+`min_mapq = 20` is excluded as a caller-overridable input filter rather than a scoring cutoff, but named here because it is the one judgement call that moves every fraction the scoring is built from — change it and every tier above sees different input.
 
 **False-positive rate has not been measured.** The blind test used three positions. Nothing establishes how often the tools would flag ordinary coverage variance across a whole genome.
 
@@ -267,6 +273,6 @@ manually.
 
 1. **One real patient BAM with a known karyotype.** A single case with a documented translocation would close the largest validation gap. Both breakpoint regions, approximate coordinates from the cytogenetic band, and whether the data is short-read or long-read is enough to begin.
 
-2. **Judgement on whether the evidence scoring is clinically sensible** — whether the layers, their weighting, and the thresholds match how a clinical geneticist actually reasons about this evidence. Six of seven thresholds are currently the author's judgement and would benefit from review.
+2. **Judgement on whether the evidence scoring is clinically sensible** — whether the layers, their weighting, and the thresholds match how a clinical geneticist actually reasons about this evidence. Twelve of fourteen thresholds are currently the author's judgement and would benefit from review; see Limitations for the convention behind that count and which two are empirical.
 
 3. **Attempts to break it.** Any case where the assistant asserts something the data does not support is more useful than any successful run.

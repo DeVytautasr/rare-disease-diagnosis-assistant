@@ -439,3 +439,61 @@ from inspecting the reasoning rather than the score — the same standard this
 project applies to the models it evaluates, applied to the instrument doing
 the evaluating. An evidence pipeline that demands models cite the tool behind
 every claim should not exempt its own metrics from the requirement.
+
+### The tool's own thresholds, counted under one convention
+
+The criteria above score the models. The tool being scored has its own
+cutoffs, and until this pass the repository carried two different counts of
+them — "seven" in the tutorial, "nine" in a model-generated report. Neither
+was wrong so much as unstated: they used different conventions over the same
+code. One convention, applied everywhere:
+
+> **Threshold** means any numeric cutoff that changes what the assistant
+> reports — whether by altering a component score or by altering the prose a
+> model reads and may quote. Strength bands are excluded: they only rename an
+> already-computed score. Caller-overridable input filters are excluded but
+> named.
+
+**14 thresholds — 11 scoring, 3 text-only — of which 2 are empirically
+derived.**
+
+| Group | Count | Cutoffs |
+|---|---:|---|
+| Discordant-pair tiers | 3 | `disc_fraction` ≥ 0.5 → 25, ≥ 0.2 → 15, > 0 → 7.5 |
+| Soft-clip tiers | 2 | `max_clips` ≥ 10 → 25, ≥ 3 → 15 |
+| Split-read tiers | 3 | `split_fraction` ≥ 0.3 → 25, ≥ 0.1 → 15, > 0 → 7.5 |
+| Depth tiers | 2 | `depth_ratio` < 0.3 → 25, < 0.7 → 15 |
+| Depth localisation | 1 | `dip_tolerance_bp` = 1000 zeroes a non-zero depth score when the dip is not localised to the focus position |
+| **Text-only** | 3 | predominance gate (≥ 60% share **and** ≥ 3 reads); `SOFT_CLIP_PILEUP_MIN_READS` = 3, which selects "consensus clip position" over "no clip pileup" |
+
+**Why the text-only gates are counted.** The predominance gate changed no
+score. It still caused a retraction: it made the tool assert a dominant
+translocation partner from a single read, a model quoted that sentence rather
+than the number behind it, and the published finding blamed the model for a
+fabrication that was the tool's. A convention counting only scored outcomes
+would have excluded the cutoff that did the most documented damage in this
+project — which is a good reason not to use that convention.
+
+**The two empirical thresholds**, and precisely what each rests on:
+
+- `DEPTH_RATIO_DELETION_THRESHOLD = 0.7` — **one locus, two technologies.**
+  GIAB HG002 at chr1:115,686,862, measured on PacBio HiFi and Illumina 300x.
+  Replicated across sequencing technology, not across independent genomic
+  positions.
+- `dip_tolerance_bp = 1000` — **two real loci, with margin documented on both
+  sides.** chr1:16,890,000, where the region's minimum is an unrelated
+  fluctuation 1400bp away and must not count, and chr1:115,686,862, where a
+  real breakpoint's lowest sampled bin is 800–900bp downstream and must
+  count. 1000bp sits in the gap. Its own docstring states the failure modes
+  this leaves open: a real dip 1000–1400bp from a breakpoint is missed, and a
+  fluctuation within 1000bp of a flat locus is miscounted.
+
+The remaining twelve are the author's judgement, documented as such.
+
+**Excluded but named: `min_mapq = 20`.** It is the read-quality filter applied
+inside every counting function, caller-overridable, and not part of the
+scoring rubric — so it is not counted. It is named because it is the one
+judgement call that moves every fraction the scoring is built from: change it
+and all eleven scoring thresholds above see different input.
+(`low_mapq_fraction > 0.4` appears only as advisory text in a docstring;
+nothing in the code compares against it.)

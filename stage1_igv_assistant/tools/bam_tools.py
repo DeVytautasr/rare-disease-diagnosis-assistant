@@ -20,6 +20,52 @@ from dataclasses import dataclass, asdict
 from typing import Optional
 
 
+# ── Threshold inventory and convention ──────────────────────────────────────
+#
+# "Threshold" means any numeric cutoff that changes what the assistant
+# reports -- whether by altering a component score or by altering the prose a
+# model reads and may quote. Strength bands are excluded: they only rename an
+# already-computed score. Caller-overridable input filters are excluded but
+# named below.
+#
+# Under that convention: 14 thresholds -- 11 scoring, 3 text-only -- of which
+# 2 are empirically derived.
+#
+# SCORING (11), all in summarize_breakpoint_evidence:
+#   discordant_pair_score   disc_fraction  >= 0.5 -> 25 | >= 0.2 -> 15 | > 0 -> 7.5
+#   soft_clip_score         max_clips      >= 10  -> 25 | >= 3   -> 15
+#   split_read_score        split_fraction >= 0.3 -> 25 | >= 0.1 -> 15 | > 0 -> 7.5
+#   depth_score             depth_ratio    <  0.3 -> 25 | <  0.7 -> 15
+#                           dip_tolerance_bp = 1000 zeroes a non-zero depth
+#                           score when the dip is not localised to the focus
+#
+# TEXT-ONLY (3), which change no score but change what a model may quote:
+#   PARTNER_DOMINANCE_MIN_SHARE = 0.6   } together gate whether a partner
+#   PARTNER_DOMINANCE_MIN_READS = 3     } chromosome is called "predominant"
+#   SOFT_CLIP_PILEUP_MIN_READS  = 3     gates "consensus clip position"
+#                                       vs "no clip pileup"
+#
+# The text-only gates are counted deliberately. The predominance gate changed
+# no score and caused a retraction: a model quoted the sentence it produced
+# rather than the number behind it, and the published finding blamed the
+# model. A convention that excluded these would have hidden the cutoff that
+# did the most documented damage. See
+# results/BENCHMARK_LOCAL_MODELS.md's correction notice.
+#
+# EMPIRICALLY DERIVED (2 of 14):
+#   DEPTH_RATIO_DELETION_THRESHOLD = 0.7  one locus, two technologies
+#   dip_tolerance_bp = 1000               two real loci, margin documented
+#                                         on both sides (see
+#                                         get_read_depth_profile's docstring)
+# The remaining 12 are the author's judgement, documented as such.
+#
+# EXCLUDED but named: min_mapq = 20, the read-quality filter applied in every
+# counting function. It is caller-overridable and not part of the scoring
+# rubric, but it is the one judgement call that moves every fraction the
+# scoring is built from -- change it and every tier above sees different
+# input. low_mapq_fraction > 0.4 appears only as advisory text in a
+# docstring; nothing in the code compares against it.
+
 # ── Calibrated constants ────────────────────────────────────────────────────────
 #
 # Single source of truth for "does this depth_ratio_min_to_mean look like a
