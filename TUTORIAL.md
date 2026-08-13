@@ -3,7 +3,7 @@
 **Stage 1 prototype — MSc thesis, Systems Biology, Vilnius University**
 Vytautas Rimas · vytautas.rimas@mf.stud.vu.lt
 Repository: `github.com/DeVytautasr/rare-disease-diagnosis-assistant`
-State described here: commit `f581dc7` · 11 tools · 3 test files (18 + 1 tests, 22 checks)
+State described here: commit `f581dc7` · 11 tools · 3 test files · 28 tests
 
 ---
 
@@ -61,7 +61,7 @@ python stage1_igv_assistant/tests/test_server.py
 python stage1_igv_assistant/tests/test_partner_distribution.py
 ```
 
-Expect 18 tests, then 1, then 22 checks — all passing. The third file is pure
+Expect 18 tests, then 1, then 9 — all passing. The third file is pure
 Python (no BAM, no IGV, under a second); it guards the evidence-summary
 observation strings against a defect class where the tool asserted a pattern
 its data did not contain. The first file takes roughly four minutes because it streams a real BAM from NIST and calls the live Ensembl API. Tests degrade gracefully and report a skip if IGV or network access is unavailable rather than failing.
@@ -216,7 +216,7 @@ reports, not by any automated check. The benchmark documents lead with this
 rather than burying it, and state plainly that the scores are a screening
 layer directing attention to runs worth reading, not measurements.
 
-If you are evaluating this project, that last point is the one to press on.
+If you are evaluating this project, that last point is the one to press on. That is the entry point if you are assessing how the work was evaluated; the blind session recommended above is the entry point if you are assessing whether the tools work.
 
 ---
 
@@ -233,7 +233,7 @@ If you are evaluating this project, that last point is the one to press on.
 
 Ten defects were found across Stage 1 development, and the model-comparison
 benchmark that followed found nine more — two of them in the scoring code
-itself, after it had already produced published results. None was caught by unit tests — they surfaced from real files, real external binaries, or from reading output and noticing the numbers did not agree. One was found by the assistant itself, which observed that reported component scores did not sum to the reported composite and said so rather than deferring to the headline figure.
+itself, after it had already produced published results. None was caught by the test suite as originally written — they surfaced from real files, real external binaries, or from reading output and noticing the numbers did not agree. In one case the test that should have caught the defect was itself the problem: it asserted that the correct command had been generated, never that the command succeeded, and passed continuously while the feature had never once worked. One was found by the assistant itself, which observed that reported component scores did not sum to the reported composite and said so rather than deferring to the headline figure.
 
 ---
 
