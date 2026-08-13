@@ -24,11 +24,14 @@ Miniconda3-latest-Linux-x86_64.sh
 # Secrets
 .api/
 
-# Generated IGV screenshots. Server-assigned session dirs (post-FIX-C) plus
-# the model-chosen output dirs that pre-FIX-C runs scattered at repo root.
+# Generated IGV screenshots.
+# Post-FIX-C the server assigns output paths under its own session directory,
+# so model-generated images no longer land at repo root. These rules cover
+# that directory plus a catch-all for any stray PNG or image directory a
+# pre-FIX-C run (or a direct bam_tools call) leaves in the root -- the tool
+# API no longer lets a model choose a path, but a script still can.
 stage1_igv_assistant/screenshots/sessions/
-/chr1_*_evidence/
-/hg002_*_evidence/
-/sv_report_*/
+/*.png
+/*_evidence/
 /evidence_panel*/
-/screenshot.png
+/sv_report_*/

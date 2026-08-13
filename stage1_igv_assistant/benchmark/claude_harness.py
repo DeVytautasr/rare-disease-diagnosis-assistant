@@ -20,7 +20,7 @@ subscription.
 Usage:
     python -m stage1_igv_assistant.benchmark.claude_harness \\
         --model claude-sonnet-5 --case POSITIVE --runs 3 \\
-        --output stage1_igv_assistant/benchmark/runs
+        --output stage1_igv_assistant/benchmark/runs/unsorted
 """
 from __future__ import annotations
 
@@ -227,7 +227,7 @@ def main() -> None:
     parser.add_argument("--runs", type=int, default=3, help="Runs per case (default 3)")
     parser.add_argument(
         "--output",
-        default="stage1_igv_assistant/benchmark/runs",
+        default="stage1_igv_assistant/benchmark/runs/unsorted",
         help="Directory to write per-run JSON logs to",
     )
     args = parser.parse_args()

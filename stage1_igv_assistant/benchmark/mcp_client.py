@@ -279,6 +279,11 @@ class RunLog:
     # run. The model saw only the refs (see redact_image_payload); this is
     # how a human gets back to the actual files.
     image_handles: Optional[dict] = None
+    # Which tool/scorer fixes were in place when this run executed. Provenance
+    # lives here rather than only in the directory name, so a log stays
+    # self-describing if it is ever moved -- see benchmark/runs/README.md.
+    # Backfilled for existing logs; set it explicitly on new sweeps.
+    stage: Optional[str] = None
 
     def to_dict(self) -> dict:
         return dataclasses.asdict(self)

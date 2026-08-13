@@ -70,7 +70,7 @@ Breakpoints investigated: 2
   BP2_chr8: chr8:47000000 — moderate (2/4)
 ```
 
-Full structured record saved to `stage1_igv_assistant/results/demo_case.json`.
+Full structured record saved to `stage1_igv_assistant/data/demo_case.json`.
 
 ---
 

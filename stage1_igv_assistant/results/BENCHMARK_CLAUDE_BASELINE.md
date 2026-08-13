@@ -58,7 +58,7 @@ server and the same three cases:
    run-log format as `ollama_harness.py` (shared via `benchmark/mcp_client.py`)
    — the only thing that differs from the local-model runs is which chat API
    is called. **9/9 runs complete.**
-2. **Instruction-blind arm** (`benchmark/runs_blind/`, saved via
+2. **Instruction-blind arm** (`benchmark/runs/blind_arm/`, saved via
    `benchmark/save_blind_run.py`) — an actual Claude Code session (Agent tool),
    given only the case's prompt text and instructed to use *only* the MCP
    server's tools, not read source, and not rely on prior knowledge. This is

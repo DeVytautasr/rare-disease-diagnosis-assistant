@@ -25,7 +25,7 @@ from pathlib import Path
 
 from stage1_igv_assistant.benchmark.mcp_client import RunLog, ToolCallRecord
 
-RUNS_DIR = Path(__file__).resolve().parent / "runs_blind"
+RUNS_DIR = Path(__file__).resolve().parent / "runs" / "blind_arm"
 
 
 def save_blind_run(
