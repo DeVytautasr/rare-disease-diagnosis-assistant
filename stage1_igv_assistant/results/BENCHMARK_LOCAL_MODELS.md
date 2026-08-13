@@ -48,32 +48,19 @@ verification.
 
 ## `correct_verdict` is a screening aid, not a verdict
 
-This criterion has now required **three separate corrections**, and every one
-of them was found by a human reading full reports — none by the metric:
+`correct_verdict` has required **three separate corrections** (word boundary,
+window width, cue attachment), each found by a human reading full reports and
+none by the metric. **Treat it as a screening aid that flags runs for
+inspection: for the ADVERSARIAL case in particular, a score is not a finding
+until a human has read the full report.** Every adversarial verdict in this
+document has been read individually. `score.py` records the sentences that
+drove each verdict (`negating_sentences` / `confirming_sentences` in the
+detail dict) so that read is quick.
 
-1. **Word-boundary bug.** `\b` misplaced so "no" matched inside "know"/"known",
-   the exact word the adversarial prompt invites models to echo.
-2. **Window too narrow.** A fixed 30-character cue→object window missed
-   Claude's *"I cannot confirm ... translocation signature"* (38 characters),
-   scoring a rejection as a failure to reject.
-3. **Cue attachment.** Widening to sentence scope then produced the opposite
-   error: *"no significant drop in depth, consistent with a balanced
-   translocation"* scored as a rejection, when "no" negates the depth drop
-   and the claim about the translocation is an endorsement. Fixed by
-   classifying on the nearest cue preceding the term — and then again by
-   treating "expected" as a confirmation cue, after qwen was found writing
-   *"no split reads were found, which is expected for a balanced
-   translocation"*, which the nearest-cue rule still read as rejection.
-
-Each fix was a response to a specific misclassification found by reading, and
-there is no reason to believe the fourth failure mode is not waiting in text
-nobody has read yet. **Treat `correct_verdict` as a screening aid that flags
-runs for inspection. For the ADVERSARIAL case in particular, a score is not
-a finding until a human has read the full report.** Every adversarial verdict
-reported in this document has been read individually; the score alone was
-wrong often enough that this is not optional. `score.py` now records the
-sentences that drove each verdict (`negating_sentences` /
-`confirming_sentences` in the detail dict) precisely so that read is quick.
+It is not the only criterion with this problem — see
+**Reliability of the scoring criteria** at the end of this document for the
+full account across all five, including the one left deliberately unfixed as
+a worked example.
 
 ## Scope
 
@@ -409,3 +396,80 @@ content needs the opposite approach — there the model *can* see the image,
 and the requirement becomes that its description match the pixels, which is
 a verification problem rather than an access-control one. Nothing here
 generalises to that case.
+
+## Reliability of the scoring criteria
+
+Five binary criteria were meant to make these results reproducible without a
+human in the loop. In practice **three of the five proved unreliable, one
+held up, and one was never stress-tested** — and every defect was found by
+reading reports, never by the metric reporting a problem with itself.
+
+| Criterion | Status | How it failed |
+|---|---|---|
+| `all_layers_queried` | **Fixed** | Required a call to all four evidence layers regardless of applicability, so a model that correctly skipped `split_reads` on a BAM with no SA tags — exactly what the system prompt instructs — failed the check. It penalised the correct behaviour. Now consults the run's own `applicable_layers` result. |
+| `correct_verdict` | **Fixed three times, still not trusted** | (1) `\b` misplaced, so "no" matched inside "known" — the word the adversarial prompt invites models to echo. (2) A fixed 30-character cue→object window missed *"I cannot confirm ... translocation signature"* at 38 characters. (3) Widening to sentence scope inverted a case: *"no significant drop in depth, consistent with a balanced translocation"* scored as rejection when "no" negates the depth drop. Fixed by nearest-cue classification, then again by treating "expected" as a confirmation cue after qwen was found writing *"no split reads were found, which is expected for a balanced translocation"*. |
+| `citation_fidelity` | **Broken, deliberately not fixed** | Fails **21 of 21** claude-sonnet-5 runs, in every case without a single fabricated number. |
+| `no_hallucination` | **Held up** | The one criterion that caught real problems and produced no known false positives — it flagged qwen's unsupported variant sizes and its unprompted "GIAB" provenance claim, both confirmed genuine on reading. |
+| `tool_sequence_valid` | **Unexamined** | Never independently verified. It has not been shown wrong, but it was also never subjected to the scrutiny that broke the other three, and "not yet found to be wrong" is not a property worth reporting as reliability. |
+
+### Why `citation_fidelity` is documented rather than fixed
+
+It is left broken on purpose, as a worked example of the failure mode this
+section exists to describe. Reading the numbers it flags as "uncited" in one
+Claude run — `['-180', '-300', '25', '250', '96.4']` — four distinct
+mechanisms are visible, none of them fabrication:
+
+- **Phantom negatives from ranges.** The report says `~250-300x` and
+  `~100-180x`. The number regex (`-?\d+`) reads the ASCII range hyphen as a
+  minus sign and extracts `-300` and `-180` — values that cannot possibly
+  appear in any tool output, so they are flagged with certainty. This is the
+  metric manufacturing its own violations.
+- **Rounding.** `96.4` is the model rounding the tool's `96.37`.
+- **Prose ranges.** `250` and `300` are endpoints of a range the model
+  described; no single tool field contains either.
+- **Scoring constants.** `25` is the fixed per-component maximum
+  (`soft_clip_score 25.0/25`), quoted from the tool's own scale.
+
+Every one of these is correct behaviour scored as a failure. Fixing it would
+mean special-casing range syntax, tolerating rounding, and modelling derived
+arithmetic — which is to say, re-implementing the judgement the criterion was
+introduced to avoid needing. That is the honest finding, and it is more
+useful recorded than papered over. **Read `citation_fidelity`'s 0/3 rows as
+"not measured", not as "failed".**
+
+### The conclusion
+
+**An automated rubric over free-text reports was not adequate for this task.**
+Every substantive finding in this benchmark was ultimately confirmed or
+overturned by reading reports manually — including both retracted findings,
+each of which the metrics had reported as clean model behaviour:
+
+- qwen was recorded as fabricating a "predominantly chr4" claim. The metrics
+  showed nothing wrong; the tool had produced that sentence and qwen quoted
+  it, which is what the rules require.
+- Claude was scored 2/3 on the adversarial case. The metric registered a
+  clean failure; the model had explicitly refused to confirm the false
+  premise, eight characters outside a regex window.
+
+Neither would have surfaced from the score tables. Both were found by reading
+the reports the scores summarised.
+
+**Treat the scores as a screening layer that directs attention to runs worth
+reading — not as measurements.** They are useful for that: they are cheap,
+they rank runs, and they make regressions visible between stages. They are
+not evidence on their own, and no number in these documents rests on one.
+
+### This mirrors the project's own argument, one level up
+
+The benchmark exists to test whether a model will assert a finding its
+evidence does not support. The scoring criteria did precisely that, about the
+models, for as long as nobody inspected them: `all_layers_queried` reported a
+failure that was compliance, `correct_verdict` reported a capitulation that
+was a refusal, `citation_fidelity` reports fabrication where there is
+rounding and a hyphen.
+
+The criteria were trusted while they were unexamined. Every correction came
+from inspecting the reasoning rather than the score — the same standard this
+project applies to the models it evaluates, applied to the instrument doing
+the evaluating. An evidence pipeline that demands models cite the tool behind
+every claim should not exempt its own metrics from the requirement.
