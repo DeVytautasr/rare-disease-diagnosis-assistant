@@ -14,6 +14,8 @@ import subprocess as _subprocess
 import os as _os
 import signal as _signal
 import tempfile as _tempfile
+import hashlib as _hashlib
+import json as _json
 from dataclasses import dataclass, asdict
 from typing import Optional
 
@@ -54,6 +56,79 @@ DEPTH_RATIO_DELETION_THRESHOLD = 0.7
 # case_object.py's SequencingInfo.applicable_evidence_layers property (which
 # uses this exact vocabulary already).
 EVIDENCE_LAYER_NAMES = ("discordant_pairs", "soft_clipped_reads", "split_reads", "read_depth")
+
+# A "predominant" partner chromosome may only be claimed when one actually
+# dominates: at least PARTNER_DOMINANCE_MIN_READS partner records in total
+# AND the top partner holding at least PARTNER_DOMINANCE_MIN_SHARE of them.
+#
+# This exists because the original implementation took
+# next(iter(chrom_counts)) — the FIRST-INSERTED key, not even the maximum —
+# and labelled it "predominantly" unconditionally, with no check that a
+# dominant partner existed. Consequences found in committed benchmark data
+# (see results/BENCHMARK_LOCAL_MODELS.md's correction section):
+#   - ADVERSARIAL (prompt falsely asserts a t(1;12) translocation): a single
+#     discordant read produced "mates mapping predominantly to chr12",
+#     handing the model a sentence that reads as corroborating the false
+#     premise.
+#   - NEGATIVE (control locus, expected finding: no credible signal): 5
+#     mates on 5 different chromosomes produced "predominantly to chr9".
+# Both directly contradict this module's own documented semantics
+# (discordant_pairs' docstring: "Mates scattered across many different
+# chromosomes = background noise").
+PARTNER_DOMINANCE_MIN_READS = 3
+PARTNER_DOMINANCE_MIN_SHARE = 0.6
+
+# Minimum reads sharing one clip position before the word "consensus" is
+# used. Matches the first scoring tier in summarize_breakpoint_evidence
+# (max_clips >= 3). Below it, describing a "consensus clip position" asserts
+# agreement among reads that does not exist — the same defect class as the
+# partner-dominance bug above, found in the same audit: the NEGATIVE control
+# runs reported "consensus clip position at X (1 reads)" off a single read.
+SOFT_CLIP_PILEUP_MIN_READS = 3
+
+
+def _describe_partner_distribution(chrom_counts: dict, mate_noun: str) -> str:
+    """
+    Describe how partner chromosomes are distributed WITHOUT asserting a
+    clustering pattern the counts don't show. Returns a clause to follow the
+    read count, one of:
+
+      "(mate on chr12) — single read, not a clustering signal"
+      "with mates mapping predominantly to chr8 (12/15)"
+      "with mates scattered across 7 chromosomes — no dominant partner"
+
+    Args:
+        chrom_counts: {chromosome: count}, e.g. discordant_pairs'
+                      mate_chromosomes or split_reads' partner_chromosomes.
+        mate_noun:    singular noun for one partner record ("mate",
+                      "supplementary alignment"); plural adds "s".
+
+    Ties are broken by chromosome name so the output is deterministic
+    rather than dependent on dict insertion order — the specific flaw that
+    made the original next(iter(...)) implementation pick an arbitrary
+    chromosome and call it predominant.
+    """
+    if not chrom_counts:
+        return ""
+    total = sum(chrom_counts.values())
+    top_chrom, top_count = max(chrom_counts.items(), key=lambda kv: (kv[1], kv[0]))
+
+    n_chroms = len(chrom_counts)
+
+    if total == 1:
+        return f"({mate_noun} on {top_chrom}) — single read, not a clustering signal"
+    if (total >= PARTNER_DOMINANCE_MIN_READS
+            and top_count / total >= PARTNER_DOMINANCE_MIN_SHARE):
+        return (f"with {mate_noun}s mapping predominantly to {top_chrom} "
+                f"({top_count}/{total})")
+    if n_chroms == 1:
+        # All on one chromosome but under the read floor: not "scattered"
+        # (there is nothing to scatter across), and not enough reads to call
+        # a pattern either. Say exactly that.
+        return (f"with all {total} {mate_noun}s on {top_chrom} — too few reads "
+                f"to establish a clustering pattern")
+    return (f"with {mate_noun}s scattered across {n_chroms} chromosomes "
+            f"— no dominant partner")
 
 
 # ── Data structures ──────────────────────────────────────────────────────────
@@ -1293,12 +1368,19 @@ def summarize_breakpoint_evidence(
             discordant_pair_score = 0.0
 
     if disc["discordant_pairs"] > 0:
-        top_mate_chrom = next(iter(disc["mate_chromosomes"]))
-        observations.append(
-            f"{disc['discordant_pairs']} discordant pair(s) "
-            f"({disc['discordant_fraction']:.0%} of reads in window) with mates mapping "
-            f"predominantly to {top_mate_chrom}."
-        )
+        n_disc = disc["discordant_pairs"]
+        partner_phrase = _describe_partner_distribution(disc["mate_chromosomes"], "mate")
+        if n_disc == 1:
+            # The fraction is omitted here deliberately: at n=1 it rounds to
+            # "0% of reads in window", which reads as "no discordant pairs"
+            # directly beside a sentence reporting one.
+            observations.append(f"1 discordant pair {partner_phrase}.")
+        else:
+            observations.append(
+                f"{n_disc} discordant pairs "
+                f"({disc['discordant_fraction']:.0%} of reads in window) "
+                f"{partner_phrase}."
+            )
 
     # ── Soft-clip component (0-25) ──
     # Scored on max_clips_at_position — how many reads actually pile up at
@@ -1325,12 +1407,24 @@ def summarize_breakpoint_evidence(
             soft_clip_score = 0.0
 
     if clips["soft_clipped_reads"] > 0:
-        observations.append(
-            f"{clips['soft_clipped_reads']} soft-clipped read(s) "
-            f"({clips['soft_clipped_fraction']:.0%} of reads in window), "
-            f"consensus clip position at {clips['consensus_clip_position']} "
-            f"({clips['max_clips_at_position']} reads)."
-        )
+        n_clips = clips["soft_clipped_reads"]
+        max_clips_obs = clips["max_clips_at_position"]
+        fraction_str = f"({clips['soft_clipped_fraction']:.0%} of reads in window)"
+        if max_clips_obs >= SOFT_CLIP_PILEUP_MIN_READS:
+            observations.append(
+                f"{n_clips} soft-clipped read(s) {fraction_str}, "
+                f"consensus clip position at {clips['consensus_clip_position']} "
+                f"({max_clips_obs} reads)."
+            )
+        else:
+            # "consensus" implies reads agreeing on a boundary; below the
+            # pileup threshold they don't. Say so rather than dressing
+            # scattered clipping up as a localized breakpoint signal.
+            observations.append(
+                f"{n_clips} soft-clipped read(s) {fraction_str}, but no clip pileup "
+                f"— at most {max_clips_obs} read(s) share any single clip position, "
+                f"so there is no consensus breakpoint."
+            )
 
     # ── Split-read component (0-25) ──
     if not layer_assessable["split_reads"]:
@@ -1347,13 +1441,23 @@ def summarize_breakpoint_evidence(
             split_read_score = 0.0
 
     if split["split_reads"] > 0:
-        top_partner_chrom = next(iter(split["partner_chromosomes"]))
-        observations.append(
-            f"{split['split_reads']} split read(s) "
-            f"({split['split_read_fraction']:.0%} of reads in window) with supplementary "
-            f"alignments mapping predominantly to {top_partner_chrom} "
-            f"(e.g. {split['example_partner_loci'][:1]})."
+        n_split = split["split_reads"]
+        partner_phrase = _describe_partner_distribution(
+            split["partner_chromosomes"], "supplementary alignment"
         )
+        examples = split.get("example_partner_loci") or []
+        # Render the first example as a bare locus string; the previous
+        # `[:1]` slice interpolated a Python list, so reports read
+        # "(e.g. ['chr8:47000000'])" with brackets and quotes included.
+        example_suffix = f" (e.g. {examples[0]})" if examples else ""
+        if n_split == 1:
+            observations.append(f"1 split read {partner_phrase}{example_suffix}.")
+        else:
+            observations.append(
+                f"{n_split} split reads "
+                f"({split['split_read_fraction']:.0%} of reads in window) "
+                f"{partner_phrase}{example_suffix}."
+            )
 
     # ── Read-depth component (0-25) ──
     # depth_ratio < DEPTH_RATIO_DELETION_THRESHOLD flags a possible deletion
@@ -2179,6 +2283,21 @@ def run_igv_screenshot(
             "shutdown_method": shutdown_method,
             "igv_stdout": stdout_text[-500:] if stdout_text else "",
             "igv_stderr": stderr_text[-500:] if stderr_text else "",
+            # The caller (an LLM agent) never receives the PNG's pixel data
+            # through the MCP tool-call mechanism -- only this dict, as text.
+            # Stated explicitly rather than left implicit, after a session
+            # observed both claude-sonnet-5 and qwen2.5:7b write confident
+            # descriptions of image contents neither had been shown (see
+            # results/LLM_SESSION_4_VISUAL_*.md). evidence_panel's per-layer
+            # panels embed this same dict, so this propagates there too.
+            "image_content_available_to_caller": False,
+            "note": (
+                "This tool returns a file path only. The image itself has "
+                "not been provided to you. You cannot describe its visual "
+                "contents. Report that an image was generated and where, "
+                "and state that visual interpretation requires a human "
+                "reviewer or a vision-capable client."
+            ),
         }
         if not success:
             result["error"] = (f"IGV timed out after {timeout_sec}s"
@@ -2193,6 +2312,117 @@ def run_igv_screenshot(
         for p in (stdout_path, stderr_path):
             if p and _os.path.exists(p):
                 _os.unlink(p)
+
+
+# ── Image handles: keeping filesystem paths away from the model ─────────────
+#
+# The MCP tool layer (server.py) exposes NO path parameter and returns NO
+# path: it assigns the output location itself and hands back an opaque
+# handle. These helpers implement that.
+#
+# Why the tool signature had to change rather than just redacting the
+# response: an earlier fix redacted screenshot_path from tool *results*, and
+# qwen2.5:7b promptly cited "/tmp/igv_screenshot.png" in its report anyway --
+# a path it had supplied itself as the output_path argument, which
+# necessarily stays in the conversation history. You cannot redact away a
+# path the model chose. Removing the parameter is the only way to make the
+# path genuinely unavailable to it. See
+# results/LLM_SESSION_4_VISUAL_qwen2.5-7b.md.
+IMAGE_SESSION_DIR_ENV = "IGV_IMAGE_SESSION_DIR"
+IMAGE_MANIFEST_NAME = "manifest.json"
+
+# Fields that carry a filesystem path or an IGV process log (which also
+# contains paths). Stripped from every model-visible screenshot result.
+_PATH_BEARING_KEYS = ("screenshot_path", "batch_script", "igv_stdout", "igv_stderr")
+
+IMAGE_HANDLE_NOTE = (
+    "An image was generated but has NOT been provided to you: you have an "
+    "opaque reference (image_ref) only -- no file path, and no pixel data. "
+    "You cannot see this image and must not describe what it shows, "
+    "contains, or looks like. Report that it was generated, which layer and "
+    "region it covers, and what a human reviewer should check."
+)
+
+
+def image_handle(path: str) -> str:
+    """Stable, non-path-shaped reference for one image file."""
+    return "IMG_" + _hashlib.sha256(_os.path.abspath(path).encode("utf-8")).hexdigest()[:4]
+
+
+def png_dimensions(path: str) -> Optional[str]:
+    """"WxH" from the PNG IHDR chunk, or None. Describes the file, not its
+    depicted contents, so it is safe to expose."""
+    try:
+        with open(path, "rb") as fh:
+            header = fh.read(24)
+        if len(header) < 24 or header[:8] != b"\x89PNG\r\n\x1a\n":
+            return None
+        return (f"{int.from_bytes(header[16:20], 'big')}"
+                f"x{int.from_bytes(header[20:24], 'big')}")
+    except OSError:
+        return None
+
+
+def image_session_dir() -> str:
+    """
+    Directory this server process writes screenshots into. Honours
+    IGV_IMAGE_SESSION_DIR (set by the benchmark harness so it knows where to
+    read the handle manifest back from); otherwise falls back to a
+    per-process directory under the repo's screenshots/sessions/.
+    """
+    configured = _os.environ.get(IMAGE_SESSION_DIR_ENV)
+    if configured:
+        base = configured
+    else:
+        base = _os.path.join(
+            _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))),
+            "screenshots", "sessions", f"session_{_os.getpid()}",
+        )
+    _os.makedirs(base, exist_ok=True)
+    return base
+
+
+def _record_handles(session_dir: str, mapping: dict) -> None:
+    """Append to the session's handle->path manifest, so humans (and the
+    harness) can resolve a handle back to a real file. The model never sees
+    this file."""
+    if not mapping:
+        return
+    manifest_path = _os.path.join(session_dir, IMAGE_MANIFEST_NAME)
+    existing = {}
+    if _os.path.exists(manifest_path):
+        try:
+            with open(manifest_path) as fh:
+                existing = _json.load(fh)
+        except (OSError, ValueError):
+            existing = {}
+    existing.update(mapping)
+    with open(manifest_path, "w") as fh:
+        _json.dump(existing, fh, indent=2)
+
+
+def to_handle_result(result: dict, session_dir: str) -> dict:
+    """
+    Convert one run_igv_screenshot result into its model-visible form:
+    every path-bearing field removed, an image_ref added, dimensions added.
+    Records the handle->path mapping in the session manifest as a side
+    effect. Results that produced no screenshot (errors, skips) pass through
+    with path-bearing fields stripped but no handle.
+    """
+    if not isinstance(result, dict):
+        return result
+    out = {k: v for k, v in result.items() if k not in _PATH_BEARING_KEYS}
+    path = result.get("screenshot_path")
+    if isinstance(path, str) and path:
+        handle = image_handle(path)
+        _record_handles(session_dir, {handle: _os.path.abspath(path)})
+        out["image_ref"] = handle
+        dims = png_dimensions(path)
+        if dims:
+            out["image_dimensions"] = dims
+    out["image_content_available_to_caller"] = False
+    out["note"] = IMAGE_HANDLE_NOTE
+    return out
 
 
 # ── Tool 11: Per-layer visual evidence panel ────────────────────────────────

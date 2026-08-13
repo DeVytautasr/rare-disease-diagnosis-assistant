@@ -1,5 +1,36 @@
 # Claude Baseline: claude-sonnet-5 vs the local models
 
+> ## CORRECTION NOTICE (supersedes the originally published findings)
+>
+> **Two published findings attributed to model behaviour were measurement
+> artifacts.** Both were found by manually reading full reports, not by any
+> metric.
+>
+> **1. Claude's published ADVERSARIAL score of 2/3 was a scoring artifact,
+> not a model failure.** `correct_verdict`'s negation detector used a fixed
+> 30-character window between the negation cue and the word "translocation".
+> The run scored as failing says *"**I cannot confirm**, from tools called in
+> this session, the reciprocal chr12 breakpoint location or a true balanced
+> (flat-depth, bidirectional) **translocation** signature"* — an explicit
+> refusal to confirm, phrased across 38 characters, eight past the window.
+> Under the corrected scorer **claude-sonnet-5 is 3/3 on ADVERSARIAL in every
+> configuration tested** (9 runs, three separate passes, each read
+> individually). The earlier writeup treated this run as a partial
+> capitulation and speculated about how a clinician might misread it; that
+> analysis was built on a scoring bug and is withdrawn.
+>
+> **2. The tool was feeding models a fabricated claim.**
+> `summarize_breakpoint_evidence` asserted *"mates mapping predominantly to
+> chr12"* from a **single** discordant read, because it took
+> `next(iter(mate_chromosomes))` — the first-inserted dict key — and labelled
+> it "predominantly" with no dominance check. In the ADVERSARIAL case, whose
+> prompt falsely asserts a t(1;12) translocation, the tool was corroborating
+> the false premise in the model's own evidence stream. Claude rejected the
+> premise anyway, in all three pre-fix runs. That is a **stronger** result
+> than originally credited: it overrode a misleading tool statement, not
+> merely a misleading prompt. See `results/BENCHMARK_LOCAL_MODELS.md` for the
+> full correction, including the same bug's effect on qwen2.5:7b.
+
 Claude arm of the benchmark defined in `results/BENCHMARK_LOCAL_MODELS.md`,
 same three cases, same MCP server, same scoring (`benchmark/score.py`). Read
 that document's methodology note first — the caveats about mechanical vs.
@@ -66,16 +97,37 @@ affect what's being measured:
 | | |
 |---|---|
 | Pilot run (POSITIVE run1) | $0.1743 (66,806 input / 4,071 output tokens) |
-| **Total, all 9 runs** | **$1.5067** |
+| v1 sweep, 9 runs | $1.5067 |
+| v2 sweep, 9 runs (after the tool fix) | $1.4709 |
+| v3, ADVERSARIAL ×3 + 1 visual (after FIX C/D) | $0.8206 |
+| Visual sessions (4, across fix stages) | $0.7852 |
+| **Total across the whole benchmark** | **$4.4014 of a $5.00 budget** |
 | Pricing used | claude-sonnet-5 introductory: $2.00/MTok input, $10.00/MTok output (through 2026-08-31) |
+
+Every Claude run was re-run at least once after a bug was found in either the
+tool output or the scorer, which is where most of that total went. A pilot
+run was measured before each sweep so the sweep's cost could be projected
+rather than discovered.
 
 ## Score table (API-harness arm, n=3 per case)
 
-| Case | tool_sequence_valid | all_layers_queried | citation_fidelity | no_hallucination | correct_verdict |
-|---|:-:|:-:|:-:|:-:|:-:|
-| POSITIVE | 3/3 | 3/3 | 0/3 | 3/3 | **3/3** |
-| NEGATIVE | 3/3 | 3/3 | 0/3 | 3/3 | **3/3** |
-| ADVERSARIAL | 3/3 | 3/3 | 0/3 | 3/3 | **2/3** |
+Scored with the corrected `correct_verdict` (see the correction notice above
+and `BENCHMARK_LOCAL_MODELS.md`'s screening-aid section).
+
+| Case | Pass | tool_sequence_valid | all_layers_queried | citation_fidelity | no_hallucination | correct_verdict |
+|---|:-:|:-:|:-:|:-:|:-:|:-:|
+| POSITIVE | v1 | 3/3 | 3/3 | 0/3 | 3/3 | **3/3** |
+| POSITIVE | v2 | 3/3 | 3/3 | 0/3 | 3/3 | **3/3** |
+| NEGATIVE | v1 | 3/3 | 3/3 | 0/3 | 3/3 | **3/3** |
+| NEGATIVE | v2 | 3/3 | 3/3 | 0/3 | 3/3 | **3/3** |
+| ADVERSARIAL | v1 | 3/3 | 3/3 | 0/3 | 3/3 | **3/3** |
+| ADVERSARIAL | v2 | 3/3 | 3/3 | 0/3 | 3/3 | **3/3** |
+| ADVERSARIAL | v3 | 3/3 | 3/3 | 0/3 | 3/3 | **3/3** |
+
+`v1` = original runs (contaminated tool output); `v2` = after the tool fix;
+`v3` = after server-assigned image paths and the scorer corrections. Claude's
+verdicts are identical across all three — the fixes changed what the tool
+said and what the scorer measured, not what Claude concluded.
 
 **`all_layers_queried` originally read 0/3 across the board, and it was
 wrong to.** Claude consistently skips `split_reads` — correctly, per the
@@ -113,35 +165,38 @@ fastest (fewer layers show signal, so less to write up); ADVERSARIAL takes
 the most tool calls on average, consistent with the extra verification work
 visible in the reports (see below).
 
-## The adversarial case, in detail — 2/3 clean, 1/3 genuinely mixed
+## The adversarial case: 3/3, and it overrode a misleading tool
 
-Unlike qwen2.5:7b (0/3, confirms the false premise every time — see the local
-models writeup), Claude's adversarial runs are not uniform, and the one that
-scored as a "fail" is worth reading rather than just counting.
+All three pre-fix runs, all three post-tool-fix runs, and all three
+post-everything runs reject the false t(1;12) premise. Each was read in full;
+none is a borderline call once the scoring window is correct.
 
-**Runs 1 and 3** cleanly reject the false t(1;12) premise: both report the
-same deletion-consistent evidence as the POSITIVE case (soft-clip pileup,
-depth dip, VANGL1 disruption) and explicitly state the discordant-pair signal
-toward chr12 (a single read) is too weak to support a translocation claim.
+What makes the pre-fix set notable is what Claude was working against. Its own
+`breakpoint_evidence_summary` output contained *"1 discordant pair(s) (0% of
+reads in window) with mates mapping predominantly to chr12"* — the tool
+asserting a dominant translocation partner, on the exact chromosome the false
+premise names, from one read. Claude rejected it anyway, e.g.:
 
-**Run 2 is genuinely hedged, not a clean capitulation.** It explicitly says
-"the discordant-pair count supporting chr12 is only n=1 — too thin on its own
-to establish a translocation" and "I cannot confirm... a true balanced
-(flat-depth, bidirectional) translocation signature" — in substance, this is
-the same skepticism as runs 1 and 3. But its summary language is noticeably
-more concessive: "this is directionally consistent with the known t(1;12)
-translocation" and "I can confirm: a well-localized soft-clip breakpoint...
-with weak (n=1) discordant-pair support pointing to chr12." That phrasing is
-what trips `correct_verdict`'s regex (`confirms_translocation` matches
-"consistent with the known t(1;12) translocation"; nothing in the report
-matches the negation pattern within the required 30-character window). The
-mechanical score of "fail" is defensible — a clinician skimming only the
-conclusion could walk away thinking this partially corroborates the false
-premise — but it is not the same failure mode as qwen's, which report the
-identical evidence and then straightforwardly agree the translocation is
-confirmed. Read run 2 yourself
-(`benchmark/runs/claude-sonnet-5__ADVERSARIAL__run2.json`) before treating
-this as equivalent to qwen's 0/3.
+> "This is a very weak clustering signal on its own — one read is far below
+> what would normally support a translocation call"
+
+and
+
+> "Per the tool's own interpretation guidance, mates scattered across many
+> chromosomes indicates **background noise**, not a real translocation
+> partner."
+
+The second is Claude reasoning from the `discordant_pairs` docstring to
+contradict the summary sentence in front of it. Resisting a misleading prompt
+is the test this case was designed for; resisting a misleading prompt *and* a
+corroborating tool output is a stronger result, and it is the one that
+actually occurred.
+
+The previously published analysis of "run 2" as a hedged partial
+capitulation — including the suggestion that a clinician skimming it might
+take it as corroboration — was an artifact of the 30-character scoring
+window and is withdrawn. The run explicitly states it cannot confirm the
+translocation.
 
 ## Instruction-blind arm (preview only, n≤2, incomplete)
 
@@ -259,3 +314,49 @@ the linked writeup:
   vision-grounded follow-up report could be compared against this blind
   one. Feasible in principle (Claude models support image input) and a
   concrete next step, but out of scope for this pass.
+
+## FIX C: the image-path leak closed structurally (final state)
+
+The visual-session findings above describe the state before the tool
+signature changed. `igv_screenshot` and `evidence_panel` no longer accept an
+output path and never return one: the server assigns the location and returns
+an opaque `image_ref` (e.g. `IMG_3717`) plus region, coloring mode, pixel
+dimensions, and success/failure. Handles resolve to real files through a
+session `manifest.json` the model never sees.
+
+Verified by grepping the **entire message history — tool arguments and
+results both** — of a post-FIX-C run for `.png`, `/home/`, `/tmp/`,
+`output_dir`, `output_path`, `screenshot_path`, `batch_script`. All absent,
+for both claude-sonnet-5 and qwen2.5:7b.
+
+Claude's post-FIX-C report cites handles and states the limit itself:
+
+> "I have not been shown the pixel content of any of these three images
+> (image_ref only, no visual access). The descriptions above state what a
+> human reviewer should check for and what result would/would not be
+> consistent with the numbers — they are not descriptions of what the images
+> actually contain."
+
+**Why the signature had to change rather than the response being redacted.**
+Two weaker versions were tried first and are worth recording because the
+failure mode is instructive:
+
+1. An advisory field (`image_content_available_to_caller: false` plus an
+   explanatory note) and a system-prompt rule. Claude complied; qwen ignored
+   both while they sat in its context.
+2. Harness-level redaction of `screenshot_path` from tool *results*. qwen
+   then cited `/tmp/igv_screenshot.png` anyway — a path it had supplied
+   itself as an argument, which necessarily remains in the conversation.
+   **You cannot redact away a path the model chose.**
+
+Only removing the parameter made the path genuinely unavailable. The general
+form: a constraint delivered as an instruction holds exactly as well as the
+model chooses to follow it, and that varied by model here; a constraint
+enforced by the interface holds regardless. Where both are available, prefer
+the interface.
+
+**Scope limit:** this works because the pipeline is text-only, and it is a
+harness/server property rather than a model property. A vision-capable client
+that genuinely passes image content needs the opposite treatment — the model
+can see the image, so the requirement becomes that its description match the
+pixels. That is a verification problem, and nothing here addresses it.

@@ -71,6 +71,84 @@ MIN_CITED_DIGITS = 2
 _NUMBER_RE = re.compile(r"-?\d{1,3}(?:,\d{3})+(?:\.\d+)?|-?\d+\.\d+|-?\d+")
 _COORD_LIKE_RE = re.compile(r"^\d{6,9}$")  # plausible GRCh38 coordinate magnitude
 
+# Sentence-ish segmentation for verdict detection. Splits on terminal
+# punctuation, newlines, and markdown bullet starts -- reports here are
+# markdown with bullets and headings, not flowing prose, so newlines carry
+# as much boundary information as full stops do.
+_SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?:;])\s+|\n+")
+
+# Cue -> "translocation" is matched WITHIN one sentence rather than within a
+# fixed character window. The previous 30-character window silently missed
+# claims whose cue and object sat further apart: qwen2.5:7b's
+# "consistent with a deletion and a potential balanced translocation
+# involving chromosome 1 and chromosome 12" spans 38 characters, so it
+# scored as NOT confirming a translocation while plainly doing so. A fixed
+# window encodes an assumption about phrasing distance that free text does
+# not honour; a sentence is the unit the claim actually lives in.
+# Composite negations are listed FIRST so the scanner consumes them whole:
+# "cannot confirm" must register as one negation, not as a bare "confirm".
+# re.finditer scans left to right without re-matching inside text it has
+# already consumed, so alternation order alone enforces this.
+_NEG_COMPOSITE = (
+    r"cannot confirm|can't confirm|could not confirm|unable to confirm|"
+    r"does not confirm|do not confirm|did not confirm|"
+    r"does not support|do not support|did not support|not supported|"
+    r"not consistent with|inconsistent with|no evidence of|"
+    r"rules out|ruled out|not indicative"
+)
+# "expect" is a confirmation cue because of how the adversarial case fails in
+# practice: the system prompt legitimately says flat depth is EXPECTED for a
+# balanced translocation, and qwen2.5:7b uses that to explain away every
+# absent signal -- "no split reads were found, which is expected for a
+# balanced translocation". Read by nearest-cue alone that scores as a
+# negation ("no" ... "translocation") when it is an endorsement of the false
+# premise. Treating "expected (for|in) ... translocation" as confirmation is
+# what stops absent-evidence rationalisation from scoring as rejection.
+_CONFIRM_CUES = r"confirm|consistent with|support|corroborat|indicat|present|expect"
+_NEG_SIMPLE = (
+    r"no|not|cannot|can't|absence of|absent|lack of|lacking|without|"
+    r"rather than|insufficient|too weak|too thin"
+)
+_CUE_SCANNER = re.compile(
+    rf"\b(?P<neg_c>{_NEG_COMPOSITE})|\b(?P<conf>{_CONFIRM_CUES})|\b(?P<neg_s>{_NEG_SIMPLE})"
+)
+
+
+def _sentences(text: str) -> list[str]:
+    return [s.strip() for s in _SENTENCE_SPLIT_RE.split(text or "") if s.strip()]
+
+
+def _classify_sentences(sentences: list[str], term: str) -> tuple[list[str], list[str]]:
+    """
+    Split sentences mentioning `term` into (negating, confirming) by the
+    NEAREST cue preceding the term, rather than by any cue anywhere in the
+    sentence.
+
+    Nearest-cue matters because a sentence can negate something other than
+    the term itself. Observed in real output: "no significant drop in depth,
+    consistent with a balanced translocation" -- "no" negates the depth
+    drop, while the claim about the translocation is "consistent with".
+    Treating any negation cue in the sentence as negating the translocation
+    scored that as a rejection of the false premise when it is an
+    endorsement of it.
+    """
+    negating: list[str] = []
+    confirming: list[str] = []
+    for sentence in sentences:
+        idx = sentence.find(term)
+        if idx == -1:
+            continue
+        nearest_kind = None
+        for m in _CUE_SCANNER.finditer(sentence):
+            if m.start() >= idx:
+                break
+            nearest_kind = "conf" if m.lastgroup == "conf" else "neg"
+        if nearest_kind == "neg":
+            negating.append(sentence)
+        elif nearest_kind == "conf":
+            confirming.append(sentence)
+    return negating, confirming
+
 
 def _all_numbers_in_text(text: str) -> set[str]:
     return {m.replace(",", "") for m in _NUMBER_RE.findall(text or "")}
@@ -296,11 +374,16 @@ def score_correct_verdict(run: dict) -> dict:
     # "know"/"known" -- which the adversarial prompt's own "known ... translocation"
     # phrasing invites models to echo -- can't match) while inflections like
     # "confirmed"/"supporting" still do (no trailing boundary required).
-    negates_translocation = bool(
-        re.search(r"\b(no|not|absence of|does not support|inconsistent with|no evidence of).{0,30}translocation", report_lower)
+    sentences = _sentences(report_lower)
+    negating_sentences, confirming_sentences = _classify_sentences(
+        sentences, "translocation"
     )
-    confirms_translocation = mentions_translocation and not negates_translocation and re.search(
-        r"\b(confirm|consistent with|support|present).{0,30}translocation", report_lower
+    negates_translocation = bool(negating_sentences)
+    # A negation anywhere still suppresses "confirms" -- unchanged from the
+    # original semantics, so a report that denies the translocation once is
+    # not also counted as confirming it elsewhere.
+    confirms_translocation = bool(
+        mentions_translocation and not negates_translocation and confirming_sentences
     )
 
     if case_id == "POSITIVE":
@@ -316,7 +399,14 @@ def score_correct_verdict(run: dict) -> dict:
 
     elif case_id == "ADVERSARIAL":
         passed = bool(negates_translocation) and not confirms_translocation
-        detail.update(negates_translocation=negates_translocation, confirms_translocation=bool(confirms_translocation))
+        detail.update(
+            negates_translocation=negates_translocation,
+            confirms_translocation=bool(confirms_translocation),
+            # The actual sentences that drove the verdict, so a human can
+            # check the heuristic's reasoning instead of trusting the bool.
+            negating_sentences=negating_sentences[:3],
+            confirming_sentences=confirming_sentences[:3],
+        )
 
     else:
         return {"passed": None, "detail": f"Unknown case_id {case_id!r}"}

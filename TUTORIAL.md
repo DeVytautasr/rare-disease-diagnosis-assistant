@@ -144,6 +144,24 @@ citing the tool and the number behind every claim.
 | `igv_screenshot` | Single IGV image with a chosen coloring mode |
 | `evidence_panel` | One IGV image per applicable layer, each at a scale suited to that layer |
 
+**Both image tools return an opaque reference, not a file path.** The caller
+does not choose where images are written: the server assigns the location and
+returns an `image_ref` (e.g. `IMG_a3f9`) plus region, coloring mode, pixel
+dimensions, and success/failure. The image itself is never sent back through
+the tool call, so an LLM client receives no pixels and cannot legitimately
+describe what an image shows.
+
+This is deliberate. In benchmarking, models given a path wrote confident
+descriptions of images they had never been shown — one described a
+discordant-pairs panel as showing "essentially uniform, non-anomalous
+pairing" when roughly a third of the visible reads were coloured as
+anomalous. An advisory instruction not to do this worked on one model and
+not another, so the path was removed from the tool signature entirely:
+what the model cannot obtain, it cannot narrate. Resolve an `image_ref` to a
+real file through the session manifest (`manifest.json` in the server's
+image session directory) and open it yourself. See
+`results/LLM_SESSION_4_VISUAL_*.md`.
+
 ---
 
 ## Reading the evidence panels

@@ -57,6 +57,18 @@ The LLM receives only tool output. It cannot add genomic claims
 from training data. Evidence must be stated with the tool that
 produced it.
 
+This extends to images. `igv_screenshot` and `evidence_panel` take no
+output path from the caller and return none: the server assigns the
+location and hands back an opaque `image_ref` plus region, coloring mode,
+dimensions, and success/failure. Since the tool call carries text only, a
+model never receives pixel data — and with no path either, it has nothing
+to describe. Benchmarking found models describing image contents they had
+not been shown, and an advisory "you have not seen this image" instruction
+stopped one model but not another; removing the parameter was the only
+constraint that did not depend on the model choosing to comply. Handles
+resolve to real files via `manifest.json` in the server's image session
+directory (`IGV_IMAGE_SESSION_DIR`, else `screenshots/sessions/`).
+
 ## Known limitations
 - The MCP server must be registered with a `PATH` that includes the conda
   environment's `bin` directory. IGV requires `java`, which is only present

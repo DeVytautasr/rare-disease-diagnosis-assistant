@@ -7,8 +7,12 @@ never adds genomic facts from its own training data.
 Run from repo root: python -m stage1_igv_assistant.server
 """
 
+import os
+
 from fastmcp import FastMCP
 from stage1_igv_assistant.tools.bam_tools import (
+    image_session_dir,
+    to_handle_result,
     get_bam_stats_at_locus,
     count_discordant_pairs,
     count_soft_clipped_reads,
@@ -45,6 +49,11 @@ RULES:
    one that isn't artificially capped by layers this data could never
    produce — but evidence_score_raw is available if asked for the
    unnormalised view.
+10. You have not seen any image produced by the screenshot tools. Never
+    describe what an image shows, contains, or looks like. State that it
+    was generated, give its path, and say what a reviewer should check.
+    Describing image contents you have not been shown is fabrication,
+    equivalent to citing a number no tool returned.
 """,
 )
 
@@ -302,7 +311,7 @@ def reciprocal_breakpoint(bam_path: str, primary_chromosome: str, primary_positi
 
 @mcp.tool()
 def igv_screenshot(bam_paths: list, chromosome: str, start: int, end: int,
-                   output_path: str, genome_build: str = "hg38",
+                   genome_build: str = "hg38",
                    color_by: str = "UNEXPECTED_PAIR",
                    max_coverage: int = None,
                    coverage_height: int = 120) -> dict:
@@ -310,6 +319,14 @@ def igv_screenshot(bam_paths: list, chromosome: str, start: int, end: int,
     Generate a visual IGV screenshot of a breakpoint region.
     Call this AFTER gathering evidence, to produce visual confirmation
     a clinician can review.
+
+    You do NOT choose where the image is written and you do NOT receive a
+    file path. The server assigns the location and returns an opaque
+    image_ref (e.g. "IMG_a3f9") plus metadata you can legitimately reason
+    about: region, coloring mode, pixel dimensions, and success/failure.
+    The image itself is never provided to you, so you cannot and must not
+    describe what it shows — report that it was generated, which region it
+    covers, and what a reviewer should check.
 
     Choose color_by based on the suspected event:
     - UNEXPECTED_PAIR for translocations (shows inter-chromosomal pairs,
@@ -331,21 +348,32 @@ def igv_screenshot(bam_paths: list, chromosome: str, start: int, end: int,
     the region.
     coverage_height sets the coverage track's pixel height (IGV default
     is ~50px, too short to render a depth dip legibly).
-    Returns the path to the PNG image and the exact IGV batch script used,
-    so the visualization is fully reproducible.
     """
-    return run_igv_screenshot(bam_paths, chromosome, start, end,
-                              output_path, genome_build, color_by,
-                              max_coverage=max_coverage,
-                              coverage_height=coverage_height)
+    session_dir = image_session_dir()
+    output_path = os.path.join(
+        session_dir, f"{chromosome}_{start}_{end}_{color_by}.png"
+    )
+    result = run_igv_screenshot(bam_paths, chromosome, start, end,
+                                output_path, genome_build, color_by,
+                                max_coverage=max_coverage,
+                                coverage_height=coverage_height)
+    return to_handle_result(result, session_dir)
 
 @mcp.tool()
 def evidence_panel(bam_paths: list, chromosome: str, position: int,
-                   output_dir: str, start: int = None, end: int = None,
+                   start: int = None, end: int = None,
                    applicable_layers: list = None, windows: dict = None) -> dict:
     """
     Generates one screenshot PER evidence layer, instead of a single image
-    trying to show everything at once. Each layer gets BOTH the IGV
+    trying to show everything at once.
+
+    You do NOT choose where images are written and you do NOT receive file
+    paths. The server assigns the location; each panel entry carries an
+    opaque image_ref (e.g. "IMG_a3f9") plus region, coloring mode, pixel
+    dimensions, and success/failure. The images themselves are never
+    provided to you, so you cannot and must not describe what they show —
+    report which layers were generated, the region each covers, and what a
+    reviewer should check. Each layer gets BOTH the IGV
     settings that isolate it visually AND its own window around `position`
     — a single shared window can't serve every layer (confirmed directly:
     a region wide enough for a depth dip renders soft-clip marks
@@ -390,15 +418,24 @@ def evidence_panel(bam_paths: list, chromosome: str, position: int,
       position, chromosome, bam_paths, applicable_layers,
       applicable_layers_source, windows_used (per-layer region actually
       used, for all 4 layers regardless of skip status), and panels: a
-      dict with one entry per evidence layer, each either a
-      run_igv_screenshot-shaped result (screenshot_path, success, etc.,
-      plus window_bp and — for soft_clipped_reads — clip_side_determination)
+      dict with one entry per evidence layer, each either a screenshot
+      result (image_ref, image_dimensions, success, region, color_by,
+      window_bp and — for soft_clipped_reads — clip_side_determination)
       or a {"skipped": true, "reason": ...} entry.
     """
-    return igv_evidence_panel(bam_paths, chromosome, position, output_dir,
-                              start=start, end=end,
-                              applicable_layers=applicable_layers,
-                              windows=windows)
+    session_dir = image_session_dir()
+    result = igv_evidence_panel(bam_paths, chromosome, position, session_dir,
+                                start=start, end=end,
+                                applicable_layers=applicable_layers,
+                                windows=windows)
+    panels = result.get("panels")
+    if isinstance(panels, dict):
+        result["panels"] = {
+            layer: (entry if isinstance(entry, dict) and entry.get("skipped")
+                    else to_handle_result(entry, session_dir))
+            for layer, entry in panels.items()
+        }
+    return result
 
 if __name__ == "__main__":
     mcp.run()

@@ -33,6 +33,8 @@ from stage1_igv_assistant.benchmark.mcp_client import (
     call_mcp_tool,
     mcp_schema_to_ollama_tool,
     mcp_session,
+    read_image_manifest,
+    redact_image_payload,
 )
 
 # Default Ollama context (4096) is too small for this workload -- 11 tool
@@ -92,7 +94,7 @@ async def run_once(model: str, case_id: str, run_index: int, max_turns: int = MA
     start = time.monotonic()
     error: str | None = None
 
-    async with mcp_session() as (session, init_result):
+    async with mcp_session() as (session, init_result, image_session_dir):
         system_prompt = init_result.instructions or ""
         tools_result = await session.list_tools()
         ollama_tools = [mcp_schema_to_ollama_tool(t) for t in tools_result.tools]
@@ -105,6 +107,7 @@ async def run_once(model: str, case_id: str, run_index: int, max_turns: int = MA
         tool_call_log: list[ToolCallRecord] = []
         hit_max_turns = True
         final_report: str | None = None
+        image_handles: dict = {}
 
         for turn in range(1, max_turns + 1):
             try:
@@ -179,13 +182,22 @@ async def run_once(model: str, case_id: str, run_index: int, max_turns: int = MA
                         via_text_fallback=via_fallback,
                     )
                 )
+                # The server already returns handles rather than paths
+                # (FIX C); this is now a no-op safety net rather than the
+                # primary control.
+                visible_payload, new_handles = redact_image_payload(result["payload"])
+                image_handles.update(new_handles)
                 messages.append(
                     {
                         "role": "tool",
                         "tool_name": name,
-                        "content": json.dumps(result["payload"], default=str),
+                        "content": json.dumps(visible_payload, default=str),
                     }
                 )
+
+        # Server-assigned handles: the only route from an image_ref the
+        # model cited back to a real file a human can open.
+        image_handles.update(read_image_manifest(image_session_dir))
 
         elapsed = time.monotonic() - start
         return RunLog(
@@ -201,6 +213,7 @@ async def run_once(model: str, case_id: str, run_index: int, max_turns: int = MA
             hit_max_turns=hit_max_turns,
             wall_clock_seconds=round(elapsed, 3),
             error=error,
+            image_handles=image_handles or None,
         )
 
 

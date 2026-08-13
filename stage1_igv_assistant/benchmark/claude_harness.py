@@ -42,6 +42,8 @@ from stage1_igv_assistant.benchmark.mcp_client import (
     call_mcp_tool,
     mcp_schema_to_anthropic_tool,
     mcp_session,
+    read_image_manifest,
+    redact_image_payload,
 )
 
 load_dotenv(REPO_ROOT / ".env")
@@ -68,7 +70,7 @@ async def run_once(client, model: str, case_id: str, run_index: int, max_turns: 
     start = time.monotonic()
     error: str | None = None
 
-    async with mcp_session() as (session, init_result):
+    async with mcp_session() as (session, init_result, image_session_dir):
         system_prompt = init_result.instructions or ""
         tools_result = await session.list_tools()
         anthropic_tools = [mcp_schema_to_anthropic_tool(t) for t in tools_result.tools]
@@ -79,6 +81,7 @@ async def run_once(client, model: str, case_id: str, run_index: int, max_turns: 
         final_report: str | None = None
         input_tokens_total = 0
         output_tokens_total = 0
+        image_handles: dict = {}
 
         for turn in range(1, max_turns + 1):
             try:
@@ -132,15 +135,25 @@ async def run_once(client, model: str, case_id: str, run_index: int, max_turns: 
                         malformed_reason=malformed_reason,
                     )
                 )
+                # The server already returns handles rather than paths (FIX
+                # C), so this is now a no-op safety net rather than the
+                # primary control -- kept so a future tool that forgets to
+                # redact still can't leak a path into the transcript.
+                visible_payload, new_handles = redact_image_payload(result["payload"])
+                image_handles.update(new_handles)
                 tool_result_blocks.append(
                     {
                         "type": "tool_result",
                         "tool_use_id": block.id,
-                        "content": str(result["payload"]),
+                        "content": str(visible_payload),
                         "is_error": bool(result["is_error"]),
                     }
                 )
             messages.append({"role": "user", "content": tool_result_blocks})
+
+        # Server-assigned handles: the only route from an image_ref the
+        # model cited back to a real file a human can open.
+        image_handles.update(read_image_manifest(image_session_dir))
 
         elapsed = time.monotonic() - start
         estimated_cost_usd = (
@@ -165,6 +178,7 @@ async def run_once(client, model: str, case_id: str, run_index: int, max_turns: 
                 "output_tokens": output_tokens_total,
                 "estimated_cost_usd": round(estimated_cost_usd, 4),
             },
+            image_handles=image_handles or None,
         )
 
 

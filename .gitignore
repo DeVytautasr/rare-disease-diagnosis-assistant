@@ -23,3 +23,12 @@ Miniconda3-latest-Linux-x86_64.sh
 
 # Secrets
 .api/
+
+# Generated IGV screenshots. Server-assigned session dirs (post-FIX-C) plus
+# the model-chosen output dirs that pre-FIX-C runs scattered at repo root.
+stage1_igv_assistant/screenshots/sessions/
+/chr1_*_evidence/
+/hg002_*_evidence/
+/sv_report_*/
+/evidence_panel*/
+/screenshot.png
