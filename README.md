@@ -42,4 +42,17 @@ alignments of the same confirmed deletion. See
 `stage1_igv_assistant/results/` for validation write-ups, and
 `TUTORIAL.md` for a guided walkthrough (written for external reviewers).
 
+**Model comparison benchmark (`stage1_igv_assistant/benchmark/`).**
+Three models run against the same server, cases, and scoring:
+`claude-sonnet-5` via an API harness, `qwen2.5:7b` and `llama3.1:8b`
+hosted locally. Three cases — a confirmed deletion, a control locus, and
+an adversarial variant whose prompt asserts a translocation the data does
+not support. Run logs are grouped by fix stage under `benchmark/runs/`
+(see its README); findings are in `results/BENCHMARK_LOCAL_MODELS.md` and
+`results/BENCHMARK_CLAUDE_BASELINE.md`, both of which open with
+correction notices — two published findings turned out to be measurement
+artifacts rather than model behaviour, and the documents say so before
+they say anything else. `results/README.md` indexes all of it with a
+reading order.
+
 Stage 2 (variant/gene + phenotype prioritization) has not been started.

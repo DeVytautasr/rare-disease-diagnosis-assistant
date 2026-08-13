@@ -6,6 +6,10 @@ This directory contains the thesis background and methods chapter.
 - thesis_background_methods_chapter.md — full chapter, 47 references
 - thesis_chapter_updated.docx — Word format for supervisor submission
 
+The chapter's Stage 1 section now also covers the three-model comparison,
+the two retracted findings, and the scoring-criteria reliability analysis —
+see `stage1_igv_assistant/results/` for the underlying write-ups.
+
 ## Chapter sections
 1. Introduction and Motivation
 2. Related Work (includes Eilbeck 2017, AI-MARRVEL 2024, MARRVEL-MCP 2026)

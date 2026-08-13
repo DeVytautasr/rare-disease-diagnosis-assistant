@@ -25,7 +25,14 @@ python -m stage1_igv_assistant.server
 ```
 python stage1_igv_assistant/tests/test_bam_tools.py
 python stage1_igv_assistant/tests/test_server.py
+python stage1_igv_assistant/tests/test_partner_distribution.py
 ```
+`test_partner_distribution.py` is a pure-Python regression suite (no BAM, no
+IGV, runs in under a second) guarding the observation strings in
+`summarize_breakpoint_evidence` against a class of defect where the tool
+asserted a pattern its data did not contain -- see
+`results/BENCHMARK_LOCAL_MODELS.md`'s correction notice.
+
 `test_bam_tools.py`'s real-IGV assertions and `igv_screenshot`'s
 functionality both require Java (present in the `rda` conda env, not the
 base env) — run under `conda run -n rda python ...` or
@@ -112,3 +119,7 @@ directory (`IGV_IMAGE_SESSION_DIR`, else `screenshots/sessions/`).
   (the tool had to kill it after confirming the PNG was written), or 
   `"timeout"` (no output file appeared within `timeout_sec`, which 
   still acts as a hard ceiling and kills the process either way).
+  Any pre-existing file at the output path is deleted before IGV
+  launches: a stale file's size is trivially "stable" from the first
+  poll, which previously caused the tool to kill IGV before it had
+  rendered anything and report the leftover file as a fresh success.

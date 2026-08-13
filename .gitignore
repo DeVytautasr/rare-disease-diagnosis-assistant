@@ -35,3 +35,8 @@ stage1_igv_assistant/screenshots/sessions/
 /*_evidence/
 /evidence_panel*/
 /sv_report_*/
+
+# WSL/NTFS alternate-data-stream artifacts. Created automatically beside any
+# file that came from a Windows download or a Windows-side editor; they carry
+# no content and should never be committed.
+*:Zone.Identifier
