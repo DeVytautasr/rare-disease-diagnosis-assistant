@@ -21,7 +21,19 @@ because it initially made this session's own images untrustworthy.
 
 Claude's `evidence_panel` call used `output_dir="./chr1_115686862_evidence"`
 — a directory that already existed with PNGs from the original benchmark's
-POSITIVE-case pilot run, over an hour earlier. `run_igv_screenshot`'s
+POSITIVE-case pilot run, over an hour earlier.
+
+> **That directory no longer exists, and that call can no longer be made.**
+> `output_dir` was removed from the tool signature entirely (FIX C): output
+> paths are now assigned by the server under its own session directory, and
+> a caller-supplied path is not accepted. The collision described here — a
+> model choosing an output directory that another run had already written
+> to — is therefore no longer reachable through the MCP tools. The path is
+> retained in this paragraph because it is what the run actually did; see
+> `benchmark/runs/README.md` for the stage layout and
+> `BENCHMARK_CLAUDE_BASELINE.md`'s FIX C section for why the parameter was
+> removed rather than the behaviour merely discouraged.
+ `run_igv_screenshot`'s
 completion check polls `output_path` for a stable (unchanged) file size
 across two 1-second checks, then kills IGV. If a file already exists at that
 path when the poll starts, its size is trivially "stable" from the very
