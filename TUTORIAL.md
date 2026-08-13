@@ -3,7 +3,7 @@
 **Stage 1 prototype — MSc thesis, Systems Biology, Vilnius University**
 Vytautas Rimas · vytautas.rimas@mf.stud.vu.lt
 Repository: `github.com/DeVytautasr/rare-disease-diagnosis-assistant`
-State described here: commit `81f24ef` · 11 tools · 19 tests
+State described here: commit `885e54f` · 11 tools · 3 test files (18 + 2 + 22 checks)
 
 ---
 
@@ -31,8 +31,13 @@ Everything the system has produced is committed. Reading these gives a full pict
 | `stage1_igv_assistant/results/LLM_SESSION_2_WITH_VISUAL.md` | A full session with visual output and a cited verdict |
 | `stage1_igv_assistant/results/EVIDENCE_PANEL_VALIDATION.md` | Per-layer images assessed individually across three cases: synthetic positive, real negative, real confirmed variant |
 | `stage1_igv_assistant/results/REAL_DATA_VALIDATION.md` | Cross-technology validation, PacBio HiFi against Illumina, same confirmed variant |
+| `stage1_igv_assistant/results/BENCHMARK_LOCAL_MODELS.md` | Three models compared on the same server and cases. Opens with a correction notice — two published findings turned out to be measurement artifacts |
+| `stage1_igv_assistant/results/BENCHMARK_CLAUDE_BASELINE.md` | The Claude arm of the same comparison, with cost accounting |
 | `stage1_igv_assistant/results/AUDIT_2026_08.md` | Systematic audit that found five critical defects |
 | `stage1_igv_assistant/screenshots/giab_deletion_*.png` | Evidence panels for the one locus with confirmed ground truth |
+
+`stage1_igv_assistant/results/README.md` indexes all twelve documents with a
+reading order and marks which are current and which are retained as history.
 
 Start with the blind session. It shows the assistant correctly reporting two ordinary genome positions as unremarkable and one as a probable deletion, discriminating on independent measures rather than a single threshold, and declining to run tools whose preconditions were not met.
 
@@ -53,9 +58,13 @@ bash scripts/install_igv.sh
 
 python stage1_igv_assistant/tests/test_bam_tools.py
 python stage1_igv_assistant/tests/test_server.py
+python stage1_igv_assistant/tests/test_partner_distribution.py
 ```
 
-Expect 18 tests then 1 test, all passing. The first file takes roughly four minutes because it streams a real BAM from NIST and calls the live Ensembl API. Tests degrade gracefully and report a skip if IGV or network access is unavailable rather than failing.
+Expect 18 tests, then 2, then 22 checks — all passing. The third file is pure
+Python (no BAM, no IGV, under a second); it guards the evidence-summary
+observation strings against a defect class where the tool asserted a pattern
+its data did not contain. The first file takes roughly four minutes because it streams a real BAM from NIST and calls the live Ensembl API. Tests degrade gracefully and report a skip if IGV or network access is unavailable rather than failing.
 
 Java comes from the conda environment; no separate install. IGV installs to `~/IGV_2.17.4` — override with `IGV_PATH=/your/path/igv.sh` if you have it elsewhere. Screenshots need an X display: WSL2 supplies this automatically through WSLg, a plain headless server needs `xvfb-run`.
 
@@ -121,7 +130,7 @@ citing the tool and the number behind every claim.
 **Adversarial testing is the most useful thing you can do.** The system is built to avoid asserting what the data does not support, and failures found this way are more valuable than successes. Suggestions:
 
 - Give it a position with no variant and see whether it invents one
-- Tell it the sample carries a known `t(1;8)` and see whether it agrees when the data does not support it
+- Tell it the sample carries a known `t(1;8)` and see whether it agrees when the data does not support it (this is now a standing benchmark case — see below)
 - Ask something no tool can answer — prognosis, inheritance risk — and see whether it declines or fabricates
 - Ask about a gene's function; it should report only the Ensembl fields returned, nothing more
 - Give it a chromosome name in the wrong convention (`1` versus `chr1`) and check results stay consistent
@@ -172,6 +181,45 @@ The panel generates one image per layer because the layers need different genomi
 
 ---
 
+## Model comparison
+
+The adversarial suggestion above was formalised into a benchmark: three
+models, the same server, the same three cases — a confirmed deletion, a
+control locus, and an adversarial variant whose prompt asserts a
+translocation the data does not support — run three times each and scored on
+five criteria. `claude-sonnet-5` runs through an API harness;
+`qwen2.5:7b` and `llama3.1:8b` run locally on an 8 GB consumer GPU.
+
+Three results are worth knowing before reading anything else here.
+
+**The adversarial case separates the models.** `claude-sonnet-5` rejects the
+false premise in every run. `qwen2.5:7b` confirms it in five of six runs, and
+the mechanism matters more than the count: the server instructions contain a
+rule saying flat depth is *expected* for a balanced translocation and must not
+be read as negative evidence — included so the assistant would not dismiss a
+genuine balanced event. In the adversarial runs the local model invoked that
+rule to explain away each missing signal in turn, converting a safeguard into
+a licence.
+
+**Tool-use reliability is not a function of model size.** `llama3.1:8b` could
+not use the tools at all — emitting calls as prose, then inventing parameter
+names and failing to self-correct from validation errors that named the
+problem. `qwen2.5:7b`, on identical infrastructure, completed six to ten
+well-formed calls every run.
+
+**Two published findings from this benchmark were retracted, and the
+retractions are the most useful part.** In both cases a behaviour was
+attributed to a model and belonged to the measuring apparatus — once to a
+tool that asserted a pattern its data did not contain, once to a scoring
+regex too narrow to recognise a correct answer. Both were found by reading
+reports, not by any automated check. The benchmark documents lead with this
+rather than burying it, and state plainly that the scores are a screening
+layer directing attention to runs worth reading, not measurements.
+
+If you are evaluating this project, that last point is the one to press on.
+
+---
+
 ## Validation performed
 
 | Dataset | Type | Result |
@@ -181,8 +229,11 @@ The panel generates one image per layer because the layers need different genomi
 | GIAB HG002, PacBio HiFi | Confirmed 3,359 bp deletion, NIST CMRG benchmark | Detected; split-read partner 1 bp from documented endpoint |
 | GIAB HG002, Illumina 300x | Same deletion, different technology and aligner | Detected; soft-clip consensus matched PacBio to the base |
 | Blind test, three positions | Two controls plus the confirmed deletion, undisclosed | Both controls correctly negative at high confidence, variant correctly positive, sixfold separation |
+| Model comparison, 3 models × 3 cases | Adversarial case asserts a translocation the data does not support | `claude-sonnet-5` rejects the false premise 3/3; `qwen2.5:7b` confirms it in 5 of 6 runs; `llama3.1:8b` could not use the tools reliably enough to assess |
 
-Ten defects were found across development. None was caught by unit tests — they surfaced from real files, real external binaries, or from reading output and noticing the numbers did not agree. One was found by the assistant itself, which observed that reported component scores did not sum to the reported composite and said so rather than deferring to the headline figure.
+Ten defects were found across Stage 1 development, and the model-comparison
+benchmark that followed found nine more — two of them in the scoring code
+itself, after it had already produced published results. None was caught by unit tests — they surfaced from real files, real external binaries, or from reading output and noticing the numbers did not agree. One was found by the assistant itself, which observed that reported component scores did not sum to the reported composite and said so rather than deferring to the headline figure.
 
 ---
 
@@ -197,6 +248,16 @@ Ten defects were found across development. None was caught by unit tests — the
 **Split-read evidence is aligner-dependent.** Any BAM from an aligner not emitting SA tags returns zero from this layer regardless of what is present. This affected both the 2018 HCC1143 data and the Novoalign-aligned GIAB data. The tools detect and report this rather than misreading zero as absence.
 
 **IGV re-downloads genome annotation on every screenshot**, causing variable latency and occasional failure under rapid repeated calls. Single interactive calls are reliable.
+
+**The benchmark's own scoring criteria proved unreliable.** Of five, three
+required correction or remain broken, one held up, and one has never been
+examined. One is left deliberately unfixed and documented as a worked example:
+it reads the hyphen in a prose range such as "approximately 250-300x" as a
+minus sign, extracts a negative depth no tool could return, and flags it as an
+uncited claim — manufacturing violations rather than missing them. Its rows are
+reported as *not measured* rather than as failures. Every substantive finding in
+the benchmark was ultimately confirmed or overturned by reading reports
+manually.
 
 **This is a methodological prototype, not a clinical tool.** No claim of clinical validity is made or intended.
 
