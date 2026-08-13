@@ -3,7 +3,7 @@
 **Stage 1 prototype — MSc thesis, Systems Biology, Vilnius University**
 Vytautas Rimas · vytautas.rimas@mf.stud.vu.lt
 Repository: `github.com/DeVytautasr/rare-disease-diagnosis-assistant`
-State described here: commit `885e54f` · 11 tools · 3 test files (18 + 2 + 22 checks)
+State described here: commit `f581dc7` · 11 tools · 3 test files (18 + 1 tests, 22 checks)
 
 ---
 
@@ -61,7 +61,7 @@ python stage1_igv_assistant/tests/test_server.py
 python stage1_igv_assistant/tests/test_partner_distribution.py
 ```
 
-Expect 18 tests, then 2, then 22 checks — all passing. The third file is pure
+Expect 18 tests, then 1, then 22 checks — all passing. The third file is pure
 Python (no BAM, no IGV, under a second); it guards the evidence-summary
 observation strings against a defect class where the tool asserted a pattern
 its data did not contain. The first file takes roughly four minutes because it streams a real BAM from NIST and calls the live Ensembl API. Tests degrade gracefully and report a skip if IGV or network access is unavailable rather than failing.
