@@ -9,6 +9,18 @@ data/bam/
 data/vcf/reference/
 screenshots/*.png
 
+# Real patient data lives outside the repo, at ~/patient_data/. Git does not
+# expand "~" in ignore patterns, so the rule is written as a bare directory
+# name: it matches a "patient_data/" directory at any depth in the repo.
+# The real protection is that the data sits outside the tree entirely; this
+# catches a stray copy, symlink, or mount someone puts inside it later.
+patient_data/
+
+# Claude Code: subagent definitions in .claude/agents/ are shared and
+# committed. Local permission grants and runtime locks are per-machine.
+.claude/settings.local.json
+.claude/*.lock
+
 # Python
 __pycache__/
 *.pyc
