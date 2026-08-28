@@ -38,7 +38,19 @@ PATIENT_MARKER = "patient_data"
 # slice written to /tmp would leave the namespace and become ungoverned bytes
 # that these rules no longer see -- the laundering path this route exists to
 # prevent.
-DERIVED_MARKER = "patient_data/derived"
+DERIVED_MARKERS = (
+    "patient_data/derived",
+    # The decoy tree. ~/patient_data_probe/ exists so the deny rules can be
+    # exercised live against synthetic data instead of a real patient BAM --
+    # two subagents correctly refused to probe the guard by performing the
+    # prohibited act on real data, which is the right call and left six deny
+    # paths verified only by the suite. `patient_data` is a substring of
+    # `patient_data_probe`, so every other rule already matches the decoy
+    # identically; only the derived marker needed teaching.
+    "patient_data_probe/derived",
+)
+# Used in denial text, which should always name the real location.
+DERIVED_MARKER = DERIVED_MARKERS[0]
 
 # Used to spot patient-derived files being written into the repository.
 # CLAUDE_PROJECT_DIR is set by Claude Code when it runs a hook.
@@ -360,7 +372,9 @@ def _is_patient(tok: str) -> bool:
 
 def _is_derived(tok: str) -> bool:
     t = _clean(tok).rstrip("/")
-    return t.endswith(DERIVED_MARKER) or (DERIVED_MARKER + "/") in t + "/"
+    return any(
+        t.endswith(m) or (m + "/") in t + "/" for m in DERIVED_MARKERS
+    )
 
 
 def _output_value(tokens: list):
