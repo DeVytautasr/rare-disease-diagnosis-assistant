@@ -83,6 +83,27 @@ the agent's job, and a guard that blocked it would just get switched off.
 Reading and running are untouched: the three test suites, `git log`, `grep`,
 `cat`, `find`, `wc`, `diff`, and redirection into `/tmp` all pass.
 
+### Patient data is protected in BOTH modes (fixed 2026-08-28)
+
+Originally every `patient_data` rule sat inside `if MODE == "no-git"`, so a
+`verifier` or `thesis-editor` run could `tar` and `curl` the patient BAMs
+that the `patient-data` agent exists to protect. **The boundary was drawn
+around the agent, not around the data.** That was hole 3; it was found by
+probing the guard, not by reading it.
+
+`check_patient_data()` now runs before any mode-specific logic, in every
+mode. With a `patient_data` path among the arguments, these deny regardless
+of which agent is running:
+
+- network egress — `curl`, `wget`, `scp`, `rsync`, `ssh`, `nc`, `sftp`, …
+- archiving — `tar`, `zip`, `gzip`, `bgzip`, `bzip2`, `xz`, `zstd`, `7z`
+- copy/move/link/delete/chmod — every `PATH_MUTATORS` command
+- `samtools`/`bcftools` writing subcommands and `-o` output
+
+Asserted for both modes in `test_guard.py`. `no-mutation` keeps its own
+freedoms where no patient path is involved: `tar` into `/tmp`, `curl` to a
+URL, `rm /tmp/scratch` all still pass.
+
 ### Fail-closed
 
 A malformed payload, a missing command string, or any internal exception
@@ -116,7 +137,28 @@ have to *author* a script to get a write primitive — which itself requires a
 write. The realistic residual risk is an agent invoking a script that already
 exists and happens to mutate state, not an agent bootstrapping one.
 
-### 2. Obfuscation the tokenizer does not model
+### 2. Reading patient data to stdout is not filtered — in either mode
+
+`base64`, `cat`, `xxd`, `od`, `hexdump`, `strings` and `head -c` against a
+`patient_data` path are **allowed**. None appears in `PATH_MUTATORS`,
+`NETWORK_TOOLS` or `BLOCKED_ALWAYS`, and the `touches_patient` check is
+consulted only for mutating and archiving commands. Found 2026-08-28 by live
+subagent probing, not by the test suite; now asserted in `test_guard.py`.
+
+Note the asymmetry: `gzip -c patient.bam` is denied (`gzip` is in the archive
+set) while `base64 patient.bam` is allowed. Same channel, opposite verdicts,
+for no principled reason.
+
+**The honest framing:** these commands do not move a file, they read it into
+the conversation transcript. That is the same channel `samtools view` uses —
+and `samtools view` must stay open, because reading the BAM is the agent's
+entire job. So this hole cannot be closed by denying commands, only narrowed.
+Denying `base64`/`xxd`/`od`/`hexdump` on a patient path costs nothing (no
+workflow here needs them) and removes an obvious accidental route, but the
+class stays open as long as the agent can read at all. "No patient bytes in
+the transcript" therefore belongs with the advisory rules below, not here.
+
+### 3. Obfuscation the tokenizer does not model
 
 `guard.py` is a best-effort tokenizer, not a shell parser. Untested and
 likely to get through: nested `$(…)` beyond one level, arithmetic expansion,
@@ -126,19 +168,20 @@ the same command, `xargs` reading command names from stdin, unusual quoting.
 Variable-built command names (`export G=git; $G commit`) *are* caught, by
 denying any command whose first token contains `$`.
 
-### 3. Scope: the guard only fires for these three agents
+### 4. Scope: the guard only fires for these three agents
 
 `bam-tools-dev`, `test-writer`, `benchmark-runner`, `docs-writer` and the
 main session are unaffected and can do everything above. That is deliberate —
-they need to.
+they need to. But see hole 3: the two agents that *are* guarded
+still differ in what they protect, so "guarded" does not imply "patient-safe".
 
-### 4. The agents must actually be loaded
+### 5. The agents must actually be loaded
 
 Hooks live in agent frontmatter. If the agent is invoked some other way, or
 the frontmatter is edited, the guard does not run. It is configuration, not a
 kernel.
 
-### 5. Not a defence against a hostile agent
+### 6. Not a defence against a hostile agent
 
 This raises the cost of an accident and makes the common mistake impossible.
 It is not an adversarial boundary. A model actively trying to commit patient

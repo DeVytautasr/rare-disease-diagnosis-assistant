@@ -29,6 +29,9 @@ MODE = sys.argv[1] if len(sys.argv) > 1 else "no-mutation"
 # repository and never the patient data directory.
 ALLOWED_WRITE_ROOTS = ("/tmp/", "/var/tmp/", "/dev/null", "/dev/stdout", "/dev/stderr")
 
+# Substring identifying the governed patient directory.
+PATIENT_MARKER = "patient_data"
+
 # Used to spot patient-derived files being written into the repository.
 # CLAUDE_PROJECT_DIR is set by Claude Code when it runs a hook.
 REPO_ROOT = os.path.abspath(os.environ.get("CLAUDE_PROJECT_DIR", "")) if os.environ.get("CLAUDE_PROJECT_DIR") else ""
@@ -90,6 +93,22 @@ INTERPRETERS = {
 }
 SHELLS = {"bash", "sh", "zsh", "ksh", "dash", "fish", "csh", "tcsh"}
 INLINE_CODE_FLAGS = {"-c", "-e", "-E", "--command", "--eval", "--exec"}
+
+# Archiving/compression. Denied on a patient path in BOTH modes: an archive
+# is the classic staging step before data leaves a host, and nothing in this
+# project needs one. Denied even into derived/, unlike samtools output.
+ARCHIVE_TOOLS = {
+    "tar", "zip", "gzip", "bgzip", "bzip2", "xz", "zstd", "7z", "compress",
+}
+
+# Mutators whose every patient path argument is itself a write target.
+SOURCE_DESTRUCTIVE = {
+    "rm", "unlink", "mv", "truncate", "chmod", "chown", "chgrp", "touch",
+    "mkdir", "rmdir", "patch",
+}
+# Mutators whose LAST path argument is the destination; earlier ones are
+# sources and may legitimately be the read-only BAMs.
+DEST_LAST = {"cp", "install", "ln", "tee"}
 
 
 def deny(reason: str) -> None:
@@ -231,6 +250,97 @@ def check_interpreter(tokens: list, base: str, why: str) -> None:
         )
 
 
+def _clean(tok: str) -> str:
+    return tok.strip().strip("'\"")
+
+
+def _is_pathlike(tok: str) -> bool:
+    t = _clean(tok)
+    if not t or t.startswith("-"):
+        return False
+    return "/" in t or t.startswith("~") or t.startswith(".")
+
+
+def _is_patient(tok: str) -> bool:
+    return PATIENT_MARKER in _clean(tok)
+
+
+def check_patient_data(tokens: list, base: str):
+    """
+    Rules protecting ~/patient_data, applied in BOTH modes.
+
+    These used to live inside the `no-git` branch, which meant a `verifier`
+    or `thesis-editor` run could `tar` and `curl` the very BAMs the
+    `patient-data` agent exists to protect (LIMITS.md, hole 3 -- found by
+    probing, not by review). The protection belongs to the DATA, not to the
+    agent, so it runs before any mode-specific logic.
+
+    Returns None to fall through to the mode rules.
+    """
+    involved = [t for t in tokens[1:] if _is_patient(t)]
+    if not involved:
+        return None
+
+    if base in NETWORK_TOOLS:
+        deny(
+            f"Blocked: `{base}` with a patient_data path in its arguments. "
+            f"Patient sequencing data does not leave this host, from any "
+            f"agent. This rule applies in every guard mode."
+        )
+
+    if base in ARCHIVE_TOOLS:
+        deny(
+            f"Blocked: `{base}` archiving a patient_data path. Archiving is "
+            f"the staging step before data leaves a host, and no workflow "
+            f"here needs it. This rule applies in every guard mode."
+        )
+
+    paths = [t for t in tokens[1:] if _is_pathlike(t)]
+    escaping = [_clean(p) for p in paths if not _is_patient(p)]
+
+    if base in PATH_MUTATORS | SOURCE_DESTRUCTIVE | DEST_LAST:
+        if escaping:
+            deny(
+                f"Blocked: `{base}` would move patient data to {escaping}, "
+                f"outside ~/patient_data. Once patient bytes leave that "
+                f"directory every path rule here stops matching them. This "
+                f"rule applies in every guard mode."
+            )
+        deny(
+            f"Blocked: `{base}` targeting a path under patient_data. The "
+            f"patient BAMs are read-only: never copied, moved, re-indexed, "
+            f"or archived. This rule applies in every guard mode."
+        )
+
+    if base in ("samtools", "bcftools", "bgzip", "tabix"):
+        non_flag = [_clean(t) for t in tokens[1:] if not t.startswith("-")]
+        sub = non_flag[0] if non_flag else None
+        writers = {
+            "index", "sort", "merge", "reheader", "addreplacerg", "calmd",
+            "markdup", "fixmate", "collate", "depad", "split", "faidx",
+            "dict", "cat", "ampliconclip", "consensus",
+        }
+        has_output = any(
+            t == "-o" or t == "-O" or t.startswith("--output")
+            for t in tokens[1:]
+        )
+        if sub in writers or has_output:
+            if escaping:
+                deny(
+                    f"Blocked: `{base} {sub}` writes to {escaping}, outside "
+                    f"~/patient_data, with a patient_data path among its "
+                    f"inputs. A slice written elsewhere stops being governed "
+                    f"by these rules."
+                )
+            deny(
+                f"Blocked: `{base} {sub}` writes, and a patient_data path is "
+                f"among its arguments. Reading (view, head, flagstat, "
+                f"idxstats, stats, depth, coverage, quickcheck) is allowed; "
+                f"writing beside the BAMs is not."
+            )
+    return None
+
+
 def check_segment(segment: str) -> None:
     tokens = resolve_tokens(segment)
     if not tokens:
@@ -246,6 +356,9 @@ def check_segment(segment: str) -> None:
             f"Write the command literally."
         )
 
+    # Patient-data rules run in BOTH modes -- see check_patient_data.
+    check_patient_data(tokens, base)
+
     if MODE == "no-git":
         if base in ("git", "gh", "hub", "glab", "tig"):
             deny(
@@ -260,17 +373,12 @@ def check_segment(segment: str) -> None:
                 f"leave this host from this agent."
             )
         args = [t.strip("'\"") for t in tokens[1:] if not t.startswith("-")]
-        touches_patient = any("patient_data" in a for a in args)
 
-        # Copying, moving, linking or archiving the patient files -- anywhere,
-        # including into the repository.
-        if base in PATH_MUTATORS | {"tar", "zip", "gzip", "bgzip", "bzip2"}:
-            if touches_patient:
-                deny(
-                    f"Blocked: `{base}` targeting a path under patient_data. "
-                    f"The patient BAMs are read-only: never copied, moved, "
-                    f"re-indexed, or archived, and never placed in the repo."
-                )
+        # Patient-path handling now lives in check_patient_data, which runs
+        # in both modes. What remains here is repo-specific: the patient-data
+        # agent must not write into the repository even from a non-patient
+        # source.
+        if base in PATH_MUTATORS | ARCHIVE_TOOLS:
             if REPO_ROOT and any(
                 os.path.abspath(os.path.join(os.getcwd(), a)).startswith(REPO_ROOT)
                 for a in args
@@ -281,25 +389,8 @@ def check_segment(segment: str) -> None:
                     f"the repo tree."
                 )
 
-        # samtools reads are the agent's core job; samtools writes are not.
-        if base in ("samtools", "bcftools", "bgzip", "tabix"):
-            sub = args[0] if args else None
-            writers = {
-                "index", "sort", "merge", "reheader", "addreplacerg", "calmd",
-                "markdup", "fixmate", "collate", "depad", "split", "faidx",
-                "dict", "cat", "ampliconclip", "consensus",
-            }
-            has_output = any(
-                t == "-o" or t.startswith("--output") or t == "-O"
-                for t in tokens[1:]
-            )
-            if touches_patient and (sub in writers or has_output):
-                deny(
-                    f"Blocked: `{base} {sub}` writes, and a patient_data path "
-                    f"is among its arguments. Reading (view, head, flagstat, "
-                    f"idxstats, stats, depth, coverage, quickcheck) is "
-                    f"allowed; writing beside the BAMs is not."
-                )
+        # samtools writes on a patient path are handled by
+        # check_patient_data, in both modes.
         check_interpreter(tokens, base, "It can invoke git or move data.")
         return
 
