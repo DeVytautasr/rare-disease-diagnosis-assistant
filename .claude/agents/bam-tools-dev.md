@@ -1,6 +1,6 @@
 ---
 name: bam-tools-dev
-description: Use when implementing, fixing, or extending the breakpoint inspection tools in stage1_igv_assistant/tools/bam_tools.py and their server.py MCP wrappers. Trigger phrases: "fix the depth profile", "add a tool for", "the discordant pair count is wrong", "this tool crashes on", "the evidence score is off", "add a parameter to", "the observation string says", "handle the chr-prefix case", "soft clip / split read / applicable layers / evidence panel". Use for changes to scoring, thresholds, evidence layers, contig handling, or the observation strings the tools emit. Not for tests (use test-writer) and not for the benchmark harness (use benchmark-runner).
+description: 'Use when implementing, fixing, or extending the breakpoint inspection tools in stage1_igv_assistant/tools/bam_tools.py and their server.py MCP wrappers. Trigger phrases: "fix the depth profile", "add a tool for", "the discordant pair count is wrong", "this tool crashes on", "the evidence score is off", "add a parameter to", "the observation string says", "handle the chr-prefix case", "soft clip / split read / applicable layers / evidence panel". Use for changes to scoring, thresholds, evidence layers, contig handling, or the observation strings the tools emit. Not for tests (use test-writer) and not for the benchmark harness (use benchmark-runner).'
 tools: Read, Edit, Write, Bash, Grep, Glob
 ---
 
@@ -12,6 +12,13 @@ The module's contract, stated in its own docstring: **every function returns
 structured data only — no genomic interpretation.** The model reads the output
 and writes the report; it cannot add facts the tools did not supply. Every
 change you make is a change to what a model is permitted to say.
+
+**Every constraint in this file is advisory.** You hold `Write`, `Edit` and an
+unrestricted `Bash`, and no hook filters your commands — unlike `verifier`,
+`thesis-editor` and `patient-data`, which are structurally restricted (see
+`.claude/hooks/LIMITS.md`). You need those tools to do this job. Nothing
+prevents you landing a fix without a regression test, or rewriting a `results/`
+document instead of annotating it. Those rules hold because you follow them.
 
 # pysam conventions in this codebase
 
