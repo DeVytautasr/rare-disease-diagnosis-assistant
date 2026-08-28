@@ -110,6 +110,22 @@ SOURCE_DESTRUCTIVE = {
 # sources and may legitimately be the read-only BAMs.
 DEST_LAST = {"cp", "install", "ln", "tee"}
 
+# Commands whose whole purpose is to read a file to stdout in a form that
+# survives copy-paste. Denied on a patient path in both modes.
+#
+# DEFENCE IN DEPTH ONLY -- read LIMITS.md hole 2 before trusting this. The
+# transcript is the exfiltration channel, and `samtools view` reaches it
+# through exactly the same route while having to stay open, because reading
+# the BAM is the patient-data agent's entire job. Denying these removes an
+# obvious accidental route at zero cost (no workflow here needs them); it
+# does not close the class.
+CONTENT_DUMPERS = {
+    "base64", "base32", "xxd", "od", "hexdump", "strings", "uuencode",
+}
+# `head`/`tail` are denied only in byte mode (-c). Line mode stays open so
+# the transfer log can be read, which is ordinary work.
+BYTE_MODE_READERS = {"head", "tail"}
+
 
 def deny(reason: str) -> None:
     print(json.dumps({
@@ -293,6 +309,25 @@ def check_patient_data(tokens: list, base: str):
             f"Blocked: `{base}` archiving a patient_data path. Archiving is "
             f"the staging step before data leaves a host, and no workflow "
             f"here needs it. This rule applies in every guard mode."
+        )
+
+    if base in CONTENT_DUMPERS:
+        deny(
+            f"Blocked: `{base}` on a patient_data path dumps file content to "
+            f"stdout, and stdout here is the conversation transcript. Note "
+            f"this is defence in depth, not a boundary: `samtools view` "
+            f"reaches the same channel and must stay open. See LIMITS.md "
+            f"hole 2."
+        )
+
+    if base in BYTE_MODE_READERS and any(
+        t == "-c" or (t.startswith("-c") and t[2:].lstrip("0123456789") == "")
+        for t in tokens[1:]
+    ):
+        deny(
+            f"Blocked: `{base} -c` on a patient_data path dumps raw bytes to "
+            f"the transcript. Line mode (`{base} -n`, `{base} -3`) is still "
+            f"allowed for reading the transfer log. See LIMITS.md hole 2."
         )
 
     paths = [t for t in tokens[1:] if _is_pathlike(t)]

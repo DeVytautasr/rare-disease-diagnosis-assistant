@@ -137,26 +137,32 @@ have to *author* a script to get a write primitive — which itself requires a
 write. The realistic residual risk is an agent invoking a script that already
 exists and happens to mutate state, not an agent bootstrapping one.
 
-### 2. Reading patient data to stdout is not filtered — in either mode
+### 2. Reading patient data into the transcript — narrowed, NOT closed
 
-`base64`, `cat`, `xxd`, `od`, `hexdump`, `strings` and `head -c` against a
-`patient_data` path are **allowed**. None appears in `PATH_MUTATORS`,
-`NETWORK_TOOLS` or `BLOCKED_ALWAYS`, and the `touches_patient` check is
-consulted only for mutating and archiving commands. Found 2026-08-28 by live
-subagent probing, not by the test suite; now asserted in `test_guard.py`.
+`base64`, `base32`, `xxd`, `od`, `hexdump`, `strings` and `head -c`/`tail -c`
+on a `patient_data` path now deny in both modes (fixed 2026-08-28). That also
+settles an incoherence found by the same probe run: `gzip -c patient.bam`
+denied while `base64 patient.bam` allowed, same channel, opposite verdicts.
+Both deny now.
 
-Note the asymmetry: `gzip -c patient.bam` is denied (`gzip` is in the archive
-set) while `base64 patient.bam` is allowed. Same channel, opposite verdicts,
-for no principled reason.
+**Do not read that as the class being closed. It is not, and it cannot be.**
 
-**The honest framing:** these commands do not move a file, they read it into
-the conversation transcript. That is the same channel `samtools view` uses —
-and `samtools view` must stay open, because reading the BAM is the agent's
-entire job. So this hole cannot be closed by denying commands, only narrowed.
-Denying `base64`/`xxd`/`od`/`hexdump` on a patient path costs nothing (no
-workflow here needs them) and removes an obvious accidental route, but the
-class stays open as long as the agent can read at all. "No patient bytes in
-the transcript" therefore belongs with the advisory rules below, not here.
+The exfiltration channel here is the conversation transcript, and no hook can
+inspect what an agent writes into its own report. Two things still reach it:
+
+- **`samtools view` emits read-level content to stdout**, and it must stay
+  open — reading the BAM is the patient-data agent's entire job. This is the
+  same channel `base64` used.
+- **`cat` is deliberately left open**, because `cat ~/patient_data/download.log`
+  is ordinary work. `cat` on a BAM therefore also passes. Line-mode `head`/`tail`
+  are open for the same reason; only `-c` byte mode is denied.
+
+So the denials above raise the cost of an *accident* — no bioinformatics
+workflow needs `base64` on a BAM, so nothing legitimate is lost — while
+leaving the deliberate path wide open. The rule "never output read sequences,
+sample identifiers, or patient-identifying data" remains **advisory**, in the
+section at the bottom of this file, and it is still the most important
+patient-data rule and the least enforceable one.
 
 ### 3. Obfuscation the tokenizer does not model
 

@@ -178,6 +178,25 @@ def run_tests() -> None:
         ]:
             check(mode, cmd, "DENY")
 
+    section("content dumps of patient data deny in BOTH modes (hole 2)")
+    # Defence in depth only: `samtools view` reaches the same channel and
+    # must stay open. See LIMITS.md hole 2 -- this narrows the class, it
+    # does not close it.
+    for mode in ("no-git", "no-mutation"):
+        for cmd in [
+            f"base64 {PD}/SAMPLE_A-ready.bam.bai",
+            f"base32 {PD}/SAMPLE_A-ready.bam.bai",
+            f"xxd {PD}/SAMPLE_A-ready.bam.bai",
+            f"od -c {PD}/SAMPLE_A-ready.bam.bai",
+            f"hexdump -C {PD}/SAMPLE_A-ready.bam.bai",
+            f"strings {PD}/SAMPLE_A-ready.bam",
+            f"head -c 1000 {PD}/SAMPLE_A-ready.bam",
+            f"head -c1000 {PD}/SAMPLE_A-ready.bam",
+            f"tail -c 500 {PD}/SAMPLE_A-ready.bam",
+            f"base64 {PD}/SAMPLE_A-ready.bam.bai | head -1",
+        ]:
+            check(mode, cmd, "DENY")
+
     section("reading patient data still works in no-git (the agent's job)")
     for cmd in [
         f"samtools view -H {PD}/SAMPLE_A-ready.bam",
@@ -185,6 +204,9 @@ def run_tests() -> None:
         f"samtools flagstat {PD}/SAMPLE_A-ready.bam",
         f"cat {PD}/download.log",
         f"tail -3 {PD}/download.log",
+        f"head -3 {PD}/download.log",
+        f"head -n 20 {PD}/download.log",
+        f"grep -c rsync {PD}/download.log",
         f"ls -la {PD}/",
     ]:
         check("no-git", cmd, "ALLOW")
@@ -244,19 +266,13 @@ def run_tests() -> None:
         # file to stdout, so patient bytes reach the transcript directly. This
         # is the same channel as the `samtools view` that MUST stay open, so
         # denying these raises the cost of an accident without closing the class.
-        ("no-git", f"base64 {PD}/SAMPLE_A-ready.bam.bai", "dumps patient bytes to stdout"),
-        ("no-git", f"cat {PD}/SAMPLE_A-ready.bam", "dumps patient bytes to stdout"),
-        ("no-git", f"xxd {PD}/SAMPLE_A-ready.bam.bai", "dumps patient bytes to stdout"),
-        ("no-git", f"od -c {PD}/SAMPLE_A-ready.bam.bai", "dumps patient bytes to stdout"),
-        ("no-git", f"hexdump -C {PD}/SAMPLE_A-ready.bam.bai", "dumps patient bytes to stdout"),
-        ("no-git", f"strings {PD}/SAMPLE_A-ready.bam", "dumps patient bytes to stdout"),
-        ("no-git", f"head -c 1000 {PD}/SAMPLE_A-ready.bam", "dumps patient bytes to stdout"),
+        ("no-git", f"cat {PD}/SAMPLE_A-ready.bam", "cat stays open so the transfer log is readable"),
         # Hole: no-mutation mode has NO patient_data rules whatsoever. That
         # guard was written to protect the working tree, not the data, so a
         # verifier/thesis-editor run retains network egress and archiving that
         # no-git denies. The boundary is around the AGENT, not around the DATA.
-        ("no-mutation", f"cat {PD}/SAMPLE_A-ready.bam", "no patient rules in this mode"),
-        ("no-mutation", f"samtools view {PD}/SAMPLE_A-ready.bam", "no patient rules in this mode"),
+        ("no-mutation", f"cat {PD}/SAMPLE_A-ready.bam", "cat stays open; same carve-out"),
+        ("no-mutation", f"samtools view {PD}/SAMPLE_A-ready.bam", "reading must stay open -- the unclosable class"),
     ]:
         got = decide(mode, cmd)
         if got == "ALLOW":
