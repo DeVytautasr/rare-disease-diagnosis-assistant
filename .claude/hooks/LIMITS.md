@@ -141,6 +141,72 @@ otherwise deny them in `no-mutation` for being outside `/tmp`. That is
 deliberate: `derived/` is not the working tree, so nothing `no-mutation`
 protects is weakened.
 
+### Verification status: live-fired vs. asserted by the suite
+
+These are not the same claim, and this file should not blur them.
+
+`test_guard.py` (267 assertions) runs `guard.py` as a subprocess with the real
+hook payload shape, in both modes. That proves the **decision function**. It
+does not prove the hook is registered with the agent and firing — a guard that
+is correct but unwired blocks nothing.
+
+**Live-fired** means a real subagent issued the command and the `PreToolUse`
+hook actually intercepted it, or actually let it through.
+
+| Rule | Live-fired | Where |
+|---|---|---|
+| git allowlist, incl. `-C`, `/usr/bin/git`, env prefix, `$(which git)`, `&&`/`;`, extra whitespace, `--allow-empty` | yes | verifier |
+| `bash -c` / `python3 -c` inline code | yes | verifier, patient-data |
+| `sed -i`, `tee`, `cp`, `mv`, redirection outside `/tmp` | yes | verifier |
+| `git` and `gh` wholly unavailable | yes | patient-data |
+| network egress with a patient path (`curl`, `scp`, `rsync`, `wget`) | yes | patient-data, verifier |
+| archiving a patient path (`tar`) | yes | patient-data, verifier |
+| copy/move/delete/index on a patient path | yes | patient-data, verifier |
+| content dumps (`base64`, `xxd`, `head -c`) on a patient path | yes | patient-data, verifier, thesis-editor |
+| `derived/` write route allowed, and works end to end | yes | patient-data |
+| `-o /tmp/...` denied while `-o derived/...` allowed | yes | patient-data |
+| fail-closed on malformed payloads | **suite only** | — |
+| quote-awareness and unbalanced-quote fallback | **suite only** | — |
+| the `no-mutation` half of the full deny matrix | **suite only** | see below |
+
+Two details worth keeping straight:
+
+- The exhaustive deny matrix was fired through the **patient-data** agent, so
+  it exercised `no-git`. In `no-mutation` the individually live-fired rules are
+  the ones listed above; the rest of that matrix rests on the suite, which
+  asserts every case in both modes.
+- Discrimination was confirmed, not just denial: the same `curl` to the same
+  host **without** a patient path returned 200, and the same `tar` into `/tmp`
+  succeeded. The guard keys on the path, not on the binary name.
+
+### Why the deny side needed a decoy
+
+Two subagents in succession refused to probe the deny rules against the real
+BAMs, and both were right. Probing a guard by performing the prohibited act is
+only sound when the guard is known-good; the premise each time was that it had
+just changed. With no cleanup permitted, a miss would have rewritten a source
+BAM's index, separated a 39 GB BAM from its index, or deleted the transfer log.
+
+`~/patient_data_probe/` resolves this: a synthetic BAM with no provenance, its
+own log and `derived/`, where destruction is free. Because `patient_data` is a
+substring of `patient_data_probe`, every rule matches it identically; the suite
+asserts the decoy verdict-for-verdict against the real tree in both modes, so a
+decoy that silently diverges fails the suite rather than quietly invalidating
+the verification. Egress probes point at a listener on `127.0.0.1`, so a guard
+failure lands in a local log instead of leaving the host.
+
+All twelve deny shapes fired live against the decoy on 2026-08-29 and were
+denied; the `derived/` route was allowed on the same decoy in the same run,
+confirming the guard was not simply blanket-denying; zero bytes reached the
+listener.
+
+**The residue this leaves.** A subagent also declined to delete real
+patient-derived files from `derived/` — an operation the guard *permits*. The
+hook was not the backstop there; the agent's own judgment was. That is the
+advisory layer at the bottom of this file doing the work, and it is the honest
+shape of the whole system: the guard makes the common accident impossible, and
+the things it cannot reach are still declinable instructions.
+
 ### Fail-closed
 
 A malformed payload, a missing command string, or any internal exception
