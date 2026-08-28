@@ -160,6 +160,69 @@ def under_allowed_root(path: str) -> bool:
     return any(p == r.rstrip("/") or p.startswith(r) for r in ALLOWED_WRITE_ROOTS)
 
 
+def _quote_mask(text: str):
+    """
+    Per-character flags: True where the character sits inside a quoted span.
+
+    Returns (mask, balanced). If quoting is unbalanced the mask is unusable,
+    and every caller falls back to the quote-blind behaviour -- inspecting
+    too much rather than too little. Fail closed.
+    """
+    mask = [False] * len(text)
+    quote = None
+    i = 0
+    while i < len(text):
+        ch = text[i]
+        if quote is None and ch == "\\":
+            if i + 1 < len(text):
+                mask[i] = mask[i + 1] = False
+            i += 2
+            continue
+        if quote is None and ch in "'\"":
+            quote = ch
+            mask[i] = True
+            i += 1
+            continue
+        if quote is not None:
+            mask[i] = True
+            if ch == "\\" and quote == '"' and i + 1 < len(text):
+                mask[i + 1] = True
+                i += 2
+                continue
+            if ch == quote:
+                quote = None
+            i += 1
+            continue
+        i += 1
+    return mask, quote is None
+
+
+def _split_unquoted(text: str) -> list:
+    """Split on ; && || | & and newlines, ignoring separators inside quotes."""
+    mask, balanced = _quote_mask(text)
+    if not balanced:
+        # Unbalanced quoting: fall back to the blunt split so nothing hides.
+        return re.split(r"(?:\|\||&&|[;|\n&])", text)
+    parts, start, i = [], 0, 0
+    while i < len(text):
+        if mask[i]:
+            i += 1
+            continue
+        if text[i:i + 2] in ("&&", "||"):
+            parts.append(text[start:i])
+            i += 2
+            start = i
+            continue
+        if text[i] in ";|&\n":
+            parts.append(text[start:i])
+            i += 1
+            start = i
+            continue
+        i += 1
+    parts.append(text[start:])
+    return parts
+
+
 def split_segments(command: str) -> list:
     """
     Break a command line into individually-executed segments.
@@ -179,7 +242,7 @@ def split_segments(command: str) -> list:
     # by the expansion check in check_segment.
     stripped = re.sub(r"\$\([^()]*\)", " $__SUBST__ ", command)
     stripped = re.sub(r"`[^`]*`", " $__SUBST__ ", stripped)
-    segments.extend(re.split(r"(?:\|\||&&|[;|\n&])", stripped))
+    segments.extend(_split_unquoted(stripped))
     return [s.strip() for s in segments if s.strip()]
 
 
@@ -209,9 +272,15 @@ def resolve_tokens(segment: str) -> list:
 def check_redirections(command: str) -> None:
     """Deny > and >> to anywhere outside an allowed write root."""
     # Skip fd duplications (2>&1, >&2) and here-strings.
+    mask, balanced = _quote_mask(command)
     for m in re.finditer(r"(?<![0-9<>])>>?\s*([^\s;|&<>]+)", command):
         target = m.group(1)
         if target.startswith("&"):
+            continue
+        # A '>' inside a quoted argument (grep -n 'a>b') is data, not a
+        # redirection. On unbalanced quoting the mask is untrusted, so the
+        # check still runs.
+        if balanced and mask[m.start()]:
             continue
         if not under_allowed_root(target):
             deny(

@@ -203,7 +203,13 @@ patient-data rule and the least enforceable one.
 
 ### 3. Obfuscation the tokenizer does not model
 
-`guard.py` is a best-effort tokenizer, not a shell parser. Untested and
+Segment splitting and redirection scanning are quote-aware as of 2026-08-28:
+`grep -E 'tar|curl|cp ' LIMITS.md` and `grep -n 'a>b' f` used to deny, because
+the `|` and `>` inside a quoted argument were read as a pipe and a
+redirection. Unbalanced quoting falls back to the old blunt split, so the
+failure direction is still "inspect too much".
+
+Beyond that, `guard.py` is a best-effort tokenizer, not a shell parser. Untested and
 likely to get through: nested `$(…)` beyond one level, arithmetic expansion,
 `eval` of an assembled string, `alias`, shell functions defined earlier in
 the same command, `xargs` reading command names from stdin, unusual quoting.

@@ -258,6 +258,42 @@ def run_tests() -> None:
     ]:
         check("no-mutation", cmd, "ALLOW")
 
+    section("quoted arguments are data, not commands (no false positives)")
+    # Found live by the thesis-editor agent: `grep -E 'tar|curl|cp ' LIMITS.md`
+    # was denied, because the splitter broke on the `|` inside the quoted
+    # pattern and read `cp ' LIMITS.md` as a cp invocation. Auditing the
+    # guard's own docs is exactly what these agents do, so this over-block
+    # hit real work.
+    for mode in ("no-git", "no-mutation"):
+        for cmd in [
+            "grep -E 'tar|curl|cp ' LIMITS.md",
+            "grep -E 'rm|mv|scp' guard.py",
+            "grep -n 'a>b' file.txt",
+            'grep "cp foo bar" notes.md',
+            "grep -rn 'git commit' docs/",
+            "echo 'a | b'",
+        ]:
+            check(mode, cmd, "ALLOW")
+
+    section("...but real separators outside quotes still split")
+    for cmd in [
+        "echo hi && git commit -m x",
+        "git status; git commit -m x",
+        "echo Z2l0 | base64 -d | bash",
+        "cat x | bash",
+    ]:
+        check("no-mutation", cmd, "DENY")
+
+    section("unbalanced quoting falls back to blunt splitting (fail closed)")
+    # The quote mask is untrusted when quoting is unbalanced, so the guard
+    # reverts to inspecting too much rather than too little.
+    for cmd in [
+        'echo "unbalanced ; git commit -m x',
+        "echo 'unterminated | rm -rf stage1_igv_assistant",
+        'echo "a ; rm TUTORIAL.md',
+    ]:
+        check("no-mutation", cmd, "DENY")
+
     section("fail-closed behaviour")
     for mode in ("no-git", "no-mutation"):
         env = dict(os.environ, CLAUDE_PROJECT_DIR=REPO)
