@@ -104,6 +104,43 @@ Asserted for both modes in `test_guard.py`. `no-mutation` keeps its own
 freedoms where no patient path is involved: `tar` into `/tmp`, `curl` to a
 URL, `rm /tmp/scratch` all still pass.
 
+### The derived/ write route (added 2026-08-28)
+
+`~/patient_data/derived/` is the only location a guarded agent may write
+BAM-derived output to. It sits **inside** `patient_data` on purpose: every
+rule above still matches what lands there, so a slice stays governed.
+
+Permitted in both modes:
+
+```
+samtools view -b -o ~/patient_data/derived/slice.bam <source.bam> <region>
+samtools index ~/patient_data/derived/slice.bam
+samtools sort  -o ~/patient_data/derived/sorted.bam ~/patient_data/derived/slice.bam
+mkdir / rm     ~/patient_data/derived/...
+cp <source.bam> ~/patient_data/derived/
+```
+
+Still denied, and asserted in `test_guard.py`:
+
+- taking derived output anywhere else — `cp`/`mv` to `/tmp` or the repo,
+  `curl`, `scp`, `tar`, `base64` on a derived path
+- writing to, moving, or deleting the source BAMs, including
+  `mv ~/patient_data/SAMPLE_A-ready.bam ~/patient_data/derived/`
+- copying *into* `derived/` from outside `patient_data` — produce output
+  there directly rather than staging it in `/tmp` first
+
+The reasoning is the laundering argument. `samtools view -b -o /tmp/slice.bam`
+looks harmless and is not: `/tmp` is a permitted scratch root in
+`no-mutation`, so the moment patient bytes land there, every `patient_data`
+path rule stops matching them and the slice becomes freely copyable. Keeping
+derived output inside the governed namespace is what makes slicing safe to
+allow at all.
+
+Commands that write to `derived/` short-circuit the mode rules, which would
+otherwise deny them in `no-mutation` for being outside `/tmp`. That is
+deliberate: `derived/` is not the working tree, so nothing `no-mutation`
+protects is weakened.
+
 ### Fail-closed
 
 A malformed payload, a missing command string, or any internal exception

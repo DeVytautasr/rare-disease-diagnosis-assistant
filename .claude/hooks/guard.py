@@ -32,6 +32,14 @@ ALLOWED_WRITE_ROOTS = ("/tmp/", "/var/tmp/", "/dev/null", "/dev/stdout", "/dev/s
 # Substring identifying the governed patient directory.
 PATIENT_MARKER = "patient_data"
 
+# The ONLY location a restricted agent may write BAM-derived output to.
+# It sits *inside* patient_data on purpose: every rule that matches a patient
+# path still matches a slice written here, so the slice stays governed. A
+# slice written to /tmp would leave the namespace and become ungoverned bytes
+# that these rules no longer see -- the laundering path this route exists to
+# prevent.
+DERIVED_MARKER = "patient_data/derived"
+
 # Used to spot patient-derived files being written into the repository.
 # CLAUDE_PROJECT_DIR is set by Claude Code when it runs a hook.
 REPO_ROOT = os.path.abspath(os.environ.get("CLAUDE_PROJECT_DIR", "")) if os.environ.get("CLAUDE_PROJECT_DIR") else ""
@@ -281,6 +289,21 @@ def _is_patient(tok: str) -> bool:
     return PATIENT_MARKER in _clean(tok)
 
 
+def _is_derived(tok: str) -> bool:
+    t = _clean(tok).rstrip("/")
+    return t.endswith(DERIVED_MARKER) or (DERIVED_MARKER + "/") in t + "/"
+
+
+def _output_value(tokens: list):
+    """Value of -o / -O / --output / --output=X, if present."""
+    for i, t in enumerate(tokens):
+        if t in ("-o", "-O", "--output"):
+            return tokens[i + 1] if i + 1 < len(tokens) else None
+        if t.startswith("--output="):
+            return t.split("=", 1)[1]
+    return None
+
+
 def check_patient_data(tokens: list, base: str):
     """
     Rules protecting ~/patient_data, applied in BOTH modes.
@@ -338,13 +361,27 @@ def check_patient_data(tokens: list, base: str):
             deny(
                 f"Blocked: `{base}` would move patient data to {escaping}, "
                 f"outside ~/patient_data. Once patient bytes leave that "
-                f"directory every path rule here stops matching them. This "
-                f"rule applies in every guard mode."
+                f"directory every path rule here stops matching them. Write "
+                f"derived output to ~/{DERIVED_MARKER}/ instead, where it "
+                f"stays governed. This rule applies in every guard mode."
             )
+        # The derived/ route. Destination-style commands need only their
+        # destination there; the sources may be the read-only BAMs.
+        # Everything else (rm, mv, chmod, truncate ...) writes to every path
+        # it names, so all of them must already be derived output -- that is
+        # what keeps the source BAMs unmovable and undeletable.
+        if base in DEST_LAST:
+            permitted = bool(paths) and _is_derived(paths[-1])
+        else:
+            permitted = all(_is_derived(pp) for pp in paths if _is_patient(pp))
+        if permitted:
+            return "allow"
         deny(
             f"Blocked: `{base}` targeting a path under patient_data. The "
             f"patient BAMs are read-only: never copied, moved, re-indexed, "
-            f"or archived. This rule applies in every guard mode."
+            f"or archived. Derived output belongs in ~/{DERIVED_MARKER}/, "
+            f"which is the only writable location here. This rule applies in "
+            f"every guard mode."
         )
 
     if base in ("samtools", "bcftools", "bgzip", "tabix"):
@@ -364,14 +401,23 @@ def check_patient_data(tokens: list, base: str):
                 deny(
                     f"Blocked: `{base} {sub}` writes to {escaping}, outside "
                     f"~/patient_data, with a patient_data path among its "
-                    f"inputs. A slice written elsewhere stops being governed "
-                    f"by these rules."
+                    f"inputs. A slice written to /tmp stops being governed by "
+                    f"these rules -- write it to ~/{DERIVED_MARKER}/ instead."
                 )
+            out = _output_value(tokens)
+            if out is not None and _is_derived(out):
+                return "allow"
+            # Operating entirely on already-derived output, e.g.
+            # `samtools index ~/patient_data/derived/slice.bam`. A slice needs
+            # an index to be useful, and this never touches a source BAM.
+            if all(_is_derived(pp) for pp in paths if _is_patient(pp)):
+                return "allow"
             deny(
                 f"Blocked: `{base} {sub}` writes, and a patient_data path is "
                 f"among its arguments. Reading (view, head, flagstat, "
                 f"idxstats, stats, depth, coverage, quickcheck) is allowed; "
-                f"writing beside the BAMs is not."
+                f"writing beside the BAMs is not. Send derived output to "
+                f"~/{DERIVED_MARKER}/ with -o."
             )
     return None
 
@@ -391,8 +437,11 @@ def check_segment(segment: str) -> None:
             f"Write the command literally."
         )
 
-    # Patient-data rules run in BOTH modes -- see check_patient_data.
-    check_patient_data(tokens, base)
+    # Patient-data rules run in BOTH modes -- see check_patient_data. A
+    # permitted write into patient_data/derived/ short-circuits: the mode
+    # rules below would otherwise deny it for being outside /tmp.
+    if check_patient_data(tokens, base) == "allow":
+        return
 
     if MODE == "no-git":
         if base in ("git", "gh", "hub", "glab", "tig"):
