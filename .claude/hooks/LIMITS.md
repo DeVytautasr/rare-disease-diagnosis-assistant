@@ -125,7 +125,7 @@ Still denied, and asserted in `test_guard.py`:
 - taking derived output anywhere else — `cp`/`mv` to `/tmp` or the repo,
   `curl`, `scp`, `tar`, `base64` on a derived path
 - writing to, moving, or deleting the source BAMs, including
-  `mv ~/patient_data/SAMPLE_A-ready.bam ~/patient_data/derived/`
+  `mv ~/patient_data/<source>.bam ~/patient_data/derived/`
 - copying *into* `derived/` from outside `patient_data` — produce output
   there directly rather than staging it in `/tmp` first
 
