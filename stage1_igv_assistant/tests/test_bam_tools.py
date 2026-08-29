@@ -825,12 +825,17 @@ def run_tests():
         assert_error_dict(
             "get_bam_stats_at_locus/beyond_end",
             get_bam_stats_at_locus(err_bam, "chr1", 999999999999, 999999999999 + 100),
-            "invalid_region",
+            # Both of these were "invalid_region", which conflated two
+            # different mistakes. A position past the contig end is now
+            # out_of_range and names the contig length; an unknown contig
+            # name is still invalid_region. See
+            # REAL_PATIENT_DATA_VALIDATION.md finding 14.
+            "out_of_range",
         )
         assert_error_dict(
             "count_discordant_pairs/beyond_end",
             count_discordant_pairs(err_bam, "chr1", 999999999999),
-            "invalid_region",
+            "out_of_range",
         )
         print("  Position beyond end of chromosome: clean error dict — PASSED")
 

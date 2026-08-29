@@ -182,8 +182,10 @@ def _describe_partner_distribution(chrom_counts: dict, mate_noun: str) -> str:
 @dataclass
 class LocusStats:
     chromosome: str
-    start: int
-    end: int
+    start: int                 # clamped to the contig, not the requested value
+    end: int                   # clamped to the contig, not the requested value
+    contig_length: int         # from the BAM header
+    clamped_to_contig: bool    # True when the request overran the contig
     total_reads: int
     mean_depth: float
     mean_mapq: float
@@ -427,6 +429,51 @@ def _validate_range(chromosome: str, start: int, end: int) -> Optional[dict]:
     return None
 
 
+def _clamp_or_error(bam, chromosome: str, resolved_chrom: str,
+                    start: int, end: int):
+    """
+    Clamp a requested range to the contig's real bounds, or reject it as out
+    of range.
+
+    Two defects motivated this (REAL_PATIENT_DATA_VALIDATION.md findings 5
+    and 14):
+
+    * A window overrunning the contig end was neither clamped nor flagged,
+      and the FULL requested width was reported. Asking for chrM:16000-17500
+      on a 16,569 bp contig returned the same reads as 16000-16569 but a
+      mean_depth of 1,011.06 instead of 2,665.36 -- the denominator included
+      931 bases that do not exist. Depth profiles emitted whole bins past the
+      contig end (20 of 20 in one case), and a window near the edge scored a
+      maximum depth component off those empty bins.
+    * A coordinate entirely past the end returned a clean zero result,
+      indistinguishable from a genuine coverage gap. pysam does not raise for
+      an out-of-range fetch, so nothing downstream noticed. A typo'd
+      coordinate looked exactly like real data.
+
+    Returns (start, end, clamp_info, error). Callers reassign start/end from
+    this, so every span, denominator and echoed field is the clamped one.
+    """
+    length = bam.get_reference_length(resolved_chrom)
+    if start >= length:
+        return start, end, None, {
+            "error": f"requested start {start} is at or past the end of "
+                     f"{resolved_chrom} (contig length {length}). This is a "
+                     f"coordinate error, not a coverage gap.",
+            "error_type": "out_of_range",
+            "chromosome": chromosome,
+            "position": start,
+            "contig_length": length,
+        }
+    new_start = max(0, start)
+    new_end = min(end, length)
+    return new_start, new_end, {
+        "contig_length": length,
+        "clamped_to_contig": (new_start != start or new_end != end),
+        "requested_start": start,
+        "requested_end": end,
+    }, None
+
+
 def _fetch_or_error(bam, chromosome: str, resolved_chrom: str, start: int, end: int):
     """
     Calls bam.fetch() and returns (iterator, None) on success or
@@ -485,6 +532,13 @@ def get_bam_stats_at_locus(
         bam.close()
         return err
 
+    start, end, clamp_info, range_error = _clamp_or_error(
+        bam, chromosome, resolved_chrom, start, end
+    )
+    if range_error:
+        bam.close()
+        return range_error
+
     read_iter, fetch_error = _fetch_or_error(bam, chromosome, resolved_chrom, start, end)
     if fetch_error:
         bam.close()
@@ -524,6 +578,8 @@ def get_bam_stats_at_locus(
         chromosome=chromosome,
         start=start,
         end=end,
+        contig_length=clamp_info["contig_length"],
+        clamped_to_contig=clamp_info["clamped_to_contig"],
         total_reads=total,
         mean_depth=round(mean_depth, 2),
         mean_mapq=round(mean_mapq, 2),
@@ -582,6 +638,13 @@ def count_discordant_pairs(
         err = _contig_not_found_error(bam, chromosome)
         bam.close()
         return err
+
+    start, end, clamp_info, range_error = _clamp_or_error(
+        bam, chromosome, resolved_chrom, start, end
+    )
+    if range_error:
+        bam.close()
+        return range_error
 
     read_iter, fetch_error = _fetch_or_error(bam, chromosome, resolved_chrom, start, end)
     if fetch_error:
@@ -714,6 +777,13 @@ def count_soft_clipped_reads(
         err = _contig_not_found_error(bam, chromosome)
         bam.close()
         return err
+
+    start, end, clamp_info, range_error = _clamp_or_error(
+        bam, chromosome, resolved_chrom, start, end
+    )
+    if range_error:
+        bam.close()
+        return range_error
 
     read_iter, fetch_error = _fetch_or_error(bam, chromosome, resolved_chrom, start, end)
     if fetch_error:
@@ -856,6 +926,13 @@ def get_split_reads(
         err = _contig_not_found_error(bam, chromosome)
         bam.close()
         return err
+
+    start, end, clamp_info, range_error = _clamp_or_error(
+        bam, chromosome, resolved_chrom, start, end
+    )
+    if range_error:
+        bam.close()
+        return range_error
 
     read_iter, fetch_error = _fetch_or_error(bam, chromosome, resolved_chrom, start, end)
     if fetch_error:
@@ -1078,6 +1155,13 @@ def get_read_depth_profile(
         bam.close()
         return err
 
+    start, end, clamp_info, range_error = _clamp_or_error(
+        bam, chromosome, resolved_chrom, start, end
+    )
+    if range_error:
+        bam.close()
+        return range_error
+
     read_iter, fetch_error = _fetch_or_error(bam, chromosome, resolved_chrom, start, end)
     if fetch_error:
         bam.close()
@@ -1176,6 +1260,10 @@ def get_read_depth_profile(
         "dip_is_at_focus": dip_is_at_focus,
         "assessable": assessable,
         "reason": None if assessable else "no reads in queried region",
+        # Clamped, not requested: bins past the contig end used to be emitted
+        # as real zero-depth bins and pulled the mean down.
+        "contig_length": clamp_info["contig_length"],
+        "clamped_to_contig": clamp_info["clamped_to_contig"],
         # The depth layer deliberately applies NO MAPQ filter, while every
         # other counting layer filters at min_mapq=20. Reported rather than
         # changed: filtering here would silently shift every depth number and
