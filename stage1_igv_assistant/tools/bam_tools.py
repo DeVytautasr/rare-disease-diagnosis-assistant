@@ -1650,13 +1650,13 @@ def summarize_breakpoint_evidence(
         observations.append(
             f"Read depth drops to {depth_profile['summary']['depth_ratio_min_to_mean']:.0%} "
             f"of the window mean near the queried position (min {depth_profile['summary']['min_depth']} "
-            f"vs mean {depth_profile['summary']['mean_depth']} reads/window) — "
+            f"vs mean {depth_profile['summary']['mean_depth']}, per-base depth) — "
             f"consistent with a possible deletion."
         )
     elif off_position_dip:
         observations.append(
             f"Read depth dips to {depth_profile['summary']['min_depth']} "
-            f"(mean {depth_profile['summary']['mean_depth']}) at "
+            f"(mean {depth_profile['summary']['mean_depth']}, per-base depth) at "
             f"{chromosome}:{depth_profile['summary']['dip_position']}, "
             f"{depth_profile['summary']['dip_distance_from_focus']}bp from the queried position — "
             f"an off-position depth feature, not counted as evidence for this breakpoint."
