@@ -396,8 +396,44 @@ def _contig_not_found_error(bam, chromosome: str) -> dict:
     }
 
 
+def _validate_window(chromosome: str, position, window_bp) -> Optional[dict]:
+    """
+    Type-check a position/window pair BEFORE any arithmetic on them.
+
+    The windowed tools compute `position - window_bp` to build their range,
+    which happens before _validate_range ever sees the values -- so a string
+    position raised TypeError from the subtraction and never reached the
+    structured-error contract. Same class as the three crashes in
+    REAL_PATIENT_DATA_VALIDATION.md; found by the regression suite written
+    for them rather than by the original validation run.
+    """
+    for label, value in (("position", position), ("window_bp", window_bp)):
+        if isinstance(value, bool) or not isinstance(value, int):
+            return {
+                "error": f"{label} must be an integer (got "
+                         f"{type(value).__name__}: {value!r})",
+                "error_type": "invalid_parameters",
+                "chromosome": chromosome,
+                "position": position if isinstance(position, int) else 0,
+            }
+    return None
+
+
 def _validate_range(chromosome: str, start: int, end: int) -> Optional[dict]:
     """Returns an error dict for an invalid start/end pair, else None."""
+    # Type check first. Every other malformed input returned a structured
+    # error dict, but string coordinates reached the comparison below and
+    # raised TypeError straight out of the tool, bypassing the contract
+    # entirely (REAL_PATIENT_DATA_VALIDATION.md, crash 3).
+    for label, value in (("start", start), ("end", end)):
+        if isinstance(value, bool) or not isinstance(value, int):
+            return {
+                "error": f"{label} must be an integer (got "
+                         f"{type(value).__name__}: {value!r})",
+                "error_type": "invalid_parameters",
+                "chromosome": chromosome,
+                "position": start if isinstance(start, int) else 0,
+            }
     if start < 0 or end < 0:
         return {
             "error": f"start and end must be non-negative (got start={start}, end={end})",
@@ -620,6 +656,10 @@ def count_discordant_pairs(
         region is invalid. error_type is one of "bam_access",
         "invalid_region", "invalid_parameters".
     """
+    window_error = _validate_window(chromosome, position, window_bp)
+    if window_error:
+        return window_error
+
     start = max(0, position - window_bp)
     end = position + window_bp
 
@@ -759,6 +799,10 @@ def count_soft_clipped_reads(
         region is invalid. error_type is one of "bam_access",
         "invalid_region", "invalid_parameters".
     """
+    window_error = _validate_window(chromosome, position, window_bp)
+    if window_error:
+        return window_error
+
     start = max(0, position - window_bp)
     end = position + window_bp
 
@@ -908,6 +952,10 @@ def get_split_reads(
         region is invalid. error_type is one of "bam_access",
         "invalid_region", "invalid_parameters".
     """
+    window_error = _validate_window(chromosome, position, window_bp)
+    if window_error:
+        return window_error
+
     start = max(0, position - window_bp)
     end = position + window_bp
 
@@ -1166,6 +1214,31 @@ def get_read_depth_profile(
     if fetch_error:
         bam.close()
         return fetch_error
+
+    # window_size 0 raised ValueError from range(); a negative window_size
+    # raised IndexError from the bin index below, but only where reads
+    # existed -- over an empty region the same call returned a clean result.
+    # Both bypassed the structured-error contract
+    # (REAL_PATIENT_DATA_VALIDATION.md, crashes 1 and 2).
+    if isinstance(window_size, bool) or not isinstance(window_size, int):
+        bam.close()
+        return {
+            "error": f"window_size must be an integer (got "
+                     f"{type(window_size).__name__}: {window_size!r})",
+            "error_type": "invalid_parameters",
+            "chromosome": chromosome,
+            "position": start,
+        }
+    if window_size <= 0:
+        bam.close()
+        return {
+            "error": f"window_size must be a positive integer (got "
+                     f"{window_size}). A zero or negative bin width cannot "
+                     f"partition a region.",
+            "error_type": "invalid_parameters",
+            "chromosome": chromosome,
+            "position": start,
+        }
 
     window_starts = list(range(start, end, window_size))
     base_counts = [0] * len(window_starts)
@@ -1514,6 +1587,10 @@ def summarize_breakpoint_evidence(
         fail or applicable_layers contains an unrecognised name
         (error_type "invalid_parameters").
     """
+    window_error = _validate_window(chromosome, position, window_bp)
+    if window_error:
+        return window_error
+
     if applicable_layers is not None:
         unknown = [l for l in applicable_layers if l not in EVIDENCE_LAYER_NAMES]
         if unknown:
