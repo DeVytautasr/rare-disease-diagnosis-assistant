@@ -292,6 +292,11 @@ class SplitReadResult:
                                   # exceeds split_reads.
     sa_entries_total: int         # raw SA records parsed, before per-read
                                   # deduplication — the old partner-count unit
+    sa_entries_below_min_mapq: int  # SA records dropped by their OWN mapQ
+    partner_strand_concordant: int  # SA segments on the same strand as the primary
+    partner_strand_flipped: int     # SA segments on the opposite strand —
+                                    # orientation distinguishes an inversion-type
+                                    # junction from a direct one
     example_partner_loci: list    # up to 5 "chrom:pos" strings for inspection
     reads_below_min_mapq: int  # reads present but dropped by the MAPQ filter
     quality_limited: bool      # True when reads existed and ALL were filtered out;
@@ -983,7 +988,11 @@ def get_split_reads(
     chromosome: str,
     position: int,
     window_bp: int = 200,
-    min_mapq: int = 0
+    # Was 0 while count_discordant_pairs and count_soft_clipped_reads both
+    # defaulted to 20, so a bare call filtered nothing and silently disagreed
+    # with its neighbours. summarize always passed 20 explicitly, which is
+    # why the asymmetry survived unnoticed.
+    min_mapq: int = 20
 ) -> dict:
     """
     Counts split (chimeric) reads: primary alignments carrying an SA
@@ -1044,6 +1053,9 @@ def get_split_reads(
     split = 0
     partner_chroms = {}
     sa_entries_total = 0
+    sa_entries_below_min_mapq = 0
+    strand_concordant = 0
+    strand_flipped = 0
     refs = set(bam.references)
     example_loci = []
 
@@ -1060,7 +1072,6 @@ def get_split_reads(
         if not read.has_tag("SA"):
             continue
 
-        split += 1
         # SA tag format: "rname,pos,strand,CIGAR,mapQ,NM;" (one or more entries)
         sa_entries = read.get_tag("SA").rstrip(";").split(";")
         first_rname, first_pos = None, None
@@ -1071,18 +1082,52 @@ def get_split_reads(
         # it (619 entries against 603 reads in one real window).
         # REAL_PATIENT_DATA_VALIDATION.md finding 9.
         partners_this_read = set()
+        primary_strand = "-" if read.is_reverse else "+"
         for entry in sa_entries:
             fields = entry.split(",")
             if len(fields) < 2:
                 continue
             sa_entries_total += 1
             rname, pos_str = fields[0], fields[1]
+
+            # The SA record carries its OWN mapQ (field 4), and it used to be
+            # parsed past entirely: min_mapq filtered the primary alignment
+            # only, so a partner segment at mapQ 0 was counted at full weight
+            # by a caller who had asked for min_mapq=20. In one real window
+            # 144/619 and 224/316 SA records were mapQ 0 -- 71% for one
+            # sample. Evidence that looked filtered was not.
+            # REAL_PATIENT_DATA_VALIDATION.md finding 7.
+            if len(fields) >= 5:
+                try:
+                    sa_mapq = int(fields[4])
+                except ValueError:
+                    sa_mapq = None
+                if sa_mapq is not None and sa_mapq < min_mapq:
+                    sa_entries_below_min_mapq += 1
+                    continue
+
+            # Strand (field 2) was likewise parsed past. Orientation is what
+            # distinguishes an inversion-type junction from a direct one, and
+            # 12.3%/10.1% of real SA entries flip strand relative to the
+            # primary, so it is not a corner case.
+            if len(fields) >= 3:
+                if fields[2] == primary_strand:
+                    strand_concordant += 1
+                else:
+                    strand_flipped += 1
+
             if first_rname is None:
                 first_rname, first_pos = rname, pos_str
             # Normalised so an aligner that writes "8" and one that writes
             # "chr8" for the same physical partner don't split into two
             # separate dict keys/counts.
             partners_this_read.add(_canonical_chrom(rname, refs))
+
+        # A read whose every supplementary alignment was filtered out has no
+        # credible partner left, so it is not split evidence.
+        if not partners_this_read:
+            continue
+        split += 1
         for norm_rname in partners_this_read:
             partner_chroms[norm_rname] = partner_chroms.get(norm_rname, 0) + 1
 
@@ -1112,6 +1157,9 @@ def get_split_reads(
                              else (0.0 if quality_limited else None)),
         partner_chromosomes=partner_chroms_sorted,
         sa_entries_total=sa_entries_total,
+        sa_entries_below_min_mapq=sa_entries_below_min_mapq,
+        partner_strand_concordant=strand_concordant,
+        partner_strand_flipped=strand_flipped,
         example_partner_loci=example_loci,
         reads_below_min_mapq=below_mapq,
         quality_limited=quality_limited,
