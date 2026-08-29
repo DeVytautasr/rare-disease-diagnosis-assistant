@@ -1984,6 +1984,71 @@ def get_gene_at_locus(
     }
 
 
+# Discordant-pair thresholds for the reciprocal check. Named because verdict
+# and is_balanced used to compute their own, and disagreed: every verdict
+# branch required primary >= 5 while is_balanced used >= 3 on both sides, so
+# anything in the 3-4 band returned "INSUFFICIENT EVIDENCE at both positions"
+# together with is_balanced=True. Two callers reading the same object got
+# opposite answers, and both fields look authoritative.
+# (REAL_PATIENT_DATA_VALIDATION.md finding 3.)
+RECIPROCAL_STRONG = 5      # a side counts as strong signal
+RECIPROCAL_PRESENT = 2     # a partner side counts as present-but-weak
+RECIPROCAL_BALANCED = 3    # both sides comparable -> is_balanced
+RECIPROCAL_BACKPOINT = 3   # partner mates pointing back at the primary
+
+
+def _reciprocal_verdict(primary_disc: int, reciprocal_disc: int,
+                        back_pointing: int):
+    """
+    Single source of both the verdict and is_balanced, so they cannot
+    contradict each other.
+
+    Pure function of three counts — no BAM access — which is what lets the
+    regression suite check every combination exhaustively rather than the
+    handful a fixture happens to produce.
+
+    Invariant, asserted in tests over the full grid: is_balanced is never True
+    while the verdict says INSUFFICIENT. The old code had no branch for "both
+    sides show weak but symmetric signal", so that whole region of the input
+    space fell through to a catch-all that then contradicted is_balanced.
+
+    Returns (verdict, is_balanced).
+    """
+    is_balanced = (primary_disc >= RECIPROCAL_BALANCED
+                   and reciprocal_disc >= RECIPROCAL_BALANCED)
+
+    if (primary_disc >= RECIPROCAL_STRONG
+            and reciprocal_disc >= RECIPROCAL_STRONG
+            and back_pointing >= RECIPROCAL_BACKPOINT):
+        verdict = ("RECIPROCAL CONFIRMED — both breakpoints show concordant "
+                   "inter-chromosomal signal")
+    elif primary_disc >= RECIPROCAL_STRONG and reciprocal_disc >= RECIPROCAL_PRESENT:
+        verdict = ("RECIPROCAL LIKELY — primary signal strong, partner signal "
+                   "present but weak")
+    elif is_balanced:
+        # The branch the old code lacked. Both sides clear RECIPROCAL_BALANCED
+        # but not RECIPROCAL_STRONG: real symmetry, too little of it to call.
+        verdict = (f"RECIPROCAL POSSIBLE — both positions show weak but "
+                   f"symmetric signal ({primary_disc} and {reciprocal_disc} "
+                   f"discordant pairs); below the threshold for a confident call")
+    elif primary_disc >= RECIPROCAL_STRONG and reciprocal_disc == 0:
+        verdict = ("RECIPROCAL NOT FOUND — only one side shows signal; may be "
+                   "artifact or wrong partner coords")
+    elif primary_disc == 0 and reciprocal_disc == 0:
+        verdict = "INSUFFICIENT EVIDENCE at both positions"
+    elif primary_disc == 0:
+        verdict = (f"INSUFFICIENT EVIDENCE at the primary position "
+                   f"({reciprocal_disc} discordant pair(s) at the partner)")
+    elif reciprocal_disc == 0:
+        verdict = (f"INSUFFICIENT EVIDENCE at the partner position "
+                   f"({primary_disc} discordant pair(s) at the primary)")
+    else:
+        verdict = (f"INSUFFICIENT EVIDENCE — {primary_disc} discordant pair(s) "
+                   f"at the primary and {reciprocal_disc} at the partner, both "
+                   f"below the threshold for a call")
+    return verdict, is_balanced
+
+
 # ── Tool 8: Reciprocal breakpoint check ────────────────────────────────────────
 
 def check_reciprocal_breakpoint(
@@ -2070,14 +2135,9 @@ def check_reciprocal_breakpoint(
     reciprocal_mate_chroms = reciprocal.get("mate_chromosomes", {})
     back_pointing = reciprocal_mate_chroms.get(_normalize_chrom(primary_chromosome), 0)
 
-    if primary_disc >= 5 and reciprocal_disc >= 5 and back_pointing >= 3:
-        verdict = "RECIPROCAL CONFIRMED — both breakpoints show concordant inter-chromosomal signal"
-    elif primary_disc >= 5 and reciprocal_disc >= 2:
-        verdict = "RECIPROCAL LIKELY — primary signal strong, partner signal present but weak"
-    elif primary_disc >= 5 and reciprocal_disc == 0:
-        verdict = "RECIPROCAL NOT FOUND — only one side shows signal; may be artifact or wrong partner coords"
-    else:
-        verdict = "INSUFFICIENT EVIDENCE at both positions"
+    verdict, is_balanced = _reciprocal_verdict(
+        primary_disc, reciprocal_disc, back_pointing
+    )
 
     return {
         "primary": {
@@ -2094,7 +2154,7 @@ def check_reciprocal_breakpoint(
             "mate_chromosomes": reciprocal_mate_chroms,
         },
         "verdict": verdict,
-        "is_balanced": primary_disc >= 3 and reciprocal_disc >= 3,
+        "is_balanced": is_balanced,
     }
 
 
