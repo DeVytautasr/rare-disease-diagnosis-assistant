@@ -1770,18 +1770,21 @@ def summarize_breakpoint_evidence(
         partner_phrase = _describe_partner_distribution(
             split["partner_chromosomes"], "supplementary alignment"
         )
-        examples = split.get("example_partner_loci") or []
-        # Render the first example as a bare locus string; the previous
-        # `[:1]` slice interpolated a Python list, so reports read
-        # "(e.g. ['chr8:47000000'])" with brackets and quotes included.
-        example_suffix = f" (e.g. {examples[0]})" if examples else ""
+        # No example locus is interpolated here, deliberately. On patient
+        # data that string is a per-read position taken from one read's SA
+        # tag, and this is the field a reporting assistant is most likely to
+        # copy wholesale. example_partner_loci remains available as a
+        # STRUCTURED field, which a caller can drop before producing a
+        # report; a coordinate embedded mid-sentence cannot be dropped
+        # without rewriting the sentence
+        # (REAL_PATIENT_DATA_VALIDATION.md finding 12).
         if n_split == 1:
-            observations.append(f"1 split read {partner_phrase}{example_suffix}.")
+            observations.append(f"1 split read {partner_phrase}.")
         else:
             observations.append(
                 f"{n_split} split reads "
                 f"({split['split_read_fraction']:.0%} of reads in window) "
-                f"{partner_phrase}{example_suffix}."
+                f"{partner_phrase}."
             )
 
     # ── Read-depth component (0-25) ──
