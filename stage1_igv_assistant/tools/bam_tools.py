@@ -313,6 +313,45 @@ def _resolve_contig(bam, chromosome: str) -> Optional[str]:
     return None
 
 
+def _canonical_chrom(name: str, refs) -> str:
+    """
+    Canonical spelling of a contig name for use as a dict key or comparison,
+    resolved against the BAM header.
+
+    The previous helper (_normalize_chrom, since removed) prepended "chr"
+    unconditionally. That is right for the 26
+    primary contigs and wrong for the 525 HLA-* contigs in hs38DH, which carry
+    no chr prefix: it turned HLA-A*01:01:01:01 into chrHLA-A*01:01:01:01, a
+    name absent from the header, and emitted it as though it were a real
+    reference contig. In one MHC window 16 of 44 partner keys named contigs
+    that do not exist, with no error raised
+    (REAL_PATIENT_DATA_VALIDATION.md finding 6).
+
+    Here a name the header knows keeps the header's own spelling, and a name
+    the header does not know is returned unchanged. Nothing is invented.
+    Both operands of a comparison still normalise identically, which is the
+    property that helper existed to provide.
+    """
+    if name in refs:
+        return name
+    alt = name[3:] if name.startswith("chr") else f"chr{name}"
+    if alt in refs:
+        return alt
+    return name
+
+
+def _chrom_count(counts: dict, name: str) -> int:
+    """
+    Look up a contig in a counts dict tolerant of chr-prefix spelling, since
+    the dict is keyed by the header's spelling and the caller's string may
+    use the other convention.
+    """
+    if name in counts:
+        return counts[name]
+    alt = name[3:] if name.startswith("chr") else f"chr{name}"
+    return counts.get(alt, 0)
+
+
 # Above this fraction of MAPQ<20 reads, a locus is reported as
 # QUALITY-LIMITED instead of carrying a normalised evidence_score. 0.4 was
 # already named as the advisory cutoff in this module's provenance notes but
@@ -343,30 +382,6 @@ def _assess_window(passed: int, below_mapq: int):
     if passed == 0:
         return True, None, True
     return True, None, False
-
-
-def _normalize_chrom(chromosome: str) -> str:
-    """
-    Canonical form for chromosome-name comparisons and dict keys: always
-    chr-prefixed. This is the pure-string counterpart to _resolve_contig
-    above — that one resolves a name against a specific BAM's header (and
-    needs a bam handle to do it); this one has no header to check against,
-    so it just picks one fixed convention (chr-prefixed, matching every
-    BAM/header this project has used) and applies it to both sides of a
-    comparison. Applying it identically to both operands makes "1" and
-    "chr1" compare equal regardless of which convention either string
-    happens to use — that's the property that matters here, not whether
-    chr-prefixed is objectively "more correct".
-
-    Use this wherever a chromosome name is compared, counted, or used as a
-    dict key WITHOUT a bam handle available to resolve it properly (e.g.
-    read.next_reference_name vs a caller-supplied chromosome string, or an
-    SA-tag partner rname used as a dict key). Do NOT use this as a
-    replacement for _resolve_contig when a bam handle IS available (e.g.
-    before bam.fetch()) — that function checks the real header and can
-    catch genuinely-invalid contig names, which this cannot.
-    """
-    return chromosome if chromosome.startswith("chr") else f"chr{chromosome}"
 
 
 def _contig_not_found_error(bam, chromosome: str) -> dict:
@@ -576,7 +591,8 @@ def count_discordant_pairs(
     total = 0
     discordant = 0
     mate_chroms = {}
-    norm_chromosome = _normalize_chrom(chromosome)
+    refs = set(bam.references)
+    norm_chromosome = _canonical_chrom(chromosome, refs)
 
     below_mapq = 0
     for read in read_iter:
@@ -605,7 +621,7 @@ def count_discordant_pairs(
         # (e.g. caller passes "1" against a "chr1"-header BAM, and every
         # same-chromosome mate gets miscounted as discordant).
         mate_name = read.next_reference_name
-        mate_norm = _normalize_chrom(mate_name) if mate_name is not None else None
+        mate_norm = _canonical_chrom(mate_name, refs) if mate_name is not None else None
         if mate_norm != norm_chromosome:
             discordant += 1
             mate_chr = mate_norm if mate_norm is not None else "unknown"
@@ -849,6 +865,7 @@ def get_split_reads(
     total = 0
     split = 0
     partner_chroms = {}
+    refs = set(bam.references)
     example_loci = []
 
     below_mapq = 0
@@ -878,7 +895,7 @@ def get_split_reads(
             # Normalised so an aligner that writes "8" and one that writes
             # "chr8" for the same physical partner don't split into two
             # separate dict keys/counts.
-            norm_rname = _normalize_chrom(rname)
+            norm_rname = _canonical_chrom(rname, refs)
             partner_chroms[norm_rname] = partner_chroms.get(norm_rname, 0) + 1
 
         if first_rname is not None:
@@ -2143,7 +2160,7 @@ def check_reciprocal_breakpoint(
     # back_pointing=0 here even when the real count is nonzero, downgrading
     # the verdict below for no genomic reason.
     reciprocal_mate_chroms = reciprocal.get("mate_chromosomes", {})
-    back_pointing = reciprocal_mate_chroms.get(_normalize_chrom(primary_chromosome), 0)
+    back_pointing = _chrom_count(reciprocal_mate_chroms, primary_chromosome)
 
     verdict, is_balanced = _reciprocal_verdict(
         primary_disc, reciprocal_disc, back_pointing
