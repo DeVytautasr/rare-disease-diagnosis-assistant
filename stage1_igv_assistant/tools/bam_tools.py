@@ -243,7 +243,16 @@ class SplitReadResult:
     total_reads_in_window: int
     split_reads: int
     split_read_fraction: Optional[float]   # None when total_reads_in_window == 0 (undefined, not 0)
-    partner_chromosomes: dict     # {chr_name: count}, parsed from SA tags
+    partner_chromosomes: dict     # {chr_name: number of SPLIT READS whose SA tag
+                                  # names that contig}. Read counts, not entry
+                                  # counts: a read with several segments on one
+                                  # contig contributes 1. The sum equals
+                                  # split_reads unless a read names more than
+                                  # one distinct partner contig, in which case
+                                  # it contributes once to each and the sum
+                                  # exceeds split_reads.
+    sa_entries_total: int         # raw SA records parsed, before per-read
+                                  # deduplication — the old partner-count unit
     example_partner_loci: list    # up to 5 "chrom:pos" strings for inspection
     reads_below_min_mapq: int  # reads present but dropped by the MAPQ filter
     quality_limited: bool      # True when reads existed and ALL were filtered out;
@@ -990,6 +999,7 @@ def get_split_reads(
     total = 0
     split = 0
     partner_chroms = {}
+    sa_entries_total = 0
     refs = set(bam.references)
     example_loci = []
 
@@ -1010,17 +1020,26 @@ def get_split_reads(
         # SA tag format: "rname,pos,strand,CIGAR,mapQ,NM;" (one or more entries)
         sa_entries = read.get_tag("SA").rstrip(";").split(";")
         first_rname, first_pos = None, None
+        # Deduplicated PER READ. partner_chromosomes previously incremented
+        # once per SA entry while split_reads counted once per read, so the
+        # two headline numbers were in different units and a read with two
+        # segments on the same contig counted as two pieces of evidence for
+        # it (619 entries against 603 reads in one real window).
+        # REAL_PATIENT_DATA_VALIDATION.md finding 9.
+        partners_this_read = set()
         for entry in sa_entries:
             fields = entry.split(",")
             if len(fields) < 2:
                 continue
+            sa_entries_total += 1
             rname, pos_str = fields[0], fields[1]
             if first_rname is None:
                 first_rname, first_pos = rname, pos_str
             # Normalised so an aligner that writes "8" and one that writes
             # "chr8" for the same physical partner don't split into two
             # separate dict keys/counts.
-            norm_rname = _canonical_chrom(rname, refs)
+            partners_this_read.add(_canonical_chrom(rname, refs))
+        for norm_rname in partners_this_read:
             partner_chroms[norm_rname] = partner_chroms.get(norm_rname, 0) + 1
 
         if first_rname is not None:
@@ -1048,6 +1067,7 @@ def get_split_reads(
         split_read_fraction=(round(split / total, 3) if total > 0
                              else (0.0 if quality_limited else None)),
         partner_chromosomes=partner_chroms_sorted,
+        sa_entries_total=sa_entries_total,
         example_partner_loci=example_loci,
         reads_below_min_mapq=below_mapq,
         quality_limited=quality_limited,
