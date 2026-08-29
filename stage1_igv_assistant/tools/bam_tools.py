@@ -95,6 +95,16 @@ from typing import Optional
 # left here as the historical calibration record, not rewritten — see
 # REAL_DATA_VALIDATION.md's "Post-fix re-validation" addendum for the full
 # before/after comparison.
+#
+# WINDOW-SIZE COUPLING — this threshold is meaningless without the window
+# size it was calibrated at, and must never be quoted alone.
+# depth_ratio_min_to_mean is strongly window-size dependent: at one fixed
+# span (+/-2000) the same locus gives 0.523 at window_size=100, 0.585 at 200,
+# 0.830 at 500 and 0.868 at 1000 — crossing this threshold between 200 and
+# 500. 0.7 was calibrated at window_size=200, which is what
+# summarize_breakpoint_evidence's depth_window_size defaults to. Changing the
+# bin size without re-deriving the threshold changes the verdict for
+# non-genomic reasons.
 DEPTH_RATIO_DELETION_THRESHOLD = 0.7
 
 # Canonical evidence-layer names, shared between summarize_breakpoint_evidence's
@@ -282,6 +292,11 @@ class BreakpointEvidenceSummary:
     label: str
     chromosome: str
     position: int
+    depth_window_bp: int           # geometry the depth layer actually used;
+    depth_window_size: int         # depth_ratio_min_to_mean is strongly
+                                    # window-size dependent, so the ratio and
+                                    # any threshold on it are meaningless
+                                    # without these two numbers
     evidence_score: Optional[float]  # 0-100, normalised over applicable+assessable layers;
                                       # None when no layer could be scored at all (see evidence_strength)
     evidence_score_raw: float      # 0-100, direct sum of all 4 components regardless of applicability;
@@ -1487,7 +1502,9 @@ def summarize_breakpoint_evidence(
     label: str = "",
     window_bp: int = 500,
     min_mapq: int = 20,
-    applicable_layers: list = None
+    applicable_layers: list = None,
+    depth_window_bp: int = 2000,
+    depth_window_size: int = 200
 ) -> dict:
     """
     Combines discordant-pair, soft-clip, split-read, and read-depth evidence
@@ -1638,9 +1655,17 @@ def summarize_breakpoint_evidence(
         bam_path, chromosome, position,
         window_bp=min(window_bp, 200), min_mapq=min_mapq
     )
+    # The depth layer's geometry is its own, NOT window_bp. It was hardcoded
+    # at +/-2000 with 200 bp bins, which silently ignored window_bp and made
+    # this call disagree with a standalone get_read_depth_profile at any
+    # other geometry -- 4 of 10 positions gave opposite likely_deletion
+    # verdicts (REAL_PATIENT_DATA_VALIDATION.md finding 10). Now explicit,
+    # defaulted to the previous values so existing behaviour is unchanged,
+    # and echoed in the result so a caller can reproduce the number.
     depth_profile = get_read_depth_profile(
-        bam_path, chromosome, max(0, position - 2000), position + 2000,
-        window_size=200, focus_position=position
+        bam_path, chromosome,
+        max(0, position - depth_window_bp), position + depth_window_bp,
+        window_size=depth_window_size, focus_position=position
     )
 
     for result in (stats, disc, clips, split, depth_profile):
@@ -1965,6 +1990,8 @@ def summarize_breakpoint_evidence(
         label=label,
         chromosome=chromosome,
         position=position,
+        depth_window_bp=depth_window_bp,
+        depth_window_size=depth_window_size,
         evidence_score=evidence_score,
         evidence_score_raw=evidence_score_raw,
         evidence_strength=evidence_strength,
