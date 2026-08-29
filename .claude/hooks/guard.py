@@ -359,6 +359,34 @@ def _clean(tok: str) -> str:
     return tok.strip().strip("'\"")
 
 
+# `RESULT=$(samtools quickcheck ...)` captures a substitution into a variable.
+# split_segments already extracted the inner command and inspected it as its
+# own segment, so denying the outer assignment is redundant -- and it was
+# inconsistent too: `export V=$(date)` passed while `V=$(date)` did not,
+# purely because the assignment-stripping in resolve_tokens left the marker
+# as the apparent command name. Note this matches only when the substitution
+# is the ENTIRE value; `$(which git) commit`, where the substitution IS the
+# command name, still has a trailing word and is still denied.
+PURE_CAPTURE = re.compile(
+    r"^\s*(?:export|local|declare|readonly|typeset)?\s*"
+    r"[A-Za-z_][A-Za-z0-9_]*=\s*\$__SUBST__\s*$"
+)
+
+
+def _under_repo(path: str) -> bool:
+    """
+    True only when `path` is the repo root or genuinely inside it.
+
+    `startswith(REPO_ROOT)` matched siblings that merely share the prefix --
+    `<repo>-backup`, `<repo>.old`, `<repo>2` were all denied as "inside the
+    repository". Compare on a path boundary instead.
+    """
+    if not REPO_ROOT:
+        return False
+    p = os.path.abspath(os.path.join(os.getcwd(), _clean(path)))
+    return p == REPO_ROOT or p.startswith(REPO_ROOT + os.sep)
+
+
 def _is_pathlike(tok: str) -> bool:
     t = _clean(tok)
     if not t or t.startswith("-"):
@@ -511,6 +539,11 @@ def check_segment(segment: str) -> None:
         return
     base = os.path.basename(tokens[0])
 
+    # A substitution captured into a variable carries no command of its own;
+    # the inner command was already extracted and checked as its own segment.
+    if PURE_CAPTURE.match(segment):
+        return
+
     # A command name built from a variable ($G, $(which git)) defeats every
     # name-based check below. Legitimate commands here never need one.
     if "$" in tokens[0]:
@@ -546,14 +579,14 @@ def check_segment(segment: str) -> None:
         # agent must not write into the repository even from a non-patient
         # source.
         if base in PATH_MUTATORS | ARCHIVE_TOOLS:
-            if REPO_ROOT and any(
-                os.path.abspath(os.path.join(os.getcwd(), a)).startswith(REPO_ROOT)
-                for a in args
-            ):
+            if any(_under_repo(a) for a in args):
                 deny(
                     f"Blocked: `{base}` writing inside the repository from the "
                     f"patient-data agent. Patient-derived files never enter "
-                    f"the repo tree."
+                    f"the repo tree. Note that a RELATIVE path is resolved "
+                    f"against this hook's working directory, which is the "
+                    f"project root and may differ from your shell's -- use an "
+                    f"absolute path for scratch work outside the repo."
                 )
 
         # samtools writes on a patient path are handled by
