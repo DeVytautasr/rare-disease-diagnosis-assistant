@@ -200,7 +200,10 @@ class DiscordantPairResult:
     discordant_pairs: int
     discordant_fraction: Optional[float]   # None when total_reads_in_window == 0 (undefined, not 0)
     mate_chromosomes: dict     # {chr_name: count}
-    assessable: bool           # False when total_reads_in_window == 0
+    reads_below_min_mapq: int  # reads present but dropped by the MAPQ filter
+    quality_limited: bool      # True when reads existed and ALL were filtered out;
+                               # the layer is still assessed, and scores zero
+    assessable: bool           # False ONLY when the window held no reads at all
     reason: Optional[str]      # explains why, when assessable is False
 
 @dataclass
@@ -224,7 +227,10 @@ class SoftClipResult:
     right_consensus_position: Optional[int]
     right_max_clips_at_position: int
     dominant_clip_side: Optional[str]   # "left" | "right" | "tied" | None (no clips at all)
-    assessable: bool           # False when total_reads_in_window == 0
+    reads_below_min_mapq: int  # reads present but dropped by the MAPQ filter
+    quality_limited: bool      # True when reads existed and ALL were filtered out;
+                               # the layer is still assessed, and scores zero
+    assessable: bool           # False ONLY when the window held no reads at all
     reason: Optional[str]      # explains why, when assessable is False
 
 @dataclass
@@ -237,7 +243,10 @@ class SplitReadResult:
     split_read_fraction: Optional[float]   # None when total_reads_in_window == 0 (undefined, not 0)
     partner_chromosomes: dict     # {chr_name: count}, parsed from SA tags
     example_partner_loci: list    # up to 5 "chrom:pos" strings for inspection
-    assessable: bool           # False when total_reads_in_window == 0
+    reads_below_min_mapq: int  # reads present but dropped by the MAPQ filter
+    quality_limited: bool      # True when reads existed and ALL were filtered out;
+                               # the layer is still assessed, and scores zero
+    assessable: bool           # False ONLY when the window held no reads at all
     reason: Optional[str]      # explains why, when assessable is False
 
 @dataclass
@@ -304,6 +313,38 @@ def _resolve_contig(bam, chromosome: str) -> Optional[str]:
     return None
 
 
+# Above this fraction of MAPQ<20 reads, a locus is reported as
+# QUALITY-LIMITED instead of carrying a normalised evidence_score. 0.4 was
+# already named as the advisory cutoff in this module's provenance notes but
+# nothing compared against it; real-data validation made it operative. It is
+# inherited judgement, not an independently validated figure.
+LOW_MAPQ_QUALITY_GATE = 0.4
+
+
+def _assess_window(passed: int, below_mapq: int):
+    """
+    Tri-state assessment of a counting window.
+
+    Distinguishes a window with no reads at all -- structurally unassessable,
+    and rightly excluded from the evidence denominator -- from a window whose
+    reads were all removed by the MAPQ filter, which IS assessed and scores
+    zero, and must stay in the denominator.
+
+    Conflating the two made the evidence score rise as mapping quality fell:
+    in an all-MAPQ-0 window the three filtered layers dropped out, the depth
+    layer (which applies no MAPQ filter) was normalised over a denominator of
+    1, and a 25/25 depth score became 100/100 "strong". See
+    results/REAL_PATIENT_DATA_VALIDATION.md findings 1 and 2.
+
+    Returns (assessable, reason, quality_limited).
+    """
+    if passed == 0 and below_mapq == 0:
+        return False, "no reads in window", False
+    if passed == 0:
+        return True, None, True
+    return True, None, False
+
+
 def _normalize_chrom(chromosome: str) -> str:
     """
     Canonical form for chromosome-name comparisons and dict keys: always
@@ -350,6 +391,20 @@ def _validate_range(chromosome: str, start: int, end: int) -> Optional[dict]:
     if start > end:
         return {
             "error": f"start ({start}) must not be greater than end ({end})",
+            "error_type": "invalid_parameters",
+            "chromosome": chromosome,
+            "position": start,
+        }
+    if start == end:
+        # A zero-width window is a caller error, not a measurement. Left
+        # unvalidated it silently produced "no reads in window" for every
+        # counting layer, which dropped them from the evidence denominator and
+        # let a clean locus score 60.0 "moderate" off the depth layer alone
+        # (window_bp=0 -- REAL_PATIENT_DATA_VALIDATION.md finding 1).
+        return {
+            "error": f"zero-width region requested (start == end == {start}). "
+                     f"A window with no width cannot be measured; if this came "
+                     f"from window_bp=0, pass a positive window size.",
             "error_type": "invalid_parameters",
             "chromosome": chromosome,
             "position": start,
@@ -523,12 +578,14 @@ def count_discordant_pairs(
     mate_chroms = {}
     norm_chromosome = _normalize_chrom(chromosome)
 
+    below_mapq = 0
     for read in read_iter:
         if read.is_unmapped:
             continue
         if read.is_secondary or read.is_supplementary:
             continue
         if read.mapping_quality < min_mapq:
+            below_mapq += 1
             continue
         # Unpaired reads (e.g. single-molecule long reads) have no mate at
         # all, so "mate_is_unmapped" defaults to False for them — without
@@ -563,7 +620,7 @@ def count_discordant_pairs(
 
     # total == 0 means the fraction is undefined, not 0 — a locus with no
     # reads at all is not the same claim as "reads present, none discordant".
-    assessable = total > 0
+    assessable, reason, quality_limited = _assess_window(total, below_mapq)
 
     result = DiscordantPairResult(
         chromosome=chromosome,
@@ -571,10 +628,13 @@ def count_discordant_pairs(
         window_bp=window_bp,
         total_reads_in_window=total,
         discordant_pairs=discordant,
-        discordant_fraction=round(discordant / total, 3) if assessable else None,
+        discordant_fraction=(round(discordant / total, 3) if total > 0
+                             else (0.0 if quality_limited else None)),
         mate_chromosomes=mate_chroms_sorted,
+        reads_below_min_mapq=below_mapq,
+        quality_limited=quality_limited,
         assessable=assessable,
-        reason=None if assessable else "no reads in window",
+        reason=reason,
     )
     return asdict(result)
 
@@ -650,10 +710,12 @@ def count_soft_clipped_reads(
     left_clip_positions = {}
     right_clip_positions = {}
 
+    below_mapq = 0
     for read in read_iter:
         if read.is_unmapped or read.is_secondary:
             continue
         if read.mapping_quality < min_mapq:
+            below_mapq += 1
             continue
 
         total += 1
@@ -688,7 +750,7 @@ def count_soft_clipped_reads(
     right_consensus_pos, right_max_clips = _consensus(right_clip_positions)
 
     # total == 0 means the fraction is undefined, not 0.
-    assessable = total > 0
+    assessable, reason, quality_limited = _assess_window(total, below_mapq)
 
     # Which side dominates overall (not just at the combined consensus
     # position, since a left-clip cluster and a right-clip cluster from
@@ -712,7 +774,8 @@ def count_soft_clipped_reads(
         window_bp=window_bp,
         total_reads_in_window=total,
         soft_clipped_reads=clipped,
-        soft_clipped_fraction=round(clipped / total, 3) if assessable else None,
+        soft_clipped_fraction=(round(clipped / total, 3) if total > 0
+                               else (0.0 if quality_limited else None)),
         consensus_clip_position=consensus_pos,
         max_clips_at_position=max_clips,
         left_clip_reads=left_total,
@@ -722,8 +785,10 @@ def count_soft_clipped_reads(
         right_consensus_position=right_consensus_pos,
         right_max_clips_at_position=right_max_clips,
         dominant_clip_side=dominant_side,
+        reads_below_min_mapq=below_mapq,
+        quality_limited=quality_limited,
         assessable=assessable,
-        reason=None if assessable else "no reads in window",
+        reason=reason,
     )
     return asdict(result)
 
@@ -786,10 +851,12 @@ def get_split_reads(
     partner_chroms = {}
     example_loci = []
 
+    below_mapq = 0
     for read in read_iter:
         if read.is_unmapped or read.is_secondary or read.is_supplementary:
             continue
         if read.mapping_quality < min_mapq:
+            below_mapq += 1
             continue
 
         total += 1
@@ -828,7 +895,7 @@ def get_split_reads(
     )
 
     # total == 0 means the fraction is undefined, not 0.
-    assessable = total > 0
+    assessable, reason, quality_limited = _assess_window(total, below_mapq)
 
     result = SplitReadResult(
         chromosome=chromosome,
@@ -836,11 +903,14 @@ def get_split_reads(
         window_bp=window_bp,
         total_reads_in_window=total,
         split_reads=split,
-        split_read_fraction=round(split / total, 3) if assessable else None,
+        split_read_fraction=(round(split / total, 3) if total > 0
+                             else (0.0 if quality_limited else None)),
         partner_chromosomes=partner_chroms_sorted,
         example_partner_loci=example_loci,
+        reads_below_min_mapq=below_mapq,
+        quality_limited=quality_limited,
         assessable=assessable,
-        reason=None if assessable else "no reads in window",
+        reason=reason,
     )
     return asdict(result)
 
@@ -1089,6 +1159,17 @@ def get_read_depth_profile(
         "dip_is_at_focus": dip_is_at_focus,
         "assessable": assessable,
         "reason": None if assessable else "no reads in queried region",
+        # The depth layer deliberately applies NO MAPQ filter, while every
+        # other counting layer filters at min_mapq=20. Reported rather than
+        # changed: filtering here would silently shift every depth number and
+        # invalidate what calibration the 0.7 deletion threshold has, which is
+        # a separate open decision. Surfacing it lets a caller see that the
+        # layers are not directly comparable.
+        "min_mapq_applied": None,
+        "mapq_note": ("depth counts ALL reads regardless of MAPQ; the "
+                      "discordant, soft-clip and split layers filter at "
+                      "min_mapq. In a low-MAPQ region this layer is the only "
+                      "one still counting, so compare with care."),
     }
 
     result = ReadDepthProfile(
@@ -1399,6 +1480,22 @@ def summarize_breakpoint_evidence(
     for layer, reason in unassessable_layers.items():
         observations.append(f"{layer} could not be assessed: {reason}.")
 
+    # A layer whose reads were ALL filtered out is assessed and scores zero --
+    # it is not excluded. Say so explicitly, with the count, so the reason a
+    # layer contributed nothing is never mistaken for an empty window.
+    quality_limited_layers = {
+        "discordant_pairs": disc,
+        "soft_clipped_reads": clips,
+        "split_reads": split,
+    }
+    for layer, payload in quality_limited_layers.items():
+        if payload.get("quality_limited"):
+            observations.append(
+                f"{layer}: all {payload['reads_below_min_mapq']} reads in the "
+                f"window were below MAPQ {min_mapq}; layer assessed as zero, "
+                f"not excluded from the score."
+            )
+
     # ── Discordant-pair component (0-25) ──
     if not layer_assessable["discordant_pairs"]:
         discordant_pair_score = None
@@ -1593,7 +1690,22 @@ def summarize_breakpoint_evidence(
         evidence_score = round(sum(applicable_scores) * (100.0 / applicable_max), 1)
         signal_layers = f"{sum(1 for s in applicable_scores if s > 0)}/{len(scoreable_layers)}"
 
-        if evidence_score >= 70:
+        # ── Quality gate ──
+        # Above LOW_MAPQ_QUALITY_GATE the underlying reads are mostly
+        # multi-mapping, and a normalised score over them invites more
+        # confidence than the data supports. Report the limitation instead of
+        # a number. evidence_score_raw is still returned for reference.
+        low_mapq_fraction = stats.get("low_mapq_fraction", 0) or 0
+        if stats["total_reads"] > 0 and low_mapq_fraction > LOW_MAPQ_QUALITY_GATE:
+            observations.append(
+                f"Quality gate: {low_mapq_fraction:.1%} of reads at this locus "
+                f"are below MAPQ 20 (threshold {LOW_MAPQ_QUALITY_GATE:.0%}). "
+                f"Mapping here is mostly ambiguous, so no normalised evidence "
+                f"score is reported."
+            )
+            evidence_score = None
+            evidence_strength = "QUALITY-LIMITED"
+        elif evidence_score >= 70:
             evidence_strength = "strong"
         elif evidence_score >= 40:
             evidence_strength = "moderate"
@@ -1614,7 +1726,14 @@ def summarize_breakpoint_evidence(
 
     # interpretation_template is built ONLY from values already computed above —
     # it adds no new facts, just restates them as one plain-language sentence.
-    if evidence_score is not None:
+    if evidence_strength == "QUALITY-LIMITED":
+        score_line = (
+            f"Score: withheld — {stats['low_mapq_fraction']:.1%} of reads here are "
+            f"below MAPQ 20, above the {LOW_MAPQ_QUALITY_GATE:.0%} quality gate, so a "
+            f"normalised score would overstate what the data supports (raw score over "
+            f"all 4 layers was {evidence_score_raw}/100, shown for reference only). "
+        )
+    elif evidence_score is not None:
         score_line = (
             f"Score: {evidence_score}/100 normalised over {len(scoreable_layers)} applicable "
             f"layer(s) ({signal_layers} showing signal); raw score over all 4 layers "
