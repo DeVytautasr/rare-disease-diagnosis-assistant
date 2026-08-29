@@ -282,9 +282,11 @@ def gene_at_locus(chromosome: str, position: int, genome_build: str = "GRCh38") 
       genes (list[dict] — one entry per overlapping gene, each with
         gene_id, gene_name, biotype (protein_coding / lncRNA / etc),
         strand ("+"|"-"), gene_start, gene_end)
-      clinical_note (str — plain-language recap: how many genes are
-        directly disrupted, or a prompt to check nearby genes if
-        intergenic)
+      annotation_note (str — plain-language recap of what the lookup
+        established: which annotated genes overlap this position, or
+        that it is intergenic. States overlap only — a coordinate
+        lookup cannot establish that a breakpoint exists or that any
+        gene is disrupted)
 
     On failure (Ensembl unreachable after retries), returns instead:
       error (str), chromosome, position,

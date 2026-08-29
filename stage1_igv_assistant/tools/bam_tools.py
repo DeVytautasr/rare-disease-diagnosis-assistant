@@ -1958,10 +1958,20 @@ def get_gene_at_locus(
                     "gene_count": len(gene_list),
                     "is_intergenic": len(gene_list) == 0,
                     "genes": gene_list,
-                    "clinical_note": (
-                        f"Breakpoint directly disrupts {len(gene_list)} gene(s)."
+                    # Renamed from clinical_note, and reworded. A coordinate
+                    # lookup cannot know a breakpoint exists, so it must not
+                    # say one does: the old text asserted "Breakpoint directly
+                    # disrupts N gene(s)" for ANY queried position, including
+                    # arbitrary controls with no evidence of anything
+                    # (REAL_PATIENT_DATA_VALIDATION.md finding 13). This states
+                    # only what the Ensembl lookup established: overlap.
+                    "annotation_note": (
+                        f"{len(gene_list)} annotated gene(s) overlap this "
+                        f"position: {', '.join(g['gene_name'] for g in gene_list)}."
                         if gene_list
-                        else "Breakpoint is intergenic — check nearby genes for positional effects."
+                        else "No annotated gene overlaps this position "
+                             "(intergenic). Nearby genes may still be relevant "
+                             "to a positional effect."
                     )
                 }
             elif r.status_code == 429:
