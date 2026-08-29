@@ -107,6 +107,19 @@ from typing import Optional
 # non-genomic reasons.
 DEPTH_RATIO_DELETION_THRESHOLD = 0.7
 
+# Minimum absolute supporting reads before the discordant or split layer may
+# score at all. The bottom tier used to award 7.5/25 for ANY non-zero
+# fraction, so a single read fired it. At 30x WGS a +/-500 bp window holds
+# ~250 reads and one read with an interchromosomal mate is ordinary
+# background: measured over 42 arbitrary control positions chosen only for
+# ordinary coverage, 32 (76%) came back "weak" rather than "none", every
+# discordant firing sitting at the 7.5 floor off 1-3 reads with no dominant
+# partner (REAL_PATIENT_DATA_VALIDATION.md finding 4).
+#
+# 3 is a judgement call, not a calibrated figure. It is the smallest count
+# that cannot be a single read plus one duplicate of it.
+MIN_ABSOLUTE_SUPPORT = 3
+
 # Canonical evidence-layer names, shared between summarize_breakpoint_evidence's
 # applicable_layers parameter, detect_applicable_layers' return value, and
 # case_object.py's SequencingInfo.applicable_evidence_layers property (which
@@ -1732,9 +1745,12 @@ def summarize_breakpoint_evidence(
             discordant_pair_score = 25.0
         elif disc_fraction >= 0.2:
             discordant_pair_score = 15.0
-        elif disc_fraction > 0:
+        elif disc_fraction > 0 and disc["discordant_pairs"] >= MIN_ABSOLUTE_SUPPORT:
             discordant_pair_score = 7.5
         else:
+            # Non-zero but below MIN_ABSOLUTE_SUPPORT scores nothing. The
+            # reads are still reported in supporting_observations; they just
+            # do not move the score.
             discordant_pair_score = 0.0
 
     if disc["discordant_pairs"] > 0:
@@ -1805,7 +1821,7 @@ def summarize_breakpoint_evidence(
             split_read_score = 25.0
         elif split_fraction >= 0.1:
             split_read_score = 15.0
-        elif split_fraction > 0:
+        elif split_fraction > 0 and split["split_reads"] >= MIN_ABSOLUTE_SUPPORT:
             split_read_score = 7.5
         else:
             split_read_score = 0.0
