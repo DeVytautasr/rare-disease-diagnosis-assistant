@@ -96,6 +96,22 @@ from typing import Optional
 # REAL_DATA_VALIDATION.md's "Post-fix re-validation" addendum for the full
 # before/after comparison.
 #
+# MEASURED FALSE-POSITIVE RATE AT ~31x (2026-08-29) — 0.7 IS NOT VALIDATED.
+# This threshold was calibrated on 300x GIAB HG002. Against real ~31x WGS it
+# fires far more often than that calibration implies. Over 120 pseudo-random
+# autosomal loci per sample (fixed seed, 117 scored, no known SV):
+#     depth layer scored > 0 at        30/117 (26%) in BOTH samples
+#     "consistent with a possible deletion" emitted at 26% of ordinary loci
+#     median depth_ratio_min_to_mean   0.739 (A) / 0.753 (B)
+# The 0.7 boundary therefore sits INSIDE the noise distribution rather than
+# outside it: at 300x the same statistic has roughly 3x less relative
+# scatter. On chrX, at about half autosomal depth, it fired at 56-58%.
+#
+# The number is deliberately NOT changed. Moving a threshold on three windows
+# plus a 120-locus grid would repeat the mistake that produced it -- a
+# genome-wide estimate is needed first. What is recorded here is that nobody
+# should read 0.7 as validated after this run.
+#
 # WINDOW-SIZE COUPLING — this threshold is meaningless without the window
 # size it was calibrated at, and must never be quoted alone.
 # depth_ratio_min_to_mean is strongly window-size dependent: at one fixed
