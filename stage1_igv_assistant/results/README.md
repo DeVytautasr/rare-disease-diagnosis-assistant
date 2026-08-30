@@ -16,11 +16,12 @@ face value.
 | 1 | `BENCHMARK_LOCAL_MODELS.md` | 411 | qwen2.5:7b vs llama3.1:8b across three cases. Opens with the correction notice covering both retracted findings, and states why `correct_verdict` is a screening aid rather than a verdict. |
 | 2 | `BENCHMARK_CLAUDE_BASELINE.md` | 362 | claude-sonnet-5 on the same cases and code. Carries the second correction notice, the cost accounting, and the FIX C architectural result. |
 | 3 | `REAL_PATIENT_DATA_VALIDATION.md` | 612 | Validation of the Stage 1 tools against the two real patient BAMs: 14 findings and 3 crashes, each with a status column recording what was done about it, plus a post-fix re-measurement addendum. Not to be confused with `GIAB_PUBLIC_DATA_VALIDATION.md`, which covers public data and reaches different conclusions about threshold calibration. |
-| 4 | `EVIDENCE_PANEL_VALIDATION.md` | 71 | **Short, but the authority for the visual-interpretation trap cited in three other documents** — the discordant-pairs panel looks visually busy while the underlying count is 1 of 1,708, because IGV colours anomalous insert size and inter-chromosomal mates alike. Its line count badly understates its role; most of its content is in long table rows. Read it before interpreting any panel image. |
-| 5 | `GIAB_PUBLIC_DATA_VALIDATION.md` | 205 | Tool behaviour against the GIAB HG002 BAM at the confirmed CMRG deletion. The ground-truth reference the benchmark cases are built on. |
-| 6 | `LLM_SESSION_3_BLIND.md` | 176 | The instruction-blind methodology the benchmark's blind arm follows. |
-| 7 | `LLM_SESSION_4_VISUAL_claude-sonnet-5.md` | 152 | Visual-tool session. Documents the stale-file false-success bug and the image-description finding. |
-| 8 | `LLM_SESSION_4_VISUAL_qwen2.5-7b.md` | 139 | Visual-tool session. Opens with the retraction of the "fabricated predominantly claim" accusation. |
+| 4 | `LLM_SESSION_5_PATIENT_DATA_qwen.md` | 479 | First LLM session on the post-fix tools, and the first on patient data. qwen2.5:7b, MCP tools only, 15 runs over 5 positions. Records that the honest observation sentences work as intended, and finds two new defects introduced by the minimum-support fix. |
+| 5 | `EVIDENCE_PANEL_VALIDATION.md` | 71 | **Short, but the authority for the visual-interpretation trap cited in three other documents** — the discordant-pairs panel looks visually busy while the underlying count is 1 of 1,708, because IGV colours anomalous insert size and inter-chromosomal mates alike. Its line count badly understates its role; most of its content is in long table rows. Read it before interpreting any panel image. |
+| 6 | `GIAB_PUBLIC_DATA_VALIDATION.md` | 205 | Tool behaviour against the GIAB HG002 BAM at the confirmed CMRG deletion. The ground-truth reference the benchmark cases are built on. |
+| 7 | `LLM_SESSION_3_BLIND.md` | 176 | The instruction-blind methodology the benchmark's blind arm follows. |
+| 8 | `LLM_SESSION_4_VISUAL_claude-sonnet-5.md` | 152 | Visual-tool session. Documents the stale-file false-success bug and the image-description finding. |
+| 9 | `LLM_SESSION_4_VISUAL_qwen2.5-7b.md` | 139 | Visual-tool session. Opens with the retraction of the "fabricated predominantly claim" accusation. |
 
 ### History — retained, superseded, not current
 
