@@ -1,4 +1,12 @@
-# Real-Data Validation Attempt — Balanced Translocation Search + Cross-Technology Comparison
+# GIAB Public-Data Validation — Balanced Translocation Search + Cross-Technology Comparison
+
+> **Which validation document is this?** This one covers **public** data:
+> GIAB HG002 and the cross-technology PacBio HiFi/Illumina comparison.
+> Nothing here comes from a patient sample. It was renamed from
+> `REAL_DATA_VALIDATION.md` on 2026-08-30 because that name sat one word
+> away from `REAL_PATIENT_DATA_VALIDATION.md`, which covers the real
+> patient BAMs and is a different dataset with different conclusions.
+> Content is unchanged by the rename.
 
 > **Vocabulary note (post applicable-layer normalisation, see AUDIT_2026_08.md
 > §5 / Critical Finding 5):** every `evidence_score` value in this document —

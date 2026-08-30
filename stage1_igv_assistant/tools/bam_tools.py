@@ -78,7 +78,7 @@ from typing import Optional
 #
 # Calibrated against the real GIAB HG002 deletion at chr1:115,686,862,
 # which measured 0.609 (PacBio HiFi) and 0.542 (Illumina 300x) using this
-# tool's ±2kb/200bp-window depth profile — see REAL_DATA_VALIDATION.md.
+# tool's ±2kb/200bp-window depth profile — see GIAB_PUBLIC_DATA_VALIDATION.md.
 # Calibrated against a single confirmed locus (replicated across 2
 # sequencing technologies, not 2 independent loci) — treat as a starting
 # point, not a validated general threshold.
@@ -94,7 +94,7 @@ from typing import Optional
 # below 0.7, so THIS threshold's conclusion is unchanged; only the
 # intermediate ratio values were ever wrong. The 0.609/0.542 numbers are
 # left here as the historical calibration record, not rewritten — see
-# REAL_DATA_VALIDATION.md's "Post-fix re-validation" addendum for the full
+# GIAB_PUBLIC_DATA_VALIDATION.md's "Post-fix re-validation" addendum for the full
 # before/after comparison.
 #
 # MEASURED FALSE-POSITIVE RATE AT ~31x (2026-08-29) — 0.7 IS NOT VALIDATED.
@@ -1526,7 +1526,7 @@ def get_read_depth_profile(
 # DISCORDANT-PAIR (discordant_fraction cutoffs: 0.2, 0.5)              HEURISTIC
 #   Chosen by judgement, not fit to data. No confirmed real balanced
 #   translocation BAM was ever found to validate against (see
-#   REAL_DATA_VALIDATION.md, "Bottom line") — every real BAM tested against
+#   GIAB_PUBLIC_DATA_VALIDATION.md, "Bottom line") — every real BAM tested against
 #   this tool was a deletion, not a translocation. The synthetic
 #   translocation fixture in test_bam_tools.py hits the top tier by
 #   construction (its discordant fraction was built to be clean), which
@@ -1575,7 +1575,7 @@ def get_read_depth_profile(
 #     / 0.502 (window_size=200) at this same locus, still comfortably below
 #     0.7. Still only 1 confirmed locus (not 2 independent loci), and not
 #     checked against true-negative/normal-coverage regions for a
-#     false-positive rate — see REAL_DATA_VALIDATION.md's "Calibration
+#     false-positive rate — see GIAB_PUBLIC_DATA_VALIDATION.md's "Calibration
 #     update" section and this module's DEPTH_RATIO_DELETION_THRESHOLD
 #     docstring for the full caveat.
 #   - 0.3 (strong/25pt tier boundary):                                 HEURISTIC

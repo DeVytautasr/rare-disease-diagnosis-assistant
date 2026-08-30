@@ -1261,7 +1261,7 @@ def run_tests():
     # that surfaced all 3 bugs these fixes address. Position A and B are
     # background/no-signal loci; position C is the real, GIAB-confirmed
     # HG002 deletion breakpoint at chr1:115,686,862 (VANGL1) also used
-    # in TEST 7 and results/REAL_DATA_VALIDATION.md.
+    # in TEST 7 and results/GIAB_PUBLIC_DATA_VALIDATION.md.
     REAL_HG002_BAM = (
         "https://ftp-trace.ncbi.nlm.nih.gov/ReferenceSamples/giab/data/"
         "AshkenazimTrio/HG002_NA24385_son/NIST_HiSeq_HG002_Homogeneity-10953946/"

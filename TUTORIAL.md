@@ -30,7 +30,7 @@ Everything the system has produced is committed. Reading these gives a full pict
 | `stage1_igv_assistant/results/LLM_SESSION_3_BLIND.md` | The most informative single file — three positions investigated blind, two controls and one real variant, the assistant not told which was which |
 | `stage1_igv_assistant/results/LLM_SESSION_2_WITH_VISUAL.md` | A full session with visual output and a cited verdict |
 | `stage1_igv_assistant/results/EVIDENCE_PANEL_VALIDATION.md` | Per-layer images assessed individually across three cases: synthetic positive, real negative, real confirmed variant |
-| `stage1_igv_assistant/results/REAL_DATA_VALIDATION.md` | Cross-technology validation, PacBio HiFi against Illumina, same confirmed variant |
+| `stage1_igv_assistant/results/GIAB_PUBLIC_DATA_VALIDATION.md` | Cross-technology validation, PacBio HiFi against Illumina, same confirmed variant |
 | `stage1_igv_assistant/results/BENCHMARK_LOCAL_MODELS.md` | Three models compared on the same server and cases. Opens with a correction notice — two published findings turned out to be measurement artifacts |
 | `stage1_igv_assistant/results/BENCHMARK_CLAUDE_BASELINE.md` | The Claude arm of the same comparison, with cost accounting |
 | `stage1_igv_assistant/results/AUDIT_2026_08.md` | Systematic audit that found five critical defects |

@@ -1,5 +1,12 @@
 # Real Patient Data Validation — Stage 1 Breakpoint Tools
 
+> **Which validation document is this?** This one covers the **real patient
+> BAMs**. For the public GIAB HG002 / PacBio-Illumina validation see
+> `GIAB_PUBLIC_DATA_VALIDATION.md` (renamed from `REAL_DATA_VALIDATION.md`
+> on 2026-08-30 to keep the two apart). The two datasets reach different
+> conclusions about threshold calibration; do not read a figure from one as
+> if it came from the other.
+
 **Date:** 2026-08-29
 **Data:** two aligned WGS BAMs, ~39 GB and ~41.6 GB, referred to throughout as
 SAMPLE_A and SAMPLE_B. Real sample identifiers are deliberately absent from
@@ -58,7 +65,37 @@ windows where essentially all reads are unmappable.
 
 ## Findings, ranked by how badly they could mislead
 
+> **Annotation added 2026-08-30.** The findings below are unchanged. Nothing
+> measured in the validation run has been edited, re-run in place, or removed —
+> those numbers are the evidence base the decisions were made from, and a
+> decision cannot be checked against evidence that was rewritten to agree with
+> it. What follows is a status column recording what was done about each
+> finding, plus a re-measurement section at the end.
+
+| # | Status | Commit |
+|---:|---|---|
+| 1 | FIXED | `b37b347` |
+| 2 | FIXED | `b37b347` |
+| 3 | FIXED | `89512e5` |
+| 4 | PART FIXED, PART DELIBERATELY NOT | `8364b23, 59281e3` |
+| 5 | FIXED | `c0dcfbc` |
+| 6 | FIXED | `016fc06` |
+| 7 | FIXED | `b7cc665` |
+| 8 | FIXED, WITH A DOCUMENTED CAVEAT | `e29fae1` |
+| 9 | FIXED | `92d54e3` |
+| 10 | FIXED | `f4b8e27` |
+| 11 | FIXED | `99bbb71` |
+| 12 | FIXED | `b1ea12c` |
+| 13 | FIXED | `7da77c7` |
+| 14 | FIXED | `ffac4b6, c0dcfbc` |
+| crashes | FIXED | `ffac4b6` |
+
+All fixes carry a regression test in `stage1_igv_assistant/tests/`, named for
+the condition that exposed them.
+
 ### 1. Losing data raises the score — up to 100/100 "strong" on unusable data
+> **Status: FIXED** — `b37b347`. Tri-state assessment plus a `LOW_MAPQ_QUALITY_GATE = 0.4` gate: a window where >40% of reads fail the MAPQ filter now returns `evidence_score: None` / `QUALITY-LIMITED` instead of a normalised score.
+
 
 `summarize_breakpoint_evidence` excludes unassessable layers from **both the
 numerator and the denominator** of `evidence_score` (documented at
@@ -92,6 +129,8 @@ The same mechanism fires from a parameter alone: `window_bp=0` at a clean 32x
 MAPQ-60 locus returns `SCORE=60.0 "moderate"` from `raw=15.0`.
 
 ### 2. "No reads in window" is reported when reads exist but were MAPQ-filtered
+> **Status: FIXED** — `b37b347`. `assessable` is now false ONLY when the window held no reads at all; reads-present-but-filtered is a distinct `quality_limited` state with its own reason.
+
 
 The reason string accompanying finding 1 is itself wrong. At an HLA contig the
 stats layer reports 4 (SAMPLE_A) and 7 (SAMPLE_B) reads while the other layers
@@ -103,6 +142,8 @@ multi-mapping" — a completely different statement, and the one that would have
 warned them off finding 1.
 
 ### 3. `verdict` and `is_balanced` can contradict each other
+> **Status: FIXED** — `89512e5`. `verdict` and `is_balanced` are derived from one decision rather than computed twice.
+
 
 In `check_reciprocal_breakpoint`, every `verdict` branch requires
 `primary_disc >= 5` (`bam_tools.py:1954-1958`), while `is_balanced` is
@@ -122,6 +163,8 @@ one side has signal — it fired on a case with 3 discordant pairs and 1
 back-pointing read at the reciprocal position.
 
 ### 4. The depth layer's false-positive rate at ~31x is not small
+> **Status: PART FIXED, PART DELIBERATELY NOT** — `8364b23, 59281e3`. First half fixed: `MIN_ABSOLUTE_SUPPORT = 3` gates the bottom tier of the discordant and split layers. Second half deliberately unchanged: the 0.7 depth threshold was NOT moved, because moving a calibration constant on the strength of one cohort of two would trade a measured false-positive rate for an unmeasured false-negative one. The 26% figure is recorded in the threshold-provenance comment instead. See the re-measurement below.
+
 
 Across 120 pseudo-random autosomal loci per BAM (fixed seed, 117 scored):
 
@@ -155,6 +198,8 @@ The soft-clip layer, scored on `max_clips_at_position` rather than a fraction,
 was clean at **0/42**. That layer's redesign is holding up on real data.
 
 ### 5. Windows overrunning a contig end are not clamped, and the full width is reported
+> **Status: FIXED** — `c0dcfbc`. Windows are clamped to the contig length, `clamped_to_contig` and `contig_length` are returned, and a start past the end is an `out_of_range` error rather than clean zeros.
+
 
 `get_bam_stats_at_locus(chrM, 16000, 17500)` returns the same 11,840 reads as
 `16000-16569`, but `mean_depth` 1,011.06 instead of 2,665.36 — exactly
@@ -177,6 +222,8 @@ Related: `consensus_clip_position` was returned as **16,569 on a 16,569 bp
 contig** (last valid 0-based base is 16,568), with 1,113 supporting reads.
 
 ### 6. Fabricated contig names for HLA partners
+> **Status: FIXED** — `016fc06`. `_canonical_chrom` resolves against the BAM header in both directions and returns the name unchanged when it cannot resolve. No contig name is invented.
+
 
 `_normalize_chrom` prepends `chr` unconditionally. Every contig class in this
 reference is already prefixed *except* the 525 `HLA-*` contigs, so:
@@ -196,6 +243,8 @@ contigs.
 partner therefore appears under two different broken spellings in one result.
 
 ### 7. `min_mapq` never reaches the SA record; strand is discarded
+> **Status: FIXED** — `b7cc665`. SA entries are filtered by their own mapQ, `sa_entries_below_min_mapq` reports the drops, strand is kept as `partner_strand_concordant`/`partner_strand_flipped`, and `get_split_reads`'s `min_mapq` default moved from 0 to 20 to match its neighbours. See the re-measurement below — the drop is large.
+
 
 `get_split_reads` reads only `fields[0]` and `fields[1]` of each SA entry.
 Strand, CIGAR, mapQ and NM are parsed past and dropped.
@@ -210,6 +259,8 @@ relative to the primary. Orientation is the field distinguishing an
 inversion-type junction from a direct one.
 
 ### 8. Alt contigs are treated as separate chromosomes from their own primary
+> **Status: FIXED, WITH A DOCUMENTED CAVEAT** — `e29fae1`. `_primary_contig` maps the well-defined `chrN_*` pattern to `chrN` for the discordance decision only; the exact contig is still reported, and same-primary mates are counted in `same_primary_alt_mates`. The 525 `HLA-*` contigs are NOT mapped to chr6 — their names encode no such link, so mapping them would mean hardcoding a guess. Known caveat, asserted in the test so it stays visible.
+
 
 On `chr15_KI270905v1_alt` the largest single mate partner is chr15 itself,
 counted as a discordant inter-chromosomal pair. At MAPQ 60 with no filtering
@@ -225,6 +276,8 @@ On an HLA contig with `min_mapq=0` the discordant fraction is **1.000** (all
 mates on chr6) — the top tier, generated entirely by routine alt-aware mapping.
 
 ### 9. `split_reads` and `partner_chromosomes` are in different units
+> **Status: FIXED** — `92d54e3`. Partner counts are deduplicated per read, and `sa_entries_total` preserves the raw entry count. A read naming two distinct partners still contributes to each — the docstring now says so.
+
 
 `split += 1` once per read; `partner_chroms[...] += 1` once per SA *entry*. So
 `sum(partner_chromosomes.values()) != split_reads` (619 vs 603; 316 vs 303).
@@ -235,6 +288,8 @@ double-counts as two pieces of evidence for that partner.
 The docstring says `{chr_name: count}` without saying count of what.
 
 ### 10. Two entry points to the depth layer disagree
+> **Status: FIXED** — `f4b8e27`. `depth_window_bp` and `depth_window_size` are parameters, defaulted to the previous 2000/200 so behaviour is unchanged, and echoed in the result so a caller can reproduce the ratio. The window-size coupling is stated with the threshold constant.
+
 
 `summarize_breakpoint_evidence` hardcodes its own depth geometry
 (`bam_tools.py:1358-1361`), ignoring `window_bp`:
@@ -265,6 +320,8 @@ ordinary locus, and True for whole-chrM profiles at both `window_size=100` and
 `window_size=1`.
 
 ### 11. A stale unit label in the sentence most likely to be quoted
+> **Status: FIXED** — `99bbb71`. The sentence names per-base depth, matching what the tool computes.
+
 
 `bam_tools.py:1556`:
 
@@ -280,6 +337,8 @@ report. The adjacent off-position branch prints the same quantities with no
 unit at all, so the two branches are also inconsistent with each other.
 
 ### 12. A per-read SA coordinate is embedded in prose output
+> **Status: FIXED** — `b1ea12c`. The per-read SA coordinate is out of the prose; `example_partner_loci` carries it as a structured field.
+
 
 `bam_tools.py:1498` interpolates a concrete partner locus taken from a single
 read's SA tag into the `supporting_observations` sentence:
@@ -296,6 +355,8 @@ copy wholesale. Flagged as a data-handling consideration for anything built on
 top of these tools.
 
 ### 13. `clinical_note` asserts a breakpoint from a coordinate lookup
+> **Status: FIXED** — `7da77c7`. `clinical_note` states what the coordinate lookup established, not that a breakpoint disrupts a gene.
+
 
 `bam_tools.py:1842-1843` returns, for **any** queried coordinate:
 
@@ -308,6 +369,8 @@ no evidence of one. The field name and the verb "disrupts" both assert
 something a coordinate lookup cannot know.
 
 ### 14. Out-of-range coordinates return clean zeros rather than an error
+> **Status: FIXED** — `ffac4b6, c0dcfbc`. Out-of-range coordinates return a structured `out_of_range` error.
+
 
 `stats(chr21, 46,709,983, ...)` past the contig end returns
 `reads=0, mean_depth 0.0` with the requested span echoed and no out-of-range
@@ -418,3 +481,132 @@ single slow request; and one returned gene had no `external_name`, so
 Reported only. **No code was changed**, no fixes were applied, and no duplicate
 filtering was added. The duplicate-filtering decision, and any response to the
 findings above, follow from these results rather than preceding them.
+
+### Addendum, 2026-08-30: post-fix re-measurement
+
+The paragraph above describes the validation run itself and stays true of it.
+The fixes came afterwards, in the commits named in the status column. This
+section records what changed when the fixed code was re-run against the same
+two BAMs. It is additive: nothing above was re-run in place or edited.
+
+Method: three git worktrees of this repository at `ffac4b6` (before any of
+this group of fixes), `8364b23` (plus `MIN_ABSOLUTE_SUPPORT`) and `e29fae1`
+(plus findings 7 and 8), imported in turn so that the BAM, the coordinates and
+the parameters are identical and the only variable is the code.
+
+#### The 42-locus control grid (finding 4, first half)
+
+The original grid's coordinates were not recorded and its scratch files are
+gone, so the identical positions could not be recovered. A fresh grid was
+drawn by a rule fixed in advance — seed 20260830, uniform over chr1–chr22
+weighted by contig length, 5 Mb excluded at each contig end, 150 candidates
+drawn, then accepted in draw order where the ±500 bp read count falls within
+0.6–1.4× the sample's own median non-zero window depth, until 42 are held. No
+position was chosen for the answer it gave. Both samples selected the same 42
+coordinates, as the fixed seed requires; their accepted depth bands differ
+(145–337 and 154–358 reads, medians 241 and 256).
+
+`evidence_strength` over the 42 positions:
+
+| | SAMPLE_A before | SAMPLE_A after | SAMPLE_B before | SAMPLE_B after |
+|---|---:|---:|---:|---:|
+| `none` | 14 (33%) | **30 (71%)** | 14 (33%) | **25 (60%)** |
+| `weak` | 28 (67%) | **12 (29%)** | 28 (67%) | **17 (40%)** |
+| `moderate` / `strong` | 0 | 0 | 0 | 0 |
+
+Layer firing rate (score > 0), before → after:
+
+| Layer | SAMPLE_A | SAMPLE_B |
+|---|---|---|
+| discordant | 25/42 (60%) → **7/42 (17%)** | 25/42 (60%) → **9/42 (21%)** |
+| split | 2/42 (5%) → **0/42** | 2/42 (5%) → **0/42** |
+| soft-clip | 1/42 (2%) → 1/42 (2%) | 2/42 (5%) → 2/42 (5%) |
+| depth | 0/42 → 0/42 | 0/42 → 0/42 |
+
+Mean `evidence_score` fell from 8.04 to 4.46 (SAMPLE_A) and 9.46 to 6.25
+(SAMPLE_B); the median fell from 7.50 to 0.00 in both. The verdict changed at
+16/42 and 11/42 positions, in every case from `weak` to `none`, never the
+reverse. The `minsup` and `post` columns are identical at all 42 rows in both
+samples — findings 7 and 8 do not move these ordinary autosomal control loci,
+which is what should be expected of them.
+
+Two honest qualifications. First, this is a **different grid** from the one
+that produced the 32/42 (76%) figure above, so the two "before" numbers —
+28/42 (67%) here, 32/42 (76%) there — are not the same measurement. They agree
+in size and direction, which is the most that can be claimed. Second, the
+soft-clip and depth layers are unchanged by this fix, so their rates are a
+control on the method rather than a result: they did not move, and they were
+not expected to.
+
+The bottom tier no longer fires on background. It has not been shown to still
+fire on real events — this grid contains no known breakpoint, so it can only
+measure false positives. That asymmetry is why the depth threshold was left
+alone.
+
+#### Finding 7: SA-record MAPQ filtering
+
+At chr1:1,000,000–1,100,000, the window used for the SA-parsing check above:
+
+| Call | SAMPLE_A before → after | SAMPLE_B before → after |
+|---|---|---|
+| explicit `min_mapq=20` | 293 → **207** (−29.4%) | 101 → **40** (−60.4%) |
+| explicit `min_mapq=0` | 603 → 603 (unchanged) | 303 → 303 (unchanged) |
+| default, no `min_mapq` | 603 → **207** (−65.7%) | 303 → **40** (−86.8%) |
+
+SA entries dropped for failing their own mapQ: 91/298 and 62/102. The
+`min_mapq=0` row is the control — the parameter is real in both directions,
+and a caller who asks for no filtering still gets none. The default row moves
+most because two changes compound there: the SA filter, and the default itself
+moving from 0 to 20.
+
+Strand, previously discarded entirely, at `min_mapq=0`: 447 concordant /
+172 flipped (SAMPLE_A) and 144 / 172 (SAMPLE_B). SAMPLE_B's SA entries in this
+window are close to evenly split between orientations.
+
+#### Finding 8: alt contigs
+
+At chr6:32,578,000 (MHC), defaults:
+
+| | SAMPLE_A before → after | SAMPLE_B before → after |
+|---|---|---|
+| `evidence_score` | 15.0 → **7.5** | 47.5 → **22.5** |
+| `evidence_strength` | weak → weak | **moderate → weak** |
+| discordant pairs | 16/296 → 15/296 | 24/219 → **11/219** |
+| `same_primary_alt_mates` | — → 1 | — → **13** |
+| split reads | 10 → 0 | 80 → **2** |
+
+SAMPLE_B's split partners before the fix were `chr6_GL000256v2_alt` (47),
+`chr6_GL000253v2_alt` (15), `chr6_GL000252v2_alt` (10), `chr6_GL000254v2_alt`
+(8) — the observation text called that *"scattered across 4 chromosomes — no
+dominant partner"* for what is chr6 and three of its own alt haplotypes. That
+sentence is gone. Most of the split collapse here is finding 7's MAPQ filter
+rather than finding 8; the two ship together and were measured together.
+
+On `chr15_KI270905v1_alt` the result is weaker than expected, and it is
+recorded as measured rather than as hoped. The contig midpoint has **zero
+coverage** in both samples — `NOT ASSESSABLE`, not a negative control. Scanning
+all 517 windows at 10 kb stride found exactly **one** window with ≥100 reads,
+at position 1,840,500, in both samples. There:
+
+| | SAMPLE_A | SAMPLE_B |
+|---|---|---|
+| discordant before → after (MAPQ 60) | 47/147 → 43/147 | 39/175 → 38/175 |
+| fraction | 0.320 → 0.293 | 0.223 → 0.217 |
+| `same_primary_alt_mates` | 4 | 1 |
+| `evidence_score` | 40.0 → **40.0** | 40.0 → **40.0** |
+
+SAMPLE_B's 0.223 matches the figure reported above exactly, so this is very
+likely the same window the original run used for that sample; SAMPLE_A's 0.320
+does not match the 0.172 reported above, so its original position was a
+different one and could not be recovered.
+
+**The fix does not rescue this locus, and the finding above overstates the
+cause.** The top mate partners at this window are chr14, chr7 and chr13 — not
+chr15. Only 4 and 1 mates were on chr15 or its own scaffolds. The 40.0
+"moderate" score survives the fix because it is driven by mates on genuinely
+different chromosomes, which is what mismapping onto a 5 Mb alt haplotype
+produces. Same-primary alt pairing was real but small here. Finding 8 is
+correct that alt contigs were miscounted; it is not correct that this was what
+made the alt contig score "moderate". Alt-contig loci remain a known weak spot,
+now for a reason the fix was never going to address.
+

@@ -68,7 +68,7 @@ CASES: dict[str, Case] = {
             "Confirmed GIAB CMRG-benchmark heterozygous deletion "
             "(chr1:115,686,862-115,690,222). See "
             "results/EVIDENCE_PANEL_VALIDATION.md section 3 and "
-            "results/REAL_DATA_VALIDATION.md for ground truth and prior "
+            "results/GIAB_PUBLIC_DATA_VALIDATION.md for ground truth and prior "
             "tool output at this exact locus, on this exact BAM."
         ),
     ),

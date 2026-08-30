@@ -17,7 +17,7 @@
 > equivalent — original figures are kept as recorded, not recomputed. The
 > raw tool outputs and locus findings (read counts, positions, mate
 > chromosomes) are unaffected by any of this and remain accurate. See
-> `REAL_DATA_VALIDATION.md` and `docs/thesis/thesis_background_methods_chapter.md`
+> `GIAB_PUBLIC_DATA_VALIDATION.md` and `docs/thesis/thesis_background_methods_chapter.md`
 > for the current scoring model.
 
 **Date:** 2026-08-08
@@ -128,7 +128,7 @@ To move beyond synthetic data, we validated the tools against a real modern long
 *(This 0.6 threshold was later raised to 0.7 and unified into the single
 `DEPTH_RATIO_DELETION_THRESHOLD` constant, used identically by
 `get_read_depth_profile`'s `likely_deletion` flag and
-`summarize_breakpoint_evidence`'s `depth_score` — see `REAL_DATA_VALIDATION.md`'s
+`summarize_breakpoint_evidence`'s `depth_score` — see `GIAB_PUBLIC_DATA_VALIDATION.md`'s
 "Calibration update" section and `AUDIT_2026_08.md` Critical Finding 4.)*
 
 *(Correction, 2026-08-11: the 0.618–0.707 figures above were computed by
@@ -142,5 +142,5 @@ for exactly this reason, so a caller can localize the ratio to depth near
 the breakpoint rather than the whole scanned window. The ~41x/36x→~20x
 flanking-vs-inside comparison in this paragraph came from
 `get_bam_stats_at_locus`, which was never part of either bug, and is
-unaffected. See `REAL_DATA_VALIDATION.md`'s "Post-fix re-validation"
+unaffected. See `GIAB_PUBLIC_DATA_VALIDATION.md`'s "Post-fix re-validation"
 section for corrected numbers at the equivalent Illumina locus.)*
