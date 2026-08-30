@@ -16,6 +16,7 @@ import signal as _signal
 import tempfile as _tempfile
 import hashlib as _hashlib
 import json as _json
+import re as _re
 from dataclasses import dataclass, asdict
 from typing import Optional
 
@@ -240,7 +241,10 @@ class DiscordantPairResult:
     total_reads_in_window: int
     discordant_pairs: int
     discordant_fraction: Optional[float]   # None when total_reads_in_window == 0 (undefined, not 0)
-    mate_chromosomes: dict     # {chr_name: count}
+    mate_chromosomes: dict     # {exact_contig_name: read count} for discordant mates
+    same_primary_alt_mates: int   # mates on an alt/random contig OF THE SAME
+                                  # primary chromosome: not inter-chromosomal,
+                                  # counted here so they stay visible
     reads_below_min_mapq: int  # reads present but dropped by the MAPQ filter
     quality_limited: bool      # True when reads existed and ALL were filtered out;
                                # the layer is still assessed, and scores zero
@@ -398,6 +402,31 @@ def _canonical_chrom(name: str, refs) -> str:
     if alt in refs:
         return alt
     return name
+
+
+def _primary_contig(name: str) -> str:
+    """
+    The primary chromosome a contig belongs to, for deciding whether a pair
+    is genuinely inter-chromosomal.
+
+    hs38DH carries alt haplotypes and unlocalised scaffolds named after their
+    primary: chr15_KI270905v1_alt and chr1_KI270706v1_random belong to chr15
+    and chr1. Comparing raw names counted a mate on chr15's OWN alt haplotype
+    as an inter-chromosomal event -- on chr15_KI270905v1_alt the largest
+    single mate partner was chr15 itself, giving discordant fractions of
+    0.172 and 0.223 at MAPQ 60 and composite scores of 32.5 "weak" and 40.0
+    "moderate" out of routine alt-aware mapping
+    (REAL_PATIENT_DATA_VALIDATION.md finding 8).
+
+    Only the well-defined chrN_* pattern is handled. chrUn_* has no primary
+    to map to and is left alone. The 525 HLA-* contigs are a KNOWN CAVEAT:
+    they belong to the MHC on chr6 but their names encode no such link, so
+    mapping them would mean hardcoding a guess. A mate on an HLA contig is
+    still counted as inter-chromosomal, and that is a documented limitation
+    rather than an oversight.
+    """
+    m = _re.match(r"^(chr(?:[0-9]+|[XYM]))_", name)
+    return m.group(1) if m else name
 
 
 def _chrom_count(counts: dict, name: str) -> int:
@@ -752,6 +781,7 @@ def count_discordant_pairs(
     total = 0
     discordant = 0
     mate_chroms = {}
+    same_primary_alt_mates = 0
     refs = set(bam.references)
     norm_chromosome = _canonical_chrom(chromosome, refs)
 
@@ -783,10 +813,20 @@ def count_discordant_pairs(
         # same-chromosome mate gets miscounted as discordant).
         mate_name = read.next_reference_name
         mate_norm = _canonical_chrom(mate_name, refs) if mate_name is not None else None
-        if mate_norm != norm_chromosome:
+        if mate_norm is None:
             discordant += 1
-            mate_chr = mate_norm if mate_norm is not None else "unknown"
-            mate_chroms[mate_chr] = mate_chroms.get(mate_chr, 0) + 1
+            mate_chroms["unknown"] = mate_chroms.get("unknown", 0) + 1
+        elif _primary_contig(mate_norm) != _primary_contig(norm_chromosome):
+            discordant += 1
+            # The EXACT contig is reported, not the primary it maps to --
+            # the grouping decides discordance, it does not blur the report.
+            mate_chroms[mate_norm] = mate_chroms.get(mate_norm, 0) + 1
+        elif mate_norm != norm_chromosome:
+            # Same primary chromosome, different contig: an alt haplotype or
+            # unlocalised scaffold of the chromosome we are already on. Not
+            # an inter-chromosomal event. Counted separately so the reads are
+            # visible rather than silently dropped.
+            same_primary_alt_mates += 1
 
     bam.close()
 
@@ -808,6 +848,7 @@ def count_discordant_pairs(
         discordant_fraction=(round(discordant / total, 3) if total > 0
                              else (0.0 if quality_limited else None)),
         mate_chromosomes=mate_chroms_sorted,
+        same_primary_alt_mates=same_primary_alt_mates,
         reads_below_min_mapq=below_mapq,
         quality_limited=quality_limited,
         assessable=assessable,
