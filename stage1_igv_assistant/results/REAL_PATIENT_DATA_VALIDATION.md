@@ -93,6 +93,9 @@ windows where essentially all reads are unmappable.
 All fixes carry a regression test in `stage1_igv_assistant/tests/`, named for
 the condition that exposed them.
 
+> Two further findings, **15 and 16**, were added on 2026-08-31. They did not
+> come from this validation run — see the section at the end of this document.
+
 ### 1. Losing data raises the score — up to 100/100 "strong" on unusable data
 > **Status: FIXED** — `b37b347`. Tri-state assessment plus a `LOW_MAPQ_QUALITY_GATE = 0.4` gate: a window where >40% of reads fail the MAPQ filter now returns `evidence_score: None` / `QUALITY-LIMITED` instead of a normalised score.
 
@@ -610,3 +613,194 @@ correct that alt contigs were miscounted; it is not correct that this was what
 made the alt contig score "moderate". Alt-contig loci remain a known weak spot,
 now for a reason the fix was never going to address.
 
+
+---
+
+## Findings 15 and 16, 2026-08-31 — found by an LLM session, not by this run
+
+> **Provenance.** Findings 1–14 above came from the 2026-08-29 validation run,
+> in which tools were called directly from Python. These two did not. They were
+> found on 2026-08-31 by the first LLM session to use the MCP tools after the
+> fourteen fixes, against the same two BAMs
+> (`LLM_SESSION_5_PATIENT_DATA_qwen.md`). They are numbered into this document
+> because they are defects in the same tool surface, reported against the code
+> state `e29fae1` that the fourteen fixes produced — but they were **not**
+> measured by the run above, and the ranking there does not include them.
+
+| # | Status | Fixed in | Present in `e29fae1` | Cause |
+|---:|---|---|---|---|
+| 15 | FIXED | `96b5e25` | yes | latent before the fixes, **amplified** by `8364b23` |
+| 16 | FIXED | `96b5e25` | yes | introduced by `8364b23` |
+
+Both carry regression tests in `tests/test_subthreshold_observations.py`
+(35 assertions).
+
+### 15. A score of zero is reported as an empty window, directly beneath the counts that contradict it
+
+`supporting_observations` ended with a blanket denial:
+
+> No discordant pairs, soft-clipping, split reads, or depth changes detected
+> near this position.
+
+emitted whenever `evidence_score == 0` and the window held any reads. The
+session saw it printed in the same list as, and immediately after, a sentence
+reporting one discordant pair with a named mate chromosome. Two contradicting
+sentences, with nothing to tell a reader which is authoritative — and the
+denial is the one a model summarising the list is most likely to carry into a
+report, because it is the last and the most general.
+
+**The obvious explanation is wrong, and the grid says so.** It is natural to
+blame `MIN_ABSOLUTE_SUPPORT` (`8364b23`): once 1–2 supporting reads score
+nothing, a zero score stops implying an empty window. But the contradiction
+fires on **7/42 and 8/42** control loci in the *pre-fix* code as well, because
+two other counted-but-unscored cases already existed — soft clips below the
+pileup threshold, and depth dips ruled off-position. `MIN_ABSOLUTE_SUPPORT`
+took it from 7 and 8 to **22/42 and 18/42**, more than half of all loci in
+`SAMPLE_A`. It tripled a defect it did not create.
+
+That distinction determined the fix. Gating the denial on `MIN_ABSOLUTE_SUPPORT`
+specifically would have left the soft-clip and depth cases firing. It is
+instead gated on the **actual absence of all four layers**, so any future
+layer-level gate inherits the correct behaviour. Where reads exist but sit
+under a threshold they are named, with the bar they missed:
+
+> No layer reached its scoring threshold. Support is present but sub-threshold:
+> 1 discordant pair(s), below the 3-read minimum for this 500bp window.
+
+Reads discarded by `min_mapq` count as presence for this purpose too: "we
+filtered them out" is a different claim from "there was nothing there", and the
+per-layer quality note already sat one line above the denial that contradicted
+it.
+
+Measured after the fix: **0/42 in both samples, at both window widths.** The
+blanket sentence still fires verbatim where it is true, which is asserted
+separately so the fix cannot degenerate into never denying anything.
+
+*Caveat on the count.* The detector flags a locus when the denial co-occurs
+with a non-zero discordant, split or soft-clip count. It does not count
+off-position depth dips, so 7/42 and 8/42 are **lower bounds** on the pre-fix
+rate.
+
+### 16. The minimum-support threshold is not window-invariant, so the verdict moves with an argument
+
+`MIN_ABSOLUTE_SUPPORT = 3` was deliberately an absolute count rather than a
+fraction — a fraction cannot distinguish 1-in-250 from 1-in-4. But a bare count
+is not invariant to the window it is counted in. The number of background reads
+in a ±`window_bp` window scales with `window_bp`, so 3 is a strict filter at
+500 bp and a loose one at 1500 bp.
+
+The session hit this directly: one position read `none` with 1 discordant pair
+at the default 500 bp and `weak` with 4 pairs at `window_bp=1000`. The verdict
+changed because an argument changed, not because the evidence did — and
+`window_bp` is a parameter the model chooses.
+
+**Decision: scale the threshold, *and* report the window.** Not either/or.
+
+Scaling is the substantive fix, and the shape is derivable rather than guessed:
+at uniform coverage the expected background count is proportional to the number
+of reads in the window, which is proportional to its width. The threshold is
+now stated as 3 per `MIN_ABSOLUTE_SUPPORT_WINDOW_BP = 500` and scaled to the
+window in use, floored at 2 so that no window is narrow enough to let one read
+plus its duplicate score. But scaling alone would have *hidden* the coupling
+rather than fixed it — the mistake the depth threshold was explicitly not
+allowed to make — so `window_bp` and `min_supporting_reads` are now returned
+fields and appear in `interpretation_template`, exactly as `depth_window_bp`
+and `depth_window_size` already were, and for the same reason: a verdict quoted
+without its window is not a reproducible statement.
+
+#### The 42-locus grid, re-run at two window widths
+
+Same selection rule as the 2026-08-30 addendum (seed 20260830, 5 Mb excluded at
+each contig end, 150 candidates, accepted in draw order within 0.6–1.4× the
+sample's own median candidate depth, until 42 held). The acceptance band always
+uses ±500 bp, so **both window widths are evaluated at the same 42
+coordinates**; the only variables are the code state and `window_bp`.
+
+Three code states: `before` = `ffac4b6` (no minimum at all), `fixed3` =
+`e29fae1` (a bare count of 3), `scaled` = `96b5e25`.
+
+`evidence_strength`, count of `weak` out of 42 — the false-positive measure,
+since this grid contains no known breakpoint:
+
+| | SAMPLE_A @500 | SAMPLE_A @1000 | SAMPLE_B @500 | SAMPLE_B @1000 |
+|---|---:|---:|---:|---:|
+| `before` | 26 (62%) | 34 (81%) | 25 (60%) | 34 (81%) |
+| `fixed3` | 11 (26%) | 18 (43%) | 15 (36%) | 21 (50%) |
+| `scaled` | 11 (26%) | **7 (17%)** | 15 (36%) | **11 (26%)** |
+
+**The improvement does not survive the window change under a bare count.**
+Widening to 1000 bp gives back roughly half the gain — `SAMPLE_A` 26% → 43%,
+`SAMPLE_B` 36% → 50%. Under scaling it survives and strengthens.
+
+Discordant-layer firing rate (component score > 0), out of 42:
+
+| | SAMPLE_A @500 | SAMPLE_A @1000 | SAMPLE_B @500 | SAMPLE_B @1000 |
+|---|---:|---:|---:|---:|
+| `before` | 23 | 32 | 22 | 33 |
+| `fixed3` | 7 | **14** | 8 | **17** |
+| `scaled` | 7 | 2 | 8 | 2 |
+
+The `fixed3` row is the measurement that justifies the linear form: **the
+firing rate doubles exactly when the window doubles** — 7→14 and 8→17 — which
+is what proportional background predicts and what a window-invariant threshold
+must cancel. This is no longer only an argument.
+
+Mean `evidence_score` over the 39 scoreable loci (3 are `QUALITY-LIMITED` in
+every state and every window, and are excluded):
+
+| | SAMPLE_A @500 | SAMPLE_A @1000 | SAMPLE_B @500 | SAMPLE_B @1000 |
+|---|---:|---:|---:|---:|
+| `before` | 7.88 | 9.62 | 9.23 | 11.35 |
+| `fixed3` | 4.42 | 5.77 | 6.15 | 7.88 |
+| `scaled` | 4.42 | 3.46 | 6.15 | 5.00 |
+
+Finding 15's contradiction rate over the same grid, out of 42:
+
+| | SAMPLE_A @500 | SAMPLE_A @1000 | SAMPLE_B @500 | SAMPLE_B @1000 |
+|---|---:|---:|---:|---:|
+| `before` | 7 | 1 | 8 | 2 |
+| `fixed3` | 22 | 17 | 18 | 15 |
+| `scaled` | **0** | **0** | **0** | **0** |
+
+The `before` row falls at the wider window only because more loci score
+non-zero there and never reach the denial branch at all — it is not an
+improvement.
+
+**At the default width the scaling is exactly a no-op.** Every *scoring*
+column of `fixed3@500` and `scaled@500` is identical, in both samples: the same
+11 and 15 `weak` verdicts, the same 7 and 8 discordant firings, the same means
+and medians. Every figure in the 2026-08-30 addendum still stands unaltered.
+The one column that does move at 500 bp is the contradiction count (22→0,
+18→0), which is finding 15's fix, not finding 16's — the two ship in one commit
+and must not be read as one effect.
+
+#### Two honest qualifications
+
+**This is a third grid, not the addendum's.** The selection rule was re-derived
+from its written description rather than from the original script, which is
+gone. It draws a slightly different sample: median candidate depth 242 and 258
+here against 241 and 256 there, and this run reports 3 `QUALITY-LIMITED` loci
+per sample which the addendum's table did not separate out. The `before@500`
+`weak` rates — 62% and 60% here, 67% and 67% there — agree in size and
+direction. That is the most that can be claimed, and it is the same caveat the
+addendum itself carried against the original 76% figure.
+
+**Linear scaling over-corrects; it is conservative, not invariant.** True
+verdict-invariance would hold the firing rate roughly constant across widths.
+It does not: `scaled@1000` fires on 2/42 in both samples, against 7 and 8 at
+the default. The reason is structural — a threshold that grows like the mean
+outruns a count distribution whose spread grows like the root of the mean, so
+the same nominal cutoff sits further into the tail at the wider window. A
+variance-aware rule (scaling like mean + k·√mean) would be closer to invariant,
+and was **not** adopted, because choosing *k* would be a second uncalibrated
+judgement stacked on the first.
+
+The cost of over-correcting is a loss of sensitivity at wide windows, and this
+grid **cannot price it**: it contains no true positive, so it can only measure
+false positives, and every number above is a false-positive number. That is the
+same asymmetry that stopped the 0.7 depth threshold from being moved. The
+difference here is that the alternative is not "leave it alone" but a bare
+count that is demonstrably wrong in the *unsafe* direction — it inflates
+evidence as the window widens. Erring conservative at non-default widths, with
+the default untouched and the coupling now printed alongside every verdict, is
+the position taken. It is a judgement call and is recorded as one.

@@ -320,6 +320,22 @@ fix.
 
 ### A. The tools now contradict themselves in prose
 
+> **Status: FIXED** — `96b5e25`, filed as finding 15 in
+> `REAL_PATIENT_DATA_VALIDATION.md`. The denial is gated on the absence of all
+> four layers; sub-threshold reads are named with the bar they missed. Measured
+> 0/42 on the control grid afterwards, at both window widths.
+>
+> **One claim below is corrected by that measurement.** This section calls the
+> contradiction *"a direct and unintended consequence of the minimum-support
+> fix"*. The grid shows it firing on 7/42 and 8/42 control loci in the pre-fix
+> code as well, via scattered soft clips and off-position depth dips, which
+> were always counted but unscored. `MIN_ABSOLUTE_SUPPORT` tripled it (to 22/42
+> and 18/42); it did not create it. The observation here was right about the
+> defect and wrong about its cause, and the difference mattered: keying the fix
+> to `MIN_ABSOLUTE_SUPPORT`, as suggested below, would have left the soft-clip
+> and depth cases firing.
+
+
 `supporting_observations` at P1 and P2 contains both a specific count and a
 blanket denial of that count:
 
@@ -346,6 +362,14 @@ should be fixed: the blanket sentence should key off the counts, or should
 say "no scoring evidence" rather than "no discordant pairs".
 
 ### B. `MIN_ABSOLUTE_SUPPORT` is not normalised by window size
+
+> **Status: FIXED** — `96b5e25`, filed as finding 16 in
+> `REAL_PATIENT_DATA_VALIDATION.md`. The threshold is stated per 500 bp and
+> scaled to the window used; the window and the derived bar are returned and
+> printed with the verdict. The mirror argument below is confirmed on real
+> data: under a bare count of 3, the discordant layer's firing rate doubles
+> exactly when the window doubles (7→14 and 8→17 of 42 loci).
+
 
 `MIN_ABSOLUTE_SUPPORT = 3` is deliberately an absolute count, on the
 documented reasoning that *"a fraction cannot distinguish 1-in-250 from
