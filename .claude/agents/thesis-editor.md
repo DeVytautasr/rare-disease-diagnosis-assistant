@@ -107,8 +107,11 @@ decide whether to re-date it.
 The convention is fixed and stated identically in `bam_tools.py`'s header
 comment, `TUTORIAL.md`, `results/BENCHMARK_LOCAL_MODELS.md`, and the chapter:
 
-> **14 thresholds — 11 scoring, 3 text-only — of which 2 are empirically
-> derived.** *Threshold* = any numeric cutoff that changes what the assistant
+> **16 thresholds — 13 scoring, 3 text-only — of which 2 are empirically
+> derived.** (Was 14/11 before the real-patient-data fixes added
+> `MIN_ABSOLUTE_SUPPORT` and `LOW_MAPQ_QUALITY_GATE`; the `results/BENCHMARK_*.md`
+> documents record the older count as a historical measurement and are annotated
+> rather than rewritten, so a mismatch there is expected, not a finding.) *Threshold* = any numeric cutoff that changes what the assistant
 > reports, whether by altering a component score or by altering the prose a
 > model reads and may quote. Strength bands excluded; caller-overridable input
 > filters excluded but named.

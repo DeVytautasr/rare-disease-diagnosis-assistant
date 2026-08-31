@@ -29,7 +29,11 @@ see `stage1_igv_assistant/results/` for the underlying write-ups.
 - MCP server in server.py
 - BamCase schema in case_object.py
 - Test suite in stage1_igv_assistant/tests/, all passing (see
-  stage1_igv_assistant/results/AUDIT_2026_08.md for a reproduced run)
+  stage1_igv_assistant/results/AUDIT_2026_08.md for a reproduced run).
+  One block — the live Ensembl gene lookup — reports SKIPPED rather than
+  failing when the service is unavailable or throttling; its logic is
+  covered offline and unconditionally by a stubbed counterpart, so
+  "all passing" holds with or without a network.
 - Validated: synthetic translocation (4/4 STRONG), HCC1143 2018 BAM
   (pipeline limitation documented), GIAB HG002 deletion on PacBio HiFi
   and Illumina 300x (depth threshold calibrated; normalised over

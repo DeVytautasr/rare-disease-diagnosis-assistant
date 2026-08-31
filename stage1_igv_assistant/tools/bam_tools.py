@@ -1847,14 +1847,16 @@ def summarize_breakpoint_evidence(
 
     THRESHOLD PROVENANCE — read before trusting evidence_strength as more
     than a decomposed summary (full detail in the comment block immediately
-    above this function): of the 9 tier-cutoff values used across all 4
+    above this function): of the 11 tier-cutoff values used across all 4
     layers, only ONE — the read-depth layer's 0.7 moderate-tier threshold —
     is empirically calibrated, and against a single confirmed real locus
     (GIAB HG002 deletion, replicated across 2 technologies, not 2
-    independent loci). The other 8 — discordant-pair's 0.2/0.5, soft-clip's
+    independent loci). The other 10 — discordant-pair's 0.2/0.5, soft-clip's
     3/10 (on max_clips_at_position, not fraction — changed 2026-08-11),
     split-read's 0.1/0.3, the read-depth layer's own 0.3 strong-tier
-    threshold, and dip_tolerance_bp's 1000bp localization radius — are
+    threshold, dip_tolerance_bp's 1000bp localization radius,
+    MIN_ABSOLUTE_SUPPORT's 3-reads-per-500bp floor on the bottom tier, and
+    LOW_MAPQ_QUALITY_GATE's 0.4 — are
     HEURISTIC: chosen by judgement, never validated against real
     confirmed-positive or true-negative data beyond the 2-3 real loci noted
     in the comment block above this function. This is not a defect to work

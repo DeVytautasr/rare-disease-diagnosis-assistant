@@ -74,9 +74,11 @@ The fixed conventions you must not contradict:
 - **11 MCP tools** (asserted by `test_server.py`).
 - **18 + 1 + 9 tests** across the three files — `TUTORIAL.md` promises
   reviewers exactly this.
-- **14 thresholds — 11 scoring, 3 text-only — of which 2 are empirical.**
-  Stated identically in `bam_tools.py`'s header comment, `TUTORIAL.md`, the
-  thesis chapter, and `BENCHMARK_LOCAL_MODELS.md`. The repository once carried
+- **16 thresholds — 13 scoring, 3 text-only — of which 2 are empirical.**
+  Stated identically in `bam_tools.py`'s header comment, `TUTORIAL.md`, and the
+  thesis chapter. `BENCHMARK_LOCAL_MODELS.md` and `BENCHMARK_CLAUDE_BASELINE.md`
+  record the earlier count of 14 as it stood when those runs were made; they are
+  annotated, not rewritten, so their figure is expected to differ. The repository once carried
   two counts ("seven" and "nine") under two unstated conventions; that is why
   the convention is now written down. If a count changes, change all four sites
   in one commit.

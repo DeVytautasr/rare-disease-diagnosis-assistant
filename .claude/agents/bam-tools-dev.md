@@ -114,7 +114,7 @@ one layer down. `evidence_score_raw` is the one place unassessable folds in as
 
 # The threshold convention
 
-**14 thresholds — 11 scoring, 3 text-only — of which 2 are empirical.** The
+**16 thresholds — 13 scoring, 3 text-only — of which 2 are empirical.** The
 definition, the full inventory, and the reasoning are in the comment block at
 the top of `bam_tools.py`. Read it before touching a cutoff.
 
@@ -124,10 +124,11 @@ the top of `bam_tools.py`. Read it before touching a cutoff.
 > already-computed score). Caller-overridable input filters are excluded but
 > named.
 
-- **11 scoring**, all in `summarize_breakpoint_evidence`: three discordant-pair
-  tiers, two soft-clip tiers, three split-read tiers, two depth tiers, and
+- **13 scoring**, all in `summarize_breakpoint_evidence`: three discordant-pair
+  tiers, two soft-clip tiers, three split-read tiers, two depth tiers,
   `dip_tolerance_bp = 1000` which zeroes a non-zero depth score when the dip is
-  not localised to the focus position.
+  not localised to the focus position, and the two added by the
+  real-patient-data fixes — `MIN_ABSOLUTE_SUPPORT = 3` per `MIN_ABSOLUTE_SUPPORT_WINDOW_BP = 500` (scaled to `window_bp`, gates the bottom discordant/split tier) and `LOW_MAPQ_QUALITY_GATE = 0.4` (withholds the normalised score entirely).
 - **3 text-only**: `PARTNER_DOMINANCE_MIN_SHARE = 0.6` and
   `PARTNER_DOMINANCE_MIN_READS = 3` (together gating "predominant"), and
   `SOFT_CLIP_PILEUP_MIN_READS = 3` (gating "consensus clip position" vs "no

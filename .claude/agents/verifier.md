@@ -147,9 +147,13 @@ verdict and must never appear in your output.
   `LLM_SESSION_1.md` is a correct historical record, not a defect, provided it
   is annotated as superseded. Check whether the annotation is there before
   reporting the number as wrong.
-- The threshold convention is fixed: **14 thresholds — 11 scoring, 3 text-only
+- The threshold convention is fixed: **16 thresholds — 13 scoring, 3 text-only
   — of which 2 are empirical.** Any document giving a different count is
-  contradicted unless it explicitly states a different convention.
+  contradicted unless it explicitly states a different convention. It was 14/11
+  until the real-patient-data fixes added `MIN_ABSOLUTE_SUPPORT` and
+  `LOW_MAPQ_QUALITY_GATE`; `results/BENCHMARK_LOCAL_MODELS.md` and
+  `results/BENCHMARK_CLAUDE_BASELINE.md` still say 14 on purpose, annotated as
+  superseded, because that is what the models in those runs were told.
 - `results/AUDIT_2026_08.md` is the systematic audit. Many of its findings are
   now fixed. Do not report an audit finding as a live defect without checking
   the current code.

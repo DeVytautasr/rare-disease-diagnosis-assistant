@@ -457,6 +457,14 @@ code. One convention, applied everywhere:
 **14 thresholds — 11 scoring, 3 text-only — of which 2 are empirically
 derived.**
 
+> **Superseded count, kept as recorded.** This figure was correct when this
+> benchmark ran. The real-patient-data fixes later added two scoring
+> thresholds (`MIN_ABSOLUTE_SUPPORT`, `LOW_MAPQ_QUALITY_GATE`), taking the
+> inventory to **16 — 13 scoring, 3 text-only, still 2 empirical**. The
+> current inventory is the comment block at the top of `bam_tools.py`. The
+> number below is not edited: it is what the models in this run were told.
+
+
 | Group | Count | Cutoffs |
 |---|---:|---|
 | Discordant-pair tiers | 3 | `disc_fraction` ≥ 0.5 → 25, ≥ 0.2 → 15, > 0 → 7.5 |
