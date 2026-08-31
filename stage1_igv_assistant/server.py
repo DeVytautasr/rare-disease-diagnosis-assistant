@@ -158,16 +158,18 @@ def breakpoint_evidence_summary(bam_path: str, chromosome: str, position: int,
     Integrates evidence layers into one structured report. Call this LAST.
 
     THRESHOLD PROVENANCE — state this plainly in any report citing
-    evidence_strength, don't present it as calibrated: of the 9 tier
-    cutoffs behind the 4 component scores, only ONE (the read-depth
-    layer's 0.7 moderate-tier threshold) is empirically calibrated, and
-    against a single confirmed real locus. The other 8 (discordant-pair
-    0.2/0.5, soft-clip 3/10 — on max_clips_at_position, not fraction —,
-    split-read 0.1/0.3, read-depth's own 0.3 strong-tier threshold, and
-    the depth layer's dip_tolerance_bp=1000bp localization radius) are
-    heuristic judgement calls, never validated against real data beyond a
-    handful of loci. evidence_strength is an interpretable decomposition
-    of what fired, not a calibrated probability.
+    evidence_strength, don't present it as calibrated: of the 11 cutoffs
+    behind the 4 component scores, only ONE (the read-depth layer's 0.7
+    moderate-tier threshold) is empirically calibrated, and against a
+    single confirmed real locus. The other 10 (discordant-pair 0.2/0.5,
+    soft-clip 3/10 — on max_clips_at_position, not fraction —, split-read
+    0.1/0.3, read-depth's own 0.3 strong-tier threshold, the depth
+    layer's dip_tolerance_bp=1000bp localization radius, the
+    min_supporting_reads floor described below, and the 40% low-MAPQ
+    quality gate) are heuristic judgement calls, never validated against
+    real data beyond a handful of loci. evidence_strength is an
+    interpretable decomposition of what fired, not a calibrated
+    probability.
 
     DEPTH SCORING is now two-part: depth_ratio_min_to_mean (localized to
     focus_position=position, not the window's global minimum — see
@@ -200,7 +202,16 @@ def breakpoint_evidence_summary(bam_path: str, chromosome: str, position: int,
     never a bare 0/100.
 
     Returns exactly these fields:
-      label, chromosome, position — echoed back from the call
+      label, chromosome, position — echoed back from the call. CHECK THESE
+        against the coordinate you were asked about before quoting any
+        number below them; every tool echoes the position it actually used,
+        and a report about a position the case never named is wrong even
+        when every figure in it is real.
+      window_bp, min_supporting_reads — the window this call actually used,
+        and the number of supporting reads the bottom scoring tier required
+        AT THAT WIDTH. Quote both whenever you quote evidence_strength: the
+        verdict moves with the window, so "none" without its window is not
+        a reproducible statement.
       evidence_score (float 0-100, or None if NOT ASSESSABLE — normalised
         over applicable AND assessable layers only; this is the primary
         score when not None; report this one)
@@ -228,7 +239,12 @@ def breakpoint_evidence_summary(bam_path: str, chromosome: str, position: int,
         (the full raw dict returned by each underlying tool, for inspection —
         each of the latter 4 carries its own "assessable"/"reason" fields)
       supporting_observations (list[str] — plain-language notes on what fired,
-        including a note for each unassessable layer)
+        including a note for each unassessable layer. A score of 0 does NOT
+        imply an empty window: reads below a scoring threshold are listed
+        here as "sub-threshold", with the bar they missed. The blanket
+        "nothing detected near this position" sentence appears only when all
+        four layers are genuinely empty, so the two never co-occur — if you
+        see specific counts, believe them.)
       interpretation_template (str — one sentence restating the above fields;
         adds no new facts, only recombines values already in this same dict)
 
@@ -236,7 +252,13 @@ def breakpoint_evidence_summary(bam_path: str, chromosome: str, position: int,
     soft-clip / split-read windows — narrow it (e.g. 150-200) for a tight,
     precisely-localized breakpoint, widen it if the exact position is
     uncertain. Does NOT affect the depth-profile window, which is always a
-    fixed ±2kb regardless of this value. min_mapq (default 20) sets the
+    fixed ±2kb regardless of this value. Widening it does NOT make weak
+    evidence appear: the bottom scoring tier's minimum-support requirement
+    scales with the window (3 supporting reads per 500bp, so 6 at
+    window_bp=1000), because background scales with it too. The value used
+    is returned as min_supporting_reads. Do not sweep window_bp looking for
+    a width at which a locus scores — report the default, or report the
+    width you chose and why. min_mapq (default 20) sets the
     minimum mapping quality across all layers — lower it for regions with
     known poor mappability (check low_mapq_fraction from bam_stats_at_locus
     first) rather than silently accepting an all-zero result there.
