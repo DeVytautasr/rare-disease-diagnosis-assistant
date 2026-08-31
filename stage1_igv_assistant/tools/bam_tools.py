@@ -29,16 +29,33 @@ from typing import Optional
 # already-computed score. Caller-overridable input filters are excluded but
 # named below.
 #
-# Under that convention: 14 thresholds -- 11 scoring, 3 text-only -- of which
+# Under that convention: 16 thresholds -- 13 scoring, 3 text-only -- of which
 # 2 are empirically derived.
 #
-# SCORING (11), all in summarize_breakpoint_evidence:
+# This count was 14 (11 scoring) up to and including the version described in
+# docs/thesis/. Two scoring thresholds were added by the real-patient-data
+# fixes and are counted here: MIN_ABSOLUTE_SUPPORT and LOW_MAPQ_QUALITY_GATE.
+# Neither is empirically derived, so "2 empirically derived" is unchanged and
+# "the author's judgement" goes from 12 to 14.
+#
+# SCORING (13), all in summarize_breakpoint_evidence:
 #   discordant_pair_score   disc_fraction  >= 0.5 -> 25 | >= 0.2 -> 15 | > 0 -> 7.5
 #   soft_clip_score         max_clips      >= 10  -> 25 | >= 3   -> 15
 #   split_read_score        split_fraction >= 0.3 -> 25 | >= 0.1 -> 15 | > 0 -> 7.5
 #   depth_score             depth_ratio    <  0.3 -> 25 | <  0.7 -> 15
 #                           dip_tolerance_bp = 1000 zeroes a non-zero depth
 #                           score when the dip is not localised to the focus
+#   MIN_ABSOLUTE_SUPPORT = 3 per MIN_ABSOLUTE_SUPPORT_WINDOW_BP = 500
+#                           additionally gates the > 0 -> 7.5 tier of the
+#                           discordant and split layers, scaled to window_bp.
+#                           The reference width is part of the same threshold,
+#                           not a second one -- 3-per-500bp is one statement.
+#   LOW_MAPQ_QUALITY_GATE = 0.4  withholds evidence_score entirely (strength
+#                           becomes QUALITY-LIMITED) rather than altering a
+#                           component. The line further down saying this
+#                           figure is advisory-only was true before real-data
+#                           validation made it operative; it is corrected
+#                           below.
 #
 # TEXT-ONLY (3), which change no score but change what a model may quote:
 #   PARTNER_DOMINANCE_MIN_SHARE = 0.6   } together gate whether a partner
@@ -53,19 +70,23 @@ from typing import Optional
 # did the most documented damage. See
 # results/BENCHMARK_LOCAL_MODELS.md's correction notice.
 #
-# EMPIRICALLY DERIVED (2 of 14):
+# EMPIRICALLY DERIVED (2 of 16):
 #   DEPTH_RATIO_DELETION_THRESHOLD = 0.7  one locus, two technologies
 #   dip_tolerance_bp = 1000               two real loci, margin documented
 #                                         on both sides (see
 #                                         get_read_depth_profile's docstring)
-# The remaining 12 are the author's judgement, documented as such.
+# The remaining 14 are the author's judgement, documented as such.
+# MIN_ABSOLUTE_SUPPORT is a judgement value whose EFFECT was measured (42
+# arbitrary control loci, two samples); that is not the same as the value
+# being derived from data, and it is not counted as empirical here.
 #
 # EXCLUDED but named: min_mapq = 20, the read-quality filter applied in every
 # counting function. It is caller-overridable and not part of the scoring
 # rubric, but it is the one judgement call that moves every fraction the
 # scoring is built from -- change it and every tier above sees different
-# input. low_mapq_fraction > 0.4 appears only as advisory text in a
-# docstring; nothing in the code compares against it.
+# input. (low_mapq_fraction > 0.4 was listed here as advisory-only text; it
+# is now the operative LOW_MAPQ_QUALITY_GATE and is counted under SCORING
+# above.)
 
 # ── Calibrated constants ────────────────────────────────────────────────────────
 #
@@ -135,7 +156,37 @@ DEPTH_RATIO_DELETION_THRESHOLD = 0.7
 #
 # 3 is a judgement call, not a calibrated figure. It is the smallest count
 # that cannot be a single read plus one duplicate of it.
+#
+# WINDOW COUPLING (2026-08-31). A bare count is not window-invariant. The
+# number of background reads in a +/-window_bp window scales linearly with
+# window_bp at uniform coverage, so a fixed threshold of 3 is a strict filter
+# at 500 bp and a loose one at 1500 bp: the same locus in the same BAM read
+# "none" with 1 discordant pair at the default 500 bp and "weak" with 4 pairs
+# at window_bp=1000, purely because the window was widened (LLM_SESSION_5_
+# PATIENT_DATA_qwen.md, defect B). The threshold below is therefore stated
+# per MIN_ABSOLUTE_SUPPORT_WINDOW_BP and scaled to the window actually used.
+#
+# The linear form is an argument, not a measurement: at uniform coverage the
+# expected count of background discordant/split reads is proportional to the
+# number of reads in the window, which is proportional to its width. That
+# keeps the threshold meaning the same thing ("more than background") at any
+# width. It is NOT a claim that 6-at-1000bp has been validated the way 3-at-
+# 500bp was measured on the 42-locus grid; see that grid re-run at two window
+# widths in REAL_PATIENT_DATA_VALIDATION.md.
 MIN_ABSOLUTE_SUPPORT = 3
+MIN_ABSOLUTE_SUPPORT_WINDOW_BP = 500
+
+
+def min_supporting_reads(window_bp: int) -> int:
+    """
+    MIN_ABSOLUTE_SUPPORT scaled from its reference window to the window
+    actually queried, so the bottom scoring tier means the same thing at any
+    window width. Never returns less than 2 — below that the threshold stops
+    excluding "one read plus its duplicate", which is the whole reason it
+    exists.
+    """
+    scaled = MIN_ABSOLUTE_SUPPORT * (window_bp / MIN_ABSOLUTE_SUPPORT_WINDOW_BP)
+    return max(2, int(round(scaled)))
 
 # Canonical evidence-layer names, shared between summarize_breakpoint_evidence's
 # applicable_layers parameter, detect_applicable_layers' return value, and
@@ -330,6 +381,15 @@ class BreakpointEvidenceSummary:
     label: str
     chromosome: str
     position: int
+    window_bp: int                 # +/- half-width the discordant, soft-clip and
+                                    # split layers actually used
+    min_supporting_reads: int      # supporting reads the bottom scoring tier
+                                    # required AT THAT WIDTH (MIN_ABSOLUTE_SUPPORT
+                                    # scaled from MIN_ABSOLUTE_SUPPORT_WINDOW_BP).
+                                    # Reported for the same reason the two depth
+                                    # geometry fields below are: the verdict moves
+                                    # with the window, so a verdict quoted without
+                                    # its window is not reproducible
     depth_window_bp: int           # geometry the depth layer actually used;
     depth_window_size: int         # depth_ratio_min_to_mean is strongly
                                     # window-size dependent, so the ratio and
@@ -1613,6 +1673,89 @@ def get_read_depth_profile(
 
 # ── Tool 6: Combined breakpoint evidence summary ──────────────────────────────
 
+def _absence_or_subthreshold_observation(
+    disc: dict,
+    clips: dict,
+    split: dict,
+    depth_profile: dict,
+    off_position_dip: bool,
+    quality_limited_layers: dict,
+    min_support: int,
+    window_bp: int,
+    min_mapq: int,
+) -> str:
+    """
+    The sentence summarize_breakpoint_evidence emits when nothing scored.
+
+    This used to be a single blanket denial — "No discordant pairs,
+    soft-clipping, split reads, or depth changes detected near this position."
+    — fired on evidence_score == 0 alone, so it appeared directly underneath
+    "1 discordant pair (mate on chr12)" in the same observations list and
+    denied it (LLM_SESSION_5_PATIENT_DATA_qwen.md, defect A). A reader --
+    human or model -- has no way to tell which of two contradicting
+    sentences to believe.
+
+    It is tempting to blame MIN_ABSOLUTE_SUPPORT, since a locus with 1-2
+    supporting reads now scores 0 while its counts stay non-zero. The
+    42-locus control grid says that is the amplification, not the cause: the
+    contradiction fires on 7/42 and 8/42 loci in the PRE-MIN_ABSOLUTE_SUPPORT
+    code too, because scattered soft clips (below the pileup threshold) and
+    off-position depth dips were always counted but unscored.
+    MIN_ABSOLUTE_SUPPORT took it to 22/42 and 18/42. Any layer-level gate
+    would have done the same, which is why the denial below is gated on
+    layer presence rather than on any particular threshold.
+
+    The denial is now gated on the actual absence of all four layers. Where
+    reads are present but sit under a scoring threshold, they are named as
+    sub-threshold, with the threshold they missed, so the zero score is
+    explained rather than contradicted.
+    """
+    sub_threshold = []
+
+    if disc["discordant_pairs"] > 0:
+        sub_threshold.append(
+            f"{disc['discordant_pairs']} discordant pair(s), below the "
+            f"{min_support}-read minimum for this {window_bp}bp window"
+        )
+    if split["split_reads"] > 0:
+        sub_threshold.append(
+            f"{split['split_reads']} split read(s), below the "
+            f"{min_support}-read minimum for this {window_bp}bp window"
+        )
+    if clips["soft_clipped_reads"] > 0:
+        sub_threshold.append(
+            f"{clips['soft_clipped_reads']} soft-clipped read(s) with no pileup "
+            f"— at most {clips['max_clips_at_position']} share any single clip "
+            f"position, {SOFT_CLIP_PILEUP_MIN_READS} needed to score"
+        )
+    if off_position_dip:
+        summary = depth_profile["summary"]
+        sub_threshold.append(
+            f"a depth dip {summary['dip_distance_from_focus']}bp off the queried "
+            f"position, not counted as evidence for this breakpoint"
+        )
+
+    # A layer whose reads were all filtered by min_mapq is not an empty layer
+    # either. It already has its own observation above; it is named here so the
+    # blanket denial cannot be emitted alongside it.
+    filtered = [
+        f"{layer} had {payload['reads_below_min_mapq']} read(s) all below MAPQ {min_mapq}"
+        for layer, payload in quality_limited_layers.items()
+        if payload.get("quality_limited")
+    ]
+    sub_threshold.extend(filtered)
+
+    if not sub_threshold:
+        return (
+            "No discordant pairs, soft-clipping, split reads, or depth changes "
+            "detected near this position."
+        )
+    return (
+        "No layer reached its scoring threshold. Support is present but "
+        "sub-threshold: " + "; ".join(sub_threshold) + "."
+    )
+
+
 def summarize_breakpoint_evidence(
     bam_path: str,
     chromosome: str,
@@ -1841,6 +1984,10 @@ def summarize_breakpoint_evidence(
                 f"not excluded from the score."
             )
 
+    # Bottom-tier support threshold, scaled to the window actually queried so
+    # that the same locus does not change verdict when only window_bp moves.
+    min_support = min_supporting_reads(window_bp)
+
     # ── Discordant-pair component (0-25) ──
     if not layer_assessable["discordant_pairs"]:
         discordant_pair_score = None
@@ -1850,12 +1997,12 @@ def summarize_breakpoint_evidence(
             discordant_pair_score = 25.0
         elif disc_fraction >= 0.2:
             discordant_pair_score = 15.0
-        elif disc_fraction > 0 and disc["discordant_pairs"] >= MIN_ABSOLUTE_SUPPORT:
+        elif disc_fraction > 0 and disc["discordant_pairs"] >= min_support:
             discordant_pair_score = 7.5
         else:
-            # Non-zero but below MIN_ABSOLUTE_SUPPORT scores nothing. The
-            # reads are still reported in supporting_observations; they just
-            # do not move the score.
+            # Non-zero but below min_support scores nothing. The reads are
+            # still reported in supporting_observations, named as sub-
+            # threshold rather than absent; they just do not move the score.
             discordant_pair_score = 0.0
 
     if disc["discordant_pairs"] > 0:
@@ -1926,7 +2073,7 @@ def summarize_breakpoint_evidence(
             split_read_score = 25.0
         elif split_fraction >= 0.1:
             split_read_score = 15.0
-        elif split_fraction > 0 and split["split_reads"] >= MIN_ABSOLUTE_SUPPORT:
+        elif split_fraction > 0 and split["split_reads"] >= min_support:
             split_read_score = 7.5
         else:
             split_read_score = 0.0
@@ -2065,7 +2212,16 @@ def summarize_breakpoint_evidence(
         else:
             evidence_strength = "none"
             if stats["total_reads"] > 0:
-                observations.append("No discordant pairs, soft-clipping, split reads, or depth changes detected near this position.")
+                observations.append(
+                    _absence_or_subthreshold_observation(
+                        disc, clips, split, depth_profile,
+                        off_position_dip=off_position_dip,
+                        quality_limited_layers=quality_limited_layers,
+                        min_support=min_support,
+                        window_bp=window_bp,
+                        min_mapq=min_mapq,
+                    )
+                )
     else:
         # Every caller-applicable layer had zero reads to assess. A score
         # of 0/100 and "cannot be assessed" are different claims — this
@@ -2096,10 +2252,17 @@ def summarize_breakpoint_evidence(
             f"locus (raw score over all 4 layers was {evidence_score_raw}/100, shown for "
             f"reference only, since it treats unassessable layers as 0). "
         )
+    window_line = (
+        f"Window: +/-{window_bp}bp for the discordant, soft-clip and split layers; "
+        f"at this width the bottom scoring tier required {min_support} supporting "
+        f"read(s) ({MIN_ABSOLUTE_SUPPORT} per {MIN_ABSOLUTE_SUPPORT_WINDOW_BP}bp, "
+        f"scaled). A verdict quoted without this window is not reproducible. "
+    )
     interpretation_template = (
         f"Breakpoint {label} at {chromosome}:{position}. "
         f"Evidence strength: {evidence_strength}. "
         f"{score_line}"
+        f"{window_line}"
         f"Observations: {'; '.join(observations) if observations else 'none'}. "
         f"Technology note: discordant_pairs only valid for paired-end data; "
         f"split_reads only valid for modern-alignment BAMs with SA tags — use "
@@ -2111,6 +2274,8 @@ def summarize_breakpoint_evidence(
         label=label,
         chromosome=chromosome,
         position=position,
+        window_bp=window_bp,
+        min_supporting_reads=min_support,
         depth_window_bp=depth_window_bp,
         depth_window_size=depth_window_size,
         evidence_score=evidence_score,
