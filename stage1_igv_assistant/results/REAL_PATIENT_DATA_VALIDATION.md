@@ -719,6 +719,13 @@ coordinates**; the only variables are the code state and `window_bp`.
 Three code states: `before` = `ffac4b6` (no minimum at all), `fixed3` =
 `e29fae1` (a bare count of 3), `scaled` = `96b5e25`.
 
+The `scaled` measurement was in fact taken against `52421ba`, the pre-amend
+form of that commit. Its message was later corrected — the pre-fix
+contradiction rate below disproved a causal claim it made — and two docstrings
+were reworded in the same amend. The two trees are identical under an AST
+comparison with docstrings stripped, so no measured number is affected; it is
+noted because the grid was run before the SHA it is attributed to existed.
+
 `evidence_strength`, count of `weak` out of 42 — the false-positive measure,
 since this grid contains no known breakpoint:
 
