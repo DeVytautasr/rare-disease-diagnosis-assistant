@@ -30,6 +30,7 @@ from stage1_igv_assistant.tools.bam_tools import (
     DEPTH_RATIO_DELETION_THRESHOLD,
     DEFAULT_PANEL_WINDOWS,
 )
+import stage1_igv_assistant.tools.bam_tools as bam_tools_module
 from stage1_igv_assistant.case_object import BamCase
 
 
@@ -539,30 +540,125 @@ def run_tests():
         if os.path.exists(translocation_bam + ".bai"):
             os.unlink(translocation_bam + ".bai")
 
-    # ── TEST 7: get_gene_at_locus ────────────────────────────────────────
-    print("TEST 7: get_gene_at_locus")
-    gene_result = None
-    for attempt in range(4):
-        gene_result = get_gene_at_locus("chr1", 115686862)
-        if "error" not in gene_result:
-            break
-        print(f"  (Ensembl attempt {attempt + 1} failed: {gene_result['error']} — retrying)")
-    assert gene_result is not None and "error" not in gene_result, \
-        "Ensembl REST API did not respond after retries"
-    print(f"  Gene(s) at chr1:115686862: {[g['gene_name'] for g in gene_result['genes']]}")
-    assert gene_result["gene_count"] >= 1, "Expected at least 1 gene"
-    assert gene_result["is_intergenic"] is False, "Expected is_intergenic == False"
+    # ── TEST 7: get_gene_at_locus (LIVE Ensembl) ─────────────────────────
+    # This is the only assertion in the suite that depends on a third-party
+    # service being up, and it used to fail the whole run when Ensembl was
+    # not. Measured on 2026-08-31: 4 of 6 consecutive full-suite runs died
+    # here on HTTP 500/503, while the same queries returned 200 from curl
+    # seconds later — Ensembl throttles under repeated querying and expresses
+    # it as a 5xx. The suite's exit code must not be a report on Ensembl's
+    # weather.
+    #
+    # Two changes, both following conventions already used in this file and
+    # in tests/test_gene_annotation_note.py:
+    #   - unavailable or throttled now prints SKIPPED with the reason, the
+    #     same way TEST 17 and TEST 19 already handle the GIAB BAM download
+    #   - the retries now back off. The old loop made 4 calls with no delay,
+    #     so all four landed inside one throttle window and failed together.
+    #     Note this is NOT redundant with get_gene_at_locus's own backoff:
+    #     that function retries 429 and connection exceptions, but on any
+    #     other non-200 status it records the code and breaks immediately,
+    #     so a 500 costs exactly one request and returns instantly.
+    #
+    # The logic this test covers is ALSO covered offline and unconditionally
+    # by TEST 7b below, which stubs the HTTP layer. TEST 7 exists to confirm
+    # the live contract still holds — the response shape, not the wording.
+    print("TEST 7: get_gene_at_locus (live Ensembl — SKIPPED if unavailable)")
 
-    intergenic_result = None
-    for attempt in range(4):
-        intergenic_result = get_gene_at_locus("chr13", 15000000)
-        if "error" not in intergenic_result:
-            break
-        print(f"  (Ensembl attempt {attempt + 1} failed: {intergenic_result['error']} — retrying)")
-    assert intergenic_result is not None and "error" not in intergenic_result, \
-        "Ensembl REST API did not respond after retries"
-    print(f"  chr13:15000000 is_intergenic: {intergenic_result['is_intergenic']}")
-    assert intergenic_result["is_intergenic"] is True, "Expected is_intergenic == True"
+    def _live_ensembl(chromosome, position, attempts=4):
+        """
+        Live lookup with exponential backoff between attempts. Returns the
+        result dict, or None if the service never responded — None means
+        "could not test", never "test failed".
+        """
+        last_error = None
+        for attempt in range(attempts):
+            result = get_gene_at_locus(chromosome, position)
+            if "error" not in result:
+                return result
+            last_error = result["error"]
+            if attempt < attempts - 1:
+                wait = 2 ** attempt          # 1s, 2s, 4s
+                print(f"  (Ensembl attempt {attempt + 1} failed: {last_error}"
+                      f" — retrying in {wait}s)")
+                time.sleep(wait)
+        print(f"  (Ensembl did not respond after {attempts} attempts:"
+              f" {last_error})")
+        return None
+
+    gene_result = _live_ensembl("chr1", 115686862)
+    intergenic_result = _live_ensembl("chr13", 15000000)
+
+    if gene_result is None or intergenic_result is None:
+        print("  SKIPPED — Ensembl REST API unavailable or throttled; "
+              "the annotation logic is still covered offline by TEST 7b\n")
+    else:
+        print(f"  Gene(s) at chr1:115686862: {[g['gene_name'] for g in gene_result['genes']]}")
+        assert gene_result["gene_count"] >= 1, "Expected at least 1 gene"
+        assert gene_result["is_intergenic"] is False, "Expected is_intergenic == False"
+        print(f"  chr13:15000000 is_intergenic: {intergenic_result['is_intergenic']}")
+        assert intergenic_result["is_intergenic"] is True, "Expected is_intergenic == True"
+        print("  PASSED ✓\n")
+
+    # ── TEST 7b: get_gene_at_locus, offline ──────────────────────────────
+    # The unconditional counterpart. Stubs the HTTP layer the same way
+    # tests/test_gene_annotation_note.py and tests/test_depth_units.py do, so
+    # the gene/intergenic branch is exercised on every run, on any machine,
+    # with or without a network. If TEST 7 is skipped, this still ran.
+    print("TEST 7b: get_gene_at_locus offline (stubbed Ensembl)")
+
+    class _FakeResponse:
+        def __init__(self, payload):
+            self.status_code = 200
+            self._payload = payload
+
+        def json(self):
+            return self._payload
+
+    class _StubEnsembl:
+        """Replaces _requests.get so this test never touches the network."""
+
+        def __init__(self, payload):
+            self.payload = payload
+            self._real = None
+
+        def __enter__(self):
+            self._real = bam_tools_module._requests.get
+            bam_tools_module._requests.get = lambda *a, **k: _FakeResponse(self.payload)
+            return self
+
+        def __exit__(self, *exc):
+            bam_tools_module._requests.get = self._real
+
+    _GENE_HIT = [{
+        "gene_id": "ENSG00000173218", "external_name": "VANGL1",
+        "biotype": "protein_coding", "strand": 1,
+        "start": 115641854, "end": 115698224,
+    }]
+
+    with _StubEnsembl(_GENE_HIT):
+        offline_hit = get_gene_at_locus("chr1", 115686862)
+    with _StubEnsembl([]):
+        offline_miss = get_gene_at_locus("chr13", 15000000)
+
+    assert "error" not in offline_hit, f"stubbed lookup errored: {offline_hit}"
+    assert offline_hit["gene_count"] == 1, f"got {offline_hit['gene_count']}"
+    assert offline_hit["is_intergenic"] is False, "gene overlap must not read as intergenic"
+    assert offline_hit["genes"][0]["gene_name"] == "VANGL1", \
+        f"got {offline_hit['genes'][0]['gene_name']}"
+
+    assert "error" not in offline_miss, f"stubbed lookup errored: {offline_miss}"
+    assert offline_miss["gene_count"] == 0, f"got {offline_miss['gene_count']}"
+    assert offline_miss["is_intergenic"] is True, "empty overlap must read as intergenic"
+
+    # The two branches must not produce the same note, which is the failure
+    # finding 13 was about.
+    assert offline_hit["annotation_note"] != offline_miss["annotation_note"], \
+        "gene-overlap and intergenic notes are identical"
+    assert "overlap" in offline_hit["annotation_note"]
+    assert "intergenic" in offline_miss["annotation_note"]
+    print(f"  overlap note:    {offline_hit['annotation_note']}")
+    print(f"  intergenic note: {offline_miss['annotation_note']}")
     print("  PASSED ✓\n")
 
     # ── TEST 9: BamCase object — save/load round-trip ─────────────────────
