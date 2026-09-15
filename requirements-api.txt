@@ -1,0 +1,5 @@
+# Optional: the Anthropic API chat backend. Not needed for the manual UI,
+# and not needed for the local (ollama) chat panel either — chat.py imports
+# this lazily, inside run_turn_api(), so it is only required if you actually
+# select a claude-* model.
+anthropic==0.121.0

@@ -52,3 +52,24 @@ stage1_igv_assistant/screenshots/sessions/
 # file that came from a Windows download or a Windows-side editor; they carry
 # no content and should never be committed.
 *:Zone.Identifier
+
+# Phase 11. Local install artefacts and generated demo data.
+# The .example file IS tracked; the real config is per-machine and may name
+# paths to real data, so it must not be.
+.venv/
+sv-assistant.conf
+demo_bundle/
+
+# Candidate-call formats. *.bam/*.bai were already covered; these were not,
+# and candidate sets are now the tool's main input -- the likelier accident.
+*.bcf
+*.csi
+*.vcf
+*.vcf.gz
+*.tbi
+
+# The sample identifier map. It lives outside the repo at ~/patient_data/, and
+# the patient_data/ rule above catches a copy placed in that directory -- but a
+# bare copy at the repo root was NOT matched by any rule, only untracked.
+# Untracked is not protection: one `git add -A` stages it.
+SAMPLE_MAP.md

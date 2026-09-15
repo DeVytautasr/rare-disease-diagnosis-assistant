@@ -1,0 +1,31 @@
+# Copy to sv-assistant.conf (next to this file) or to
+# ~/.config/sv-assistant/config.ini, or point SV_CONFIG at it.
+#
+# Everything here is OPTIONAL. Anything you leave out falls back to an
+# environment variable, then to a built-in default. The tool starts either
+# way and the startup banner tells you what it found.
+
+[paths]
+# Where to look for .bam and .bcf/.vcf files to offer in the dropdowns.
+# Default: ~/public_data     (env: SV_DATA_DIR)
+data_dir = ~/public_data
+
+# delly's exclude template. Used by the "exclude masked regions" filter step.
+# If absent, the tool still runs — the filter chain says the step did not run.
+# Default: ~/reference/human.hg38.excl.tsv   (env: SV_EXCLUDE_TEMPLATE)
+exclude_template = ~/reference/human.hg38.excl.tsv
+
+# Path to igv.sh. Only needed for the IGV picture panels (FULL tier).
+# If absent, every other part of the tool works and the panels say why.
+# Default: searches ~/IGV_2.17.4/igv.sh, ~/igv/igv.sh, /opt/igv/igv.sh
+# (env: IGV_PATH)
+# igv = /opt/igv/igv.sh
+
+# Datasets and candidate sets can also be named explicitly. These win over
+# whatever autodiscovery finds under data_dir. The LABEL is all the browser
+# and the chat model ever see — never the path.
+[datasets]
+# DEMO = /srv/demo/demo.bam
+
+[candidates]
+# DEMO = /srv/demo/demo.bcf
