@@ -1107,7 +1107,14 @@ def get_split_reads(
         chromosome: Chromosome of the candidate breakpoint
         position:   Centre of the inspection window
         window_bp:  Half-width of the inspection window (default 200bp)
-        min_mapq:   Minimum mapping quality of the primary read (default 0)
+        min_mapq:   Minimum mapping quality of the primary read (default 20).
+                    NOTE: this library default is 20, but the server-layer
+                    MCP tool `split_reads` declares its own default of 0 and
+                    passes it through, so a bare MCP call filters nothing
+                    while summarize_breakpoint_evidence passes 20. The two
+                    disagree deliberately pending a calibration decision;
+                    every return now echoes min_mapq_applied so a number can
+                    be traced to the threshold that produced it.
 
     Returns:
         SplitReadResult as dict, or a structured error dict
