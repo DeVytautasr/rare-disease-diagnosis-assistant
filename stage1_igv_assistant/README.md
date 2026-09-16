@@ -13,25 +13,39 @@ are set up correctly, warning clearly if not. Safe to re-run. To point
 the tools at a different IGV install instead, set `IGV_PATH=/path/to/igv.sh`
 (checked before the hardcoded fallback locations).
 
-## Running the MCP server
+## Running
 
-From the repo root with rda environment active:
+The browser front end is the normal way in — it starts both servers in-process:
 ```
-conda activate rda
-python -m stage1_igv_assistant.server
+python -m stage1_igv_assistant.ui --check   # what is available, then exit
+python -m stage1_igv_assistant.ui           # http://127.0.0.1:8765
+```
+`--check` prints the capability banner: which of MINIMAL / FULL (IGV) /
+COMPLETE (local model) this install can deliver, where the exclude template
+and data directory resolved from, and whether an Anthropic key is present.
+
+Either MCP server can also be run on its own, for an MCP client:
+```
+python -m stage1_igv_assistant.server            # the 11 evidence tools
+python -m stage1_igv_assistant.candidate_server  # the 4 candidate-set tools
 ```
 
-## Running all tests
+## Running the tests
+
+There are 20 test files in `tests/`, each runnable on its own:
 ```
-python stage1_igv_assistant/tests/test_bam_tools.py
-python stage1_igv_assistant/tests/test_server.py
-python stage1_igv_assistant/tests/test_partner_distribution.py
+python stage1_igv_assistant/tests/test_bam_tools.py    # the largest; needs BAMs, and Java for the IGV assertions
+python stage1_igv_assistant/tests/test_server.py       # MCP layer, tool contract
+python stage1_igv_assistant/tests/test_vcf_tools.py    # candidate sets, dedup orientation, comparison symmetry
+python stage1_igv_assistant/tests/test_ceiling_echo.py # the attainable-ceiling echo
+python stage1_igv_assistant/tests/test_api_leak.py     # nothing path-like reaches an external API
 ```
-`test_partner_distribution.py` is a pure-Python regression suite (no BAM, no
-IGV, runs in under a second) guarding the observation strings in
-`summarize_breakpoint_evidence` against a class of defect where the tool
-asserted a pattern its data did not contain -- see
-`results/BENCHMARK_LOCAL_MODELS.md`'s correction notice.
+The remaining fifteen are focused pure-Python regression suites (no BAM, no
+IGV, each under a second), one per defect class found during development —
+`test_partner_distribution.py`, `test_quality_gate.py`,
+`test_subthreshold_observations.py`, `test_minimum_support.py`,
+`test_contig_naming.py` and others. Each is named for the condition that
+exposed the defect it guards.
 
 `test_bam_tools.py`'s real-IGV assertions and `igv_screenshot`'s
 functionality both require Java (present in the `rda` conda env, not the
@@ -49,7 +63,15 @@ or fail cleanly rather than hanging if Java/IGV aren't available.
 6. read_depth_profile — copy-number changes
 7. breakpoint_evidence_summary — integrated evidence report, normalised
    over applicable_layers (evidence_score) with the unnormalised sum also
-   available (evidence_score_raw)
+   available (evidence_score_raw). Also returns the band ladder and the
+   attainable-score analysis: `score_bands`, `strong_band`, `attainable_here`,
+   `strong_band_reachable_here`, `max_all_layers`, `max_with_flat_depth`,
+   `attainable_basis`, `attainable_note`, `attainable_ceiling_derivable`. All
+   are derived from this module's own source by `score_tiers.py`, so a revised
+   scoring ladder moves them with it and an unparseable one is reported rather
+   than guessed. They exist because the score at which "strong" begins was
+   previously in no return and no description, which made the ceiling argument
+   for a balanced event unstatable at every model tier.
 8. gene_at_locus — which gene is disrupted (Ensembl REST)
 9. reciprocal_breakpoint — both sides of a balanced translocation
 10. igv_screenshot — headless IGV batch mode, generates a single PNG with
@@ -58,6 +80,24 @@ or fail cleanly rather than hanging if Java/IGV aren't available.
     pairs, split reads, read depth, soft clips), each with the IGV
     settings that actually isolate that layer visually; skips and
     explains layers detect_applicable_layers finds inapplicable
+
+## Candidate-set tools (4 total, `candidate_server.py`)
+1. load_candidate_set — register a caller's VCF/BCF for the session; reports
+   record counts, the caller's breakend convention (`chr2_pos2` or `mateid`),
+   and how many records merged during deduplication
+2. list_candidates — filtered list with every applied threshold echoed back,
+   each carrying its provenance (`tool-defined`, `reference-defined` or
+   `author judgement`), the cumulative survivors after that step, and what
+   that filter alone would remove from the unfiltered set
+3. get_candidate — one junction in full, shaped so the evidence tools can
+   consume its two breakends directly
+4. compare_candidate_sets — junction-level recurrence between two sets
+   (±500 bp), for two-sample artifact screening or two-caller concordance
+
+Deduplication keys on orientation as well as position. It did not originally,
+so the two halves of a reciprocal junction — same coordinates, opposite
+orientation — collapsed into one; keying on orientation took the public test
+set from 840 to 894 junctions and its survivors from 24 to 27.
 
 ## Anti-hallucination design
 The LLM receives only tool output. It cannot add genomic claims

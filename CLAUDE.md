@@ -40,17 +40,27 @@ Work is organized by stage, each in its own top-level folder (e.g.
 `stage1_igv_assistant/` for the Stage 1 SV/breakpoint module). Within a
 stage folder:
 
-- `tools/` for implementation
-- `tests/` for unit tests
+- `tools/` for implementation (`bam_tools.py` — the evidence tools;
+  `vcf_tools.py` — candidate-set loading, filtering and comparison)
+- `tests/` for unit tests — one file per defect class, each runnable alone
 - `data/` for small synthetic or benchmark examples only (large sequencing
   files are gitignored, not committed)
 - `results/` for session reports, validation write-ups, and audits
-- `server.py` for the stage's MCP server entrypoint, if it has one
+- `server.py` and `candidate_server.py` — the stage's two MCP entrypoints
+  (11 evidence tools and 4 candidate-set tools)
+- `ui.py` — the local browser front end, which runs both servers in-process
+- `chat.py` — the optional model panel (ollama or the Anthropic API)
+- `config.py` — path resolution: flag > env var > config file > default
+- `score_tiers.py` — derives the scoring tiers and band boundaries from
+  `bam_tools.py`'s own source, so displayed ceilings cannot go stale
 
-`docs/` at the repo root holds cross-stage design notes and the thesis
-chapter drafts (`docs/thesis/`). There is no top-level `src/` or
-`notebooks/` — exploratory work and implementation both live inside the
-relevant stage folder.
+`docs/` at the repo root holds cross-stage design notes, the thesis
+chapter drafts (`docs/thesis/`), and the Lithuanian install and usage
+documentation (`DIEGIMAS.md`, `NAUDOJIMAS.md`). At the repo root:
+`install.sh`, `requirements.txt` and `sv-assistant.conf.example` are the
+portable install path; `make_demo_bundle.py` regenerates the demo data.
+There is no top-level `src/` or `notebooks/` — exploratory work and
+implementation both live inside the relevant stage folder.
 
 ## How Claude should help
 

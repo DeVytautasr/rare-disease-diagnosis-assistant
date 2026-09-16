@@ -39,6 +39,29 @@ system. That makes them unusable as current results and useful as the record
 of what changed — `BENCHMARK_CLAUDE_BASELINE.md` explains at length why the
 Claude baseline was regenerated rather than scored from these transcripts.
 
+## Not written up here — phases 5 to 11
+
+Everything indexed above predates a run of later work. That work produced
+measurements but not prose documents, so this index would mislead anyone who
+read it as complete. What exists, and where:
+
+| Work | What was measured | Where the record is |
+|---|---|---|
+| Candidate-set bridge | Deduplication keyed on position alone collapsed reciprocal junctions; keying on orientation took the public set from 840 to 894 junctions and survivors 24 → 27. `compare_candidate_sets` was asymmetric by construction — 54 of 56 reported "unmatched" junctions were mis-reported | `tests/test_vcf_tools.py`, and the commit message for the bridge |
+| Controlled positive test | 12 heterozygous balanced translocations implanted into real NA12878 reads at known positions. 14 of 24 breakends recovered: 8/8 clean, 6/8 repeat-adjacent, 0/8 low-mappability. Every loss at variant calling, none at any filter threshold | `~/public_data/sim/implants.json` and the delly output beside it |
+| Local front end | Filter chain, four layers at both breakends, hand-entered coordinates, two-sample comparison, call log | `stage1_igv_assistant/ui.py` |
+| Local model comparison | 3 models × 6 cases × 5 runs. Malformed tool arguments: `qwen3.5:4b` 51/194, `qwen2.5:7b` 19/142, `qwen3.5:9b` 29/170. Completion 25/30, 30/30, 11/30 | `~/public_data/sim/phase8_final_record.json` |
+| Claude API control | `claude-sonnet-5` 30 runs, `claude-opus-5` 15 runs, same six cases. 45/45 answered, 0 refusals, 0 malformed arguments in 313 calls. Spend $3.86 | `~/public_data/sim/phase9_final_record.json` |
+| The ceiling result | Before: 1 of 20 runs across four models stated that a balanced translocation cannot reach "strong". After adding nine derived fields to one tool return, with no model change: 19 of 20, and 17 of 20 gave the full argument | `~/public_data/sim/phase10_final_record.json`, `tests/test_ceiling_echo.py` |
+| Installability | Installed into a clean environment on Python 3.14.4 with no inherited packages; three iterations. A 1.6 MB demo bundle regenerates from public data via `make_demo_bundle.py` | `install.sh`, `docs/DIEGIMAS.md` |
+
+**Two things to be aware of before citing any of this.** The JSON records under
+`~/public_data/sim/` are outside the repository and are not committed, so they
+are not versioned with the code that produced them. And the measurements above
+have not been through the same read-and-correct pass that produced the
+correction notices on documents 1 and 2 — the caution below applies to them
+with more force, not less.
+
 ## One caution that applies to every document here
 
 Three of the five scoring criteria are regex heuristics over free text.

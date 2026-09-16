@@ -3,13 +3,13 @@
 **Stage 1 prototype — MSc thesis, Systems Biology, Vilnius University**
 Vytautas Rimas · vytautas.rimas@mf.stud.vu.lt
 Repository: `github.com/DeVytautasr/rare-disease-diagnosis-assistant`
-State described here: commit `f581dc7` · 11 tools · 3 test files · 28 tests
+State described here: commit `1809d2a` · 15 tools (11 evidence + 4 candidate-set) · 20 test files
 
 ---
 
 ## What this is
 
-Eleven tools that read sequencing alignment files and report structured evidence at a candidate structural variant breakpoint, plus an LLM assistant that calls those tools and writes a report citing every number back to the tool that produced it.
+Fifteen tools across two MCP servers: eleven that read sequencing alignment files and report structured evidence at a candidate structural variant breakpoint, and four that load a variant caller's candidate set and filter it down to the junctions worth looking at. A local browser front end drives them by hand, and an optional LLM assistant calls the same tools through the same recorder and writes a report citing every number back to the tool that produced it.
 
 The architectural principle is that the assistant cannot state a genomic fact unless a tool returned it during that session. It is given tool access and nothing else — no ability to read source code, run scripts, or consult its own training knowledge about genes, samples, or variants. This is enforced by what it can reach, not by instruction alone.
 
@@ -44,6 +44,20 @@ Start with the blind session. It shows the assistant correctly reporting two ord
 ### Tier 2 — Run the tools yourself (30 minutes)
 
 Runs the Python tools directly against public data. No LLM involved. Linux, macOS, or WSL2 on Windows.
+
+**The quickest version of this tier is the browser front end**, which needs no
+conda environment, no reference genome and no IGV:
+
+```bash
+bash install.sh
+.venv/bin/python -m stage1_igv_assistant.ui --check   # what is available
+.venv/bin/python -m stage1_igv_assistant.ui           # http://127.0.0.1:8765
+```
+
+It opens on a filter chain and four evidence layers, with every number on
+screen linking to the tool call that produced it. Lithuanian instructions are
+in `docs/DIEGIMAS.md` and `docs/NAUDOJIMAS.md`. The rest of this tier runs the
+same tools from a shell instead.
 
 **Order matters — activate the environment before installing IGV, or the installer will warn that java is missing.**
 
@@ -137,7 +151,9 @@ citing the tool and the number behind every claim.
 
 ---
 
-## The eleven tools
+## The fifteen tools
+
+### Eleven evidence tools (`server.py`)
 
 | Tool | Returns |
 |---|---|
@@ -173,6 +189,22 @@ image session directory) and open it yourself. See
 
 ---
 
+### Four candidate-set tools (`candidate_server.py`)
+
+| Tool | Returns |
+|---|---|
+| `load_candidate_set` | Registers a caller's VCF/BCF for the session. Reports record counts, which breakend convention the caller used (`chr2_pos2` or `mateid`), and how many records merged during deduplication |
+| `list_candidates` | The filtered list, with every applied threshold echoed back — its value, its provenance (`tool-defined`, `reference-defined`, `author judgement`), the survivors after that step, and what that filter alone would remove from the unfiltered set |
+| `get_candidate` | One junction in full, shaped so the evidence tools can consume both breakends directly |
+| `compare_candidate_sets` | Junction-level recurrence between two registered sets within ±500 bp — a two-sample artifact screen, or two-caller concordance on one sample |
+
+Deduplication keys on orientation as well as position. It did not originally,
+and the two halves of a reciprocal junction — same coordinates, opposite
+orientation — collapsed into one. Keying on orientation took the public test
+set from 840 to 894 junctions and its survivors from 24 to 27.
+
+---
+
 ## Reading the evidence panels
 
 The panel generates one image per layer because the layers need different genomic scales — a deletion span is only legible across kilobases, a clip pileup only across a few hundred bases.
@@ -183,8 +215,13 @@ The panel generates one image per layer because the layers need different genomi
 
 ## Model comparison
 
-The adversarial suggestion above was formalised into a benchmark: three
-models, the same server, the same three cases — a confirmed deletion, a
+The adversarial suggestion above was formalised into a benchmark. What follows
+describes the **first generation** of it — three models, three cases. A later
+generation with six cases and five models is summarised under "The ceiling
+result" below, and it supersedes the model list here without contradicting any
+of its findings.
+
+Three models, the same server, the same three cases — a confirmed deletion, a
 control locus, and an adversarial variant whose prompt asserts a
 translocation the data does not support — run three times each and scored on
 five criteria. `claude-sonnet-5` runs through an API harness;
@@ -220,6 +257,44 @@ If you are evaluating this project, that last point is the one to press on. That
 
 ---
 
+## The ceiling result
+
+This is the single finding most worth taking from the project, and it is not
+about any model.
+
+A balanced translocation can never score "strong" here. The reason is
+arithmetic, not data: the scoring bands start "strong" at 70 of 100, the depth
+layer correctly contributes 0 when no DNA is gained or lost, and the
+paired-read layer cannot reach its top tier because roughly half the reads
+crossing the breakpoint come from the intact homolog — across 28 test
+breakpoints the paired-read fraction never exceeded 0.175 against the 0.5 that
+tier requires. The highest score reachable at a typical such locus is 57.5.
+
+Twenty runs were put to four models of very different capability — two local,
+two through the Anthropic API — asking whether the evidence at a known
+implanted translocation was strong. **One run in twenty stated the ceiling.**
+The obvious reading is that this reasoning is beyond small models.
+
+That reading was wrong. The number 70 appeared in no tool return and in no tool
+description. No model could say "57.5 is below 70" because 70 was not in the
+session. The limit was informational, not cognitive.
+
+Nine fields and one sentence were added to one tool's return —
+`strong_band`, `attainable_here`, `strong_band_reachable_here` and the rest,
+all derived from the scoring source rather than written as literals, so a
+revised ladder moves them with it. No model was changed, retrained, or
+re-prompted.
+
+**After: 19 runs in 20 state the ceiling; 17 of 20 give the full argument.** A
+4-billion-parameter model running on a laptop GPU — one that produced malformed
+tool arguments in a quarter of its calls — laid out the complete arithmetic in
+5 runs of 5.
+
+What a model can reach determines what it can say. That is a claim about tool
+design, and it is measurable.
+
+---
+
 ## Validation performed
 
 | Dataset | Type | Result |
@@ -230,6 +305,8 @@ If you are evaluating this project, that last point is the one to press on. That
 | GIAB HG002, Illumina 300x | Same deletion, different technology and aligner | Detected; soft-clip consensus matched PacBio to the base |
 | Blind test, three positions | Two controls plus the confirmed deletion, undisclosed | Both controls correctly negative at high confidence, variant correctly positive, sixfold separation |
 | Model comparison, 3 models × 3 cases | Adversarial case asserts a translocation the data does not support | `claude-sonnet-5` rejects the false premise 3/3; `qwen2.5:7b` confirms it in 5 of 6 runs; `llama3.1:8b` could not use the tools reliably enough to assess |
+| Controlled positive test, 12 implanted translocations | Heterozygous balanced events planted in real NA12878 reads at known positions | 14 of 24 breakends recovered: 8/8 in clean unique sequence, 6/8 next to repeats, 0/8 where mapping is ambiguous. Every loss occurred at variant calling; no filter setting tested discarded a true breakend |
+| Model comparison, 5 models × 6 cases × 5 runs | Same server, tools and scoring for every model | Malformed tool arguments: `qwen3.5:4b` 26.3%, `qwen3.5:9b` 17.1%, `qwen2.5:7b` 13.4%; `claude-sonnet-5` and `claude-opus-5` 0 of 313 calls. On the false-premise case `qwen2.5:7b` confirmed it 2/5, `qwen3.5:4b` rejected it 4/5, both API models 5/5. No local model is usable unsupervised on 8 GB |
 
 Ten defects were found across Stage 1 development, and the model-comparison
 benchmark that followed found nine more — two of them in the scoring code
