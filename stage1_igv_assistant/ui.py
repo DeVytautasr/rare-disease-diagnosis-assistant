@@ -163,9 +163,18 @@ def assess(bam_label, chromosome, position, window_bp=500, split_min_mapq=None):
                 "hint": "The dataset itself could not be read, so no layer could be assessed."}
     applicable = (layers["result"] or {}).get("applicable_layers")
 
+    # The low-MAPQ figure shown beside the verdict must be measured over the
+    # SAME window the quality gate in breakpoint_evidence_summary uses:
+    # position +/- window_bp, clamped at 0. This call used +/-250 while the gate
+    # used +/-500, and at six loci of the public HCC1143 slice the two fell on
+    # opposite sides of the 40% gate: 21:19,281,000 was withheld with the tool
+    # reporting 43.6% while the page showed 35.6%. The window travels with the
+    # figure so the page labels it from data, not from a literal.
+    gate_window = {"start": max(0, position - window_bp), "end": position + window_bp,
+                   "half_width_bp": window_bp}
     stats = RECORDER.call("evidence", "bam_stats_at_locus",
                           {"bam_path": bam, "chromosome": chromosome,
-                           "start": position - 250, "end": position + 250})
+                           "start": gate_window["start"], "end": gate_window["end"]})
     # The evidence tools report failure as a dict with an "error" key rather
     # than raising, so FastMCP does not flag it and a .get() on the result
     # yields None for every field. Rendering that as empty layers would be
@@ -259,6 +268,7 @@ def assess(bam_label, chromosome, position, window_bp=500, split_min_mapq=None):
                 "read_depth": sm.get("depth_score"),
             },
             "low_mapq_fraction": (stats["result"] or {}).get("low_mapq_fraction"),
+            "low_mapq_window": gate_window,
         },
         "ceiling": ceiling_for(obs),
         "position_provenance": (d.get("position_provenance") or s_.get("position_provenance")),
@@ -942,6 +952,16 @@ function ceilBlock(C,S){
     <div class="mut">${esc(C.note)}</div>
     ${C.per_layer.read_depth&&C.per_layer.read_depth.extra_gate?`<div class="mut">depth measurement only counts when: ${esc(C.per_layer.read_depth.extra_gate)}</div>`:''}</div>`;
 }
+function lowMapq(E){
+  // The figure and the quality gate share one window; the label names it from
+  // the payload. null*100 is 0 in JS, so a missing figure must not print 0.0%.
+  const S=E.summary||{}, W=S.low_mapq_window;
+  if(S.low_mapq_fraction==null) return '<b>not measured</b>';
+  const pct=(S.low_mapq_fraction*100).toFixed(1)+'%';
+  if(!W) return `${pct} <span class="err">(window not reported)</span>`;
+  return `${pct} over ${esc(E.chromosome)}:${W.start}–${W.end} `
+    +`(±${W.half_width_bp} bp, the window the quality gate uses)`;
+}
 function renderEvidence(list,title){
   let h=`<h3 style="font-size:13px">${esc(title)}</h3>`;
   for(const E of list){
@@ -961,7 +981,7 @@ function renderEvidence(list,title){
         <div class="mut">${esc(pp.note||'')}</div></div>
       <h4 style="margin:10px 0 4px">${esc(E.chromosome)}:${E.position} <span class="mut">· dataset ${esc(E.bam_label)}
         · applicable layers ${esc(JSON.stringify(E.applicable_layers))} ${chip(E.applicable_call,'applicable_layers')}
-        · ambiguously mapped reads here: ${(E.summary.low_mapq_fraction*100).toFixed(1)}% ${chip(E.stats.call,'bam_stats')}</span></h4>
+        · ambiguously mapped reads (MAPQ &lt; 20): ${lowMapq(E)} ${chip(E.stats.call,'bam_stats')}</span></h4>
       <div class="mut" style="margin-bottom:6px">The four measurements below are the result. The
         combined score after them summarises them; it does not replace them.</div>`;
     for(const L of E.layers) h+=layerBlock(L);
