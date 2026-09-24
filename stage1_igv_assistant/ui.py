@@ -24,6 +24,7 @@ import argparse
 import asyncio
 import json
 import os
+import re
 import time
 import traceback
 import urllib.request
@@ -115,8 +116,31 @@ BANDS = None
 TIER_ERROR = None
 
 
+# Any absolute filesystem path of two or more segments. Not preceded by a word
+# character, '.', '~', ':' or '/', so URLs, ratios such as 15/28 and relative
+# fragments do not match.
+_ABS_PATH = re.compile(r"(?<![\w.~:/@-])/[\w.+@%~-]+(?:/[\w.+@%~-]*)+")
+_HOME = os.path.expanduser("~")
+
+
+def _unpath(m):
+    p = m.group(0)
+    if p.startswith(("/api/", "/img/")):        # this server's own routes, not files
+        return p
+    if p.rstrip("/") in (_HOME, os.path.dirname(_HOME)):
+        return "~"
+    return os.path.basename(p.rstrip("/")) or "~"
+
+
 def scrub(obj):
-    """Remove anything path-like or sample-like from an outbound payload."""
+    """Remove anything path-like or sample-like from an outbound payload.
+
+    Registered dataset and candidate paths (and their basenames) become <label>.
+    Every other absolute path is then reduced to its basename. The second pass
+    is the rule itself rather than a list of known paths: a scan of every route
+    found paths the list never covered -- the exclude template in /api/funnel,
+    IGV's search locations in /api/igv, tracebacks from the error branch -- so
+    no route has to be judged case by case."""
     paths = sorted(set(list(DATASETS.values()) + list(CANDIDATE_FILES.values())),
                    key=len, reverse=True)
     labels = {v: k for k, v in list(DATASETS.items()) + list(CANDIDATE_FILES.items())}
@@ -134,7 +158,7 @@ def scrub(obj):
                 base = os.path.basename(p)
                 if base and base in out:
                     out = out.replace(base, f"<{labels.get(p, 'dataset')}>")
-            return out
+            return _ABS_PATH.sub(_unpath, out)
         return x
     return s(obj)
 
@@ -393,10 +417,9 @@ def _chat_exec(name, args):
                 return None, (f"{pe['error']} No panel was generated; an image here would not "
                               f"correspond to a real locus.")
     rec = RECORDER.call(where[name], name, resolved)
-    safe = dict(rec)
-    safe["result"] = scrub(rec["result"])
-    safe["params"] = scrub(rec["params"])
-    return safe, None
+    # The whole record, not only result and params: a dispatch failure carries a
+    # traceback, and a traceback carries absolute paths.
+    return scrub(dict(rec)), None
 
 
 def _api(path, body):
@@ -475,7 +498,8 @@ def _api(path, body):
             out["panel_errors"] = panel_errors
             out["hint"] = (
                 f"No image was produced for any of the {len(panel_errors)} panel layer(s). "
-                + (f"Searched: {', '.join(first['searched'])}. " if first.get("searched") else "")
+                + ("IGV was looked for in $IGV_PATH and the built-in locations the startup "
+                   "banner lists. " if first.get("searched") else "")
                 + "The evidence numbers above are unaffected — they come from the counting "
                   "tools, not from IGV. Only the pictures are missing.")
             # The tool attaches a fixed note claiming an image WAS generated even on
@@ -616,7 +640,10 @@ class Handler(BaseHTTPRequestHandler):
         pass
 
     def _send(self, code, body, ctype="application/json"):
-        b = body if isinstance(body, bytes) else json.dumps(body).encode()
+        # Every JSON body leaves through here, so every one is scrubbed -- not only
+        # the routes that remembered to: the error branch in do_POST returned raw
+        # tracebacks, absolute paths included.
+        b = body if isinstance(body, bytes) else json.dumps(scrub(body)).encode()
         self.send_response(code)
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(b)))
@@ -1175,19 +1202,24 @@ MASK_PATH = MASK_STATUS["path"] or ""
 
 def _mask_state(requested):
     """What the mask step did, and why. Returned to the browser on every funnel
-    and compare call so a missing template can never be invisible."""
+    and compare call so a missing template can never be invisible. The template
+    is named by its file name only: this used to send the absolute path, in
+    `path` and inside `reason`, against the rule that the browser is never sent
+    a filesystem path. The startup banner still shows the full path locally."""
+    name = os.path.basename(MASK_STATUS["path"]) if MASK_STATUS["path"] else None
+    source = _ABS_PATH.sub(_unpath, MASK_STATUS["source"])
+    where = {"path": name, "source": source}
     if not requested:
-        return {"requested": False, "applied": False, "reason": None,
-                "path": MASK_STATUS["path"], "source": MASK_STATUS["source"]}
+        return {"requested": False, "applied": False, "reason": None, **where}
     if MASK_STATUS["found"]:
-        return {"requested": True, "applied": True, "reason": None,
-                "path": MASK_STATUS["path"], "source": MASK_STATUS["source"]}
+        return {"requested": True, "applied": True, "reason": None, **where}
+    why = f"no such file: {name}" if name else "not configured"
     return {"requested": True, "applied": False,
-            "reason": (f"exclude template not found ({MASK_STATUS['reason']}); "
-                       f"resolved from {MASK_STATUS['source']}. The chain below ran "
+            "reason": (f"exclude template not found ({why}); "
+                       f"resolved from {source}. The chain below ran "
                        f"WITHOUT this step — nothing was removed for overlapping a "
                        f"known-problematic region."),
-            "path": MASK_STATUS["path"], "source": MASK_STATUS["source"]}
+            **where}
 
 
 def _load_api_key():
