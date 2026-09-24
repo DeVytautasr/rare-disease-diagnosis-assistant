@@ -609,8 +609,6 @@ def run_turn_api(model, user_msg, tools, tool_names, exec_fn,
     dry_run=True builds and returns the first request body WITHOUT sending it.
     That is what the leak test inspects: the actual bytes, not a reconstruction.
     """
-    import anthropic
-
     sys_blocks = [{"type": "text", "text": system,
                    "cache_control": {"type": "ephemeral"}}]
     api_tools = to_anthropic_tools(tools, cache_last=False)
@@ -633,6 +631,11 @@ def run_turn_api(model, user_msg, tools, tool_names, exec_fn,
         return build(messages)
 
     if client is None:
+        # Imported only here, where a real client is built. It used to be the
+        # function's first line, so the dry run the leak gate uses failed on a
+        # MINIMAL install -- the configuration a supervisor would set up, since
+        # requirements-api.txt is optional -- and the gate could not run at all.
+        import anthropic
         client = anthropic.Anthropic(api_key=api_key, timeout=timeout, max_retries=2)
 
     events, results_seen, call_ids = [], [], []
