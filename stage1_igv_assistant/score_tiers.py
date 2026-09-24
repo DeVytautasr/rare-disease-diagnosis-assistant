@@ -104,13 +104,35 @@ def _scan_bands(fn_node):
 
 
 def _parsed_summary_fn():
-    src = inspect.getsource(bam_tools.summarize_breakpoint_evidence)
-    tree = ast.parse(inspect.cleandoc(src) if src.startswith("def") else src)
+    """The parsed scoring function. ANY failure to obtain or parse its source is a
+    TierDerivationError, so every caller reports "not derivable" instead of
+    crashing. Reformatting the signature onto one line used to raise a bare
+    IndentationError here -- inspect.cleandoc then dedents the body below the
+    `def` line -- which ui.main() did not catch, so the interface failed to
+    start instead of saying the ceiling could not be derived."""
+    try:
+        src = inspect.getsource(bam_tools.summarize_breakpoint_evidence)
+        tree = ast.parse(inspect.cleandoc(src) if src.startswith("def") else src)
+    except Exception as e:
+        raise TierDerivationError(
+            f"could not parse summarize_breakpoint_evidence's source "
+            f"({type(e).__name__}: {e})") from e
     fn = next((n for n in ast.walk(tree)
                if isinstance(n, ast.FunctionDef) and n.name == "summarize_breakpoint_evidence"), None)
     if fn is None:
         raise TierDerivationError("summarize_breakpoint_evidence not found in parsed source")
     return fn
+
+
+def _scanned(scan, what):
+    """Run a scan of the parsed function; anything it raises is also 'not derivable'."""
+    try:
+        return scan(_parsed_summary_fn())
+    except TierDerivationError:
+        raise
+    except Exception as e:
+        raise TierDerivationError(f"could not read the {what} from the parsed source "
+                                  f"({type(e).__name__}: {e})") from e
 
 
 def derive_bands():
@@ -126,7 +148,7 @@ def derive_bands():
 
     Returned highest-threshold-first: [{"strength","op","threshold"}, ...]
     """
-    found = _scan_bands(_parsed_summary_fn())
+    found = _scanned(_scan_bands, "band ladder")
     if "strong" not in found:
         raise TierDerivationError(
             "could not derive the 'strong' band boundary — the evidence_strength "
@@ -237,7 +259,7 @@ def ceiling_sentence(ceiling):
 
 def derive_tiers():
     """{layer: {"observed_field":..., "tiers":[{op,threshold,score}...], "max_score":float}}"""
-    found = _scan(_parsed_summary_fn())
+    found = _scanned(_scan, "tier ladders")
     missing = set(_LAYERS) - set(found)
     if missing:
         raise TierDerivationError(
