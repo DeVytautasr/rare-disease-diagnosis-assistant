@@ -8,6 +8,40 @@ GIAB_PUBLIC_DATA_VALIDATION.md contains the current, fully up-to-date validation
 
 # End-to-End Demo — Full Pipeline on a Synthetic Balanced Translocation
 
+> ## CORRECTION NOTICE (2026-09-24 — both headline scores below are superseded)
+>
+> **The two breakpoint scores in this record came from the scoring code of
+> 2026-08-09 and are not what the tool reports today.** The same BAM was
+> re-scored at the same loci with the committed code of each of the 39 commits
+> that changed `bam_tools.py`, from this record's commit (`9826d89`) to today.
+> This record's commit reproduces the recorded figures exactly, and the scores
+> change at exactly one commit, `2044852` (2026-08-11), and nowhere since:
+>
+> | Breakpoint | Recorded here (`9826d89`) | Current code (`2044852` onward) |
+> |---|---|---|
+> | BP1 chr1:1,050,000 | 100.0 "strong", 4/4 | **50.0 "moderate", 2/4** |
+> | BP2 chr8:47,000,000 | 50.0 "moderate", 2/4 | **25.0 "weak", 1/4** |
+>
+> Two changes in that commit account for all of it, each confirmed by
+> re-running the current tools at these loci (layer scores are out of 25; they
+> were out of 50 when this record was made — `c093ed4` rescaled them without
+> moving either headline score):
+>
+> - **Soft-clip layer, BP1: 25 → 0.** It now scores the largest pile-up of
+>   clips at a single position (`max_clips_at_position`; tiers at 3 and 10),
+>   not the fraction of reads clipped. BP1 has 5 clipped reads, never more than
+>   1 at the same position — this fixture staggers its clips.
+> - **Depth layer, BP1 and BP2: 25 → 0.** A dip now scores only when it lies at
+>   the queried position (`dip_is_at_focus`). The fixture's zero-coverage gaps
+>   are real (depth ratio 0.0 at both loci) but at neither position.
+>
+> The fixture is not the cause: BAMs regenerated with this record's
+> `create_translocation_bam()` and with today's are identical, read for read
+> (243 reads), to the one on disk. Caveat 2 below noted the BP1 change when it
+> was made but not BP2, and nothing beside the tables said so.
+> `data/demo_case.json` holds the same superseded values. Everything below is
+> left as originally recorded, not rewritten.
+
 **Date:** 2026-08-09
 **Case ID:** `demo_synthetic_translocation`
 **BAM:** `stage1_igv_assistant/data/bam/synthetic_translocation_demo.sorted.bam` (gitignored — regenerate with `create_translocation_bam()` from `test_bam_tools.py`)
@@ -38,6 +72,9 @@ None produced a public raw-alignment file. Papers characterizing these transloca
 | `gene_at_locus` | **AGRN** (protein_coding), chr1:1,020,069–1,056,119 |
 | `breakpoint_evidence_summary` | **evidence_score: 100.0 → "strong"**, `signal_layers: "4/4"` |
 
+> **Superseded score, kept as recorded.** The current code scores BP1
+> 50.0 "moderate", 2/4 — see the correction notice at the top.
+
 ### BP2 — chr8:47,000,000
 
 | Tool | Result |
@@ -47,6 +84,9 @@ None produced a public raw-alignment file. Papers characterizing these transloca
 | `read_depth_profile` | also flags `depth_score: 50` |
 | `gene_at_locus` | intergenic (`gene_count: 0`) |
 | `breakpoint_evidence_summary` | evidence_score: 50.0 → "moderate", `signal_layers: "2/4"` |
+
+> **Superseded score, kept as recorded.** The current code scores BP2
+> 25.0 "weak", 1/4 — see the correction notice at the top.
 
 ### Reciprocal breakpoint check
 
@@ -69,6 +109,9 @@ Breakpoints investigated: 2
   BP1_chr1: chr1:1050000 — strong (4/4)
   BP2_chr8: chr8:47000000 — moderate (2/4)
 ```
+
+> **Superseded summary, kept as recorded.** Under the current code these read
+> moderate (2/4) and weak (1/4) — see the correction notice at the top.
 
 Full structured record saved to `stage1_igv_assistant/data/demo_case.json`.
 
