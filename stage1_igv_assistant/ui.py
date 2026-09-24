@@ -22,12 +22,17 @@ Design rules this file enforces mechanically, not by convention:
 """
 import argparse
 import asyncio
+import glob
 import json
 import os
 import re
+import shutil
+import subprocess
+import tempfile
 import time
 import traceback
 import urllib.request
+import zipfile
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
 
@@ -1284,16 +1289,227 @@ def discover_public():
                 CANDIDATE_FILES.setdefault(f.split(".")[0], full)
 
 
+# The panel tool's own search (bam_tools.run_igv_screenshot): $IGV_PATH first,
+# then these. The tool never reads the config file, so main() exports a
+# configured igv path into IGV_PATH; otherwise the banner could report an IGV the
+# tool cannot find, which it once did.
 IGV_CANDIDATES = ["~/IGV_2.17.4/igv.sh", "~/igv/igv.sh", "/opt/igv/igv.sh"]
 
 
-def find_igv():
-    """Same search bam_tools does, so the banner cannot disagree with the tool."""
-    cfg, src = CFG.get("igv")
-    for c in ([cfg] if cfg else []) + [os.path.expanduser(x) for x in IGV_CANDIDATES]:
-        if c and os.path.isfile(c):
-            return c, (src if c == cfg else "built-in search path")
-    return None, src
+def _java_major(java):
+    """(major version, None) for the java binary at `java`, or (None, why)."""
+    try:
+        r = subprocess.run([java, "-version"], capture_output=True, text=True, timeout=20)
+    except (OSError, subprocess.SubprocessError) as e:
+        return None, f"{java} could not be run ({type(e).__name__})"
+    if r.returncode != 0:
+        return None, f"{java} -version exited {r.returncode}"
+    m = re.search(r'version "(\d+)(?:\.(\d+))?', r.stderr + r.stdout)
+    if not m:
+        return None, f"{java} -version printed no version"
+    major = int(m.group(1))
+    return (int(m.group(2)) if major == 1 and m.group(2) else major), None
+
+
+def _igv_java_requirement(igv_dir):
+    """(Java major version IGV's classes were compiled for, None), or (None, why).
+    Read from a class-file header in lib/igv.jar (class major version - 44), so
+    the requirement comes from the installed IGV, not from a literal."""
+    jar = os.path.join(igv_dir, "lib", "igv.jar")
+    try:
+        with zipfile.ZipFile(jar) as z:
+            classes = [n for n in z.namelist() if n.endswith(".class")]
+            pick = next((n for n in classes if n.startswith("org/broad/igv/")),
+                        classes[0] if classes else None)
+            if pick is None:
+                return None, "lib/igv.jar contains no classes"
+            head = z.read(pick)[:8]
+    except (OSError, zipfile.BadZipFile) as e:
+        return None, f"lib/igv.jar not readable ({type(e).__name__})"
+    if len(head) < 8 or head[:4] != b"\xca\xfe\xba\xbe":
+        return None, "lib/igv.jar does not hold Java class files"
+    return int.from_bytes(head[6:8], "big") - 44, None
+
+
+def verify_full():
+    """Every condition the IGV panels need, each checked so that it can fail.
+
+    Phase 11 reported FULL whenever a file existed at an igv.sh path: an empty,
+    non-executable file with no Java anywhere showed [x]. The panel tool runs
+    igv.sh directly (so it must be executable), igv.sh needs IGV's lib/igv.jar
+    and a Java it will pick up -- its bundled jdk*/bin/java, else java on PATH --
+    at least as new as IGV was compiled for, and IGV's window needs a display:
+    the tool inherits DISPLAY and does not wrap itself in xvfb-run. No test
+    render is attempted (that is IGV's whole startup), so [x] means these
+    prerequisites were verified, and the banner says exactly that.
+    Returns {"ok", "detail", "conditions": [(name, ok, detail), ...]}."""
+    conds = []
+    search = ([os.environ["IGV_PATH"]] if os.environ.get("IGV_PATH") else []) + \
+        [os.path.expanduser(c) for c in IGV_CANDIDATES]
+    igv = next((c for c in search if os.path.exists(c)), None)
+    conds.append(("igv.sh found by the panel tool's own search", bool(igv),
+                  igv or "searched " + ", ".join(search)))
+    java_note = ""
+    if igv:
+        runnable = os.path.isfile(igv) and os.access(igv, os.X_OK)
+        conds.append(("igv.sh is executable", runnable,
+                      "" if runnable else "the tool runs it directly; it needs the execute bit"))
+        home = os.path.dirname(os.path.realpath(igv))
+        need, why = _igv_java_requirement(home)
+        conds.append(("IGV's lib/igv.jar is readable", need is not None,
+                      why or f"compiled for Java {need}"))
+        bundled = sorted(glob.glob(os.path.join(home, "jdk*", "bin", "java")))
+        java = bundled[0] if bundled else shutil.which("java")
+        if not java:
+            conds.append(("a Java runtime igv.sh will use", False,
+                          "no bundled jdk*/bin/java next to igv.sh and no java on PATH"))
+        else:
+            have, why = _java_major(java)
+            conds.append(("a Java runtime igv.sh will use", have is not None,
+                          why or f"Java {have} ({'bundled with IGV' if bundled else 'on PATH'})"))
+            if have is not None and need is not None:
+                conds.append(("that Java is new enough for this IGV", have >= need,
+                              f"Java {have}; IGV was compiled for Java {need}"))
+            java_note = f"Java {have}" if have is not None else ""
+    disp = os.environ.get("DISPLAY", "")
+    local = re.match(r":(\d+)", disp)
+    if not disp:
+        conds.append(("a display for IGV's window", False,
+                      "DISPLAY is not set (WSLg: export DISPLAY=:0; no display: run under xvfb-run)"))
+    elif local:
+        sock = f"/tmp/.X11-unix/X{local.group(1)}"
+        conds.append(("a display for IGV's window", os.path.exists(sock),
+                      f"DISPLAY={disp}" + ("" if os.path.exists(sock) else f", but {sock} does not exist")))
+    else:
+        conds.append(("a display for IGV's window", True, f"DISPLAY={disp} (remote display, not probed)"))
+    ok = all(c[1] for c in conds)
+    if ok:
+        detail = (f"IGV panels — prerequisites verified: {igv} executable, {java_note}, "
+                  f"display {disp} (no test render)")
+    else:
+        first = next(c for c in conds if not c[1])
+        detail = (f"IGV panels — NOT AVAILABLE: {first[0]}: {first[2]}; "
+                  f"panels will report the failure instead of rendering")
+    return {"ok": ok, "detail": detail, "conditions": conds}
+
+
+def _selftest_fixture(d):
+    """A tiny BAM and candidate VCF for the MINIMAL self-test, so it needs no data
+    on disk. Paired 100 bp reads every 10 bp over chr1:8,000-12,000; the reads
+    starting within 150 bp of 10,000 have their mate on chr2, a 30 bp soft clip
+    and an SA tag, so all four layers have reads to assess."""
+    import pysam
+    header = pysam.AlignmentHeader.from_dict({
+        "HD": {"VN": "1.6", "SO": "coordinate"},
+        "SQ": [{"SN": "chr1", "LN": 100000}, {"SN": "chr2", "LN": 100000}]})
+    bam = os.path.join(d, "selftest.bam")
+    with pysam.AlignmentFile(bam, "wb", header=header) as out:
+        for i, start in enumerate(range(8000, 12000, 10)):
+            r = pysam.AlignedSegment(header)
+            r.query_name = f"s{i}"
+            r.query_sequence = "ACGT" * 25
+            r.query_qualities = pysam.qualitystring_to_array("I" * 100)
+            r.reference_id, r.reference_start, r.mapping_quality = 0, start, 60
+            if abs(start - 10000) <= 150:
+                r.flag = 0x1
+                r.cigar = [(4, 30), (0, 70)]
+                r.next_reference_id, r.next_reference_start = 1, 5000
+                r.set_tag("SA", "chr2,5000,+,30M70S,60,0;")
+            else:
+                r.flag = 0x1 | 0x2
+                r.cigar = [(0, 100)]
+                r.next_reference_id, r.next_reference_start = 0, start + 200
+                r.template_length = 300
+            out.write(r)
+    pysam.index(bam)
+    vcf = os.path.join(d, "selftest.vcf")
+    with open(vcf, "w") as f:
+        f.write("##fileformat=VCFv4.2\n"
+                "##contig=<ID=chr1,length=100000>\n##contig=<ID=chr2,length=100000>\n"
+                '##INFO=<ID=SVTYPE,Number=1,Type=String,Description="type">\n'
+                '##INFO=<ID=END,Number=1,Type=Integer,Description="end">\n'
+                '##INFO=<ID=CHR2,Number=1,Type=String,Description="partner contig">\n'
+                '##INFO=<ID=POS2,Number=1,Type=Integer,Description="partner position">\n'
+                '##INFO=<ID=CT,Number=1,Type=String,Description="connection type">\n'
+                '##INFO=<ID=PE,Number=1,Type=Integer,Description="paired-end support">\n'
+                '##INFO=<ID=SR,Number=1,Type=Integer,Description="split-read support">\n'
+                "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+                "chr1\t20000\tdel1\tN\t<DEL>\t.\tPASS\tSVTYPE=DEL;END=21000;PE=4;SR=0\n"
+                "chr2\t5000\tbnd1\tN\t<BND>\t.\tPASS\tSVTYPE=BND;CHR2=chr1;POS2=10000;CT=3to5;PE=10;SR=5\n")
+    return bam, vcf
+
+
+def verify_minimal():
+    """Every condition the MINIMAL line claims, exercised so that it can fail.
+
+    Phase 11's --check hard-coded ok=True and ANDed it with a count compared
+    against >= 0, so no configuration could make it report FAILED. Each entry
+    here runs the thing it names: the tool contract; the tier derivation; a
+    hand-entered coordinate through the same assess() the page uses, on a
+    fixture BAM (all four layers must come back assessable and the summary must
+    give a strength); a candidate set through load and the filter chain; and
+    every registered file must exist, each BAM with an index. The fixture's tool
+    calls go to a private recorder, so they never appear in the session's log.
+    Returns [(condition, ok, detail), ...]."""
+    global RECORDER
+    out = []
+    try:
+        ne, nb = assert_tool_contract()
+        out.append(("tool contract", True, f"{ne} evidence + {nb} bridge tools"))
+    except SystemExit as e:
+        out.append(("tool contract", False, str(e)))
+    out.append(("scoring tiers derivable from bam_tools' source",
+                TIERS is not None and BANDS is not None, TIER_ERROR or ""))
+    label, saved = "__selftest__", RECORDER
+    RECORDER = ToolRecorder()
+    try:
+        with tempfile.TemporaryDirectory() as d:
+            bam, vcf = _selftest_fixture(d)
+            DATASETS[label], CANDIDATE_FILES[label] = bam, vcf
+            name = "four evidence layers at a hand-entered coordinate"
+            try:
+                E = assess(label, "chr1", 10000)
+                layers = {L["key"]: L for L in E.get("layers", [])}
+                bad = [k for k in ("discordant_pairs", "soft_clipped_reads", "split_reads", "read_depth")
+                       if k not in layers or layers[k].get("error") or layers[k].get("assessable") is not True]
+                strength = (E.get("summary") or {}).get("evidence_strength")
+                out.append((name, not E.get("error") and not E.get("summary_error") and not bad
+                            and strength is not None,
+                            E.get("error") or E.get("summary_error")
+                            or (f"not assessable or errored: {bad}" if bad else f"summary strength {strength!r}")))
+            except Exception as e:
+                out.append((name, False, f"{type(e).__name__}: {e}"))
+            name = "candidate set through load and the filter chain"
+            try:
+                res = (_api("/api/load", {"candidates_label": label}).get("result") or {})
+                fres = ((_api("/api/funnel", {"set_id": res["set_id"], "filter_pass": True, "limit": 10})
+                         .get("result") or {}) if res.get("set_id") else {})
+                out.append((name, "error" not in res and res.get("total_records") == 2
+                            and "error" not in fres and fres.get("total_matching") == 2,
+                            res.get("error") or fres.get("error")
+                            or f"{res.get('total_records')} records loaded, {fres.get('total_matching')} "
+                               f"pass filter_pass (the fixture has 2 PASS records)"))
+            except Exception as e:
+                out.append((name, False, f"{type(e).__name__}: {e}"))
+    except Exception as e:
+        out.append(("self-test fixture written", False, f"{type(e).__name__}: {e}"))
+    finally:
+        DATASETS.pop(label, None)
+        CANDIDATE_FILES.pop(label, None)
+        RECORDER = saved
+    problems = []
+    for kind, reg in (("dataset", DATASETS), ("candidate set", CANDIDATE_FILES)):
+        for lbl, p in sorted(reg.items()):
+            if re.match(r"(https?|ftp)://", p):
+                continue
+            if not (os.path.isfile(p) and os.access(p, os.R_OK)):
+                problems.append(f"{kind} {lbl}: file missing or unreadable")
+            elif kind == "dataset" and not any(os.path.isfile(b + x) for b in (p, os.path.splitext(p)[0])
+                                               for x in (".bai", ".csi", ".crai")):
+                problems.append(f"dataset {lbl}: no .bai/.csi/.crai index beside it")
+    out.append(("every registered file exists (each BAM indexed)", not problems,
+                "; ".join(problems) or f"{len(DATASETS)} dataset(s), {len(CANDIDATE_FILES)} candidate set(s)"))
+    return out
 
 
 def probe_ollama(timeout=1.5):
@@ -1304,16 +1520,21 @@ def probe_ollama(timeout=1.5):
         return None
 
 
-def capability_report():
+def capability_report(minimal):
     """What tier this install can actually deliver. Reported at startup so a user
-    knows before they click, not after an empty panel."""
-    igv, igv_src = find_igv()
+    knows before they click, not after an empty panel. `minimal` is
+    verify_minimal()'s result: MINIMAL is [x] only if every condition passed."""
+    full = verify_full()
     models = probe_ollama()
+    failed = next((c for c in minimal if not c[1]), None)
     return {
-        "MINIMAL": {"ok": True, "needs": "python + pysam + fastmcp + requests",
-                    "detail": "filter chain, four evidence layers, hand-entered coordinates"},
-        "FULL": {"ok": bool(igv), "needs": "IGV (and Java)",
-                 "detail": f"IGV panels — {'found at ' + igv + f' ({igv_src})' if igv else 'NOT FOUND; panels will report the failure instead of rendering'}"},
+        "MINIMAL": {"ok": failed is None, "needs": "python + pysam + fastmcp + requests",
+                    "detail": (f"filter chain, four evidence layers, hand-entered coordinates — "
+                               f"self-test passed ({len(minimal)} conditions)" if failed is None else
+                               f"SELF-TEST FAILED: {failed[0]}: {failed[2]}"),
+                    "conditions": minimal},
+        "FULL": {"ok": full["ok"], "needs": "IGV, Java and a display",
+                 "detail": full["detail"], "conditions": full["conditions"]},
         "COMPLETE": {"ok": bool(models), "needs": "ollama serving at " + chatmod.OLLAMA,
                      "detail": (f"local model chat — {len(models)} model(s): {', '.join(models[:4])}"
                                 if models else "ollama not reachable; the chat panel will be unavailable")},
@@ -1324,8 +1545,11 @@ def capability_report():
 
 
 def print_banner(cap, port):
-    tier = "COMPLETE" if cap["COMPLETE"]["ok"] and cap["FULL"]["ok"] else (
-           "FULL" if cap["FULL"]["ok"] else "MINIMAL")
+    if not cap["MINIMAL"]["ok"]:
+        tier = "NONE — the MINIMAL self-test failed"
+    else:
+        tier = "COMPLETE" if cap["COMPLETE"]["ok"] and cap["FULL"]["ok"] else (
+               "FULL" if cap["FULL"]["ok"] else "MINIMAL")
     print("", flush=True)
     print(f"  available tier: {tier}", flush=True)
     for name in ("MINIMAL", "FULL", "COMPLETE"):
@@ -1364,6 +1588,13 @@ def main():
                          "Exit 0 if the MINIMAL tier works, 1 if it does not.")
     a = ap.parse_args()
 
+    # The panel tool searches $IGV_PATH and its built-in paths; it never reads the
+    # config file. Export a configured igv so the tool and the banner resolve the
+    # same igv.sh: the banner used to report a config-file IGV the tool never saw.
+    igv_cfg, _ = CFG.get("igv")
+    if igv_cfg and not os.environ.get("IGV_PATH"):
+        os.environ["IGV_PATH"] = igv_cfg
+
     ne, nb = assert_tool_contract()
     if not a.no_autodiscover:
         discover_public()
@@ -1383,11 +1614,16 @@ def main():
     print(f"tool contract OK: {ne} evidence tools + {nb} bridge tools", flush=True)
     print(f"scoring tiers: {'derived from bam_tools source' if TIERS else 'NOT DERIVABLE — ' + str(TIER_ERROR)}", flush=True)
     print(f"datasets: {len(DATASETS)}   candidate files: {len(CANDIDATE_FILES)}", flush=True)
-    cap = capability_report()
+    cap = capability_report(verify_minimal())
     print_banner(cap, a.port)
     if a.check:
-        ok = cap["MINIMAL"]["ok"] and (len(DATASETS) + len(CANDIDATE_FILES)) >= 0
-        print("  CHECK: MINIMAL tier " + ("OK — the tool will run." if ok else "FAILED."),
+        for tier in ("MINIMAL", "FULL"):
+            for name, cond_ok, detail in cap[tier]["conditions"]:
+                print(f"  CHECK {tier:7s} [{'PASS' if cond_ok else 'FAIL'}] {name}"
+                      + (f" — {detail}" if detail else ""), flush=True)
+        ok = cap["MINIMAL"]["ok"]
+        print("  CHECK: MINIMAL tier " + ("OK — every condition above was exercised, none assumed."
+                                          if ok else "FAILED — see the FAIL lines above."),
               flush=True)
         if not DATASETS and not CANDIDATE_FILES:
             print("  CHECK: no datasets or candidate sets found. The tool will start, but the "
