@@ -78,7 +78,7 @@ Pranešimas atrodo maždaug taip:
 ```
   available tier: MINIMAL
     [x] MINIMAL   filter chain, four evidence layers, hand-entered coordinates
-    [ ] FULL      IGV panels — NOT FOUND; panels will report the failure instead of rendering
+    [ ] FULL      IGV panels — NOT AVAILABLE: igv.sh found by the panel tool's own search: searched /home/.../IGV_2.17.4/igv.sh, /home/.../igv/igv.sh, /opt/igv/igv.sh; panels will report the failure instead of rendering
     [ ] COMPLETE  ollama not reachable; the chat panel will be unavailable
     [x] exclude template  /home/.../human.hg38.excl.tsv  [built-in default]
     [x] data directory    /home/.../public_data  [config file ...]
