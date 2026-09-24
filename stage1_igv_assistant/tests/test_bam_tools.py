@@ -4,11 +4,24 @@ Tests for bam_tools.py using a synthetic BAM file.
 
 We create a tiny BAM in memory with known reads, then verify
 our tools return the expected numbers.
+
+Five checks depend on something this suite cannot guarantee: live Ensembl
+(TEST 7), a real IGV + java (TESTs 10 and 13) and a public GIAB BAM over the
+network (TESTs 17 and 18). When one of them cannot run, it is recorded as NOT
+RUN and the run ends INCOMPLETE -- it is never counted as a pass. This suite
+used to print ALL TESTS PASSED with all five unrun.
+
+Exit codes:  0 = every check ran and passed
+             1 = a check failed (an assertion or unexpected error)
+             2 = INCOMPLETE: nothing failed, but at least one check did not run
 """
 
+import errno
 import os
 import pysam
+import requests
 import shutil
+import socket
 import tempfile
 import time
 import sys
@@ -32,6 +45,48 @@ from stage1_igv_assistant.tools.bam_tools import (
 )
 import stage1_igv_assistant.tools.bam_tools as bam_tools_module
 from stage1_igv_assistant.case_object import BamCase
+
+
+# ── checks that could not run ──────────────────────────────────────────────
+NOT_RUN = []
+
+
+def not_run(check, reason):
+    """Record a substantive check that did not run. Reported at the end; the
+    run is then INCOMPLETE (exit 2), not passed."""
+    NOT_RUN.append((check, reason))
+    print(f"  NOT RUN — {reason}\n")
+
+
+# A missing or broken network is recognised by exception TYPE and errno, never
+# by words in a message. TESTs 17/18 used to skip whenever str(e) contained
+# "Connection" or "Network" -- which a failed assertion printing a tool's error
+# text could do on its own. EDESTADDRREQ is what htslib raises when a host does
+# not resolve (observed: pysam, unresolvable https host); an HTTP 404 surfaces
+# as FileNotFoundError and is deliberately NOT a network failure.
+_NETWORK_ERRNOS = {errno.ECONNREFUSED, errno.ECONNRESET, errno.ECONNABORTED,
+                   errno.ETIMEDOUT, errno.EHOSTUNREACH, errno.ENETUNREACH,
+                   errno.ENETDOWN, errno.EHOSTDOWN, errno.EDESTADDRREQ}
+
+
+def is_network_failure(exc):
+    if isinstance(exc, (requests.exceptions.ConnectionError, requests.exceptions.Timeout)):
+        return True
+    if isinstance(exc, (ConnectionError, TimeoutError, socket.gaierror)):
+        return True
+    return isinstance(exc, OSError) and exc.errno in _NETWORK_ERRNOS
+
+
+def probe_remote_bam(url):
+    """None if the remote BAM's header can be read; the exception if the network
+    prevented it. Any other failure propagates: it is a problem to report."""
+    try:
+        pysam.AlignmentFile(url).close()
+    except Exception as e:
+        if is_network_failure(e):
+            return e
+        raise
+    return None
 
 
 def create_synthetic_bam(path: str):
@@ -563,7 +618,15 @@ def run_tests():
     # The logic this test covers is ALSO covered offline and unconditionally
     # by TEST 7b below, which stubs the HTTP layer. TEST 7 exists to confirm
     # the live contract still holds — the response shape, not the wording.
-    print("TEST 7: get_gene_at_locus (live Ensembl — SKIPPED if unavailable)")
+    #
+    # Since 2026-09-25 an unavailable service is NOT RUN and the run ends
+    # INCOMPLETE (exit 2) instead of passing: still not a failure, but no
+    # longer invisible. Why the service did not answer is decided from what
+    # the HTTP layer actually did -- an exception's type or a status code --
+    # because get_gene_at_locus folds both into one error string. A 5xx/429 or
+    # a network exception means "could not test"; anything else (a 4xx, a
+    # non-network exception, no HTTP call at all) is a failure.
+    print("TEST 7: get_gene_at_locus (live Ensembl — NOT RUN if unavailable)")
 
     def _live_ensembl(chromosome, position, attempts=4):
         """
@@ -586,12 +649,37 @@ def run_tests():
               f" {last_error})")
         return None
 
-    gene_result = _live_ensembl("chr1", 115686862)
-    intergenic_result = _live_ensembl("chr13", 15000000)
+    http_outcomes = []       # per real HTTP call: its status code, or the exception
+    real_get = bam_tools_module._requests.get
+
+    def _recording_get(*args, **kwargs):
+        try:
+            response = real_get(*args, **kwargs)
+        except Exception as e:
+            http_outcomes.append(e)
+            raise
+        http_outcomes.append(response.status_code)
+        return response
+
+    bam_tools_module._requests.get = _recording_get
+    try:
+        gene_result = _live_ensembl("chr1", 115686862)
+        intergenic_result = _live_ensembl("chr13", 15000000)
+    finally:
+        bam_tools_module._requests.get = real_get
 
     if gene_result is None or intergenic_result is None:
-        print("  SKIPPED — Ensembl REST API unavailable or throttled; "
-              "the annotation logic is still covered offline by TEST 7b\n")
+        exceptions = [o for o in http_outcomes if isinstance(o, BaseException)]
+        statuses = [o for o in http_outcomes if isinstance(o, int)]
+        unexpected = ([e for e in exceptions if not is_network_failure(e)]
+                      + [s for s in statuses if 400 <= s < 500 and s != 429])
+        assert http_outcomes and not unexpected, (
+            "TEST 7: the live lookup failed for a reason that is neither the network nor "
+            f"the service being unavailable: {unexpected or 'no HTTP call was made'}")
+        seen = sorted({type(e).__name__ for e in exceptions} | {f"HTTP {s}" for s in statuses if s != 200})
+        not_run("TEST 7 (live Ensembl)",
+                f"Ensembl did not answer ({', '.join(seen)}); the annotation logic is still "
+                f"covered offline by TEST 7b")
     else:
         print(f"  Gene(s) at chr1:115686862: {[g['gene_name'] for g in gene_result['genes']]}")
         assert gene_result["gene_count"] >= 1, "Expected at least 1 gene"
@@ -776,8 +864,10 @@ def run_tests():
     if real_igv_path is None or not java_available:
         reason = "IGV not installed" if real_igv_path is None else \
             "java not on PATH (IGV requires it — e.g. present in the 'rda' conda env)"
-        print(f"  {reason} on this machine — skipping real-screenshot check.")
-        print("  PASSED ✓ (error-path only)\n")
+        print("  error-path checks PASSED ✓")
+        not_run("TEST 10 (real IGV screenshot)",
+                f"{reason} on this machine — an optional dependency is missing, "
+                f"so the real-screenshot check did not run")
     else:
         with tempfile.NamedTemporaryFile(suffix=".bam", delete=False) as f:
             tmp_path3 = f.name
@@ -1161,8 +1251,10 @@ def run_tests():
         if real_igv_path is None or not java_available:
             reason = "IGV not installed" if real_igv_path is None else \
                 "java not on PATH (IGV requires it — e.g. present in the 'rda' conda env)"
-            print(f"  {reason} on this machine — skipping real 4-panel generation check.")
-            print("  PASSED ✓ (error-path only)\n")
+            print("  error-path checks PASSED ✓")
+            not_run("TEST 13 (real 4-panel generation)",
+                    f"{reason} on this machine — an optional dependency is missing, "
+                    f"so the real 4-panel generation check did not run")
         else:
             with tempfile.NamedTemporaryFile(suffix=".bam", delete=False) as f:
                 tmp_path8 = f.name
@@ -1367,8 +1459,19 @@ def run_tests():
     POSITION_B = ("chr2", 96300000)   # background — cleanest of the 3, no nearby dip either
     POSITION_C = ("chr1", 115686862)  # real GIAB HG002 deletion breakpoint (VANGL1)
 
+    # Reachability is decided once, up front, by exception type (see
+    # probe_remote_bam). Past that point any error is a failure: the per-test
+    # except clauses that used to be here matched "Connection" or "Network" in
+    # str(e), so a genuine failure whose message held either word was skipped.
+    network_block = probe_remote_bam(REAL_HG002_BAM)
+    unreachable = (None if network_block is None else
+                   f"the GIAB BAM is unreachable ({type(network_block).__name__}, "
+                   f"errno {getattr(network_block, 'errno', None)}) — no network")
+
     print("TEST 17: get_read_depth_profile focus_position/dip_* on real HG002 BAM (FIX 1+2)")
-    try:
+    if unreachable:
+        not_run("TEST 17 (real HG002 BAM, FIX 1+2)", unreachable)
+    else:
         for label, (chrom, pos), expect_deletion, expect_dip_at_focus in (
             ("A", POSITION_A, False, False),
             ("C", POSITION_C, True, True),
@@ -1423,14 +1526,11 @@ def run_tests():
             f"read_depth_profile disagrees with bam_stats_at_locus by {pct_vs_stats:.1f}% (>5%)"
         )
         print("  PASSED ✓\n")
-    except Exception as e:
-        if "getaddrinfo" in str(e) or "Connection" in str(e) or "Network" in str(e):
-            print(f"  SKIPPED — no network access to real GIAB BAM ({e})\n")
-        else:
-            raise
 
     print("TEST 18: soft-clip max_clips_at_position scoring on real HG002 BAM (FIX 3)")
-    try:
+    if unreachable:
+        not_run("TEST 18 (real HG002 BAM, FIX 3)", unreachable)
+    else:
         results = {}
         for label, (chrom, pos) in (("A", POSITION_A), ("B", POSITION_B), ("C", POSITION_C)):
             clips = count_soft_clipped_reads(REAL_HG002_BAM, chrom, pos)
@@ -1473,16 +1573,19 @@ def run_tests():
         assert summary_c["depth_score"] > 0, \
             f"Expected position C depth_score > 0 (real, on-position deletion signal), got {summary_c['depth_score']}"
         print("  PASSED ✓\n")
-    except Exception as e:
-        if "getaddrinfo" in str(e) or "Connection" in str(e) or "Network" in str(e):
-            print(f"  SKIPPED — no network access to real GIAB BAM ({e})\n")
-        else:
-            raise
 
     print("=" * 60)
+    if NOT_RUN:
+        print("INCOMPLETE — every check that ran passed, but these did NOT run:")
+        for check, reason in NOT_RUN:
+            print(f"  NOT RUN  {check}: {reason}")
+        print("An incomplete run is not a pass. Provide what is missing and run it again.")
+        print("=" * 60)
+        return 2
     print("ALL TESTS PASSED")
     print("=" * 60)
+    return 0
 
 
 if __name__ == "__main__":
-    run_tests()
+    sys.exit(run_tests())
