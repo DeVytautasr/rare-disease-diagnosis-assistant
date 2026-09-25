@@ -1,0 +1,94 @@
+{
+ "background_error_rate_isolated": 0.002104,
+ "fragment_mean": 443,
+ "fragment_sd": 105,
+ "fold": 30,
+ "seeds": {
+  "HS25": 20260925,
+  "HSXn": 20260926,
+  "HSXt": 20260927,
+  "MSv1": 20260928,
+  "MSv3": 20260929
+ },
+ "bwa_seconds": 72.2,
+ "bwa_command": "~/miniconda3/envs/synth-bwa/bin/bwa mem -Y -K 100000000 -t 6 ~/reference/GRCh38_full_analysis_set_plus_decoy_hla.fa pool_R1.fq pool_R2.fq",
+ "profiles": {
+  "HS25": {
+   "bam": "~/public_data/sim/measure/profiles/HS25.bam",
+   "region": "chr20:35,000,000-36,000,000",
+   "reads": 200037,
+   "aligned_bases": 30000900,
+   "isolated_mismatches": 57156,
+   "recurrent_sites": 542,
+   "recurrent_mismatch_bases": 1086,
+   "error_rate_isolated": 0.001905,
+   "mismatch_rate_all": 0.001941
+  },
+  "HSXn": {
+   "bam": "~/public_data/sim/measure/profiles/HSXn.bam",
+   "region": "chr20:35,000,000-36,000,000",
+   "reads": 200048,
+   "aligned_bases": 29999585,
+   "isolated_mismatches": 122667,
+   "recurrent_sites": 2654,
+   "recurrent_mismatch_bases": 5338,
+   "error_rate_isolated": 0.004089,
+   "mismatch_rate_all": 0.004267
+  },
+  "HSXt": {
+   "bam": "~/public_data/sim/measure/profiles/HSXt.bam",
+   "region": "chr20:35,000,000-36,000,000",
+   "reads": 200012,
+   "aligned_bases": 29996110,
+   "isolated_mismatches": 107618,
+   "recurrent_sites": 2051,
+   "recurrent_mismatch_bases": 4138,
+   "error_rate_isolated": 0.003588,
+   "mismatch_rate_all": 0.003726
+  },
+  "MSv1": {
+   "bam": "~/public_data/sim/measure/profiles/MSv1.bam",
+   "region": "chr20:35,000,000-36,000,000",
+   "reads": 200042,
+   "aligned_bases": 29999610,
+   "isolated_mismatches": 145694,
+   "recurrent_sites": 3909,
+   "recurrent_mismatch_bases": 7880,
+   "error_rate_isolated": 0.004857,
+   "mismatch_rate_all": 0.005119
+  },
+  "MSv3": {
+   "bam": "~/public_data/sim/measure/profiles/MSv3.bam",
+   "region": "chr20:35,000,000-36,000,000",
+   "reads": 199914,
+   "aligned_bases": 29372462,
+   "isolated_mismatches": 592469,
+   "recurrent_sites": 82424,
+   "recurrent_mismatch_bases": 172118,
+   "error_rate_isolated": 0.020171,
+   "mismatch_rate_all": 0.026031
+  }
+ },
+ "closest_first": [
+  "HS25",
+  "HSXt",
+  "HSXn",
+  "MSv1",
+  "MSv3"
+ ],
+ "abs_difference": {
+  "HS25": 0.000199,
+  "HSXt": 0.001484,
+  "HSXn": 0.001985,
+  "MSv1": 0.002753,
+  "MSv3": 0.018067
+ },
+ "versions": {
+  "bwa": "Version: 0.7.15-r1140",
+  "art_illumina": "Q Version 2.5.8 (June 6, 2016)",
+  "samtools": "samtools 1.21",
+  "bcftools": "bcftools 1.21",
+  "htslib (samtools)": "Using htslib 1.24",
+  "delly": "Delly (Version: 2.6.0)"
+ }
+}

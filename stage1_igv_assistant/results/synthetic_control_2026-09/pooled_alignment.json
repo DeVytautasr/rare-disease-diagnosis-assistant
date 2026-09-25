@@ -1,0 +1,19 @@
+{
+ "command": "~/miniconda3/envs/synth-bwa/bin/bwa mem -Y -K 100000000 -t 10 -R @RG\\tID:SIM\\tSM:NA12878\\tLB:NA12878\\tPL:illumina ~/reference/GRCh38_full_analysis_set_plus_decoy_hla.fa ~/public_data/sim/work/pool/R1.fq ~/public_data/sim/work/pool/R2.fq",
+ "threads": 10,
+ "wall_seconds": 8.8,
+ "records_per_implant": {
+  "IMP01": 122,
+  "IMP02": 100,
+  "IMP03": 129,
+  "IMP04": 100,
+  "IMP05": 114,
+  "IMP06": 159,
+  "IMP07": 117,
+  "IMP08": 115,
+  "IMP09": 106,
+  "IMP10": 87,
+  "IMP11": 121,
+  "IMP12": 82
+ }
+}

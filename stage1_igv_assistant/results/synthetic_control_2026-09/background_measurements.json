@@ -1,0 +1,49 @@
+{
+ "background": "~/public_data/NA12878.chr20_chr21.bam",
+ "background_bytes": 1636070786,
+ "quality_bins": {
+  "distinct": [
+   2,
+   3,
+   4,
+   5,
+   6,
+   10,
+   20,
+   30
+  ],
+  "counts": {
+   "2": 1996,
+   "3": 4502,
+   "4": 33013,
+   "5": 23481,
+   "6": 195343,
+   "10": 2890684,
+   "20": 1195094,
+   "30": 145655887
+  },
+  "bases": 150000000
+ },
+ "fragment_length": {
+  "region": "chr20:31,000,000-41,000,000",
+  "pairs": 1148342,
+  "mean": 442.64,
+  "sd": 104.58,
+  "median": 434.0,
+  "mad": 67.0,
+  "proper_pairs_above_cap": 0,
+  "cap": 1500
+ },
+ "error": {
+  "bam": "~/public_data/NA12878.chr20_chr21.bam",
+  "region": "chr20:35,000,000-36,000,000",
+  "reads": 227789,
+  "aligned_bases": 33866364,
+  "isolated_mismatches": 71248,
+  "recurrent_sites": 10381,
+  "recurrent_mismatch_bases": 44013,
+  "error_rate_isolated": 0.002104,
+  "mismatch_rate_all": 0.003403
+ },
+ "wall_seconds": 6.4
+}

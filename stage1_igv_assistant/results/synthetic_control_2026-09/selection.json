@@ -1,0 +1,578 @@
+{
+ "master_seed": 20260925,
+ "min_spacing_bp": 1000000,
+ "thresholds": {
+  "low_mapq_gate": 0.4,
+  "homopolymer_repeat": 10,
+  "dinucleotide_repeat": 10,
+  "entropy_repeat_below": 3.6148,
+  "lmf_partial": 0.05,
+  "mappability_partial_below": 0.9,
+  "homopolymer_clean_max": 8,
+  "dinucleotide_clean_max": 8,
+  "entropy_clean_min": 3.6897
+ },
+ "threshold_rule": "-- fixed on 2026-09-25 after seeing the distribution of 978\ncandidates (scan_breakpoints.py summary); a breakend's class is:\n\n  low_mappability  low_mapq_fraction_200 > 0.4          the tools' own quality gate\n  repeat_adjacent  low_mapq_fraction_200 <= 0.4 and at least one repeat signal:\n                     max_homopolymer >= 10 bp            (the 90th percentile; a common\n                                                          \"long homopolymer\" cut)\n                     max_dinucleotide_run >= 10 bp       (5 units, a common STR minimum;\n                                                          the 95th percentile)\n                     entropy2 < 3.6148                   (the 5th percentile)\n                     low_mapq_fraction_200 >= 0.05       (partial MAPQ loss below the gate)\n                     mappability < 0.9                   (partial empirical ambiguity)\n  clean_unique     low_mapq_fraction_200 == 0 and mappability == 1.0 and\n                   max_homopolymer <= 8 and max_dinucleotide_run <= 8 and\n                   entropy2 >= 3.6897                    (the 10th percentile)\n  unclassified     anything else -- a buffer between the classes, never selected\n\nAn implant's two breakends must both be in its class.\n\nThe recorded Phase 6 coordinates were displayed together with that\ndistribution, so they were visible when the thresholds were chosen. Under a\nstrict upper-decile rule (dinucleotide run >= 8 bp, the 90th percentile) the\nchr21 end of IMP01 (a run of exactly 8 bp) would be repeat_adjacent, not clean.",
+ "pool_sizes": {
+  "chr20:clean_unique": 394,
+  "chr20:low_mappability": 7,
+  "chr20:repeat_adjacent": 146,
+  "chr21:clean_unique": 212,
+  "chr21:low_mappability": 30,
+  "chr21:repeat_adjacent": 95
+ },
+ "class_counts": {
+  "chr20": {
+   "clean_unique": 394,
+   "repeat_adjacent": 146,
+   "low_mappability": 7,
+   "unclassified": 56
+  },
+  "chr21": {
+   "clean_unique": 212,
+   "repeat_adjacent": 95,
+   "low_mappability": 30,
+   "unclassified": 38
+  }
+ },
+ "recorded_coordinate_checks": [
+  {
+   "implant": "IMP01",
+   "breakend": "chr20:200000",
+   "recorded_class": "clean_unique",
+   "recomputed_class": "clean_unique",
+   "confirmed": true
+  },
+  {
+   "implant": "IMP01",
+   "breakend": "chr21:14100000",
+   "recorded_class": "clean_unique",
+   "recomputed_class": "clean_unique",
+   "confirmed": true
+  },
+  {
+   "implant": "IMP05",
+   "breakend": "chr21:13300000",
+   "recorded_class": "repeat_adjacent",
+   "recomputed_class": "repeat_adjacent",
+   "confirmed": true
+  },
+  {
+   "implant": "IMP06",
+   "breakend": "chr20:3900000",
+   "recorded_class": "repeat_adjacent",
+   "recomputed_class": "repeat_adjacent",
+   "confirmed": true
+  },
+  {
+   "implant": "IMP06",
+   "breakend": "chr21:17200000",
+   "recorded_class": "repeat_adjacent",
+   "recomputed_class": "repeat_adjacent",
+   "confirmed": true
+  },
+  {
+   "implant": "IMP10",
+   "breakend": "chr20:25800000",
+   "recorded_class": "low_mappability",
+   "recomputed_class": "low_mappability",
+   "confirmed": true
+  },
+  {
+   "implant": "IMP10",
+   "breakend": "chr21:7600000",
+   "recorded_class": "low_mappability",
+   "recomputed_class": "low_mappability",
+   "confirmed": true
+  },
+  {
+   "implant": "IMP11",
+   "breakend": "chr20:31100000",
+   "recorded_class": "low_mappability",
+   "recomputed_class": "low_mappability",
+   "confirmed": true
+  }
+ ],
+ "implants": [
+  {
+   "id": "IMP01",
+   "class": "clean_unique",
+   "source": {
+    "chr20": "recorded (Phase 6), class confirmed",
+    "chr21": "recorded (Phase 6), class confirmed"
+   },
+   "stats": {
+    "chr20": {
+     "chrom": "chr20",
+     "pos": 200000,
+     "low_mapq_fraction_200": 0.0,
+     "reads_200": 142,
+     "mean_depth_200": 39.41,
+     "low_mapq_fraction_500": 0.0,
+     "entropy2": 3.8391,
+     "max_homopolymer": 4,
+     "max_dinucleotide_run": 4,
+     "mappability": 1.0,
+     "tiles": 82,
+     "class": "clean_unique"
+    },
+    "chr21": {
+     "chrom": "chr21",
+     "pos": 14100000,
+     "low_mapq_fraction_200": 0.0,
+     "reads_200": 133,
+     "mean_depth_200": 36.42,
+     "low_mapq_fraction_500": 0.0,
+     "entropy2": 3.8463,
+     "max_homopolymer": 4,
+     "max_dinucleotide_run": 8,
+     "mappability": 1.0,
+     "tiles": 82,
+     "class": "clean_unique"
+    }
+   },
+   "chr20": 200000,
+   "chr21": 14100000
+  },
+  {
+   "id": "IMP02",
+   "class": "clean_unique",
+   "source": {
+    "chr20": "drawn (seed 1133209472, pool 363)",
+    "chr21": "drawn (seed 2114545686, pool 195)"
+   },
+   "stats": {
+    "chr20": {
+     "chrom": "chr20",
+     "pos": 45500000,
+     "low_mapq_fraction_200": 0.0,
+     "reads_200": 142,
+     "mean_depth_200": 37.15,
+     "low_mapq_fraction_500": 0.0,
+     "entropy2": 3.8534,
+     "max_homopolymer": 4,
+     "max_dinucleotide_run": 6,
+     "mappability": 1.0,
+     "tiles": 82,
+     "class": "clean_unique"
+    },
+    "chr21": {
+     "chrom": "chr21",
+     "pos": 33900000,
+     "low_mapq_fraction_200": 0.0,
+     "reads_200": 106,
+     "mean_depth_200": 28.53,
+     "low_mapq_fraction_500": 0.0,
+     "entropy2": 3.8517,
+     "max_homopolymer": 5,
+     "max_dinucleotide_run": 6,
+     "mappability": 1.0,
+     "tiles": 82,
+     "class": "clean_unique"
+    }
+   },
+   "chr20": 45500000,
+   "chr21": 33900000
+  },
+  {
+   "id": "IMP03",
+   "class": "clean_unique",
+   "source": {
+    "chr20": "drawn (seed 2049046530, pool 349)",
+    "chr21": "drawn (seed 855960936, pool 183)"
+   },
+   "stats": {
+    "chr20": {
+     "chrom": "chr20",
+     "pos": 4900000,
+     "low_mapq_fraction_200": 0.0,
+     "reads_200": 148,
+     "mean_depth_200": 40.74,
+     "low_mapq_fraction_500": 0.0,
+     "entropy2": 3.8781,
+     "max_homopolymer": 6,
+     "max_dinucleotide_run": 4,
+     "mappability": 1.0,
+     "tiles": 82,
+     "class": "clean_unique"
+    },
+    "chr21": {
+     "chrom": "chr21",
+     "pos": 45700000,
+     "low_mapq_fraction_200": 0.0,
+     "reads_200": 143,
+     "mean_depth_200": 38.41,
+     "low_mapq_fraction_500": 0.0,
+     "entropy2": 3.8638,
+     "max_homopolymer": 4,
+     "max_dinucleotide_run": 4,
+     "mappability": 1.0,
+     "tiles": 82,
+     "class": "clean_unique"
+    }
+   },
+   "chr20": 4900000,
+   "chr21": 45700000
+  },
+  {
+   "id": "IMP04",
+   "class": "clean_unique",
+   "source": {
+    "chr20": "drawn (seed 1067671839, pool 342)",
+    "chr21": "drawn (seed 1990258768, pool 168)"
+   },
+   "stats": {
+    "chr20": {
+     "chrom": "chr20",
+     "pos": 46900000,
+     "low_mapq_fraction_200": 0.0,
+     "reads_200": 129,
+     "mean_depth_200": 32.23,
+     "low_mapq_fraction_500": 0.0,
+     "entropy2": 3.8699,
+     "max_homopolymer": 6,
+     "max_dinucleotide_run": 6,
+     "mappability": 1.0,
+     "tiles": 82,
+     "class": "clean_unique"
+    },
+    "chr21": {
+     "chrom": "chr21",
+     "pos": 29200000,
+     "low_mapq_fraction_200": 0.0,
+     "reads_200": 131,
+     "mean_depth_200": 35.76,
+     "low_mapq_fraction_500": 0.0,
+     "entropy2": 3.8565,
+     "max_homopolymer": 5,
+     "max_dinucleotide_run": 4,
+     "mappability": 1.0,
+     "tiles": 82,
+     "class": "clean_unique"
+    }
+   },
+   "chr20": 46900000,
+   "chr21": 29200000
+  },
+  {
+   "id": "IMP05",
+   "class": "repeat_adjacent",
+   "source": {
+    "chr20": "drawn (seed 1459101402, pool 115)",
+    "chr21": "recorded (Phase 6), class confirmed"
+   },
+   "stats": {
+    "chr20": {
+     "chrom": "chr20",
+     "pos": 1900000,
+     "low_mapq_fraction_200": 0.016,
+     "reads_200": 126,
+     "mean_depth_200": 32.79,
+     "low_mapq_fraction_500": 0.008,
+     "entropy2": 3.8426,
+     "max_homopolymer": 14,
+     "max_dinucleotide_run": 4,
+     "mappability": 1.0,
+     "tiles": 82,
+     "class": "repeat_adjacent"
+    },
+    "chr21": {
+     "chrom": "chr21",
+     "pos": 13300000,
+     "low_mapq_fraction_200": 0.0,
+     "reads_200": 156,
+     "mean_depth_200": 44.75,
+     "low_mapq_fraction_500": 0.0,
+     "entropy2": 3.7571,
+     "max_homopolymer": 10,
+     "max_dinucleotide_run": 6,
+     "mappability": 1.0,
+     "tiles": 82,
+     "class": "repeat_adjacent"
+    }
+   },
+   "chr20": 1900000,
+   "chr21": 13300000
+  },
+  {
+   "id": "IMP06",
+   "class": "repeat_adjacent",
+   "source": {
+    "chr20": "recorded (Phase 6), class confirmed",
+    "chr21": "recorded (Phase 6), class confirmed"
+   },
+   "stats": {
+    "chr20": {
+     "chrom": "chr20",
+     "pos": 3900000,
+     "low_mapq_fraction_200": 0.0,
+     "reads_200": 177,
+     "mean_depth_200": 48.45,
+     "low_mapq_fraction_500": 0.0,
+     "entropy2": 3.8663,
+     "max_homopolymer": 10,
+     "max_dinucleotide_run": 6,
+     "mappability": 1.0,
+     "tiles": 82,
+     "class": "repeat_adjacent"
+    },
+    "chr21": {
+     "chrom": "chr21",
+     "pos": 17200000,
+     "low_mapq_fraction_200": 0.0,
+     "reads_200": 147,
+     "mean_depth_200": 40.38,
+     "low_mapq_fraction_500": 0.0,
+     "entropy2": 3.732,
+     "max_homopolymer": 6,
+     "max_dinucleotide_run": 16,
+     "mappability": 1.0,
+     "tiles": 82,
+     "class": "repeat_adjacent"
+    }
+   },
+   "chr20": 3900000,
+   "chr21": 17200000
+  },
+  {
+   "id": "IMP07",
+   "class": "repeat_adjacent",
+   "source": {
+    "chr20": "drawn (seed 1043115336, pool 111)",
+    "chr21": "drawn (seed 232476431, pool 67)"
+   },
+   "stats": {
+    "chr20": {
+     "chrom": "chr20",
+     "pos": 55000000,
+     "low_mapq_fraction_200": 0.0,
+     "reads_200": 129,
+     "mean_depth_200": 34.8,
+     "low_mapq_fraction_500": 0.004,
+     "entropy2": 3.8794,
+     "max_homopolymer": 7,
+     "max_dinucleotide_run": 10,
+     "mappability": 1.0,
+     "tiles": 82,
+     "class": "repeat_adjacent"
+    },
+    "chr21": {
+     "chrom": "chr21",
+     "pos": 41200000,
+     "low_mapq_fraction_200": 0.008,
+     "reads_200": 125,
+     "mean_depth_200": 29.6,
+     "low_mapq_fraction_500": 0.004,
+     "entropy2": 3.8857,
+     "max_homopolymer": 10,
+     "max_dinucleotide_run": 6,
+     "mappability": 1.0,
+     "tiles": 82,
+     "class": "repeat_adjacent"
+    }
+   },
+   "chr20": 55000000,
+   "chr21": 41200000
+  },
+  {
+   "id": "IMP08",
+   "class": "repeat_adjacent",
+   "source": {
+    "chr20": "drawn (seed 1518490679, pool 105)",
+    "chr21": "drawn (seed 954265415, pool 62)"
+   },
+   "stats": {
+    "chr20": {
+     "chrom": "chr20",
+     "pos": 13500000,
+     "low_mapq_fraction_200": 0.0,
+     "reads_200": 124,
+     "mean_depth_200": 35.62,
+     "low_mapq_fraction_500": 0.0,
+     "entropy2": 3.6899,
+     "max_homopolymer": 5,
+     "max_dinucleotide_run": 10,
+     "mappability": 1.0,
+     "tiles": 82,
+     "class": "repeat_adjacent"
+    },
+    "chr21": {
+     "chrom": "chr21",
+     "pos": 39300000,
+     "low_mapq_fraction_200": 0.0,
+     "reads_200": 152,
+     "mean_depth_200": 39.41,
+     "low_mapq_fraction_500": 0.0,
+     "entropy2": 3.8549,
+     "max_homopolymer": 13,
+     "max_dinucleotide_run": 6,
+     "mappability": 1.0,
+     "tiles": 82,
+     "class": "repeat_adjacent"
+    }
+   },
+   "chr20": 13500000,
+   "chr21": 39300000
+  },
+  {
+   "id": "IMP09",
+   "class": "low_mappability",
+   "source": {
+    "chr20": "drawn (seed 83332530, pool 4)",
+    "chr21": "drawn (seed 116038248, pool 17)"
+   },
+   "stats": {
+    "chr20": {
+     "chrom": "chr20",
+     "pos": 33700000,
+     "low_mapq_fraction_200": 0.479,
+     "reads_200": 94,
+     "mean_depth_200": 22.38,
+     "low_mapq_fraction_500": 0.339,
+     "entropy2": 3.3785,
+     "max_homopolymer": 7,
+     "max_dinucleotide_run": 4,
+     "mappability": 0.4146,
+     "tiles": 82,
+     "class": "low_mappability"
+    },
+    "chr21": {
+     "chrom": "chr21",
+     "pos": 5900000,
+     "low_mapq_fraction_200": 1.0,
+     "reads_200": 104,
+     "mean_depth_200": 30.09,
+     "low_mapq_fraction_500": 1.0,
+     "entropy2": 3.6537,
+     "max_homopolymer": 5,
+     "max_dinucleotide_run": 6,
+     "mappability": 0.0,
+     "tiles": 82,
+     "class": "low_mappability"
+    }
+   },
+   "chr20": 33700000,
+   "chr21": 5900000
+  },
+  {
+   "id": "IMP10",
+   "class": "low_mappability",
+   "source": {
+    "chr20": "recorded (Phase 6), class confirmed",
+    "chr21": "recorded (Phase 6), class confirmed"
+   },
+   "stats": {
+    "chr20": {
+     "chrom": "chr20",
+     "pos": 25800000,
+     "low_mapq_fraction_200": 1.0,
+     "reads_200": 110,
+     "mean_depth_200": 30.02,
+     "low_mapq_fraction_500": 1.0,
+     "entropy2": 3.8765,
+     "max_homopolymer": 4,
+     "max_dinucleotide_run": 6,
+     "mappability": 0.0,
+     "tiles": 82,
+     "class": "low_mappability"
+    },
+    "chr21": {
+     "chrom": "chr21",
+     "pos": 7600000,
+     "low_mapq_fraction_200": 1.0,
+     "reads_200": 107,
+     "mean_depth_200": 27.31,
+     "low_mapq_fraction_500": 1.0,
+     "entropy2": 3.8955,
+     "max_homopolymer": 5,
+     "max_dinucleotide_run": 6,
+     "mappability": 0.0,
+     "tiles": 82,
+     "class": "low_mappability"
+    }
+   },
+   "chr20": 25800000,
+   "chr21": 7600000
+  },
+  {
+   "id": "IMP11",
+   "class": "low_mappability",
+   "source": {
+    "chr20": "recorded (Phase 6), class confirmed",
+    "chr21": "drawn (seed 1869246703, pool 10)"
+   },
+   "stats": {
+    "chr20": {
+     "chrom": "chr20",
+     "pos": 31100000,
+     "low_mapq_fraction_200": 0.545,
+     "reads_200": 121,
+     "mean_depth_200": 25.53,
+     "low_mapq_fraction_500": 0.597,
+     "entropy2": 3.3527,
+     "max_homopolymer": 3,
+     "max_dinucleotide_run": 4,
+     "mappability": 0.561,
+     "tiles": 82,
+     "class": "low_mappability"
+    },
+    "chr21": {
+     "chrom": "chr21",
+     "pos": 20200000,
+     "low_mapq_fraction_200": 0.493,
+     "reads_200": 148,
+     "mean_depth_200": 40.96,
+     "low_mapq_fraction_500": 0.418,
+     "entropy2": 3.8482,
+     "max_homopolymer": 5,
+     "max_dinucleotide_run": 6,
+     "mappability": 0.0,
+     "tiles": 82,
+     "class": "low_mappability"
+    }
+   },
+   "chr20": 31100000,
+   "chr21": 20200000
+  },
+  {
+   "id": "IMP12",
+   "class": "low_mappability",
+   "source": {
+    "chr20": "drawn (seed 211666409, pool 3)",
+    "chr21": "drawn (seed 866322079, pool 9)"
+   },
+   "stats": {
+    "chr20": {
+     "chrom": "chr20",
+     "pos": 47900000,
+     "low_mapq_fraction_200": 0.804,
+     "reads_200": 112,
+     "mean_depth_200": 29.9,
+     "low_mapq_fraction_500": 0.858,
+     "entropy2": 3.8826,
+     "max_homopolymer": 6,
+     "max_dinucleotide_run": 4,
+     "mappability": 0.0,
+     "tiles": 82,
+     "class": "low_mappability"
+    },
+    "chr21": {
+     "chrom": "chr21",
+     "pos": 44100000,
+     "low_mapq_fraction_200": 1.0,
+     "reads_200": 84,
+     "mean_depth_200": 23.31,
+     "low_mapq_fraction_500": 1.0,
+     "entropy2": 3.889,
+     "max_homopolymer": 11,
+     "max_dinucleotide_run": 4,
+     "mappability": 0.0,
+     "tiles": 82,
+     "class": "low_mappability"
+    }
+   },
+   "chr20": 47900000,
+   "chr21": 44100000
+  }
+ ]
+}

@@ -1,0 +1,1090 @@
+{
+ "experiment": "synthetic positive control, rebuilt 2026-09-25 -- a NEW experiment (new draws, ALT-aware index, partly new breakpoints), not a reproduction of Phase 6",
+ "status": "STOPPED at the pre-registered IMP01 gate: at least one criterion failed. Nothing downstream of the gate was run -- no further implant BAMs, no delly on the implants or on the background, no demo bundle.",
+ "design": "heterozygous balanced reciprocal t(20;21), one implant per BAM, in the NA12878 chr20+chr21 slice; see scripts/synthetic/make_implants.py for every rule",
+ "code": {
+  "measure": "scripts/synthetic/measure_background.py",
+  "scan": "scripts/synthetic/scan_breakpoints.py",
+  "select": "scripts/synthetic/select_breakpoints.py",
+  "generate": "scripts/synthetic/make_implants.py",
+  "gate": "scripts/synthetic/gate_imp01.py",
+  "delly": "scripts/synthetic/run_delly_synth.sh"
+ },
+ "versions": {
+  "bwa": "Version: 0.7.15-r1140",
+  "art_illumina": "Q Version 2.5.8 (June 6, 2016)",
+  "samtools": "samtools 1.21",
+  "bcftools": "bcftools 1.21",
+  "htslib (samtools)": "Using htslib 1.24",
+  "delly": "Delly (Version: 2.6.0)"
+ },
+ "seeds": {
+  "master_seed": 20260925,
+  "selection_draws": {
+   "IMP01": {
+    "chr20": "recorded (Phase 6), class confirmed",
+    "chr21": "recorded (Phase 6), class confirmed"
+   },
+   "IMP02": {
+    "chr20": "drawn (seed 1133209472, pool 363)",
+    "chr21": "drawn (seed 2114545686, pool 195)"
+   },
+   "IMP03": {
+    "chr20": "drawn (seed 2049046530, pool 349)",
+    "chr21": "drawn (seed 855960936, pool 183)"
+   },
+   "IMP04": {
+    "chr20": "drawn (seed 1067671839, pool 342)",
+    "chr21": "drawn (seed 1990258768, pool 168)"
+   },
+   "IMP05": {
+    "chr20": "drawn (seed 1459101402, pool 115)",
+    "chr21": "recorded (Phase 6), class confirmed"
+   },
+   "IMP06": {
+    "chr20": "recorded (Phase 6), class confirmed",
+    "chr21": "recorded (Phase 6), class confirmed"
+   },
+   "IMP07": {
+    "chr20": "drawn (seed 1043115336, pool 111)",
+    "chr21": "drawn (seed 232476431, pool 67)"
+   },
+   "IMP08": {
+    "chr20": "drawn (seed 1518490679, pool 105)",
+    "chr21": "drawn (seed 954265415, pool 62)"
+   },
+   "IMP09": {
+    "chr20": "drawn (seed 83332530, pool 4)",
+    "chr21": "drawn (seed 116038248, pool 17)"
+   },
+   "IMP10": {
+    "chr20": "recorded (Phase 6), class confirmed",
+    "chr21": "recorded (Phase 6), class confirmed"
+   },
+   "IMP11": {
+    "chr20": "recorded (Phase 6), class confirmed",
+    "chr21": "drawn (seed 1869246703, pool 10)"
+   },
+   "IMP12": {
+    "chr20": "drawn (seed 211666409, pool 3)",
+    "chr21": "drawn (seed 866322079, pool 9)"
+   }
+  },
+  "per_implant": {
+   "IMP01": {
+    "remove_A": 816187603,
+    "remove_B": 2089404254,
+    "art_J20": 1593031808,
+    "pick_J20": 1293833540,
+    "art_J21": 1019745319,
+    "pick_J21": 2065008310
+   },
+   "IMP02": {
+    "remove_A": 1638358063,
+    "remove_B": 1670648285,
+    "art_J20": 942247574,
+    "pick_J20": 1087793832,
+    "art_J21": 1660121252,
+    "pick_J21": 594119913
+   },
+   "IMP03": {
+    "remove_A": 1268147064,
+    "remove_B": 288831609,
+    "art_J20": 1005189375,
+    "pick_J20": 74996597,
+    "art_J21": 1434697342,
+    "pick_J21": 1371837468
+   },
+   "IMP04": {
+    "remove_A": 1632625800,
+    "remove_B": 1677044901,
+    "art_J20": 57062706,
+    "pick_J20": 1213631025,
+    "art_J21": 841048992,
+    "pick_J21": 1508914284
+   },
+   "IMP05": {
+    "remove_A": 2110429716,
+    "remove_B": 1535922043,
+    "art_J20": 1229104232,
+    "pick_J20": 960570442,
+    "art_J21": 2065702606,
+    "pick_J21": 1474755165
+   },
+   "IMP06": {
+    "remove_A": 1005688558,
+    "remove_B": 966493446,
+    "art_J20": 2021803709,
+    "pick_J20": 1170934864,
+    "art_J21": 496549764,
+    "pick_J21": 69678400
+   },
+   "IMP07": {
+    "remove_A": 601178239,
+    "remove_B": 250616929,
+    "art_J20": 2041068797,
+    "pick_J20": 1836871868,
+    "art_J21": 1813303548,
+    "pick_J21": 1898149199
+   },
+   "IMP08": {
+    "remove_A": 460529952,
+    "remove_B": 154703838,
+    "art_J20": 994004767,
+    "pick_J20": 686292177,
+    "art_J21": 398610275,
+    "pick_J21": 1515714380
+   },
+   "IMP09": {
+    "remove_A": 1875596265,
+    "remove_B": 369775666,
+    "art_J20": 1477586207,
+    "pick_J20": 658801603,
+    "art_J21": 15003808,
+    "pick_J21": 881184574
+   },
+   "IMP10": {
+    "remove_A": 1559836626,
+    "remove_B": 1632996763,
+    "art_J20": 1286853468,
+    "pick_J20": 1383684098,
+    "art_J21": 920556435,
+    "pick_J21": 844735709
+   },
+   "IMP11": {
+    "remove_A": 509456872,
+    "remove_B": 1943870899,
+    "art_J20": 1700333904,
+    "pick_J20": 1377482352,
+    "art_J21": 115932633,
+    "pick_J21": 150293527
+   },
+   "IMP12": {
+    "remove_A": 1893422302,
+    "remove_B": 1412279415,
+    "art_J20": 907301183,
+    "pick_J20": 1305665462,
+    "art_J21": 124627007,
+    "pick_J21": 2143079221
+   }
+  },
+  "art_profile_seeds": {
+   "HS25": 20260925,
+   "HSXn": 20260926,
+   "HSXt": 20260927,
+   "MSv1": 20260928,
+   "MSv3": 20260929
+  }
+ },
+ "class_thresholds": {
+  "low_mapq_gate": 0.4,
+  "homopolymer_repeat": 10,
+  "dinucleotide_repeat": 10,
+  "entropy_repeat_below": 3.6148,
+  "lmf_partial": 0.05,
+  "mappability_partial_below": 0.9,
+  "homopolymer_clean_max": 8,
+  "dinucleotide_clean_max": 8,
+  "entropy_clean_min": 3.6897
+ },
+ "recorded_coordinate_checks": [
+  {
+   "implant": "IMP01",
+   "breakend": "chr20:200000",
+   "recorded_class": "clean_unique",
+   "recomputed_class": "clean_unique",
+   "confirmed": true
+  },
+  {
+   "implant": "IMP01",
+   "breakend": "chr21:14100000",
+   "recorded_class": "clean_unique",
+   "recomputed_class": "clean_unique",
+   "confirmed": true
+  },
+  {
+   "implant": "IMP05",
+   "breakend": "chr21:13300000",
+   "recorded_class": "repeat_adjacent",
+   "recomputed_class": "repeat_adjacent",
+   "confirmed": true
+  },
+  {
+   "implant": "IMP06",
+   "breakend": "chr20:3900000",
+   "recorded_class": "repeat_adjacent",
+   "recomputed_class": "repeat_adjacent",
+   "confirmed": true
+  },
+  {
+   "implant": "IMP06",
+   "breakend": "chr21:17200000",
+   "recorded_class": "repeat_adjacent",
+   "recomputed_class": "repeat_adjacent",
+   "confirmed": true
+  },
+  {
+   "implant": "IMP10",
+   "breakend": "chr20:25800000",
+   "recorded_class": "low_mappability",
+   "recomputed_class": "low_mappability",
+   "confirmed": true
+  },
+  {
+   "implant": "IMP10",
+   "breakend": "chr21:7600000",
+   "recorded_class": "low_mappability",
+   "recomputed_class": "low_mappability",
+   "confirmed": true
+  },
+  {
+   "implant": "IMP11",
+   "breakend": "chr20:31100000",
+   "recorded_class": "low_mappability",
+   "recomputed_class": "low_mappability",
+   "confirmed": true
+  }
+ ],
+ "gate": {
+  "IMP01": {
+   "implant": "IMP01",
+   "bam": "~/public_data/sim/bams/IMP01.bam",
+   "breakpoints": {
+    "chr20": 200000,
+    "chr21": 14100000
+   },
+   "a": {
+    "truly_spanning_reads": 33,
+    "with_partner_sa": 18,
+    "fraction": 0.5455,
+    "threshold": 0.7,
+    "primary_off_chr20_chr21": 0,
+    "not_found": 0,
+    "holds": false
+   },
+   "b": {
+    "wrong_partner_sa_entries": 0,
+    "threshold": 0,
+    "holds": true,
+    "info_sa_entries_outside_chr20_chr21_over_all_simulated_records": 0,
+    "info_simulated_records": 122
+   },
+   "c": {
+    "depth": {
+     "chr20": {
+      "position": 200000,
+      "pre_mean_depth": 39.59,
+      "post_mean_depth": 36.69,
+      "change": -0.0733,
+      "pre_nondup": 36.63,
+      "post_nondup": 34.93,
+      "change_nondup": -0.0464
+     },
+     "chr21": {
+      "position": 14100000,
+      "pre_mean_depth": 34.87,
+      "post_mean_depth": 35.44,
+      "change": 0.0163,
+      "pre_nondup": 31.36,
+      "post_nondup": 32.53,
+      "change_nondup": 0.0373
+     }
+    },
+    "threshold": 0.1,
+    "holds": true
+   },
+   "verdict": "FAIL"
+  }
+ },
+ "bams_built": [
+  "IMP01"
+ ],
+ "delly": {},
+ "delly_background": null,
+ "implants": [
+  {
+   "id": "IMP01",
+   "class": "clean_unique",
+   "chr20": 200000,
+   "chr21": 14100000,
+   "source": {
+    "chr20": "recorded (Phase 6), class confirmed",
+    "chr21": "recorded (Phase 6), class confirmed"
+   },
+   "prepared": true,
+   "compensation": {
+    "removal": {
+     "A": {
+      "chrom": "chr20",
+      "pos": 200000,
+      "spanning_pairs": 68,
+      "spanning_duplicates": 5,
+      "removed": 34,
+      "removed_duplicates": 4,
+      "removed_nondup": 30,
+      "remove_seed": 816187603
+     },
+     "B": {
+      "chrom": "chr21",
+      "pos": 14100000,
+      "spanning_pairs": 49,
+      "spanning_duplicates": 4,
+      "removed": 24,
+      "removed_duplicates": 2,
+      "removed_nondup": 22,
+      "remove_seed": 2089404254
+     }
+    },
+    "fragments_added_total": 52,
+    "junctions": {
+     "J20": {
+      "template_length": 4000,
+      "junction_index": 2000,
+      "art_seed": 1593031808,
+      "art_fold": 60,
+      "art_attempts": 1,
+      "spanning_fragments_available": 72,
+      "pick_seed": 1293833540,
+      "fragments_added": 26,
+      "reads_spanning_junction": 15
+     },
+     "J21": {
+      "template_length": 4000,
+      "junction_index": 2000,
+      "art_seed": 1019745319,
+      "art_fold": 60,
+      "art_attempts": 1,
+      "spanning_fragments_available": 91,
+      "pick_seed": 2065008310,
+      "fragments_added": 26,
+      "reads_spanning_junction": 18
+     }
+    }
+   },
+   "bam_built": true,
+   "build": {
+    "bam": "~/public_data/sim/bams/IMP01.bam",
+    "bytes": 1624702926,
+    "background_records": 29330868,
+    "removed_records": 116,
+    "simulated_records": 122,
+    "output_records": 29330874,
+    "record_arithmetic_holds": true,
+    "read_groups": 13,
+    "samples_in_read_groups": [
+     "NA12878"
+    ],
+    "libraries_in_read_groups": [
+     "NA12878"
+    ],
+    "wall_seconds": 142.4
+   },
+   "gate_verdict": "FAIL",
+   "delly": null
+  },
+  {
+   "id": "IMP02",
+   "class": "clean_unique",
+   "chr20": 45500000,
+   "chr21": 33900000,
+   "source": {
+    "chr20": "drawn (seed 1133209472, pool 363)",
+    "chr21": "drawn (seed 2114545686, pool 195)"
+   },
+   "prepared": true,
+   "compensation": {
+    "removal": {
+     "A": {
+      "chrom": "chr20",
+      "pos": 45500000,
+      "spanning_pairs": 62,
+      "spanning_duplicates": 9,
+      "removed": 31,
+      "removed_duplicates": 5,
+      "removed_nondup": 26,
+      "remove_seed": 1638358063
+     },
+     "B": {
+      "chrom": "chr21",
+      "pos": 33900000,
+      "spanning_pairs": 34,
+      "spanning_duplicates": 3,
+      "removed": 17,
+      "removed_duplicates": 2,
+      "removed_nondup": 15,
+      "remove_seed": 1670648285
+     }
+    },
+    "fragments_added_total": 41,
+    "junctions": {
+     "J20": {
+      "template_length": 4000,
+      "junction_index": 2000,
+      "art_seed": 942247574,
+      "art_fold": 60,
+      "art_attempts": 1,
+      "spanning_fragments_available": 91,
+      "pick_seed": 1087793832,
+      "fragments_added": 20,
+      "reads_spanning_junction": 16
+     },
+     "J21": {
+      "template_length": 4000,
+      "junction_index": 2000,
+      "art_seed": 1660121252,
+      "art_fold": 60,
+      "art_attempts": 1,
+      "spanning_fragments_available": 80,
+      "pick_seed": 594119913,
+      "fragments_added": 21,
+      "reads_spanning_junction": 12
+     }
+    }
+   },
+   "bam_built": false,
+   "build": null,
+   "gate_verdict": null,
+   "delly": null
+  },
+  {
+   "id": "IMP03",
+   "class": "clean_unique",
+   "chr20": 4900000,
+   "chr21": 45700000,
+   "source": {
+    "chr20": "drawn (seed 2049046530, pool 349)",
+    "chr21": "drawn (seed 855960936, pool 183)"
+   },
+   "prepared": true,
+   "compensation": {
+    "removal": {
+     "A": {
+      "chrom": "chr20",
+      "pos": 4900000,
+      "spanning_pairs": 60,
+      "spanning_duplicates": 5,
+      "removed": 30,
+      "removed_duplicates": 2,
+      "removed_nondup": 28,
+      "remove_seed": 1268147064
+     },
+     "B": {
+      "chrom": "chr21",
+      "pos": 45700000,
+      "spanning_pairs": 60,
+      "spanning_duplicates": 6,
+      "removed": 30,
+      "removed_duplicates": 3,
+      "removed_nondup": 27,
+      "remove_seed": 288831609
+     }
+    },
+    "fragments_added_total": 55,
+    "junctions": {
+     "J20": {
+      "template_length": 4000,
+      "junction_index": 2000,
+      "art_seed": 1005189375,
+      "art_fold": 60,
+      "art_attempts": 1,
+      "spanning_fragments_available": 99,
+      "pick_seed": 74996597,
+      "fragments_added": 28,
+      "reads_spanning_junction": 17
+     },
+     "J21": {
+      "template_length": 4000,
+      "junction_index": 2000,
+      "art_seed": 1434697342,
+      "art_fold": 60,
+      "art_attempts": 1,
+      "spanning_fragments_available": 78,
+      "pick_seed": 1371837468,
+      "fragments_added": 27,
+      "reads_spanning_junction": 17
+     }
+    }
+   },
+   "bam_built": false,
+   "build": null,
+   "gate_verdict": null,
+   "delly": null
+  },
+  {
+   "id": "IMP04",
+   "class": "clean_unique",
+   "chr20": 46900000,
+   "chr21": 29200000,
+   "source": {
+    "chr20": "drawn (seed 1067671839, pool 342)",
+    "chr21": "drawn (seed 1990258768, pool 168)"
+   },
+   "prepared": true,
+   "compensation": {
+    "removal": {
+     "A": {
+      "chrom": "chr20",
+      "pos": 46900000,
+      "spanning_pairs": 48,
+      "spanning_duplicates": 2,
+      "removed": 24,
+      "removed_duplicates": 2,
+      "removed_nondup": 22,
+      "remove_seed": 1632625800
+     },
+     "B": {
+      "chrom": "chr21",
+      "pos": 29200000,
+      "spanning_pairs": 40,
+      "spanning_duplicates": 4,
+      "removed": 20,
+      "removed_duplicates": 1,
+      "removed_nondup": 19,
+      "remove_seed": 1677044901
+     }
+    },
+    "fragments_added_total": 41,
+    "junctions": {
+     "J20": {
+      "template_length": 4000,
+      "junction_index": 2000,
+      "art_seed": 57062706,
+      "art_fold": 60,
+      "art_attempts": 1,
+      "spanning_fragments_available": 92,
+      "pick_seed": 1213631025,
+      "fragments_added": 20,
+      "reads_spanning_junction": 12
+     },
+     "J21": {
+      "template_length": 4000,
+      "junction_index": 2000,
+      "art_seed": 841048992,
+      "art_fold": 60,
+      "art_attempts": 1,
+      "spanning_fragments_available": 103,
+      "pick_seed": 1508914284,
+      "fragments_added": 21,
+      "reads_spanning_junction": 15
+     }
+    }
+   },
+   "bam_built": false,
+   "build": null,
+   "gate_verdict": null,
+   "delly": null
+  },
+  {
+   "id": "IMP05",
+   "class": "repeat_adjacent",
+   "chr20": 1900000,
+   "chr21": 13300000,
+   "source": {
+    "chr20": "drawn (seed 1459101402, pool 115)",
+    "chr21": "recorded (Phase 6), class confirmed"
+   },
+   "prepared": true,
+   "compensation": {
+    "removal": {
+     "A": {
+      "chrom": "chr20",
+      "pos": 1900000,
+      "spanning_pairs": 53,
+      "spanning_duplicates": 7,
+      "removed": 26,
+      "removed_duplicates": 2,
+      "removed_nondup": 24,
+      "remove_seed": 2110429716
+     },
+     "B": {
+      "chrom": "chr21",
+      "pos": 13300000,
+      "spanning_pairs": 62,
+      "spanning_duplicates": 12,
+      "removed": 31,
+      "removed_duplicates": 6,
+      "removed_nondup": 25,
+      "remove_seed": 1535922043
+     }
+    },
+    "fragments_added_total": 49,
+    "junctions": {
+     "J20": {
+      "template_length": 4000,
+      "junction_index": 2000,
+      "art_seed": 1229104232,
+      "art_fold": 60,
+      "art_attempts": 1,
+      "spanning_fragments_available": 96,
+      "pick_seed": 960570442,
+      "fragments_added": 24,
+      "reads_spanning_junction": 18
+     },
+     "J21": {
+      "template_length": 4000,
+      "junction_index": 2000,
+      "art_seed": 2065702606,
+      "art_fold": 60,
+      "art_attempts": 1,
+      "spanning_fragments_available": 102,
+      "pick_seed": 1474755165,
+      "fragments_added": 25,
+      "reads_spanning_junction": 15
+     }
+    }
+   },
+   "bam_built": false,
+   "build": null,
+   "gate_verdict": null,
+   "delly": null
+  },
+  {
+   "id": "IMP06",
+   "class": "repeat_adjacent",
+   "chr20": 3900000,
+   "chr21": 17200000,
+   "source": {
+    "chr20": "recorded (Phase 6), class confirmed",
+    "chr21": "recorded (Phase 6), class confirmed"
+   },
+   "prepared": true,
+   "compensation": {
+    "removal": {
+     "A": {
+      "chrom": "chr20",
+      "pos": 3900000,
+      "spanning_pairs": 72,
+      "spanning_duplicates": 5,
+      "removed": 36,
+      "removed_duplicates": 0,
+      "removed_nondup": 36,
+      "remove_seed": 1005688558
+     },
+     "B": {
+      "chrom": "chr21",
+      "pos": 17200000,
+      "spanning_pairs": 64,
+      "spanning_duplicates": 11,
+      "removed": 32,
+      "removed_duplicates": 6,
+      "removed_nondup": 26,
+      "remove_seed": 966493446
+     }
+    },
+    "fragments_added_total": 62,
+    "junctions": {
+     "J20": {
+      "template_length": 4000,
+      "junction_index": 2000,
+      "art_seed": 2021803709,
+      "art_fold": 60,
+      "art_attempts": 1,
+      "spanning_fragments_available": 78,
+      "pick_seed": 1170934864,
+      "fragments_added": 31,
+      "reads_spanning_junction": 25
+     },
+     "J21": {
+      "template_length": 4000,
+      "junction_index": 2000,
+      "art_seed": 496549764,
+      "art_fold": 60,
+      "art_attempts": 1,
+      "spanning_fragments_available": 107,
+      "pick_seed": 69678400,
+      "fragments_added": 31,
+      "reads_spanning_junction": 22
+     }
+    }
+   },
+   "bam_built": false,
+   "build": null,
+   "gate_verdict": null,
+   "delly": null
+  },
+  {
+   "id": "IMP07",
+   "class": "repeat_adjacent",
+   "chr20": 55000000,
+   "chr21": 41200000,
+   "source": {
+    "chr20": "drawn (seed 1043115336, pool 111)",
+    "chr21": "drawn (seed 232476431, pool 67)"
+   },
+   "prepared": true,
+   "compensation": {
+    "removal": {
+     "A": {
+      "chrom": "chr20",
+      "pos": 55000000,
+      "spanning_pairs": 60,
+      "spanning_duplicates": 9,
+      "removed": 30,
+      "removed_duplicates": 5,
+      "removed_nondup": 25,
+      "remove_seed": 601178239
+     },
+     "B": {
+      "chrom": "chr21",
+      "pos": 41200000,
+      "spanning_pairs": 49,
+      "spanning_duplicates": 5,
+      "removed": 24,
+      "removed_duplicates": 2,
+      "removed_nondup": 22,
+      "remove_seed": 250616929
+     }
+    },
+    "fragments_added_total": 47,
+    "junctions": {
+     "J20": {
+      "template_length": 4000,
+      "junction_index": 2000,
+      "art_seed": 2041068797,
+      "art_fold": 60,
+      "art_attempts": 1,
+      "spanning_fragments_available": 101,
+      "pick_seed": 1836871868,
+      "fragments_added": 24,
+      "reads_spanning_junction": 18
+     },
+     "J21": {
+      "template_length": 4000,
+      "junction_index": 2000,
+      "art_seed": 1813303548,
+      "art_fold": 60,
+      "art_attempts": 1,
+      "spanning_fragments_available": 99,
+      "pick_seed": 1898149199,
+      "fragments_added": 23,
+      "reads_spanning_junction": 17
+     }
+    }
+   },
+   "bam_built": false,
+   "build": null,
+   "gate_verdict": null,
+   "delly": null
+  },
+  {
+   "id": "IMP08",
+   "class": "repeat_adjacent",
+   "chr20": 13500000,
+   "chr21": 39300000,
+   "source": {
+    "chr20": "drawn (seed 1518490679, pool 105)",
+    "chr21": "drawn (seed 954265415, pool 62)"
+   },
+   "prepared": true,
+   "compensation": {
+    "removal": {
+     "A": {
+      "chrom": "chr20",
+      "pos": 13500000,
+      "spanning_pairs": 50,
+      "spanning_duplicates": 7,
+      "removed": 25,
+      "removed_duplicates": 3,
+      "removed_nondup": 22,
+      "remove_seed": 460529952
+     },
+     "B": {
+      "chrom": "chr21",
+      "pos": 39300000,
+      "spanning_pairs": 57,
+      "spanning_duplicates": 6,
+      "removed": 28,
+      "removed_duplicates": 4,
+      "removed_nondup": 24,
+      "remove_seed": 154703838
+     }
+    },
+    "fragments_added_total": 46,
+    "junctions": {
+     "J20": {
+      "template_length": 4000,
+      "junction_index": 2000,
+      "art_seed": 994004767,
+      "art_fold": 60,
+      "art_attempts": 1,
+      "spanning_fragments_available": 102,
+      "pick_seed": 686292177,
+      "fragments_added": 23,
+      "reads_spanning_junction": 20
+     },
+     "J21": {
+      "template_length": 4000,
+      "junction_index": 2000,
+      "art_seed": 398610275,
+      "art_fold": 60,
+      "art_attempts": 1,
+      "spanning_fragments_available": 101,
+      "pick_seed": 1515714380,
+      "fragments_added": 23,
+      "reads_spanning_junction": 19
+     }
+    }
+   },
+   "bam_built": false,
+   "build": null,
+   "gate_verdict": null,
+   "delly": null
+  },
+  {
+   "id": "IMP09",
+   "class": "low_mappability",
+   "chr20": 33700000,
+   "chr21": 5900000,
+   "source": {
+    "chr20": "drawn (seed 83332530, pool 4)",
+    "chr21": "drawn (seed 116038248, pool 17)"
+   },
+   "prepared": true,
+   "compensation": {
+    "removal": {
+     "A": {
+      "chrom": "chr20",
+      "pos": 33700000,
+      "spanning_pairs": 44,
+      "spanning_duplicates": 2,
+      "removed": 22,
+      "removed_duplicates": 0,
+      "removed_nondup": 22,
+      "remove_seed": 1875596265
+     },
+     "B": {
+      "chrom": "chr21",
+      "pos": 5900000,
+      "spanning_pairs": 42,
+      "spanning_duplicates": 2,
+      "removed": 21,
+      "removed_duplicates": 0,
+      "removed_nondup": 21,
+      "remove_seed": 369775666
+     }
+    },
+    "fragments_added_total": 43,
+    "junctions": {
+     "J20": {
+      "template_length": 4000,
+      "junction_index": 2000,
+      "art_seed": 1477586207,
+      "art_fold": 60,
+      "art_attempts": 1,
+      "spanning_fragments_available": 108,
+      "pick_seed": 658801603,
+      "fragments_added": 22,
+      "reads_spanning_junction": 17
+     },
+     "J21": {
+      "template_length": 4000,
+      "junction_index": 2000,
+      "art_seed": 15003808,
+      "art_fold": 60,
+      "art_attempts": 1,
+      "spanning_fragments_available": 90,
+      "pick_seed": 881184574,
+      "fragments_added": 21,
+      "reads_spanning_junction": 16
+     }
+    }
+   },
+   "bam_built": false,
+   "build": null,
+   "gate_verdict": null,
+   "delly": null
+  },
+  {
+   "id": "IMP10",
+   "class": "low_mappability",
+   "chr20": 25800000,
+   "chr21": 7600000,
+   "source": {
+    "chr20": "recorded (Phase 6), class confirmed",
+    "chr21": "recorded (Phase 6), class confirmed"
+   },
+   "prepared": true,
+   "compensation": {
+    "removal": {
+     "A": {
+      "chrom": "chr20",
+      "pos": 25800000,
+      "spanning_pairs": 39,
+      "spanning_duplicates": 0,
+      "removed": 19,
+      "removed_duplicates": 0,
+      "removed_nondup": 19,
+      "remove_seed": 1559836626
+     },
+     "B": {
+      "chrom": "chr21",
+      "pos": 7600000,
+      "spanning_pairs": 43,
+      "spanning_duplicates": 4,
+      "removed": 21,
+      "removed_duplicates": 2,
+      "removed_nondup": 19,
+      "remove_seed": 1632996763
+     }
+    },
+    "fragments_added_total": 38,
+    "junctions": {
+     "J20": {
+      "template_length": 4000,
+      "junction_index": 2000,
+      "art_seed": 1286853468,
+      "art_fold": 60,
+      "art_attempts": 1,
+      "spanning_fragments_available": 107,
+      "pick_seed": 1383684098,
+      "fragments_added": 19,
+      "reads_spanning_junction": 11
+     },
+     "J21": {
+      "template_length": 4000,
+      "junction_index": 2000,
+      "art_seed": 920556435,
+      "art_fold": 60,
+      "art_attempts": 1,
+      "spanning_fragments_available": 106,
+      "pick_seed": 844735709,
+      "fragments_added": 19,
+      "reads_spanning_junction": 12
+     }
+    }
+   },
+   "bam_built": false,
+   "build": null,
+   "gate_verdict": null,
+   "delly": null
+  },
+  {
+   "id": "IMP11",
+   "class": "low_mappability",
+   "chr20": 31100000,
+   "chr21": 20200000,
+   "source": {
+    "chr20": "recorded (Phase 6), class confirmed",
+    "chr21": "drawn (seed 1869246703, pool 10)"
+   },
+   "prepared": true,
+   "compensation": {
+    "removal": {
+     "A": {
+      "chrom": "chr20",
+      "pos": 31100000,
+      "spanning_pairs": 39,
+      "spanning_duplicates": 5,
+      "removed": 19,
+      "removed_duplicates": 2,
+      "removed_nondup": 17,
+      "remove_seed": 509456872
+     },
+     "B": {
+      "chrom": "chr21",
+      "pos": 20200000,
+      "spanning_pairs": 65,
+      "spanning_duplicates": 3,
+      "removed": 32,
+      "removed_duplicates": 1,
+      "removed_nondup": 31,
+      "remove_seed": 1943870899
+     }
+    },
+    "fragments_added_total": 48,
+    "junctions": {
+     "J20": {
+      "template_length": 4000,
+      "junction_index": 2000,
+      "art_seed": 1700333904,
+      "art_fold": 60,
+      "art_attempts": 1,
+      "spanning_fragments_available": 92,
+      "pick_seed": 1377482352,
+      "fragments_added": 24,
+      "reads_spanning_junction": 13
+     },
+     "J21": {
+      "template_length": 4000,
+      "junction_index": 2000,
+      "art_seed": 115932633,
+      "art_fold": 60,
+      "art_attempts": 1,
+      "spanning_fragments_available": 86,
+      "pick_seed": 150293527,
+      "fragments_added": 24,
+      "reads_spanning_junction": 20
+     }
+    }
+   },
+   "bam_built": false,
+   "build": null,
+   "gate_verdict": null,
+   "delly": null
+  },
+  {
+   "id": "IMP12",
+   "class": "low_mappability",
+   "chr20": 47900000,
+   "chr21": 44100000,
+   "source": {
+    "chr20": "drawn (seed 211666409, pool 3)",
+    "chr21": "drawn (seed 866322079, pool 9)"
+   },
+   "prepared": true,
+   "compensation": {
+    "removal": {
+     "A": {
+      "chrom": "chr20",
+      "pos": 47900000,
+      "spanning_pairs": 45,
+      "spanning_duplicates": 5,
+      "removed": 22,
+      "removed_duplicates": 5,
+      "removed_nondup": 17,
+      "remove_seed": 1893422302
+     },
+     "B": {
+      "chrom": "chr21",
+      "pos": 44100000,
+      "spanning_pairs": 33,
+      "spanning_duplicates": 2,
+      "removed": 16,
+      "removed_duplicates": 0,
+      "removed_nondup": 16,
+      "remove_seed": 1412279415
+     }
+    },
+    "fragments_added_total": 33,
+    "junctions": {
+     "J20": {
+      "template_length": 4000,
+      "junction_index": 2000,
+      "art_seed": 907301183,
+      "art_fold": 60,
+      "art_attempts": 1,
+      "spanning_fragments_available": 93,
+      "pick_seed": 1305665462,
+      "fragments_added": 16,
+      "reads_spanning_junction": 10
+     },
+     "J21": {
+      "template_length": 4000,
+      "junction_index": 2000,
+      "art_seed": 124627007,
+      "art_fold": 60,
+      "art_attempts": 1,
+      "spanning_fragments_available": 81,
+      "pick_seed": 2143079221,
+      "fragments_added": 17,
+      "reads_spanning_junction": 15
+     }
+    }
+   },
+   "bam_built": false,
+   "build": null,
+   "gate_verdict": null,
+   "delly": null
+  }
+ ]
+}
