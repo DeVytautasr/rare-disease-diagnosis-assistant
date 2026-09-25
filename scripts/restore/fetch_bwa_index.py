@@ -6,7 +6,7 @@ publishes in its current.tree listing. Downloaded, never built.
     fetch_bwa_index.py [--dest DIR] [--ebi-conns N] [--aws-conns N]
 
 The three large files are fetched as parallel byte ranges from both mirrors: on
-2026-09-26 one connection to EBI measured 1.6 MB/s, eight together 5.0 MB/s,
+2026-09-25 one connection to EBI measured 1.6 MB/s, eight together 5.0 MB/s,
 and four more to AWS added 1.1 MB/s. Ranges are appended to per-segment files,
 so an interrupted run resumes instead of restarting.
 
@@ -34,7 +34,7 @@ AWS = "https://1000genomes.s3.amazonaws.com"
 DIR = "technical/reference/GRCh38_reference_genome"
 FA = "GRCh38_full_analysis_set_plus_decoy_hla.fa"
 EXTS = ["alt", "amb", "ann", "pac", "sa", "bwt"]
-# Observed with HEAD requests to both mirrors on 2026-09-26; a mismatch stops the run.
+# Observed with HEAD requests to both mirrors on 2026-09-25; a mismatch stops the run.
 EXPECTED_BYTES = {"amb": 20199, "ann": 448319, "bwt": 3217347004,
                   "pac": 804336731, "sa": 1608673512, "alt": 487553}
 # Published md5s already verified in earlier sessions, used as a positive
@@ -62,7 +62,10 @@ def published_md5s(dest):
     with requests.get(url, stream=True, timeout=(30, 300)) as r:
         r.raise_for_status()
         last_modified = r.headers.get("Last-Modified", "?")
-        for line in r.iter_lines(decode_unicode=True):
+        # current.tree is served as text/plain with no charset, so requests
+        # would hand back bytes; decode each line explicitly.
+        for raw in r.iter_lines():
+            line = raw.decode("utf-8", "replace")
             if line and f"{DIR}/{FA}" in line:
                 path = line.split("\t")[0]
                 md5 = next((f for f in line.split("\t") if re.fullmatch(r"[0-9a-f]{32}", f)), None)
