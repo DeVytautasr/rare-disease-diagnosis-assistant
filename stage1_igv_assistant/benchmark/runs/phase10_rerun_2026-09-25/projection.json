@@ -1,0 +1,42 @@
+{
+ "schema_sha256": "6ce8866a5d4317cb8664c4083e22b89d87e4d65e3961b92f5a56b8408e51cef0",
+ "first_request_chars": 19548,
+ "prices": {
+  "claude-sonnet-5": {
+   "in": 2.0,
+   "cache_write_5m": 2.5,
+   "cache_read": 0.2,
+   "out": 10.0
+  },
+  "claude-opus-5": {
+   "in": 5.0,
+   "cache_write_5m": 6.25,
+   "cache_read": 0.5,
+   "out": 25.0
+  }
+ },
+ "count_tokens_first_request": {
+  "error": "AuthenticationError: Error code: 401 - {'type': 'error', 'error': {'type': 'authentication_error', 'message': 'API key is invalid.'}, 'request_id': None}"
+ },
+ "assumptions": {
+  "iterations": 8,
+  "new_input_tokens_per_iteration": 900,
+  "output_tokens_per_iteration": 1500
+ },
+ "projection": {
+  "claude-sonnet-5": {
+   "per_run_usd": 0.165,
+   "ten_runs_usd": 1.65
+  },
+  "claude-opus-5": {
+   "per_run_usd": 0.412,
+   "ten_runs_usd": 4.12
+  }
+ },
+ "projected_total_usd_20_runs": 5.77,
+ "phase10_scaled": {
+  "quoted": "$0.96 for 10 API runs",
+  "twenty_runs_usd": 1.92
+ },
+ "budget_cap_usd": 17.31
+}
