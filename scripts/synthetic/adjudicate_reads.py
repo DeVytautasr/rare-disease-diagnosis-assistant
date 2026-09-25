@@ -350,12 +350,69 @@ def step_merge():
     xs = [p["low_mapq_fraction_500"] for p in per_point if p["fp_rate_m0"] is not None]
     ys = [p["fp_rate_m0"] for p in per_point if p["fp_rate_m0"] is not None]
     r = ec.pearson(xs, ys)
+    # The same rate with truly spanning reads whose SA names a wrong partner counted
+    # as TRUE: they do cross the junction, although the tool reports their partner
+    # as some other chromosome. Both readings are reported; neither is hidden.
+    for p in per_point:
+        n, sae = p["tool_count_m0"], p["categories_m0"].get("spanning_sa_elsewhere", 0)
+        p["fp_rate_m0_spanning_counted_true"] = round((p["fp_m0"] - sae) / n, 4) if n else None
+    ys2 = [p["fp_rate_m0_spanning_counted_true"] for p in per_point if p["fp_rate_m0"] is not None]
+    r2 = ec.pearson(xs, ys2)
+    by_class_alt = {}
+    for k in ec.CLASS_ORDER:
+        pts = [p for p in per_point if p["class"] == k]
+        n = sum(p["tool_count_m0"] for p in pts)
+        nonspan = sum(p["fp_m0"] - p["categories_m0"].get("spanning_sa_elsewhere", 0) for p in pts)
+        by_class_alt[k] = {"counted": n, "not_spanning": nonspan, "rate": round(nonspan / n, 4) if n else None}
+    # where the wrong-partner SA tags of truly spanning reads point, from sim.bam
+    wrong = []
+    for i in ec.IMPLANTS:
+        sa_of = {}
+        with pysam.AlignmentFile(os.path.join(WORK, i, "sim.bam")) as f:
+            for x in f:
+                if not (x.is_secondary or x.is_supplementary) and x.has_tag("SA"):
+                    sa_of[(x.query_name, 1 if x.is_read1 else 2)] = x.get_tag("SA")
+        for p in recs[i]["points"]:
+            for c in p["split_m0"]["counted"]:
+                if c["category"] == "spanning_sa_elsewhere":
+                    ents = [e.split(",") for e in sa_of[tuple(c["key"])].rstrip(";").split(";") if e]
+                    wrong.append({"read": f"{c['key'][0]}/{c['key'][1]}", "breakpoint": f"{p['chrom']}:{p['position']}",
+                                  "class": classes[i]["chosen"],
+                                  "sa_targets": [f"{e[0]}:{e[1]}" for e in ents],
+                                  "sa_mapq": [ec_int for ec_int in (_int(e[4]) for e in ents if len(e) >= 5)]})
+    wrong_mapq = {}
+    for w in wrong:
+        for q in w["sa_mapq"]:
+            wrong_mapq[q] = wrong_mapq.get(q, 0) + 1
     # (b) short overhang
     no_sa = [dict(r_, implant=i) for i in ec.IMPLANTS for r_ in recs[i]["reads"]
              if r_.get("primary") not in ("unmapped", "not found") and not r_.get("has_sa")]
     all_ts = [r_ for i in ec.IMPLANTS for r_ in recs[i]["reads"]]
     flagged = [f"{r_['read']}/{r_['mate']} (shorter side {r_['shorter_side']} bp)" for r_ in no_sa
                if r_.get("alignable_to_partner_despite_side_rule")]
+    # why an SA-less truly spanning read escapes the soft-clip layer, first reason
+    # that applies, in the order the layer itself filters; "other" must stay 0
+    cig = {}
+    for i in ec.IMPLANTS:
+        with pysam.AlignmentFile(os.path.join(WORK, i, "sim.bam")) as f:
+            for x in f:
+                if not (x.is_secondary or x.is_supplementary) and not x.is_unmapped:
+                    c = x.cigartuples or []
+                    cig[(x.query_name, 1 if x.is_read1 else 2)] = (
+                        x.mapping_quality,
+                        max([n for op, n in c[:1] + c[-1:] if op == 4] or [0]))
+    escaped = {}
+    for r_ in no_sa:
+        if r_.get("caught_by_soft_clip"):
+            continue
+        mq, clip = cig[(r_["read"], r_["mate"])]
+        why = ("primary outside both breakpoint windows" if not r_.get("breakpoint_window") else
+               f"primary MAPQ < {CLIP_MAPQ}" if mq < CLIP_MAPQ else
+               f"shorter side < {MIN_CLIP} bp" if r_["shorter_side"] < MIN_CLIP else
+               f"longest end clip < {MIN_CLIP} bp although the shorter side is >= {MIN_CLIP} bp"
+               if clip < MIN_CLIP else "other")
+        escaped[why] = escaped.get(why, 0) + 1
+        r_["escaped_because"] = why
     # (c) min_mapq 20
     g20 = sum(r_["tool_genuine_m20"] for r_ in rows)
     fp0 = sum(pooled([p], "split_m0")["false_positive"] for p in points)
@@ -374,7 +431,12 @@ def step_merge():
                                         for k in ("tool", "delly", "tie")},
             "by_class": by_class, "per_breakpoint": per_point,
             "fp_rate_pearson_r_vs_low_mapq_fraction": round(r, 3) if r is not None else None,
-            "fp_rate_r_n_breakpoints": len(xs)},
+            "fp_rate_r_n_breakpoints": len(xs),
+            "alternative_reading_wrong_partner_spanning_reads_counted_true": {
+                "by_class": by_class_alt,
+                "pearson_r_vs_low_mapq_fraction": round(r2, 3) if r2 is not None else None},
+            "spanning_reads_with_a_wrong_partner_sa": {"reads": len(wrong), "sa_mapq_counts": wrong_mapq,
+                                                       "list": wrong}},
         "b_short_overhang": {
             "truly_spanning_reads": len(all_ts),
             "primary_unmapped_or_missing": sum(1 for r_ in all_ts if r_.get("primary") in ("unmapped", "not found")),
@@ -384,6 +446,7 @@ def step_merge():
             "without_sa_shorter_side_under_10": sum(1 for r_ in no_sa if r_["shorter_side"] < MIN_CLIP),
             "without_sa_shorter_side_27_to_29": sum(1 for r_ in no_sa if 27 <= r_["shorter_side"] <= 29),
             "flagged_alignable_despite_side_rule": flagged,
+            "not_caught_first_reason": escaped,
             "with_sa_but_none_to_partner": sum(1 for r_ in all_ts if r_.get("has_sa") and not r_.get("sa_to_partner")),
             "reads": no_sa},
         "c_min_mapq_20": {
@@ -409,10 +472,16 @@ def step_merge():
     for p in sorted(per_point, key=lambda p: -(p["fp_m0"])):
         if p["fp_m0"]:
             print(f"      {p['breakpoint']}: {p['fp_m0']}/{p['tool_count_m0']} FP, lmf {p['low_mapq_fraction_500']}")
+    alt = a["alternative_reading_wrong_partner_spanning_reads_counted_true"]
+    print(f"    reading 2 (spanning reads with a wrong-partner SA counted as true): {alt['by_class']}; "
+          f"r = {alt['pearson_r_vs_low_mapq_fraction']}")
+    w = a["spanning_reads_with_a_wrong_partner_sa"]
+    print(f"    truly spanning reads whose only SA names a wrong partner: {w['reads']}; SA mapQ {w['sa_mapq_counts']}")
     b = out["b_short_overhang"]
     print(f"(b) {b['without_any_sa_tag']} of {b['truly_spanning_reads']} truly spanning reads carry no SA tag; "
           f"{b['without_sa_caught_by_soft_clip_layer']} caught by the soft-clip layer; "
           f"{b['without_sa_shorter_side_under_10']} have a shorter side under {MIN_CLIP} bp; flagged {flagged}")
+    print(f"    not caught, first reason: {b['not_caught_first_reason']}")
     c = out["c_min_mapq_20"]
     print(f"(c) min_mapq 0 -> 20: genuine {c['genuine_m0']} -> {c['genuine_m20']} (lost {c['genuine_lost']}); "
           f"false positives {c['false_positive_m0']} -> {c['false_positive_m20']} (removed {c['false_positives_removed']})")
