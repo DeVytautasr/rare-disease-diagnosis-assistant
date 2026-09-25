@@ -1,0 +1,25 @@
+committed_default  missed junctions called 0/8, surviving 0/8; background records 916, BND 13 (x1.0), survivors 27
+    IMP09: J20 called=False surviving=False; J21 called=False surviving=False
+    IMP10: J20 called=False surviving=False; J21 called=False surviving=False
+    IMP11: J20 called=False surviving=False; J21 called=False surviving=False
+    IMP12: J20 called=False surviving=False; J21 called=False surviving=False
+q1_r20             missed junctions called 0/8, surviving 0/8; background records 916, BND 13 (x1.0), survivors 27
+    IMP09: J20 called=False surviving=False; J21 called=False surviving=False
+    IMP10: J20 called=False surviving=False; J21 called=False surviving=False
+    IMP11: J20 called=False surviving=False; J21 called=False surviving=False
+    IMP12: J20 called=False surviving=False; J21 called=False surviving=False
+q1_r5              missed junctions called 0/8, surviving 0/8; background records 984, BND 81 (x6.23), survivors 27
+    IMP09: J20 called=False surviving=False; J21 called=False surviving=False
+    IMP10: J20 called=False surviving=False; J21 called=False surviving=False
+    IMP11: J20 called=False surviving=False; J21 called=False surviving=False
+    IMP12: J20 called=False surviving=False; J21 called=False surviving=False
+q0_r5              missed junctions called 1/8, surviving 0/8; background records 970, BND 93 (x7.15), survivors 28
+    IMP09: J20 called=False surviving=False; J21 called=False surviving=False
+    IMP10: J20 called=False surviving=False; J21 called=False surviving=False
+    IMP11: J20 called=True surviving=False {'pos1': 20200001, 'pos2': 31100000, 'orientation': '5to3', 'filter': 'LowQual', 'pe': 0, 'sr': 3, 'precise': True}; J21 called=False surviving=False
+    IMP12: J20 called=False surviving=False; J21 called=False surviving=False
+q0_r0              missed junctions called 1/8, surviving 0/8; background records 962, BND 85 (x6.54), survivors 28
+    IMP09: J20 called=False surviving=False; J21 called=False surviving=False
+    IMP10: J20 called=False surviving=False; J21 called=False surviving=False
+    IMP11: J20 called=True surviving=False {'pos1': 20200001, 'pos2': 31100000, 'orientation': '5to3', 'filter': 'LowQual', 'pe': 4, 'sr': 3, 'precise': True}; J21 called=False surviving=False
+    IMP12: J20 called=False surviving=False; J21 called=False surviving=False
