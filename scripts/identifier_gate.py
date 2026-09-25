@@ -13,7 +13,8 @@ Rules -- mechanical, so nothing is judged case by case at gate time:
   ID-list     any entry of --identifiers FILE (one per line; e.g. built from
               ~/patient_data/SAMPLE_MAP.md). Without it the run is INCOMPLETE.
   ID-sample   a sample-file token (NAME.bam/.cram/.bai/.crai/.csi/.vcf/.bcf/.fastq)
-              whose NAME has identifier shape -- contains a digit, or ends in
+              whose NAME has identifier shape -- contains a digit once a trailing
+              read-mate designator (R1, R2, _1, _2) is set aside, or ends in
               "-ready" as the real transferred BAMs do -- unless NAME is a public
               reference sample, a synthetic implant, or a documented placeholder
   ID-lt-code  an 11-digit Lithuanian personal code with a valid date and checksum
@@ -34,6 +35,7 @@ Exit codes: 0 clean, with an identifier list
             2 nothing fired, but no identifier list was supplied (INCOMPLETE)
 
   python3 scripts/identifier_gate.py --base COMMIT [--identifiers FILE] [--keyfile .api/claude_api_key]
+  python3 scripts/identifier_gate.py --staged [--identifiers FILE]   # before committing
   python3 scripts/identifier_gate.py --self-test     # positive and negative controls
 """
 import argparse
@@ -54,6 +56,7 @@ EXT = r"(?:bam|cram|bai|crai|csi|bcf|vcf(?:\.gz)?|fastq(?:\.gz)?|fq(?:\.gz)?)"
 SAMPLE_TOKEN = re.compile(rf"(?<![\w.+-])([A-Za-z0-9][\w.+-]*?)\.{EXT}(?!\w)")
 PUBLIC = re.compile(r"^(NA|HG|GM)\d{5}(?!\d)|^HG00[1-7](?!\d)|^HCC\d+|^CHM13|^GRCh3[78]")
 SYNTHETIC = re.compile(r"^IMP\d{2}$")
+MATE_SUFFIX = re.compile(r"(^|[._-])R?[12]$", re.I)
 PLACEHOLDER = re.compile(r"^SAMPLE_[A-Z](-ready)?$|^(patient|sample)_\d{3}$")
 LT_CODE = re.compile(r"(?<!\d)([1-6])(\d{2})(\d{2})(\d{2})(\d{3})(\d)(?!\d)")
 EMAIL = re.compile(r"(?<![\w.+-])[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
@@ -101,7 +104,11 @@ class Gate:
                                    f"<entry {k} of the identifier list> (len {len(ident)})"))
         for m in SAMPLE_TOKEN.finditer(text):
             name = m.group(1)
-            shaped = bool(re.search(r"\d", name)) or name.lower().endswith("-ready")
+            # A read-mate designator (R1/R2, _1/_2) is not an identifier: "R1.fq" and
+            # "pool_R2.fq" are silent, while a NAME with digits before the designator
+            # still fires on that NAME.
+            core = MATE_SUFFIX.sub("", name)
+            shaped = bool(re.search(r"\d", core)) or name.lower().endswith("-ready")
             if shaped and not (PUBLIC.search(name) or SYNTHETIC.search(name) or PLACEHOLDER.search(name)):
                 self.fired.append(("ID-sample", scope, where, mask(name)))
         for m in LT_CODE.finditer(text):
@@ -251,6 +258,53 @@ def run(repo, base, identifiers, key, quiet=False):
     return g, (1 if g.fired else (0 if identifiers else 2))
 
 
+def run_staged(repo, identifiers, key, quiet=False):
+    """Gate what is STAGED, before it is committed: the lines the index adds over
+    HEAD, binary staged files whole, and every blob of the index -- the tree the
+    next commit would have. Paths in added lines are gated as in the diff scope."""
+    home = os.path.expanduser("~")
+    g = Gate(identifiers, key, home, os.path.abspath(repo))
+    for rec in git(repo, "diff", "--cached", "--numstat", "-z").split("\0"):
+        parts = rec.split("\t")
+        if len(parts) == 3 and parts[0] == "-" and parts[1] == "-" and parts[2]:
+            try:
+                data = subprocess.run(["git", "-C", repo, "show", f":{parts[2]}"],
+                                      capture_output=True, check=True).stdout
+            except subprocess.CalledProcessError:
+                continue
+            for where, text in blob_texts(parts[2], data):
+                for i, ln in enumerate(text.split("\n"), 1):
+                    g.scan("staged", f"{where}:{i} (binary, staged)", ln, paths=True)
+    f, line = None, 0
+    for raw in git(repo, "diff", "--cached", "--unified=0", "--no-color").splitlines():
+        if raw.startswith("+++ "):
+            f = raw[6:] if raw.startswith("+++ b/") else raw[4:]
+        elif raw.startswith("@@"):
+            line = int(re.search(r"\+(\d+)", raw).group(1))
+        elif raw.startswith("+") and not raw.startswith("+++"):
+            g.scan("staged", f"{f}:{line} (staged, added)", raw[1:], paths=True)
+            line += 1
+    for rec in git(repo, "ls-files", "-s", "-z").split("\0"):
+        if not rec:
+            continue
+        meta, path = rec.split("\t", 1)
+        data = subprocess.run(["git", "-C", repo, "cat-file", "blob", meta.split()[1]],
+                              capture_output=True, check=True).stdout
+        for where, text in blob_texts(path, data):
+            for i, ln in enumerate(text.split("\n"), 1):
+                g.scan("index", f"{where}:{i}", ln)
+    if not quiet:
+        print(f"identifier gate (staged): {len(git(repo, 'diff', '--cached', '--name-only').split())} "
+              f"staged file(s); identifier list: "
+              f"{'%d entr%s' % (len(identifiers), 'y' if len(identifiers) == 1 else 'ies') if identifiers else 'NOT SUPPLIED'}")
+        for rule, scope, where, tok in g.fired:
+            print(f"  FIRED  {rule:10s} [{scope}] {where}  {tok}")
+        print(f"  binary blobs with no readable text container, NOT scanned: {len(set(UNSCANNED))}")
+        verdict = ("FIRED -- do not commit" if g.fired else "clean" if identifiers else
+                   "INCOMPLETE -- nothing fired, but no identifier list was supplied")
+        print(f"identifier gate (staged): {verdict}")
+    return g, (1 if g.fired else (0 if identifiers else 2))
+
 def self_test():
     """Positive controls CREATE each condition; the negative control must stay silent."""
     rnd = random.Random()
@@ -368,6 +422,39 @@ def self_test():
     print(f"POSITIVE  listed identifier with a diacritic, after a non-ASCII line -> "
           f"{'fired at names.md:2' if ok6 else 'MISSED or mislocated ' + repr(where6)} (exit {rc6})")
     ok &= ok6 and rc6 == 1
+    # --staged: an identifier in a STAGED file fires before any commit exists; the
+    # same content left unstaged in the working tree is not what would be committed.
+    ident7 = "ZQ" + rnd.choice(string.ascii_uppercase) + str(rnd.randint(1000, 9999))
+    d7, _ = repo_with(planted=False)
+    open(os.path.join(d7, "record.json"), "w").write(f'{{"sample": "{ident7}.bam"}}\n')
+    open(os.path.join(d7, "scratch.txt"), "w").write(f"unstaged {ident7}.bam\n")
+    subprocess.run(["git", "-C", d7, "add", "record.json"], capture_output=True, check=True)
+    g7, rc7 = run_staged(d7, ["SOMETHING-NOT-PRESENT"], None, quiet=True)
+    where7 = {w.split(":")[0] for r, _, w, _ in g7.fired}
+    ok7 = rc7 == 1 and "record.json" in where7 and "scratch.txt" not in where7
+    subprocess.run(["git", "-C", d7, "reset", "-q", "record.json"], capture_output=True, check=True)
+    g7b, rc7b = run_staged(d7, ["SOMETHING-NOT-PRESENT"], None, quiet=True)
+    print(f"POSITIVE  --staged: identifier in a staged file -> {'fired' if ok7 else 'MISSED'} (exit {rc7});"
+          f" unstaged copy ignored: {'yes' if 'scratch.txt' not in where7 else 'NO'}")
+    print(f"NEGATIVE  --staged after unstaging it -> exit {rc7b}, fired: {len(g7b.fired)}")
+    ok &= ok7 and rc7b == 0 and not g7b.fired
+    # Read-mate file names are not identifiers; a mate suffix must not hide one.
+    ident8 = "ZQ" + rnd.choice(string.ascii_uppercase) + str(rnd.randint(1000, 9999))
+    d8, base8 = repo_with(planted=False)
+    open(os.path.join(d8, "fq.md"), "w").write("reads R1.fq and R2.fq, pool_R1.fq, pre + \"1.fq\"\n")
+    for a_ in (["add", "-A"], ["commit", "-qm", "fastq names"]):
+        subprocess.run(["git", "-C", d8, *a_], capture_output=True, check=True, env=env5)
+    g8, rc8 = run(d8, base8, ["SOMETHING-NOT-PRESENT"], None, quiet=True)
+    print(f"NEGATIVE  read-mate file names (R1.fq, pool_R1.fq, 1.fq) -> exit {rc8}, fired: {len(g8.fired)}")
+    ok &= rc8 == 0 and not g8.fired
+    open(os.path.join(d8, "fq.md"), "a").write(f"sample {ident8}_R1.fq\n")
+    for a_ in (["add", "-A"], ["commit", "-qm", "a real-looking one"]):
+        subprocess.run(["git", "-C", d8, *a_], capture_output=True, check=True, env=env5)
+    g9, rc9 = run(d8, base8, ["SOMETHING-NOT-PRESENT"], None, quiet=True)
+    hit9 = any(r == "ID-sample" for r, *_ in g9.fired)
+    print(f"POSITIVE  identifier-shaped name with a mate suffix (NAME_R1.fq) -> "
+          f"{'fired' if hit9 else 'MISSED'} (exit {rc9})")
+    ok &= hit9 and rc9 == 1
     g4, rc4 = run(d, base, [ident2], None, quiet=True)
     print(f"POSITIVE  identifier list entry planted in .docx -> "
           f"{'fired' if any(r == 'ID-list' for r, *_ in g4.fired) else 'MISSED'} (exit {rc4})")
@@ -386,19 +473,23 @@ def main():
     ap.add_argument("--repo", default=".")
     ap.add_argument("--base")
     ap.add_argument("--identifiers", help="file, one identifier per line ('#' comments allowed)")
+    ap.add_argument("--staged", action="store_true",
+                    help="gate what is staged (git add), before committing, instead of BASE..HEAD")
     ap.add_argument("--keyfile", default=".api/claude_api_key")
     ap.add_argument("--self-test", action="store_true")
     a = ap.parse_args()
     if a.self_test:
         return self_test()
-    if not a.base:
-        ap.error("--base is required")
+    if not a.base and not a.staged:
+        ap.error("--base is required (or --staged)")
     idents = []
     if a.identifiers:
         idents = [l.strip() for l in open(a.identifiers) if l.strip() and not l.startswith("#")]
     key = None
     if a.keyfile and os.path.exists(os.path.join(a.repo, a.keyfile)):
         key = open(os.path.join(a.repo, a.keyfile)).read().strip() or None
+    if a.staged:
+        return run_staged(a.repo, idents, key)[1]
     return run(a.repo, a.base, idents, key)[1]
 
 
