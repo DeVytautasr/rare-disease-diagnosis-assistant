@@ -1,0 +1,1156 @@
+{
+ "implant": "IMP01",
+ "defined": "2026-09-25, after the pre-registered gate failed (user decision); the pre-registered result stands unedited in gate.json",
+ "bwa_limits": {
+  "T": 30,
+  "k": 19,
+  "A": 1,
+  "B": 4,
+  "O": 6,
+  "E": 1
+ },
+ "a1": {
+  "truly_spanning": 33,
+  "without_partner_sa": 15,
+  "unexplained": 0,
+  "holds": true,
+  "unexplained_reads": [],
+  "flagged_alignable_despite_side_rule": []
+ },
+ "a2": {
+  "observed": "18/33",
+  "observed_fraction": 0.5455,
+  "geometric": {
+   "positions_with_shorter_side_ge_30": 91,
+   "of": 149,
+   "fraction": 0.6107,
+   "p_observed_or_fewer": 0.2748
+  },
+  "with_art_errors_all_implants": {
+   "reads": 390,
+   "reaching_T30_with_k19_seed": 239,
+   "fraction": 0.6128
+  },
+  "original_aggregate_as_quoted": {
+   "with_sa": 183,
+   "of": 304,
+   "fraction": 0.602,
+   "verifiable": false,
+   "p_observed_or_fewer": 0.3107
+  },
+  "note": "consistency check, not pass/fail"
+ },
+ "b": {
+  "wrong_partner_sa_entries": 0,
+  "threshold": 0,
+  "holds": true,
+  "info_sa_entries_outside_chr20_chr21_over_all_simulated_records": 0,
+  "info_simulated_records": 122
+ },
+ "c": {
+  "depth": {
+   "chr20": {
+    "position": 200000,
+    "pre_mean_depth": 39.59,
+    "post_mean_depth": 36.69,
+    "change": -0.0733,
+    "pre_nondup": 36.63,
+    "post_nondup": 34.93,
+    "change_nondup": -0.0464
+   },
+   "chr21": {
+    "position": 14100000,
+    "pre_mean_depth": 34.87,
+    "post_mean_depth": 35.44,
+    "change": 0.0163,
+    "pre_nondup": 31.36,
+    "post_nondup": 32.53,
+    "change_nondup": 0.0373
+   }
+  },
+  "threshold": 0.1,
+  "holds": true
+ },
+ "reads_per_spanning_fragment": 0.6729,
+ "fragment_mean": 442.64,
+ "dose": [
+  {
+   "implant": "IMP01",
+   "A": {
+    "depth": 39.59,
+    "depth_nondup": 36.63,
+    "expected_spanning_pairs": 58.3,
+    "observed_spanning_pairs": 68,
+    "expected_removed_nondup": 27.0,
+    "removed_nondup": 30
+   },
+   "B": {
+    "depth": 34.87,
+    "depth_nondup": 31.36,
+    "expected_spanning_pairs": 51.3,
+    "observed_spanning_pairs": 49,
+    "expected_removed_nondup": 23.1,
+    "removed_nondup": 22
+   },
+   "added_fragments": {
+    "expected_total": 50.0,
+    "added_total": 52,
+    "J20": 26,
+    "J21": 26
+   },
+   "spanning_reads": {
+    "expected_per_junction_from_depth": 16.8,
+    "expected_J20_from_added": 17.5,
+    "expected_J21_from_added": 17.5,
+    "observed_J20": 15,
+    "observed_J21": 18,
+    "observed_total": 33
+   }
+  },
+  {
+   "implant": "IMP02",
+   "A": {
+    "depth": 36.14,
+    "depth_nondup": 31.11,
+    "expected_spanning_pairs": 53.2,
+    "observed_spanning_pairs": 62,
+    "expected_removed_nondup": 22.9,
+    "removed_nondup": 26
+   },
+   "B": {
+    "depth": 33.48,
+    "depth_nondup": 29.84,
+    "expected_spanning_pairs": 49.3,
+    "observed_spanning_pairs": 34,
+    "expected_removed_nondup": 22.0,
+    "removed_nondup": 15
+   },
+   "added_fragments": {
+    "expected_total": 44.9,
+    "added_total": 41,
+    "J20": 20,
+    "J21": 21
+   },
+   "spanning_reads": {
+    "expected_per_junction_from_depth": 15.1,
+    "expected_J20_from_added": 13.5,
+    "expected_J21_from_added": 14.1,
+    "observed_J20": 16,
+    "observed_J21": 12,
+    "observed_total": 28
+   }
+  },
+  {
+   "implant": "IMP03",
+   "A": {
+    "depth": 42.74,
+    "depth_nondup": 39.28,
+    "expected_spanning_pairs": 62.9,
+    "observed_spanning_pairs": 60,
+    "expected_removed_nondup": 28.9,
+    "removed_nondup": 28
+   },
+   "B": {
+    "depth": 40.46,
+    "depth_nondup": 37.26,
+    "expected_spanning_pairs": 59.6,
+    "observed_spanning_pairs": 60,
+    "expected_removed_nondup": 27.4,
+    "removed_nondup": 27
+   },
+   "added_fragments": {
+    "expected_total": 56.3,
+    "added_total": 55,
+    "J20": 28,
+    "J21": 27
+   },
+   "spanning_reads": {
+    "expected_per_junction_from_depth": 19.0,
+    "expected_J20_from_added": 18.8,
+    "expected_J21_from_added": 18.2,
+    "observed_J20": 17,
+    "observed_J21": 17,
+    "observed_total": 34
+   }
+  },
+  {
+   "implant": "IMP04",
+   "A": {
+    "depth": 38.47,
+    "depth_nondup": 35.39,
+    "expected_spanning_pairs": 56.6,
+    "observed_spanning_pairs": 48,
+    "expected_removed_nondup": 26.0,
+    "removed_nondup": 22
+   },
+   "B": {
+    "depth": 37.37,
+    "depth_nondup": 33.1,
+    "expected_spanning_pairs": 55.0,
+    "observed_spanning_pairs": 40,
+    "expected_removed_nondup": 24.4,
+    "removed_nondup": 19
+   },
+   "added_fragments": {
+    "expected_total": 50.4,
+    "added_total": 41,
+    "J20": 20,
+    "J21": 21
+   },
+   "spanning_reads": {
+    "expected_per_junction_from_depth": 17.0,
+    "expected_J20_from_added": 13.5,
+    "expected_J21_from_added": 14.1,
+    "observed_J20": 12,
+    "observed_J21": 15,
+    "observed_total": 27
+   }
+  },
+  {
+   "implant": "IMP05",
+   "A": {
+    "depth": 33.4,
+    "depth_nondup": 29.97,
+    "expected_spanning_pairs": 49.2,
+    "observed_spanning_pairs": 53,
+    "expected_removed_nondup": 22.1,
+    "removed_nondup": 24
+   },
+   "B": {
+    "depth": 40.81,
+    "depth_nondup": 34.82,
+    "expected_spanning_pairs": 60.1,
+    "observed_spanning_pairs": 62,
+    "expected_removed_nondup": 25.6,
+    "removed_nondup": 25
+   },
+   "added_fragments": {
+    "expected_total": 47.7,
+    "added_total": 49,
+    "J20": 24,
+    "J21": 25
+   },
+   "spanning_reads": {
+    "expected_per_junction_from_depth": 16.0,
+    "expected_J20_from_added": 16.2,
+    "expected_J21_from_added": 16.8,
+    "observed_J20": 18,
+    "observed_J21": 15,
+    "observed_total": 33
+   }
+  },
+  {
+   "implant": "IMP06",
+   "A": {
+    "depth": 42.92,
+    "depth_nondup": 38.39,
+    "expected_spanning_pairs": 63.2,
+    "observed_spanning_pairs": 72,
+    "expected_removed_nondup": 28.3,
+    "removed_nondup": 36
+   },
+   "B": {
+    "depth": 39.64,
+    "depth_nondup": 34.25,
+    "expected_spanning_pairs": 58.4,
+    "observed_spanning_pairs": 64,
+    "expected_removed_nondup": 25.2,
+    "removed_nondup": 26
+   },
+   "added_fragments": {
+    "expected_total": 53.5,
+    "added_total": 62,
+    "J20": 31,
+    "J21": 31
+   },
+   "spanning_reads": {
+    "expected_per_junction_from_depth": 18.0,
+    "expected_J20_from_added": 20.9,
+    "expected_J21_from_added": 20.9,
+    "observed_J20": 25,
+    "observed_J21": 22,
+    "observed_total": 47
+   }
+  },
+  {
+   "implant": "IMP07",
+   "A": {
+    "depth": 35.22,
+    "depth_nondup": 30.86,
+    "expected_spanning_pairs": 51.8,
+    "observed_spanning_pairs": 60,
+    "expected_removed_nondup": 22.7,
+    "removed_nondup": 25
+   },
+   "B": {
+    "depth": 35.23,
+    "depth_nondup": 31.89,
+    "expected_spanning_pairs": 51.9,
+    "observed_spanning_pairs": 49,
+    "expected_removed_nondup": 23.5,
+    "removed_nondup": 22
+   },
+   "added_fragments": {
+    "expected_total": 46.2,
+    "added_total": 47,
+    "J20": 24,
+    "J21": 23
+   },
+   "spanning_reads": {
+    "expected_per_junction_from_depth": 15.5,
+    "expected_J20_from_added": 16.2,
+    "expected_J21_from_added": 15.5,
+    "observed_J20": 18,
+    "observed_J21": 17,
+    "observed_total": 35
+   }
+  },
+  {
+   "implant": "IMP08",
+   "A": {
+    "depth": 34.08,
+    "depth_nondup": 30.43,
+    "expected_spanning_pairs": 50.2,
+    "observed_spanning_pairs": 50,
+    "expected_removed_nondup": 22.4,
+    "removed_nondup": 22
+   },
+   "B": {
+    "depth": 38.93,
+    "depth_nondup": 35.87,
+    "expected_spanning_pairs": 57.3,
+    "observed_spanning_pairs": 57,
+    "expected_removed_nondup": 26.4,
+    "removed_nondup": 24
+   },
+   "added_fragments": {
+    "expected_total": 48.8,
+    "added_total": 46,
+    "J20": 23,
+    "J21": 23
+   },
+   "spanning_reads": {
+    "expected_per_junction_from_depth": 16.4,
+    "expected_J20_from_added": 15.5,
+    "expected_J21_from_added": 15.5,
+    "observed_J20": 20,
+    "observed_J21": 19,
+    "observed_total": 39
+   }
+  },
+  {
+   "implant": "IMP09",
+   "A": {
+    "depth": 28.29,
+    "depth_nondup": 25.73,
+    "expected_spanning_pairs": 41.6,
+    "observed_spanning_pairs": 44,
+    "expected_removed_nondup": 18.9,
+    "removed_nondup": 22
+   },
+   "B": {
+    "depth": 29.69,
+    "depth_nondup": 28.28,
+    "expected_spanning_pairs": 43.7,
+    "observed_spanning_pairs": 42,
+    "expected_removed_nondup": 20.8,
+    "removed_nondup": 21
+   },
+   "added_fragments": {
+    "expected_total": 39.8,
+    "added_total": 43,
+    "J20": 22,
+    "J21": 21
+   },
+   "spanning_reads": {
+    "expected_per_junction_from_depth": 13.4,
+    "expected_J20_from_added": 14.8,
+    "expected_J21_from_added": 14.1,
+    "observed_J20": 17,
+    "observed_J21": 16,
+    "observed_total": 33
+   }
+  },
+  {
+   "implant": "IMP10",
+   "A": {
+    "depth": 29.19,
+    "depth_nondup": 28.05,
+    "expected_spanning_pairs": 43.0,
+    "observed_spanning_pairs": 39,
+    "expected_removed_nondup": 20.6,
+    "removed_nondup": 19
+   },
+   "B": {
+    "depth": 28.92,
+    "depth_nondup": 27.01,
+    "expected_spanning_pairs": 42.6,
+    "observed_spanning_pairs": 43,
+    "expected_removed_nondup": 19.9,
+    "removed_nondup": 19
+   },
+   "added_fragments": {
+    "expected_total": 40.5,
+    "added_total": 38,
+    "J20": 19,
+    "J21": 19
+   },
+   "spanning_reads": {
+    "expected_per_junction_from_depth": 13.6,
+    "expected_J20_from_added": 12.8,
+    "expected_J21_from_added": 12.8,
+    "observed_J20": 11,
+    "observed_J21": 12,
+    "observed_total": 23
+   }
+  },
+  {
+   "implant": "IMP11",
+   "A": {
+    "depth": 23.05,
+    "depth_nondup": 20.65,
+    "expected_spanning_pairs": 33.9,
+    "observed_spanning_pairs": 39,
+    "expected_removed_nondup": 15.2,
+    "removed_nondup": 17
+   },
+   "B": {
+    "depth": 36.42,
+    "depth_nondup": 34.13,
+    "expected_spanning_pairs": 53.6,
+    "observed_spanning_pairs": 65,
+    "expected_removed_nondup": 25.1,
+    "removed_nondup": 31
+   },
+   "added_fragments": {
+    "expected_total": 40.3,
+    "added_total": 48,
+    "J20": 24,
+    "J21": 24
+   },
+   "spanning_reads": {
+    "expected_per_junction_from_depth": 13.6,
+    "expected_J20_from_added": 16.2,
+    "expected_J21_from_added": 16.2,
+    "observed_J20": 13,
+    "observed_J21": 20,
+    "observed_total": 33
+   }
+  },
+  {
+   "implant": "IMP12",
+   "A": {
+    "depth": 32.99,
+    "depth_nondup": 30.63,
+    "expected_spanning_pairs": 48.6,
+    "observed_spanning_pairs": 45,
+    "expected_removed_nondup": 22.5,
+    "removed_nondup": 17
+   },
+   "B": {
+    "depth": 22.3,
+    "depth_nondup": 21.56,
+    "expected_spanning_pairs": 32.8,
+    "observed_spanning_pairs": 33,
+    "expected_removed_nondup": 15.9,
+    "removed_nondup": 16
+   },
+   "added_fragments": {
+    "expected_total": 38.4,
+    "added_total": 33,
+    "J20": 16,
+    "J21": 17
+   },
+   "spanning_reads": {
+    "expected_per_junction_from_depth": 12.9,
+    "expected_J20_from_added": 10.8,
+    "expected_J21_from_added": 11.4,
+    "observed_J20": 10,
+    "observed_J21": 15,
+    "observed_total": 25
+   }
+  }
+ ],
+ "verdict": "PASS",
+ "per_read": [
+  {
+   "read": "IMP01_J20_0001",
+   "mate": 2,
+   "primary": "chr21",
+   "partner": "chr20",
+   "has_partner_sa": false,
+   "bases_left": 30,
+   "bases_right": 120,
+   "shorter_side_read_bases": 30,
+   "art_mismatches": 1,
+   "art_inserted": 0,
+   "art_deleted": 0,
+   "best_score_from_art": 25,
+   "longest_exact_from_art": 17,
+   "reaches_T_and_k_from_art": false,
+   "sw_best_score_vs_partner": 25,
+   "longest_exact_vs_partner": 17,
+   "explanation": [
+    "best alignment score to the partner 25 < -T 30",
+    "longest exact match to the partner 17 bp < -k 19"
+   ],
+   "alignable_to_partner_despite_side_rule": false
+  },
+  {
+   "read": "IMP01_J20_0002",
+   "mate": 2,
+   "primary": "chr20",
+   "partner": "chr21",
+   "has_partner_sa": true,
+   "bases_left": 118,
+   "bases_right": 32,
+   "shorter_side_read_bases": 32,
+   "art_mismatches": 0,
+   "art_inserted": 0,
+   "art_deleted": 0,
+   "best_score_from_art": 32,
+   "longest_exact_from_art": 32,
+   "reaches_T_and_k_from_art": true,
+   "sw_best_score_vs_partner": 32,
+   "longest_exact_vs_partner": 32
+  },
+  {
+   "read": "IMP01_J20_0004",
+   "mate": 2,
+   "primary": "chr20",
+   "partner": "chr21",
+   "has_partner_sa": true,
+   "bases_left": 84,
+   "bases_right": 66,
+   "shorter_side_read_bases": 66,
+   "art_mismatches": 0,
+   "art_inserted": 0,
+   "art_deleted": 0,
+   "best_score_from_art": 66,
+   "longest_exact_from_art": 66,
+   "reaches_T_and_k_from_art": true,
+   "sw_best_score_vs_partner": 66,
+   "longest_exact_vs_partner": 66
+  },
+  {
+   "read": "IMP01_J20_0005",
+   "mate": 2,
+   "primary": "chr20",
+   "partner": "chr21",
+   "has_partner_sa": true,
+   "bases_left": 100,
+   "bases_right": 50,
+   "shorter_side_read_bases": 50,
+   "art_mismatches": 0,
+   "art_inserted": 0,
+   "art_deleted": 0,
+   "best_score_from_art": 50,
+   "longest_exact_from_art": 50,
+   "reaches_T_and_k_from_art": true,
+   "sw_best_score_vs_partner": 50,
+   "longest_exact_vs_partner": 50
+  },
+  {
+   "read": "IMP01_J20_0006",
+   "mate": 2,
+   "primary": "chr20",
+   "partner": "chr21",
+   "has_partner_sa": false,
+   "bases_left": 142,
+   "bases_right": 8,
+   "shorter_side_read_bases": 8,
+   "art_mismatches": 0,
+   "art_inserted": 0,
+   "art_deleted": 0,
+   "best_score_from_art": 8,
+   "longest_exact_from_art": 8,
+   "reaches_T_and_k_from_art": false,
+   "sw_best_score_vs_partner": 8,
+   "longest_exact_vs_partner": 8,
+   "explanation": [
+    "shorter side 8 bp < 30: score cannot reach -T 30",
+    "best alignment score to the partner 8 < -T 30",
+    "longest exact match to the partner 8 bp < -k 19"
+   ],
+   "alignable_to_partner_despite_side_rule": false
+  },
+  {
+   "read": "IMP01_J20_0009",
+   "mate": 1,
+   "primary": "chr21",
+   "partner": "chr20",
+   "has_partner_sa": false,
+   "bases_left": 21,
+   "bases_right": 129,
+   "shorter_side_read_bases": 21,
+   "art_mismatches": 0,
+   "art_inserted": 0,
+   "art_deleted": 0,
+   "best_score_from_art": 21,
+   "longest_exact_from_art": 21,
+   "reaches_T_and_k_from_art": false,
+   "sw_best_score_vs_partner": 21,
+   "longest_exact_vs_partner": 21,
+   "explanation": [
+    "shorter side 21 bp < 30: score cannot reach -T 30",
+    "best alignment score to the partner 21 < -T 30"
+   ],
+   "alignable_to_partner_despite_side_rule": false
+  },
+  {
+   "read": "IMP01_J20_0014",
+   "mate": 2,
+   "primary": "chr21",
+   "partner": "chr20",
+   "has_partner_sa": true,
+   "bases_left": 46,
+   "bases_right": 104,
+   "shorter_side_read_bases": 46,
+   "art_mismatches": 0,
+   "art_inserted": 0,
+   "art_deleted": 0,
+   "best_score_from_art": 46,
+   "longest_exact_from_art": 46,
+   "reaches_T_and_k_from_art": true,
+   "sw_best_score_vs_partner": 46,
+   "longest_exact_vs_partner": 46
+  },
+  {
+   "read": "IMP01_J20_0015",
+   "mate": 1,
+   "primary": "chr20",
+   "partner": "chr21",
+   "has_partner_sa": false,
+   "bases_left": 146,
+   "bases_right": 4,
+   "shorter_side_read_bases": 4,
+   "art_mismatches": 0,
+   "art_inserted": 0,
+   "art_deleted": 0,
+   "best_score_from_art": 4,
+   "longest_exact_from_art": 4,
+   "reaches_T_and_k_from_art": false,
+   "sw_best_score_vs_partner": 8,
+   "longest_exact_vs_partner": 8,
+   "explanation": [
+    "shorter side 4 bp < 30: score cannot reach -T 30",
+    "best alignment score to the partner 8 < -T 30",
+    "longest exact match to the partner 8 bp < -k 19"
+   ],
+   "alignable_to_partner_despite_side_rule": false
+  },
+  {
+   "read": "IMP01_J20_0016",
+   "mate": 2,
+   "primary": "chr20",
+   "partner": "chr21",
+   "has_partner_sa": false,
+   "bases_left": 146,
+   "bases_right": 4,
+   "shorter_side_read_bases": 4,
+   "art_mismatches": 0,
+   "art_inserted": 0,
+   "art_deleted": 0,
+   "best_score_from_art": 4,
+   "longest_exact_from_art": 4,
+   "reaches_T_and_k_from_art": false,
+   "sw_best_score_vs_partner": 8,
+   "longest_exact_vs_partner": 8,
+   "explanation": [
+    "shorter side 4 bp < 30: score cannot reach -T 30",
+    "best alignment score to the partner 8 < -T 30",
+    "longest exact match to the partner 8 bp < -k 19"
+   ],
+   "alignable_to_partner_despite_side_rule": false
+  },
+  {
+   "read": "IMP01_J20_0017",
+   "mate": 1,
+   "primary": "chr20",
+   "partner": "chr21",
+   "has_partner_sa": true,
+   "bases_left": 102,
+   "bases_right": 48,
+   "shorter_side_read_bases": 48,
+   "art_mismatches": 0,
+   "art_inserted": 0,
+   "art_deleted": 0,
+   "best_score_from_art": 48,
+   "longest_exact_from_art": 48,
+   "reaches_T_and_k_from_art": true,
+   "sw_best_score_vs_partner": 48,
+   "longest_exact_vs_partner": 48
+  },
+  {
+   "read": "IMP01_J20_0017",
+   "mate": 2,
+   "primary": "chr21",
+   "partner": "chr20",
+   "has_partner_sa": false,
+   "bases_left": 15,
+   "bases_right": 135,
+   "shorter_side_read_bases": 15,
+   "art_mismatches": 0,
+   "art_inserted": 0,
+   "art_deleted": 0,
+   "best_score_from_art": 15,
+   "longest_exact_from_art": 15,
+   "reaches_T_and_k_from_art": false,
+   "sw_best_score_vs_partner": 15,
+   "longest_exact_vs_partner": 15,
+   "explanation": [
+    "shorter side 15 bp < 30: score cannot reach -T 30",
+    "best alignment score to the partner 15 < -T 30",
+    "longest exact match to the partner 15 bp < -k 19"
+   ],
+   "alignable_to_partner_despite_side_rule": false
+  },
+  {
+   "read": "IMP01_J20_0018",
+   "mate": 2,
+   "primary": "chr21",
+   "partner": "chr20",
+   "has_partner_sa": false,
+   "bases_left": 10,
+   "bases_right": 140,
+   "shorter_side_read_bases": 10,
+   "art_mismatches": 0,
+   "art_inserted": 0,
+   "art_deleted": 0,
+   "best_score_from_art": 10,
+   "longest_exact_from_art": 10,
+   "reaches_T_and_k_from_art": false,
+   "sw_best_score_vs_partner": 10,
+   "longest_exact_vs_partner": 10,
+   "explanation": [
+    "shorter side 10 bp < 30: score cannot reach -T 30",
+    "best alignment score to the partner 10 < -T 30",
+    "longest exact match to the partner 10 bp < -k 19"
+   ],
+   "alignable_to_partner_despite_side_rule": false
+  },
+  {
+   "read": "IMP01_J20_0021",
+   "mate": 2,
+   "primary": "chr20",
+   "partner": "chr21",
+   "has_partner_sa": true,
+   "bases_left": 114,
+   "bases_right": 36,
+   "shorter_side_read_bases": 36,
+   "art_mismatches": 0,
+   "art_inserted": 0,
+   "art_deleted": 0,
+   "best_score_from_art": 36,
+   "longest_exact_from_art": 36,
+   "reaches_T_and_k_from_art": true,
+   "sw_best_score_vs_partner": 36,
+   "longest_exact_vs_partner": 36
+  },
+  {
+   "read": "IMP01_J20_0022",
+   "mate": 1,
+   "primary": "chr21",
+   "partner": "chr20",
+   "has_partner_sa": false,
+   "bases_left": 18,
+   "bases_right": 132,
+   "shorter_side_read_bases": 18,
+   "art_mismatches": 0,
+   "art_inserted": 0,
+   "art_deleted": 0,
+   "best_score_from_art": 18,
+   "longest_exact_from_art": 18,
+   "reaches_T_and_k_from_art": false,
+   "sw_best_score_vs_partner": 18,
+   "longest_exact_vs_partner": 18,
+   "explanation": [
+    "shorter side 18 bp < 30: score cannot reach -T 30",
+    "best alignment score to the partner 18 < -T 30",
+    "longest exact match to the partner 18 bp < -k 19"
+   ],
+   "alignable_to_partner_despite_side_rule": false
+  },
+  {
+   "read": "IMP01_J20_0024",
+   "mate": 2,
+   "primary": "chr20",
+   "partner": "chr21",
+   "has_partner_sa": false,
+   "bases_left": 145,
+   "bases_right": 5,
+   "shorter_side_read_bases": 5,
+   "art_mismatches": 0,
+   "art_inserted": 0,
+   "art_deleted": 0,
+   "best_score_from_art": 5,
+   "longest_exact_from_art": 5,
+   "reaches_T_and_k_from_art": false,
+   "sw_best_score_vs_partner": 8,
+   "longest_exact_vs_partner": 8,
+   "explanation": [
+    "shorter side 5 bp < 30: score cannot reach -T 30",
+    "best alignment score to the partner 8 < -T 30",
+    "longest exact match to the partner 8 bp < -k 19"
+   ],
+   "alignable_to_partner_despite_side_rule": false
+  },
+  {
+   "read": "IMP01_J21_0000",
+   "mate": 1,
+   "primary": "chr21",
+   "partner": "chr20",
+   "has_partner_sa": true,
+   "bases_left": 106,
+   "bases_right": 44,
+   "shorter_side_read_bases": 44,
+   "art_mismatches": 0,
+   "art_inserted": 0,
+   "art_deleted": 0,
+   "best_score_from_art": 44,
+   "longest_exact_from_art": 44,
+   "reaches_T_and_k_from_art": true,
+   "sw_best_score_vs_partner": 44,
+   "longest_exact_vs_partner": 44
+  },
+  {
+   "read": "IMP01_J21_0002",
+   "mate": 2,
+   "primary": "chr21",
+   "partner": "chr20",
+   "has_partner_sa": true,
+   "bases_left": 86,
+   "bases_right": 64,
+   "shorter_side_read_bases": 64,
+   "art_mismatches": 0,
+   "art_inserted": 0,
+   "art_deleted": 0,
+   "best_score_from_art": 64,
+   "longest_exact_from_art": 64,
+   "reaches_T_and_k_from_art": true,
+   "sw_best_score_vs_partner": 64,
+   "longest_exact_vs_partner": 64
+  },
+  {
+   "read": "IMP01_J21_0005",
+   "mate": 1,
+   "primary": "chr21",
+   "partner": "chr20",
+   "has_partner_sa": true,
+   "bases_left": 107,
+   "bases_right": 43,
+   "shorter_side_read_bases": 43,
+   "art_mismatches": 0,
+   "art_inserted": 0,
+   "art_deleted": 0,
+   "best_score_from_art": 43,
+   "longest_exact_from_art": 43,
+   "reaches_T_and_k_from_art": true,
+   "sw_best_score_vs_partner": 43,
+   "longest_exact_vs_partner": 43
+  },
+  {
+   "read": "IMP01_J21_0006",
+   "mate": 2,
+   "primary": "chr20",
+   "partner": "chr21",
+   "has_partner_sa": false,
+   "bases_left": 15,
+   "bases_right": 135,
+   "shorter_side_read_bases": 15,
+   "art_mismatches": 0,
+   "art_inserted": 0,
+   "art_deleted": 0,
+   "best_score_from_art": 15,
+   "longest_exact_from_art": 15,
+   "reaches_T_and_k_from_art": false,
+   "sw_best_score_vs_partner": 15,
+   "longest_exact_vs_partner": 15,
+   "explanation": [
+    "shorter side 15 bp < 30: score cannot reach -T 30",
+    "best alignment score to the partner 15 < -T 30",
+    "longest exact match to the partner 15 bp < -k 19"
+   ],
+   "alignable_to_partner_despite_side_rule": false
+  },
+  {
+   "read": "IMP01_J21_0007",
+   "mate": 2,
+   "primary": "chr20",
+   "partner": "chr21",
+   "has_partner_sa": false,
+   "bases_left": 28,
+   "bases_right": 122,
+   "shorter_side_read_bases": 28,
+   "art_mismatches": 0,
+   "art_inserted": 0,
+   "art_deleted": 0,
+   "best_score_from_art": 28,
+   "longest_exact_from_art": 28,
+   "reaches_T_and_k_from_art": false,
+   "sw_best_score_vs_partner": 28,
+   "longest_exact_vs_partner": 28,
+   "explanation": [
+    "shorter side 28 bp < 30: score cannot reach -T 30",
+    "best alignment score to the partner 28 < -T 30"
+   ],
+   "alignable_to_partner_despite_side_rule": false
+  },
+  {
+   "read": "IMP01_J21_0010",
+   "mate": 1,
+   "primary": "chr21",
+   "partner": "chr20",
+   "has_partner_sa": false,
+   "bases_left": 143,
+   "bases_right": 7,
+   "shorter_side_read_bases": 7,
+   "art_mismatches": 0,
+   "art_inserted": 0,
+   "art_deleted": 0,
+   "best_score_from_art": 7,
+   "longest_exact_from_art": 7,
+   "reaches_T_and_k_from_art": false,
+   "sw_best_score_vs_partner": 7,
+   "longest_exact_vs_partner": 7,
+   "explanation": [
+    "shorter side 7 bp < 30: score cannot reach -T 30",
+    "best alignment score to the partner 7 < -T 30",
+    "longest exact match to the partner 7 bp < -k 19"
+   ],
+   "alignable_to_partner_despite_side_rule": false
+  },
+  {
+   "read": "IMP01_J21_0011",
+   "mate": 2,
+   "primary": "chr20",
+   "partner": "chr21",
+   "has_partner_sa": true,
+   "bases_left": 64,
+   "bases_right": 86,
+   "shorter_side_read_bases": 64,
+   "art_mismatches": 0,
+   "art_inserted": 0,
+   "art_deleted": 0,
+   "best_score_from_art": 64,
+   "longest_exact_from_art": 64,
+   "reaches_T_and_k_from_art": true,
+   "sw_best_score_vs_partner": 64,
+   "longest_exact_vs_partner": 64
+  },
+  {
+   "read": "IMP01_J21_0012",
+   "mate": 2,
+   "primary": "chr20",
+   "partner": "chr21",
+   "has_partner_sa": true,
+   "bases_left": 39,
+   "bases_right": 111,
+   "shorter_side_read_bases": 39,
+   "art_mismatches": 0,
+   "art_inserted": 0,
+   "art_deleted": 0,
+   "best_score_from_art": 39,
+   "longest_exact_from_art": 39,
+   "reaches_T_and_k_from_art": true,
+   "sw_best_score_vs_partner": 39,
+   "longest_exact_vs_partner": 39
+  },
+  {
+   "read": "IMP01_J21_0013",
+   "mate": 2,
+   "primary": "chr21",
+   "partner": "chr20",
+   "has_partner_sa": false,
+   "bases_left": 139,
+   "bases_right": 11,
+   "shorter_side_read_bases": 11,
+   "art_mismatches": 0,
+   "art_inserted": 0,
+   "art_deleted": 0,
+   "best_score_from_art": 11,
+   "longest_exact_from_art": 11,
+   "reaches_T_and_k_from_art": false,
+   "sw_best_score_vs_partner": 11,
+   "longest_exact_vs_partner": 11,
+   "explanation": [
+    "shorter side 11 bp < 30: score cannot reach -T 30",
+    "best alignment score to the partner 11 < -T 30",
+    "longest exact match to the partner 11 bp < -k 19"
+   ],
+   "alignable_to_partner_despite_side_rule": false
+  },
+  {
+   "read": "IMP01_J21_0016",
+   "mate": 2,
+   "primary": "chr21",
+   "partner": "chr20",
+   "has_partner_sa": true,
+   "bases_left": 86,
+   "bases_right": 64,
+   "shorter_side_read_bases": 64,
+   "art_mismatches": 0,
+   "art_inserted": 0,
+   "art_deleted": 0,
+   "best_score_from_art": 64,
+   "longest_exact_from_art": 64,
+   "reaches_T_and_k_from_art": true,
+   "sw_best_score_vs_partner": 64,
+   "longest_exact_vs_partner": 64
+  },
+  {
+   "read": "IMP01_J21_0017",
+   "mate": 2,
+   "primary": "chr20",
+   "partner": "chr21",
+   "has_partner_sa": true,
+   "bases_left": 64,
+   "bases_right": 86,
+   "shorter_side_read_bases": 64,
+   "art_mismatches": 0,
+   "art_inserted": 0,
+   "art_deleted": 0,
+   "best_score_from_art": 64,
+   "longest_exact_from_art": 64,
+   "reaches_T_and_k_from_art": true,
+   "sw_best_score_vs_partner": 64,
+   "longest_exact_vs_partner": 64
+  },
+  {
+   "read": "IMP01_J21_0018",
+   "mate": 2,
+   "primary": "chr21",
+   "partner": "chr20",
+   "has_partner_sa": true,
+   "bases_left": 117,
+   "bases_right": 33,
+   "shorter_side_read_bases": 33,
+   "art_mismatches": 0,
+   "art_inserted": 0,
+   "art_deleted": 0,
+   "best_score_from_art": 33,
+   "longest_exact_from_art": 33,
+   "reaches_T_and_k_from_art": true,
+   "sw_best_score_vs_partner": 33,
+   "longest_exact_vs_partner": 33
+  },
+  {
+   "read": "IMP01_J21_0019",
+   "mate": 1,
+   "primary": "chr21",
+   "partner": "chr20",
+   "has_partner_sa": true,
+   "bases_left": 119,
+   "bases_right": 31,
+   "shorter_side_read_bases": 31,
+   "art_mismatches": 0,
+   "art_inserted": 0,
+   "art_deleted": 0,
+   "best_score_from_art": 31,
+   "longest_exact_from_art": 31,
+   "reaches_T_and_k_from_art": true,
+   "sw_best_score_vs_partner": 31,
+   "longest_exact_vs_partner": 31
+  },
+  {
+   "read": "IMP01_J21_0020",
+   "mate": 2,
+   "primary": "chr21",
+   "partner": "chr20",
+   "has_partner_sa": true,
+   "bases_left": 115,
+   "bases_right": 35,
+   "shorter_side_read_bases": 35,
+   "art_mismatches": 0,
+   "art_inserted": 0,
+   "art_deleted": 0,
+   "best_score_from_art": 35,
+   "longest_exact_from_art": 35,
+   "reaches_T_and_k_from_art": true,
+   "sw_best_score_vs_partner": 35,
+   "longest_exact_vs_partner": 35
+  },
+  {
+   "read": "IMP01_J21_0022",
+   "mate": 2,
+   "primary": "chr21",
+   "partner": "chr20",
+   "has_partner_sa": true,
+   "bases_left": 119,
+   "bases_right": 31,
+   "shorter_side_read_bases": 31,
+   "art_mismatches": 0,
+   "art_inserted": 0,
+   "art_deleted": 0,
+   "best_score_from_art": 31,
+   "longest_exact_from_art": 31,
+   "reaches_T_and_k_from_art": true,
+   "sw_best_score_vs_partner": 31,
+   "longest_exact_vs_partner": 31
+  },
+  {
+   "read": "IMP01_J21_0023",
+   "mate": 2,
+   "primary": "chr21",
+   "partner": "chr20",
+   "has_partner_sa": false,
+   "bases_left": 130,
+   "bases_right": 20,
+   "shorter_side_read_bases": 20,
+   "art_mismatches": 0,
+   "art_inserted": 0,
+   "art_deleted": 0,
+   "best_score_from_art": 20,
+   "longest_exact_from_art": 20,
+   "reaches_T_and_k_from_art": false,
+   "sw_best_score_vs_partner": 20,
+   "longest_exact_vs_partner": 20,
+   "explanation": [
+    "shorter side 20 bp < 30: score cannot reach -T 30",
+    "best alignment score to the partner 20 < -T 30"
+   ],
+   "alignable_to_partner_despite_side_rule": false
+  },
+  {
+   "read": "IMP01_J21_0024",
+   "mate": 2,
+   "primary": "chr21",
+   "partner": "chr20",
+   "has_partner_sa": true,
+   "bases_left": 118,
+   "bases_right": 32,
+   "shorter_side_read_bases": 32,
+   "art_mismatches": 0,
+   "art_inserted": 0,
+   "art_deleted": 0,
+   "best_score_from_art": 32,
+   "longest_exact_from_art": 32,
+   "reaches_T_and_k_from_art": true,
+   "sw_best_score_vs_partner": 32,
+   "longest_exact_vs_partner": 32
+  },
+  {
+   "read": "IMP01_J21_0025",
+   "mate": 1,
+   "primary": "chr21",
+   "partner": "chr20",
+   "has_partner_sa": false,
+   "bases_left": 122,
+   "bases_right": 28,
+   "shorter_side_read_bases": 28,
+   "art_mismatches": 0,
+   "art_inserted": 0,
+   "art_deleted": 0,
+   "best_score_from_art": 28,
+   "longest_exact_from_art": 28,
+   "reaches_T_and_k_from_art": false,
+   "sw_best_score_vs_partner": 28,
+   "longest_exact_vs_partner": 28,
+   "explanation": [
+    "shorter side 28 bp < 30: score cannot reach -T 30",
+    "best alignment score to the partner 28 < -T 30"
+   ],
+   "alignable_to_partner_despite_side_rule": false
+  }
+ ]
+}

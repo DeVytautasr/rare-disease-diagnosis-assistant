@@ -1,0 +1,1878 @@
+{
+ "experiment": "synthetic positive control, rebuilt 2026-09-25 (new draws; not a reproduction)",
+ "master_seed": 20260925,
+ "seed_derivation": "int(sha256(f'{master}:{draw name}')[:8], 16) & 0x7FFFFFFF",
+ "background": {
+  "path": "~/public_data/NA12878.chr20_chr21.bam",
+  "bytes": 1636070786
+ },
+ "selection": {
+  "low_mapq_gate": 0.4,
+  "homopolymer_repeat": 10,
+  "dinucleotide_repeat": 10,
+  "entropy_repeat_below": 3.6148,
+  "lmf_partial": 0.05,
+  "mappability_partial_below": 0.9,
+  "homopolymer_clean_max": 8,
+  "dinucleotide_clean_max": 8,
+  "entropy_clean_min": 3.6897
+ },
+ "versions": {
+  "bwa": "Version: 0.7.15-r1140",
+  "art_illumina": "Q Version 2.5.8 (June 6, 2016)",
+  "samtools": "samtools 1.21",
+  "bcftools": "bcftools 1.21",
+  "htslib (samtools)": "Using htslib 1.24",
+  "delly": "Delly (Version: 2.6.0)"
+ },
+ "implants": [
+  {
+   "id": "IMP01",
+   "class": "clean_unique",
+   "coordinate_source": {
+    "chr20": "recorded (Phase 6), class confirmed",
+    "chr21": "recorded (Phase 6), class confirmed"
+   },
+   "breakpoints": {
+    "chr20": 200000,
+    "chr21": 14100000,
+    "convention": "1-based; each junction lies between the given base and the next"
+   },
+   "junctions": {
+    "J20": {
+     "on": "der(20)",
+     "left": "chr20:200000",
+     "right": "chr21:14100001",
+     "orientation": "3' end of chr20 (after base A) joined to the 5' end of chr21 (from base B+1)",
+     "delly_ct_chr20_first": "3to5",
+     "vcf_bnd": {
+      "chr20:200000": "N[chr21:14100001[",
+      "chr21:14100001": "]chr20:200000]N"
+     }
+    },
+    "J21": {
+     "on": "der(21)",
+     "left": "chr21:14100000",
+     "right": "chr20:200001",
+     "orientation": "3' end of chr21 (after base B) joined to the 5' end of chr20 (from base A+1)",
+     "delly_ct_chr20_first": "5to3",
+     "vcf_bnd": {
+      "chr21:14100000": "N[chr20:200001[",
+      "chr20:200001": "]chr21:14100000]N"
+     }
+    }
+   },
+   "zygosity": "heterozygous",
+   "balanced": true,
+   "pre_implant": {
+    "chr20": {
+     "mean_depth_500": 39.59,
+     "low_mapq_fraction_500": 0.0,
+     "low_mapq_fraction_200": 0.0,
+     "reads_500": 298
+    },
+    "chr21": {
+     "mean_depth_500": 34.87,
+     "low_mapq_fraction_500": 0.0,
+     "low_mapq_fraction_200": 0.0,
+     "reads_500": 274
+    }
+   },
+   "scan_statistics": {
+    "chr20": {
+     "chrom": "chr20",
+     "pos": 200000,
+     "low_mapq_fraction_200": 0.0,
+     "reads_200": 142,
+     "mean_depth_200": 39.41,
+     "low_mapq_fraction_500": 0.0,
+     "entropy2": 3.8391,
+     "max_homopolymer": 4,
+     "max_dinucleotide_run": 4,
+     "mappability": 1.0,
+     "tiles": 82,
+     "class": "clean_unique"
+    },
+    "chr21": {
+     "chrom": "chr21",
+     "pos": 14100000,
+     "low_mapq_fraction_200": 0.0,
+     "reads_200": 133,
+     "mean_depth_200": 36.42,
+     "low_mapq_fraction_500": 0.0,
+     "entropy2": 3.8463,
+     "max_homopolymer": 4,
+     "max_dinucleotide_run": 8,
+     "mappability": 1.0,
+     "tiles": 82,
+     "class": "clean_unique"
+    }
+   },
+   "compensation": {
+    "removal": {
+     "A": {
+      "chrom": "chr20",
+      "pos": 200000,
+      "spanning_pairs": 68,
+      "spanning_duplicates": 5,
+      "removed": 34,
+      "removed_duplicates": 4,
+      "removed_nondup": 30,
+      "remove_seed": 816187603
+     },
+     "B": {
+      "chrom": "chr21",
+      "pos": 14100000,
+      "spanning_pairs": 49,
+      "spanning_duplicates": 4,
+      "removed": 24,
+      "removed_duplicates": 2,
+      "removed_nondup": 22,
+      "remove_seed": 2089404254
+     }
+    },
+    "fragments_added_total": 52,
+    "J20": {
+     "template_length": 4000,
+     "junction_index": 2000,
+     "art_seed": 1593031808,
+     "art_fold": 60,
+     "art_attempts": 1,
+     "spanning_fragments_available": 72,
+     "pick_seed": 1293833540,
+     "fragments_added": 26,
+     "reads_spanning_junction": 15
+    },
+    "J21": {
+     "template_length": 4000,
+     "junction_index": 2000,
+     "art_seed": 1019745319,
+     "art_fold": 60,
+     "art_attempts": 1,
+     "spanning_fragments_available": 91,
+     "pick_seed": 2065008310,
+     "fragments_added": 26,
+     "reads_spanning_junction": 18
+    }
+   },
+   "simulation": {
+    "profile": "HS25",
+    "read_length": 150,
+    "fragment_mean": 443,
+    "fragment_sd": 105,
+    "quality_bins": [
+     2,
+     3,
+     4,
+     5,
+     6,
+     10,
+     20,
+     30
+    ],
+    "quality_rule": "nearest bin, ties to the lower bin"
+   },
+   "files": {
+    "bam": "~/public_data/sim/bams/IMP01.bam",
+    "art_sam_ground_truth": [
+     "~/public_data/sim/work/IMP01/J20.art.sam",
+     "~/public_data/sim/work/IMP01/J21.art.sam"
+    ]
+   }
+  },
+  {
+   "id": "IMP02",
+   "class": "clean_unique",
+   "coordinate_source": {
+    "chr20": "drawn (seed 1133209472, pool 363)",
+    "chr21": "drawn (seed 2114545686, pool 195)"
+   },
+   "breakpoints": {
+    "chr20": 45500000,
+    "chr21": 33900000,
+    "convention": "1-based; each junction lies between the given base and the next"
+   },
+   "junctions": {
+    "J20": {
+     "on": "der(20)",
+     "left": "chr20:45500000",
+     "right": "chr21:33900001",
+     "orientation": "3' end of chr20 (after base A) joined to the 5' end of chr21 (from base B+1)",
+     "delly_ct_chr20_first": "3to5",
+     "vcf_bnd": {
+      "chr20:45500000": "N[chr21:33900001[",
+      "chr21:33900001": "]chr20:45500000]N"
+     }
+    },
+    "J21": {
+     "on": "der(21)",
+     "left": "chr21:33900000",
+     "right": "chr20:45500001",
+     "orientation": "3' end of chr21 (after base B) joined to the 5' end of chr20 (from base A+1)",
+     "delly_ct_chr20_first": "5to3",
+     "vcf_bnd": {
+      "chr21:33900000": "N[chr20:45500001[",
+      "chr20:45500001": "]chr21:33900000]N"
+     }
+    }
+   },
+   "zygosity": "heterozygous",
+   "balanced": true,
+   "pre_implant": {
+    "chr20": {
+     "mean_depth_500": 36.14,
+     "low_mapq_fraction_500": 0.0,
+     "low_mapq_fraction_200": 0.0,
+     "reads_500": 284
+    },
+    "chr21": {
+     "mean_depth_500": 33.48,
+     "low_mapq_fraction_500": 0.0,
+     "low_mapq_fraction_200": 0.0,
+     "reads_500": 270
+    }
+   },
+   "scan_statistics": {
+    "chr20": {
+     "chrom": "chr20",
+     "pos": 45500000,
+     "low_mapq_fraction_200": 0.0,
+     "reads_200": 142,
+     "mean_depth_200": 37.15,
+     "low_mapq_fraction_500": 0.0,
+     "entropy2": 3.8534,
+     "max_homopolymer": 4,
+     "max_dinucleotide_run": 6,
+     "mappability": 1.0,
+     "tiles": 82,
+     "class": "clean_unique"
+    },
+    "chr21": {
+     "chrom": "chr21",
+     "pos": 33900000,
+     "low_mapq_fraction_200": 0.0,
+     "reads_200": 106,
+     "mean_depth_200": 28.53,
+     "low_mapq_fraction_500": 0.0,
+     "entropy2": 3.8517,
+     "max_homopolymer": 5,
+     "max_dinucleotide_run": 6,
+     "mappability": 1.0,
+     "tiles": 82,
+     "class": "clean_unique"
+    }
+   },
+   "compensation": {
+    "removal": {
+     "A": {
+      "chrom": "chr20",
+      "pos": 45500000,
+      "spanning_pairs": 62,
+      "spanning_duplicates": 9,
+      "removed": 31,
+      "removed_duplicates": 5,
+      "removed_nondup": 26,
+      "remove_seed": 1638358063
+     },
+     "B": {
+      "chrom": "chr21",
+      "pos": 33900000,
+      "spanning_pairs": 34,
+      "spanning_duplicates": 3,
+      "removed": 17,
+      "removed_duplicates": 2,
+      "removed_nondup": 15,
+      "remove_seed": 1670648285
+     }
+    },
+    "fragments_added_total": 41,
+    "J20": {
+     "template_length": 4000,
+     "junction_index": 2000,
+     "art_seed": 942247574,
+     "art_fold": 60,
+     "art_attempts": 1,
+     "spanning_fragments_available": 91,
+     "pick_seed": 1087793832,
+     "fragments_added": 20,
+     "reads_spanning_junction": 16
+    },
+    "J21": {
+     "template_length": 4000,
+     "junction_index": 2000,
+     "art_seed": 1660121252,
+     "art_fold": 60,
+     "art_attempts": 1,
+     "spanning_fragments_available": 80,
+     "pick_seed": 594119913,
+     "fragments_added": 21,
+     "reads_spanning_junction": 12
+    }
+   },
+   "simulation": {
+    "profile": "HS25",
+    "read_length": 150,
+    "fragment_mean": 443,
+    "fragment_sd": 105,
+    "quality_bins": [
+     2,
+     3,
+     4,
+     5,
+     6,
+     10,
+     20,
+     30
+    ],
+    "quality_rule": "nearest bin, ties to the lower bin"
+   },
+   "files": {
+    "bam": "~/public_data/sim/bams/IMP02.bam",
+    "art_sam_ground_truth": [
+     "~/public_data/sim/work/IMP02/J20.art.sam",
+     "~/public_data/sim/work/IMP02/J21.art.sam"
+    ]
+   }
+  },
+  {
+   "id": "IMP03",
+   "class": "clean_unique",
+   "coordinate_source": {
+    "chr20": "drawn (seed 2049046530, pool 349)",
+    "chr21": "drawn (seed 855960936, pool 183)"
+   },
+   "breakpoints": {
+    "chr20": 4900000,
+    "chr21": 45700000,
+    "convention": "1-based; each junction lies between the given base and the next"
+   },
+   "junctions": {
+    "J20": {
+     "on": "der(20)",
+     "left": "chr20:4900000",
+     "right": "chr21:45700001",
+     "orientation": "3' end of chr20 (after base A) joined to the 5' end of chr21 (from base B+1)",
+     "delly_ct_chr20_first": "3to5",
+     "vcf_bnd": {
+      "chr20:4900000": "N[chr21:45700001[",
+      "chr21:45700001": "]chr20:4900000]N"
+     }
+    },
+    "J21": {
+     "on": "der(21)",
+     "left": "chr21:45700000",
+     "right": "chr20:4900001",
+     "orientation": "3' end of chr21 (after base B) joined to the 5' end of chr20 (from base A+1)",
+     "delly_ct_chr20_first": "5to3",
+     "vcf_bnd": {
+      "chr21:45700000": "N[chr20:4900001[",
+      "chr20:4900001": "]chr21:45700000]N"
+     }
+    }
+   },
+   "zygosity": "heterozygous",
+   "balanced": true,
+   "pre_implant": {
+    "chr20": {
+     "mean_depth_500": 42.74,
+     "low_mapq_fraction_500": 0.0,
+     "low_mapq_fraction_200": 0.0,
+     "reads_500": 324
+    },
+    "chr21": {
+     "mean_depth_500": 40.46,
+     "low_mapq_fraction_500": 0.0,
+     "low_mapq_fraction_200": 0.0,
+     "reads_500": 305
+    }
+   },
+   "scan_statistics": {
+    "chr20": {
+     "chrom": "chr20",
+     "pos": 4900000,
+     "low_mapq_fraction_200": 0.0,
+     "reads_200": 148,
+     "mean_depth_200": 40.74,
+     "low_mapq_fraction_500": 0.0,
+     "entropy2": 3.8781,
+     "max_homopolymer": 6,
+     "max_dinucleotide_run": 4,
+     "mappability": 1.0,
+     "tiles": 82,
+     "class": "clean_unique"
+    },
+    "chr21": {
+     "chrom": "chr21",
+     "pos": 45700000,
+     "low_mapq_fraction_200": 0.0,
+     "reads_200": 143,
+     "mean_depth_200": 38.41,
+     "low_mapq_fraction_500": 0.0,
+     "entropy2": 3.8638,
+     "max_homopolymer": 4,
+     "max_dinucleotide_run": 4,
+     "mappability": 1.0,
+     "tiles": 82,
+     "class": "clean_unique"
+    }
+   },
+   "compensation": {
+    "removal": {
+     "A": {
+      "chrom": "chr20",
+      "pos": 4900000,
+      "spanning_pairs": 60,
+      "spanning_duplicates": 5,
+      "removed": 30,
+      "removed_duplicates": 2,
+      "removed_nondup": 28,
+      "remove_seed": 1268147064
+     },
+     "B": {
+      "chrom": "chr21",
+      "pos": 45700000,
+      "spanning_pairs": 60,
+      "spanning_duplicates": 6,
+      "removed": 30,
+      "removed_duplicates": 3,
+      "removed_nondup": 27,
+      "remove_seed": 288831609
+     }
+    },
+    "fragments_added_total": 55,
+    "J20": {
+     "template_length": 4000,
+     "junction_index": 2000,
+     "art_seed": 1005189375,
+     "art_fold": 60,
+     "art_attempts": 1,
+     "spanning_fragments_available": 99,
+     "pick_seed": 74996597,
+     "fragments_added": 28,
+     "reads_spanning_junction": 17
+    },
+    "J21": {
+     "template_length": 4000,
+     "junction_index": 2000,
+     "art_seed": 1434697342,
+     "art_fold": 60,
+     "art_attempts": 1,
+     "spanning_fragments_available": 78,
+     "pick_seed": 1371837468,
+     "fragments_added": 27,
+     "reads_spanning_junction": 17
+    }
+   },
+   "simulation": {
+    "profile": "HS25",
+    "read_length": 150,
+    "fragment_mean": 443,
+    "fragment_sd": 105,
+    "quality_bins": [
+     2,
+     3,
+     4,
+     5,
+     6,
+     10,
+     20,
+     30
+    ],
+    "quality_rule": "nearest bin, ties to the lower bin"
+   },
+   "files": {
+    "bam": "~/public_data/sim/bams/IMP03.bam",
+    "art_sam_ground_truth": [
+     "~/public_data/sim/work/IMP03/J20.art.sam",
+     "~/public_data/sim/work/IMP03/J21.art.sam"
+    ]
+   }
+  },
+  {
+   "id": "IMP04",
+   "class": "clean_unique",
+   "coordinate_source": {
+    "chr20": "drawn (seed 1067671839, pool 342)",
+    "chr21": "drawn (seed 1990258768, pool 168)"
+   },
+   "breakpoints": {
+    "chr20": 46900000,
+    "chr21": 29200000,
+    "convention": "1-based; each junction lies between the given base and the next"
+   },
+   "junctions": {
+    "J20": {
+     "on": "der(20)",
+     "left": "chr20:46900000",
+     "right": "chr21:29200001",
+     "orientation": "3' end of chr20 (after base A) joined to the 5' end of chr21 (from base B+1)",
+     "delly_ct_chr20_first": "3to5",
+     "vcf_bnd": {
+      "chr20:46900000": "N[chr21:29200001[",
+      "chr21:29200001": "]chr20:46900000]N"
+     }
+    },
+    "J21": {
+     "on": "der(21)",
+     "left": "chr21:29200000",
+     "right": "chr20:46900001",
+     "orientation": "3' end of chr21 (after base B) joined to the 5' end of chr20 (from base A+1)",
+     "delly_ct_chr20_first": "5to3",
+     "vcf_bnd": {
+      "chr21:29200000": "N[chr20:46900001[",
+      "chr20:46900001": "]chr21:29200000]N"
+     }
+    }
+   },
+   "zygosity": "heterozygous",
+   "balanced": true,
+   "pre_implant": {
+    "chr20": {
+     "mean_depth_500": 38.47,
+     "low_mapq_fraction_500": 0.0,
+     "low_mapq_fraction_200": 0.0,
+     "reads_500": 295
+    },
+    "chr21": {
+     "mean_depth_500": 37.37,
+     "low_mapq_fraction_500": 0.0,
+     "low_mapq_fraction_200": 0.0,
+     "reads_500": 285
+    }
+   },
+   "scan_statistics": {
+    "chr20": {
+     "chrom": "chr20",
+     "pos": 46900000,
+     "low_mapq_fraction_200": 0.0,
+     "reads_200": 129,
+     "mean_depth_200": 32.23,
+     "low_mapq_fraction_500": 0.0,
+     "entropy2": 3.8699,
+     "max_homopolymer": 6,
+     "max_dinucleotide_run": 6,
+     "mappability": 1.0,
+     "tiles": 82,
+     "class": "clean_unique"
+    },
+    "chr21": {
+     "chrom": "chr21",
+     "pos": 29200000,
+     "low_mapq_fraction_200": 0.0,
+     "reads_200": 131,
+     "mean_depth_200": 35.76,
+     "low_mapq_fraction_500": 0.0,
+     "entropy2": 3.8565,
+     "max_homopolymer": 5,
+     "max_dinucleotide_run": 4,
+     "mappability": 1.0,
+     "tiles": 82,
+     "class": "clean_unique"
+    }
+   },
+   "compensation": {
+    "removal": {
+     "A": {
+      "chrom": "chr20",
+      "pos": 46900000,
+      "spanning_pairs": 48,
+      "spanning_duplicates": 2,
+      "removed": 24,
+      "removed_duplicates": 2,
+      "removed_nondup": 22,
+      "remove_seed": 1632625800
+     },
+     "B": {
+      "chrom": "chr21",
+      "pos": 29200000,
+      "spanning_pairs": 40,
+      "spanning_duplicates": 4,
+      "removed": 20,
+      "removed_duplicates": 1,
+      "removed_nondup": 19,
+      "remove_seed": 1677044901
+     }
+    },
+    "fragments_added_total": 41,
+    "J20": {
+     "template_length": 4000,
+     "junction_index": 2000,
+     "art_seed": 57062706,
+     "art_fold": 60,
+     "art_attempts": 1,
+     "spanning_fragments_available": 92,
+     "pick_seed": 1213631025,
+     "fragments_added": 20,
+     "reads_spanning_junction": 12
+    },
+    "J21": {
+     "template_length": 4000,
+     "junction_index": 2000,
+     "art_seed": 841048992,
+     "art_fold": 60,
+     "art_attempts": 1,
+     "spanning_fragments_available": 103,
+     "pick_seed": 1508914284,
+     "fragments_added": 21,
+     "reads_spanning_junction": 15
+    }
+   },
+   "simulation": {
+    "profile": "HS25",
+    "read_length": 150,
+    "fragment_mean": 443,
+    "fragment_sd": 105,
+    "quality_bins": [
+     2,
+     3,
+     4,
+     5,
+     6,
+     10,
+     20,
+     30
+    ],
+    "quality_rule": "nearest bin, ties to the lower bin"
+   },
+   "files": {
+    "bam": "~/public_data/sim/bams/IMP04.bam",
+    "art_sam_ground_truth": [
+     "~/public_data/sim/work/IMP04/J20.art.sam",
+     "~/public_data/sim/work/IMP04/J21.art.sam"
+    ]
+   }
+  },
+  {
+   "id": "IMP05",
+   "class": "repeat_adjacent",
+   "coordinate_source": {
+    "chr20": "drawn (seed 1459101402, pool 115)",
+    "chr21": "recorded (Phase 6), class confirmed"
+   },
+   "breakpoints": {
+    "chr20": 1900000,
+    "chr21": 13300000,
+    "convention": "1-based; each junction lies between the given base and the next"
+   },
+   "junctions": {
+    "J20": {
+     "on": "der(20)",
+     "left": "chr20:1900000",
+     "right": "chr21:13300001",
+     "orientation": "3' end of chr20 (after base A) joined to the 5' end of chr21 (from base B+1)",
+     "delly_ct_chr20_first": "3to5",
+     "vcf_bnd": {
+      "chr20:1900000": "N[chr21:13300001[",
+      "chr21:13300001": "]chr20:1900000]N"
+     }
+    },
+    "J21": {
+     "on": "der(21)",
+     "left": "chr21:13300000",
+     "right": "chr20:1900001",
+     "orientation": "3' end of chr21 (after base B) joined to the 5' end of chr20 (from base A+1)",
+     "delly_ct_chr20_first": "5to3",
+     "vcf_bnd": {
+      "chr21:13300000": "N[chr20:1900001[",
+      "chr20:1900001": "]chr21:13300000]N"
+     }
+    }
+   },
+   "zygosity": "heterozygous",
+   "balanced": true,
+   "pre_implant": {
+    "chr20": {
+     "mean_depth_500": 33.4,
+     "low_mapq_fraction_500": 0.008,
+     "low_mapq_fraction_200": 0.016,
+     "reads_500": 253
+    },
+    "chr21": {
+     "mean_depth_500": 40.81,
+     "low_mapq_fraction_500": 0.0,
+     "low_mapq_fraction_200": 0.0,
+     "reads_500": 316
+    }
+   },
+   "scan_statistics": {
+    "chr20": {
+     "chrom": "chr20",
+     "pos": 1900000,
+     "low_mapq_fraction_200": 0.016,
+     "reads_200": 126,
+     "mean_depth_200": 32.79,
+     "low_mapq_fraction_500": 0.008,
+     "entropy2": 3.8426,
+     "max_homopolymer": 14,
+     "max_dinucleotide_run": 4,
+     "mappability": 1.0,
+     "tiles": 82,
+     "class": "repeat_adjacent"
+    },
+    "chr21": {
+     "chrom": "chr21",
+     "pos": 13300000,
+     "low_mapq_fraction_200": 0.0,
+     "reads_200": 156,
+     "mean_depth_200": 44.75,
+     "low_mapq_fraction_500": 0.0,
+     "entropy2": 3.7571,
+     "max_homopolymer": 10,
+     "max_dinucleotide_run": 6,
+     "mappability": 1.0,
+     "tiles": 82,
+     "class": "repeat_adjacent"
+    }
+   },
+   "compensation": {
+    "removal": {
+     "A": {
+      "chrom": "chr20",
+      "pos": 1900000,
+      "spanning_pairs": 53,
+      "spanning_duplicates": 7,
+      "removed": 26,
+      "removed_duplicates": 2,
+      "removed_nondup": 24,
+      "remove_seed": 2110429716
+     },
+     "B": {
+      "chrom": "chr21",
+      "pos": 13300000,
+      "spanning_pairs": 62,
+      "spanning_duplicates": 12,
+      "removed": 31,
+      "removed_duplicates": 6,
+      "removed_nondup": 25,
+      "remove_seed": 1535922043
+     }
+    },
+    "fragments_added_total": 49,
+    "J20": {
+     "template_length": 4000,
+     "junction_index": 2000,
+     "art_seed": 1229104232,
+     "art_fold": 60,
+     "art_attempts": 1,
+     "spanning_fragments_available": 96,
+     "pick_seed": 960570442,
+     "fragments_added": 24,
+     "reads_spanning_junction": 18
+    },
+    "J21": {
+     "template_length": 4000,
+     "junction_index": 2000,
+     "art_seed": 2065702606,
+     "art_fold": 60,
+     "art_attempts": 1,
+     "spanning_fragments_available": 102,
+     "pick_seed": 1474755165,
+     "fragments_added": 25,
+     "reads_spanning_junction": 15
+    }
+   },
+   "simulation": {
+    "profile": "HS25",
+    "read_length": 150,
+    "fragment_mean": 443,
+    "fragment_sd": 105,
+    "quality_bins": [
+     2,
+     3,
+     4,
+     5,
+     6,
+     10,
+     20,
+     30
+    ],
+    "quality_rule": "nearest bin, ties to the lower bin"
+   },
+   "files": {
+    "bam": "~/public_data/sim/bams/IMP05.bam",
+    "art_sam_ground_truth": [
+     "~/public_data/sim/work/IMP05/J20.art.sam",
+     "~/public_data/sim/work/IMP05/J21.art.sam"
+    ]
+   }
+  },
+  {
+   "id": "IMP06",
+   "class": "repeat_adjacent",
+   "coordinate_source": {
+    "chr20": "recorded (Phase 6), class confirmed",
+    "chr21": "recorded (Phase 6), class confirmed"
+   },
+   "breakpoints": {
+    "chr20": 3900000,
+    "chr21": 17200000,
+    "convention": "1-based; each junction lies between the given base and the next"
+   },
+   "junctions": {
+    "J20": {
+     "on": "der(20)",
+     "left": "chr20:3900000",
+     "right": "chr21:17200001",
+     "orientation": "3' end of chr20 (after base A) joined to the 5' end of chr21 (from base B+1)",
+     "delly_ct_chr20_first": "3to5",
+     "vcf_bnd": {
+      "chr20:3900000": "N[chr21:17200001[",
+      "chr21:17200001": "]chr20:3900000]N"
+     }
+    },
+    "J21": {
+     "on": "der(21)",
+     "left": "chr21:17200000",
+     "right": "chr20:3900001",
+     "orientation": "3' end of chr21 (after base B) joined to the 5' end of chr20 (from base A+1)",
+     "delly_ct_chr20_first": "5to3",
+     "vcf_bnd": {
+      "chr21:17200000": "N[chr20:3900001[",
+      "chr20:3900001": "]chr21:17200000]N"
+     }
+    }
+   },
+   "zygosity": "heterozygous",
+   "balanced": true,
+   "pre_implant": {
+    "chr20": {
+     "mean_depth_500": 42.92,
+     "low_mapq_fraction_500": 0.0,
+     "low_mapq_fraction_200": 0.0,
+     "reads_500": 319
+    },
+    "chr21": {
+     "mean_depth_500": 39.64,
+     "low_mapq_fraction_500": 0.0,
+     "low_mapq_fraction_200": 0.0,
+     "reads_500": 295
+    }
+   },
+   "scan_statistics": {
+    "chr20": {
+     "chrom": "chr20",
+     "pos": 3900000,
+     "low_mapq_fraction_200": 0.0,
+     "reads_200": 177,
+     "mean_depth_200": 48.45,
+     "low_mapq_fraction_500": 0.0,
+     "entropy2": 3.8663,
+     "max_homopolymer": 10,
+     "max_dinucleotide_run": 6,
+     "mappability": 1.0,
+     "tiles": 82,
+     "class": "repeat_adjacent"
+    },
+    "chr21": {
+     "chrom": "chr21",
+     "pos": 17200000,
+     "low_mapq_fraction_200": 0.0,
+     "reads_200": 147,
+     "mean_depth_200": 40.38,
+     "low_mapq_fraction_500": 0.0,
+     "entropy2": 3.732,
+     "max_homopolymer": 6,
+     "max_dinucleotide_run": 16,
+     "mappability": 1.0,
+     "tiles": 82,
+     "class": "repeat_adjacent"
+    }
+   },
+   "compensation": {
+    "removal": {
+     "A": {
+      "chrom": "chr20",
+      "pos": 3900000,
+      "spanning_pairs": 72,
+      "spanning_duplicates": 5,
+      "removed": 36,
+      "removed_duplicates": 0,
+      "removed_nondup": 36,
+      "remove_seed": 1005688558
+     },
+     "B": {
+      "chrom": "chr21",
+      "pos": 17200000,
+      "spanning_pairs": 64,
+      "spanning_duplicates": 11,
+      "removed": 32,
+      "removed_duplicates": 6,
+      "removed_nondup": 26,
+      "remove_seed": 966493446
+     }
+    },
+    "fragments_added_total": 62,
+    "J20": {
+     "template_length": 4000,
+     "junction_index": 2000,
+     "art_seed": 2021803709,
+     "art_fold": 60,
+     "art_attempts": 1,
+     "spanning_fragments_available": 78,
+     "pick_seed": 1170934864,
+     "fragments_added": 31,
+     "reads_spanning_junction": 25
+    },
+    "J21": {
+     "template_length": 4000,
+     "junction_index": 2000,
+     "art_seed": 496549764,
+     "art_fold": 60,
+     "art_attempts": 1,
+     "spanning_fragments_available": 107,
+     "pick_seed": 69678400,
+     "fragments_added": 31,
+     "reads_spanning_junction": 22
+    }
+   },
+   "simulation": {
+    "profile": "HS25",
+    "read_length": 150,
+    "fragment_mean": 443,
+    "fragment_sd": 105,
+    "quality_bins": [
+     2,
+     3,
+     4,
+     5,
+     6,
+     10,
+     20,
+     30
+    ],
+    "quality_rule": "nearest bin, ties to the lower bin"
+   },
+   "files": {
+    "bam": "~/public_data/sim/bams/IMP06.bam",
+    "art_sam_ground_truth": [
+     "~/public_data/sim/work/IMP06/J20.art.sam",
+     "~/public_data/sim/work/IMP06/J21.art.sam"
+    ]
+   }
+  },
+  {
+   "id": "IMP07",
+   "class": "repeat_adjacent",
+   "coordinate_source": {
+    "chr20": "drawn (seed 1043115336, pool 111)",
+    "chr21": "drawn (seed 232476431, pool 67)"
+   },
+   "breakpoints": {
+    "chr20": 55000000,
+    "chr21": 41200000,
+    "convention": "1-based; each junction lies between the given base and the next"
+   },
+   "junctions": {
+    "J20": {
+     "on": "der(20)",
+     "left": "chr20:55000000",
+     "right": "chr21:41200001",
+     "orientation": "3' end of chr20 (after base A) joined to the 5' end of chr21 (from base B+1)",
+     "delly_ct_chr20_first": "3to5",
+     "vcf_bnd": {
+      "chr20:55000000": "N[chr21:41200001[",
+      "chr21:41200001": "]chr20:55000000]N"
+     }
+    },
+    "J21": {
+     "on": "der(21)",
+     "left": "chr21:41200000",
+     "right": "chr20:55000001",
+     "orientation": "3' end of chr21 (after base B) joined to the 5' end of chr20 (from base A+1)",
+     "delly_ct_chr20_first": "5to3",
+     "vcf_bnd": {
+      "chr21:41200000": "N[chr20:55000001[",
+      "chr20:55000001": "]chr21:41200000]N"
+     }
+    }
+   },
+   "zygosity": "heterozygous",
+   "balanced": true,
+   "pre_implant": {
+    "chr20": {
+     "mean_depth_500": 35.22,
+     "low_mapq_fraction_500": 0.004,
+     "low_mapq_fraction_200": 0.0,
+     "reads_500": 266
+    },
+    "chr21": {
+     "mean_depth_500": 35.23,
+     "low_mapq_fraction_500": 0.004,
+     "low_mapq_fraction_200": 0.008,
+     "reads_500": 282
+    }
+   },
+   "scan_statistics": {
+    "chr20": {
+     "chrom": "chr20",
+     "pos": 55000000,
+     "low_mapq_fraction_200": 0.0,
+     "reads_200": 129,
+     "mean_depth_200": 34.8,
+     "low_mapq_fraction_500": 0.004,
+     "entropy2": 3.8794,
+     "max_homopolymer": 7,
+     "max_dinucleotide_run": 10,
+     "mappability": 1.0,
+     "tiles": 82,
+     "class": "repeat_adjacent"
+    },
+    "chr21": {
+     "chrom": "chr21",
+     "pos": 41200000,
+     "low_mapq_fraction_200": 0.008,
+     "reads_200": 125,
+     "mean_depth_200": 29.6,
+     "low_mapq_fraction_500": 0.004,
+     "entropy2": 3.8857,
+     "max_homopolymer": 10,
+     "max_dinucleotide_run": 6,
+     "mappability": 1.0,
+     "tiles": 82,
+     "class": "repeat_adjacent"
+    }
+   },
+   "compensation": {
+    "removal": {
+     "A": {
+      "chrom": "chr20",
+      "pos": 55000000,
+      "spanning_pairs": 60,
+      "spanning_duplicates": 9,
+      "removed": 30,
+      "removed_duplicates": 5,
+      "removed_nondup": 25,
+      "remove_seed": 601178239
+     },
+     "B": {
+      "chrom": "chr21",
+      "pos": 41200000,
+      "spanning_pairs": 49,
+      "spanning_duplicates": 5,
+      "removed": 24,
+      "removed_duplicates": 2,
+      "removed_nondup": 22,
+      "remove_seed": 250616929
+     }
+    },
+    "fragments_added_total": 47,
+    "J20": {
+     "template_length": 4000,
+     "junction_index": 2000,
+     "art_seed": 2041068797,
+     "art_fold": 60,
+     "art_attempts": 1,
+     "spanning_fragments_available": 101,
+     "pick_seed": 1836871868,
+     "fragments_added": 24,
+     "reads_spanning_junction": 18
+    },
+    "J21": {
+     "template_length": 4000,
+     "junction_index": 2000,
+     "art_seed": 1813303548,
+     "art_fold": 60,
+     "art_attempts": 1,
+     "spanning_fragments_available": 99,
+     "pick_seed": 1898149199,
+     "fragments_added": 23,
+     "reads_spanning_junction": 17
+    }
+   },
+   "simulation": {
+    "profile": "HS25",
+    "read_length": 150,
+    "fragment_mean": 443,
+    "fragment_sd": 105,
+    "quality_bins": [
+     2,
+     3,
+     4,
+     5,
+     6,
+     10,
+     20,
+     30
+    ],
+    "quality_rule": "nearest bin, ties to the lower bin"
+   },
+   "files": {
+    "bam": "~/public_data/sim/bams/IMP07.bam",
+    "art_sam_ground_truth": [
+     "~/public_data/sim/work/IMP07/J20.art.sam",
+     "~/public_data/sim/work/IMP07/J21.art.sam"
+    ]
+   }
+  },
+  {
+   "id": "IMP08",
+   "class": "repeat_adjacent",
+   "coordinate_source": {
+    "chr20": "drawn (seed 1518490679, pool 105)",
+    "chr21": "drawn (seed 954265415, pool 62)"
+   },
+   "breakpoints": {
+    "chr20": 13500000,
+    "chr21": 39300000,
+    "convention": "1-based; each junction lies between the given base and the next"
+   },
+   "junctions": {
+    "J20": {
+     "on": "der(20)",
+     "left": "chr20:13500000",
+     "right": "chr21:39300001",
+     "orientation": "3' end of chr20 (after base A) joined to the 5' end of chr21 (from base B+1)",
+     "delly_ct_chr20_first": "3to5",
+     "vcf_bnd": {
+      "chr20:13500000": "N[chr21:39300001[",
+      "chr21:39300001": "]chr20:13500000]N"
+     }
+    },
+    "J21": {
+     "on": "der(21)",
+     "left": "chr21:39300000",
+     "right": "chr20:13500001",
+     "orientation": "3' end of chr21 (after base B) joined to the 5' end of chr20 (from base A+1)",
+     "delly_ct_chr20_first": "5to3",
+     "vcf_bnd": {
+      "chr21:39300000": "N[chr20:13500001[",
+      "chr20:13500001": "]chr21:39300000]N"
+     }
+    }
+   },
+   "zygosity": "heterozygous",
+   "balanced": true,
+   "pre_implant": {
+    "chr20": {
+     "mean_depth_500": 34.08,
+     "low_mapq_fraction_500": 0.0,
+     "low_mapq_fraction_200": 0.0,
+     "reads_500": 267
+    },
+    "chr21": {
+     "mean_depth_500": 38.93,
+     "low_mapq_fraction_500": 0.0,
+     "low_mapq_fraction_200": 0.0,
+     "reads_500": 300
+    }
+   },
+   "scan_statistics": {
+    "chr20": {
+     "chrom": "chr20",
+     "pos": 13500000,
+     "low_mapq_fraction_200": 0.0,
+     "reads_200": 124,
+     "mean_depth_200": 35.62,
+     "low_mapq_fraction_500": 0.0,
+     "entropy2": 3.6899,
+     "max_homopolymer": 5,
+     "max_dinucleotide_run": 10,
+     "mappability": 1.0,
+     "tiles": 82,
+     "class": "repeat_adjacent"
+    },
+    "chr21": {
+     "chrom": "chr21",
+     "pos": 39300000,
+     "low_mapq_fraction_200": 0.0,
+     "reads_200": 152,
+     "mean_depth_200": 39.41,
+     "low_mapq_fraction_500": 0.0,
+     "entropy2": 3.8549,
+     "max_homopolymer": 13,
+     "max_dinucleotide_run": 6,
+     "mappability": 1.0,
+     "tiles": 82,
+     "class": "repeat_adjacent"
+    }
+   },
+   "compensation": {
+    "removal": {
+     "A": {
+      "chrom": "chr20",
+      "pos": 13500000,
+      "spanning_pairs": 50,
+      "spanning_duplicates": 7,
+      "removed": 25,
+      "removed_duplicates": 3,
+      "removed_nondup": 22,
+      "remove_seed": 460529952
+     },
+     "B": {
+      "chrom": "chr21",
+      "pos": 39300000,
+      "spanning_pairs": 57,
+      "spanning_duplicates": 6,
+      "removed": 28,
+      "removed_duplicates": 4,
+      "removed_nondup": 24,
+      "remove_seed": 154703838
+     }
+    },
+    "fragments_added_total": 46,
+    "J20": {
+     "template_length": 4000,
+     "junction_index": 2000,
+     "art_seed": 994004767,
+     "art_fold": 60,
+     "art_attempts": 1,
+     "spanning_fragments_available": 102,
+     "pick_seed": 686292177,
+     "fragments_added": 23,
+     "reads_spanning_junction": 20
+    },
+    "J21": {
+     "template_length": 4000,
+     "junction_index": 2000,
+     "art_seed": 398610275,
+     "art_fold": 60,
+     "art_attempts": 1,
+     "spanning_fragments_available": 101,
+     "pick_seed": 1515714380,
+     "fragments_added": 23,
+     "reads_spanning_junction": 19
+    }
+   },
+   "simulation": {
+    "profile": "HS25",
+    "read_length": 150,
+    "fragment_mean": 443,
+    "fragment_sd": 105,
+    "quality_bins": [
+     2,
+     3,
+     4,
+     5,
+     6,
+     10,
+     20,
+     30
+    ],
+    "quality_rule": "nearest bin, ties to the lower bin"
+   },
+   "files": {
+    "bam": "~/public_data/sim/bams/IMP08.bam",
+    "art_sam_ground_truth": [
+     "~/public_data/sim/work/IMP08/J20.art.sam",
+     "~/public_data/sim/work/IMP08/J21.art.sam"
+    ]
+   }
+  },
+  {
+   "id": "IMP09",
+   "class": "low_mappability",
+   "coordinate_source": {
+    "chr20": "drawn (seed 83332530, pool 4)",
+    "chr21": "drawn (seed 116038248, pool 17)"
+   },
+   "breakpoints": {
+    "chr20": 33700000,
+    "chr21": 5900000,
+    "convention": "1-based; each junction lies between the given base and the next"
+   },
+   "junctions": {
+    "J20": {
+     "on": "der(20)",
+     "left": "chr20:33700000",
+     "right": "chr21:5900001",
+     "orientation": "3' end of chr20 (after base A) joined to the 5' end of chr21 (from base B+1)",
+     "delly_ct_chr20_first": "3to5",
+     "vcf_bnd": {
+      "chr20:33700000": "N[chr21:5900001[",
+      "chr21:5900001": "]chr20:33700000]N"
+     }
+    },
+    "J21": {
+     "on": "der(21)",
+     "left": "chr21:5900000",
+     "right": "chr20:33700001",
+     "orientation": "3' end of chr21 (after base B) joined to the 5' end of chr20 (from base A+1)",
+     "delly_ct_chr20_first": "5to3",
+     "vcf_bnd": {
+      "chr21:5900000": "N[chr20:33700001[",
+      "chr20:33700001": "]chr21:5900000]N"
+     }
+    }
+   },
+   "zygosity": "heterozygous",
+   "balanced": true,
+   "pre_implant": {
+    "chr20": {
+     "mean_depth_500": 28.29,
+     "low_mapq_fraction_500": 0.339,
+     "low_mapq_fraction_200": 0.479,
+     "reads_500": 251
+    },
+    "chr21": {
+     "mean_depth_500": 29.69,
+     "low_mapq_fraction_500": 1.0,
+     "low_mapq_fraction_200": 1.0,
+     "reads_500": 237
+    }
+   },
+   "scan_statistics": {
+    "chr20": {
+     "chrom": "chr20",
+     "pos": 33700000,
+     "low_mapq_fraction_200": 0.479,
+     "reads_200": 94,
+     "mean_depth_200": 22.38,
+     "low_mapq_fraction_500": 0.339,
+     "entropy2": 3.3785,
+     "max_homopolymer": 7,
+     "max_dinucleotide_run": 4,
+     "mappability": 0.4146,
+     "tiles": 82,
+     "class": "low_mappability"
+    },
+    "chr21": {
+     "chrom": "chr21",
+     "pos": 5900000,
+     "low_mapq_fraction_200": 1.0,
+     "reads_200": 104,
+     "mean_depth_200": 30.09,
+     "low_mapq_fraction_500": 1.0,
+     "entropy2": 3.6537,
+     "max_homopolymer": 5,
+     "max_dinucleotide_run": 6,
+     "mappability": 0.0,
+     "tiles": 82,
+     "class": "low_mappability"
+    }
+   },
+   "compensation": {
+    "removal": {
+     "A": {
+      "chrom": "chr20",
+      "pos": 33700000,
+      "spanning_pairs": 44,
+      "spanning_duplicates": 2,
+      "removed": 22,
+      "removed_duplicates": 0,
+      "removed_nondup": 22,
+      "remove_seed": 1875596265
+     },
+     "B": {
+      "chrom": "chr21",
+      "pos": 5900000,
+      "spanning_pairs": 42,
+      "spanning_duplicates": 2,
+      "removed": 21,
+      "removed_duplicates": 0,
+      "removed_nondup": 21,
+      "remove_seed": 369775666
+     }
+    },
+    "fragments_added_total": 43,
+    "J20": {
+     "template_length": 4000,
+     "junction_index": 2000,
+     "art_seed": 1477586207,
+     "art_fold": 60,
+     "art_attempts": 1,
+     "spanning_fragments_available": 108,
+     "pick_seed": 658801603,
+     "fragments_added": 22,
+     "reads_spanning_junction": 17
+    },
+    "J21": {
+     "template_length": 4000,
+     "junction_index": 2000,
+     "art_seed": 15003808,
+     "art_fold": 60,
+     "art_attempts": 1,
+     "spanning_fragments_available": 90,
+     "pick_seed": 881184574,
+     "fragments_added": 21,
+     "reads_spanning_junction": 16
+    }
+   },
+   "simulation": {
+    "profile": "HS25",
+    "read_length": 150,
+    "fragment_mean": 443,
+    "fragment_sd": 105,
+    "quality_bins": [
+     2,
+     3,
+     4,
+     5,
+     6,
+     10,
+     20,
+     30
+    ],
+    "quality_rule": "nearest bin, ties to the lower bin"
+   },
+   "files": {
+    "bam": "~/public_data/sim/bams/IMP09.bam",
+    "art_sam_ground_truth": [
+     "~/public_data/sim/work/IMP09/J20.art.sam",
+     "~/public_data/sim/work/IMP09/J21.art.sam"
+    ]
+   }
+  },
+  {
+   "id": "IMP10",
+   "class": "low_mappability",
+   "coordinate_source": {
+    "chr20": "recorded (Phase 6), class confirmed",
+    "chr21": "recorded (Phase 6), class confirmed"
+   },
+   "breakpoints": {
+    "chr20": 25800000,
+    "chr21": 7600000,
+    "convention": "1-based; each junction lies between the given base and the next"
+   },
+   "junctions": {
+    "J20": {
+     "on": "der(20)",
+     "left": "chr20:25800000",
+     "right": "chr21:7600001",
+     "orientation": "3' end of chr20 (after base A) joined to the 5' end of chr21 (from base B+1)",
+     "delly_ct_chr20_first": "3to5",
+     "vcf_bnd": {
+      "chr20:25800000": "N[chr21:7600001[",
+      "chr21:7600001": "]chr20:25800000]N"
+     }
+    },
+    "J21": {
+     "on": "der(21)",
+     "left": "chr21:7600000",
+     "right": "chr20:25800001",
+     "orientation": "3' end of chr21 (after base B) joined to the 5' end of chr20 (from base A+1)",
+     "delly_ct_chr20_first": "5to3",
+     "vcf_bnd": {
+      "chr21:7600000": "N[chr20:25800001[",
+      "chr20:25800001": "]chr21:7600000]N"
+     }
+    }
+   },
+   "zygosity": "heterozygous",
+   "balanced": true,
+   "pre_implant": {
+    "chr20": {
+     "mean_depth_500": 29.19,
+     "low_mapq_fraction_500": 1.0,
+     "low_mapq_fraction_200": 1.0,
+     "reads_500": 227
+    },
+    "chr21": {
+     "mean_depth_500": 28.92,
+     "low_mapq_fraction_500": 1.0,
+     "low_mapq_fraction_200": 1.0,
+     "reads_500": 222
+    }
+   },
+   "scan_statistics": {
+    "chr20": {
+     "chrom": "chr20",
+     "pos": 25800000,
+     "low_mapq_fraction_200": 1.0,
+     "reads_200": 110,
+     "mean_depth_200": 30.02,
+     "low_mapq_fraction_500": 1.0,
+     "entropy2": 3.8765,
+     "max_homopolymer": 4,
+     "max_dinucleotide_run": 6,
+     "mappability": 0.0,
+     "tiles": 82,
+     "class": "low_mappability"
+    },
+    "chr21": {
+     "chrom": "chr21",
+     "pos": 7600000,
+     "low_mapq_fraction_200": 1.0,
+     "reads_200": 107,
+     "mean_depth_200": 27.31,
+     "low_mapq_fraction_500": 1.0,
+     "entropy2": 3.8955,
+     "max_homopolymer": 5,
+     "max_dinucleotide_run": 6,
+     "mappability": 0.0,
+     "tiles": 82,
+     "class": "low_mappability"
+    }
+   },
+   "compensation": {
+    "removal": {
+     "A": {
+      "chrom": "chr20",
+      "pos": 25800000,
+      "spanning_pairs": 39,
+      "spanning_duplicates": 0,
+      "removed": 19,
+      "removed_duplicates": 0,
+      "removed_nondup": 19,
+      "remove_seed": 1559836626
+     },
+     "B": {
+      "chrom": "chr21",
+      "pos": 7600000,
+      "spanning_pairs": 43,
+      "spanning_duplicates": 4,
+      "removed": 21,
+      "removed_duplicates": 2,
+      "removed_nondup": 19,
+      "remove_seed": 1632996763
+     }
+    },
+    "fragments_added_total": 38,
+    "J20": {
+     "template_length": 4000,
+     "junction_index": 2000,
+     "art_seed": 1286853468,
+     "art_fold": 60,
+     "art_attempts": 1,
+     "spanning_fragments_available": 107,
+     "pick_seed": 1383684098,
+     "fragments_added": 19,
+     "reads_spanning_junction": 11
+    },
+    "J21": {
+     "template_length": 4000,
+     "junction_index": 2000,
+     "art_seed": 920556435,
+     "art_fold": 60,
+     "art_attempts": 1,
+     "spanning_fragments_available": 106,
+     "pick_seed": 844735709,
+     "fragments_added": 19,
+     "reads_spanning_junction": 12
+    }
+   },
+   "simulation": {
+    "profile": "HS25",
+    "read_length": 150,
+    "fragment_mean": 443,
+    "fragment_sd": 105,
+    "quality_bins": [
+     2,
+     3,
+     4,
+     5,
+     6,
+     10,
+     20,
+     30
+    ],
+    "quality_rule": "nearest bin, ties to the lower bin"
+   },
+   "files": {
+    "bam": "~/public_data/sim/bams/IMP10.bam",
+    "art_sam_ground_truth": [
+     "~/public_data/sim/work/IMP10/J20.art.sam",
+     "~/public_data/sim/work/IMP10/J21.art.sam"
+    ]
+   }
+  },
+  {
+   "id": "IMP11",
+   "class": "low_mappability",
+   "coordinate_source": {
+    "chr20": "recorded (Phase 6), class confirmed",
+    "chr21": "drawn (seed 1869246703, pool 10)"
+   },
+   "breakpoints": {
+    "chr20": 31100000,
+    "chr21": 20200000,
+    "convention": "1-based; each junction lies between the given base and the next"
+   },
+   "junctions": {
+    "J20": {
+     "on": "der(20)",
+     "left": "chr20:31100000",
+     "right": "chr21:20200001",
+     "orientation": "3' end of chr20 (after base A) joined to the 5' end of chr21 (from base B+1)",
+     "delly_ct_chr20_first": "3to5",
+     "vcf_bnd": {
+      "chr20:31100000": "N[chr21:20200001[",
+      "chr21:20200001": "]chr20:31100000]N"
+     }
+    },
+    "J21": {
+     "on": "der(21)",
+     "left": "chr21:20200000",
+     "right": "chr20:31100001",
+     "orientation": "3' end of chr21 (after base B) joined to the 5' end of chr20 (from base A+1)",
+     "delly_ct_chr20_first": "5to3",
+     "vcf_bnd": {
+      "chr21:20200000": "N[chr20:31100001[",
+      "chr20:31100001": "]chr21:20200000]N"
+     }
+    }
+   },
+   "zygosity": "heterozygous",
+   "balanced": true,
+   "pre_implant": {
+    "chr20": {
+     "mean_depth_500": 23.05,
+     "low_mapq_fraction_500": 0.597,
+     "low_mapq_fraction_200": 0.545,
+     "reads_500": 226
+    },
+    "chr21": {
+     "mean_depth_500": 36.42,
+     "low_mapq_fraction_500": 0.418,
+     "low_mapq_fraction_200": 0.493,
+     "reads_500": 292
+    }
+   },
+   "scan_statistics": {
+    "chr20": {
+     "chrom": "chr20",
+     "pos": 31100000,
+     "low_mapq_fraction_200": 0.545,
+     "reads_200": 121,
+     "mean_depth_200": 25.53,
+     "low_mapq_fraction_500": 0.597,
+     "entropy2": 3.3527,
+     "max_homopolymer": 3,
+     "max_dinucleotide_run": 4,
+     "mappability": 0.561,
+     "tiles": 82,
+     "class": "low_mappability"
+    },
+    "chr21": {
+     "chrom": "chr21",
+     "pos": 20200000,
+     "low_mapq_fraction_200": 0.493,
+     "reads_200": 148,
+     "mean_depth_200": 40.96,
+     "low_mapq_fraction_500": 0.418,
+     "entropy2": 3.8482,
+     "max_homopolymer": 5,
+     "max_dinucleotide_run": 6,
+     "mappability": 0.0,
+     "tiles": 82,
+     "class": "low_mappability"
+    }
+   },
+   "compensation": {
+    "removal": {
+     "A": {
+      "chrom": "chr20",
+      "pos": 31100000,
+      "spanning_pairs": 39,
+      "spanning_duplicates": 5,
+      "removed": 19,
+      "removed_duplicates": 2,
+      "removed_nondup": 17,
+      "remove_seed": 509456872
+     },
+     "B": {
+      "chrom": "chr21",
+      "pos": 20200000,
+      "spanning_pairs": 65,
+      "spanning_duplicates": 3,
+      "removed": 32,
+      "removed_duplicates": 1,
+      "removed_nondup": 31,
+      "remove_seed": 1943870899
+     }
+    },
+    "fragments_added_total": 48,
+    "J20": {
+     "template_length": 4000,
+     "junction_index": 2000,
+     "art_seed": 1700333904,
+     "art_fold": 60,
+     "art_attempts": 1,
+     "spanning_fragments_available": 92,
+     "pick_seed": 1377482352,
+     "fragments_added": 24,
+     "reads_spanning_junction": 13
+    },
+    "J21": {
+     "template_length": 4000,
+     "junction_index": 2000,
+     "art_seed": 115932633,
+     "art_fold": 60,
+     "art_attempts": 1,
+     "spanning_fragments_available": 86,
+     "pick_seed": 150293527,
+     "fragments_added": 24,
+     "reads_spanning_junction": 20
+    }
+   },
+   "simulation": {
+    "profile": "HS25",
+    "read_length": 150,
+    "fragment_mean": 443,
+    "fragment_sd": 105,
+    "quality_bins": [
+     2,
+     3,
+     4,
+     5,
+     6,
+     10,
+     20,
+     30
+    ],
+    "quality_rule": "nearest bin, ties to the lower bin"
+   },
+   "files": {
+    "bam": "~/public_data/sim/bams/IMP11.bam",
+    "art_sam_ground_truth": [
+     "~/public_data/sim/work/IMP11/J20.art.sam",
+     "~/public_data/sim/work/IMP11/J21.art.sam"
+    ]
+   }
+  },
+  {
+   "id": "IMP12",
+   "class": "low_mappability",
+   "coordinate_source": {
+    "chr20": "drawn (seed 211666409, pool 3)",
+    "chr21": "drawn (seed 866322079, pool 9)"
+   },
+   "breakpoints": {
+    "chr20": 47900000,
+    "chr21": 44100000,
+    "convention": "1-based; each junction lies between the given base and the next"
+   },
+   "junctions": {
+    "J20": {
+     "on": "der(20)",
+     "left": "chr20:47900000",
+     "right": "chr21:44100001",
+     "orientation": "3' end of chr20 (after base A) joined to the 5' end of chr21 (from base B+1)",
+     "delly_ct_chr20_first": "3to5",
+     "vcf_bnd": {
+      "chr20:47900000": "N[chr21:44100001[",
+      "chr21:44100001": "]chr20:47900000]N"
+     }
+    },
+    "J21": {
+     "on": "der(21)",
+     "left": "chr21:44100000",
+     "right": "chr20:47900001",
+     "orientation": "3' end of chr21 (after base B) joined to the 5' end of chr20 (from base A+1)",
+     "delly_ct_chr20_first": "5to3",
+     "vcf_bnd": {
+      "chr21:44100000": "N[chr20:47900001[",
+      "chr20:47900001": "]chr21:44100000]N"
+     }
+    }
+   },
+   "zygosity": "heterozygous",
+   "balanced": true,
+   "pre_implant": {
+    "chr20": {
+     "mean_depth_500": 32.99,
+     "low_mapq_fraction_500": 0.858,
+     "low_mapq_fraction_200": 0.804,
+     "reads_500": 253
+    },
+    "chr21": {
+     "mean_depth_500": 22.3,
+     "low_mapq_fraction_500": 1.0,
+     "low_mapq_fraction_200": 1.0,
+     "reads_500": 175
+    }
+   },
+   "scan_statistics": {
+    "chr20": {
+     "chrom": "chr20",
+     "pos": 47900000,
+     "low_mapq_fraction_200": 0.804,
+     "reads_200": 112,
+     "mean_depth_200": 29.9,
+     "low_mapq_fraction_500": 0.858,
+     "entropy2": 3.8826,
+     "max_homopolymer": 6,
+     "max_dinucleotide_run": 4,
+     "mappability": 0.0,
+     "tiles": 82,
+     "class": "low_mappability"
+    },
+    "chr21": {
+     "chrom": "chr21",
+     "pos": 44100000,
+     "low_mapq_fraction_200": 1.0,
+     "reads_200": 84,
+     "mean_depth_200": 23.31,
+     "low_mapq_fraction_500": 1.0,
+     "entropy2": 3.889,
+     "max_homopolymer": 11,
+     "max_dinucleotide_run": 4,
+     "mappability": 0.0,
+     "tiles": 82,
+     "class": "low_mappability"
+    }
+   },
+   "compensation": {
+    "removal": {
+     "A": {
+      "chrom": "chr20",
+      "pos": 47900000,
+      "spanning_pairs": 45,
+      "spanning_duplicates": 5,
+      "removed": 22,
+      "removed_duplicates": 5,
+      "removed_nondup": 17,
+      "remove_seed": 1893422302
+     },
+     "B": {
+      "chrom": "chr21",
+      "pos": 44100000,
+      "spanning_pairs": 33,
+      "spanning_duplicates": 2,
+      "removed": 16,
+      "removed_duplicates": 0,
+      "removed_nondup": 16,
+      "remove_seed": 1412279415
+     }
+    },
+    "fragments_added_total": 33,
+    "J20": {
+     "template_length": 4000,
+     "junction_index": 2000,
+     "art_seed": 907301183,
+     "art_fold": 60,
+     "art_attempts": 1,
+     "spanning_fragments_available": 93,
+     "pick_seed": 1305665462,
+     "fragments_added": 16,
+     "reads_spanning_junction": 10
+    },
+    "J21": {
+     "template_length": 4000,
+     "junction_index": 2000,
+     "art_seed": 124627007,
+     "art_fold": 60,
+     "art_attempts": 1,
+     "spanning_fragments_available": 81,
+     "pick_seed": 2143079221,
+     "fragments_added": 17,
+     "reads_spanning_junction": 15
+    }
+   },
+   "simulation": {
+    "profile": "HS25",
+    "read_length": 150,
+    "fragment_mean": 443,
+    "fragment_sd": 105,
+    "quality_bins": [
+     2,
+     3,
+     4,
+     5,
+     6,
+     10,
+     20,
+     30
+    ],
+    "quality_rule": "nearest bin, ties to the lower bin"
+   },
+   "files": {
+    "bam": "~/public_data/sim/bams/IMP12.bam",
+    "art_sam_ground_truth": [
+     "~/public_data/sim/work/IMP12/J20.art.sam",
+     "~/public_data/sim/work/IMP12/J21.art.sam"
+    ]
+   }
+  }
+ ]
+}
