@@ -9,6 +9,7 @@ cannot be recomputed.
 """
 import ast
 import inspect
+import textwrap
 
 from stage1_igv_assistant.tools import bam_tools
 
@@ -106,13 +107,19 @@ def _scan_bands(fn_node):
 def _parsed_summary_fn():
     """The parsed scoring function. ANY failure to obtain or parse its source is a
     TierDerivationError, so every caller reports "not derivable" instead of
-    crashing. Reformatting the signature onto one line used to raise a bare
-    IndentationError here -- inspect.cleandoc then dedents the body below the
-    `def` line -- which ui.main() did not catch, so the interface failed to
-    start instead of saying the ceiling could not be derived."""
+    crashing.
+
+    The source is dedented with textwrap.dedent, which removes only the margin
+    common to EVERY line. It used to go through inspect.cleandoc, a docstring
+    tool that strips the first line and then removes the smallest margin of the
+    lines AFTER it. The real signature spans several lines and closes with
+    ") -> dict:" at column 0, which pinned that margin to zero; written on one
+    line, the body's own indentation became the margin and was stripped, so a
+    valid source raised IndentationError and was reported as not derivable. A
+    source that genuinely does not parse still is."""
     try:
         src = inspect.getsource(bam_tools.summarize_breakpoint_evidence)
-        tree = ast.parse(inspect.cleandoc(src) if src.startswith("def") else src)
+        tree = ast.parse(textwrap.dedent(src))
     except Exception as e:
         raise TierDerivationError(
             f"could not parse summarize_breakpoint_evidence's source "
