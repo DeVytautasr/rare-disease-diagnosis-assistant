@@ -18,6 +18,7 @@ import json
 import os
 import re
 import shutil
+import subprocess
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -26,6 +27,21 @@ from synth_common import BAMS, SIM, WORK, tool_versions, write_json  # noqa: E40
 
 REPO = os.path.dirname(os.path.dirname(HERE))
 DEST = os.path.join(REPO, "stage1_igv_assistant", "results", "synthetic_control_2026-09")
+
+
+def tracked(path):
+    return subprocess.run(["git", "-C", REPO, "ls-files", "--error-unmatch", path],
+                          capture_output=True).returncode == 0
+
+
+def copy_unless_committed_differs(src, dst):
+    """A committed record is never changed: a copy that would alter a tracked
+    file is skipped and reported instead."""
+    if os.path.exists(dst) and tracked(dst):
+        if open(src, "rb").read() != open(dst, "rb").read():
+            print(f"NOT overwritten (committed, and the source now differs): {os.path.relpath(dst, REPO)}")
+        return
+    shutil.copyfile(src, dst)
 
 
 def load(path):
@@ -70,9 +86,9 @@ def main(dest, name, revised_name):
               "scan_candidates.json": os.path.join(SIM, "scan", "candidates.json"),
               "selection.json": os.path.join(SIM, "selection.json"),
               "pooled_alignment.json": os.path.join(WORK, "pool", "align.json")}
-    for name, src in copies.items():
+    for fname, src in copies.items():
         if os.path.exists(src):
-            shutil.copyfile(src, os.path.join(dest, name))
+            copy_unless_committed_differs(src, os.path.join(dest, fname))
     sel = load(os.path.join(SIM, "selection.json"))
     implants = []
     for imp in (sel or {}).get("implants", []):
@@ -82,10 +98,11 @@ def main(dest, name, revised_name):
         build = load(os.path.join(WORK, iid, "build.json"))
         revised = load(os.path.join(WORK, iid, "gate_revised.json"))
         if gate:
-            shutil.copyfile(os.path.join(WORK, iid, "gate.json"), os.path.join(dest, f"{iid}_gate.json"))
+            copy_unless_committed_differs(os.path.join(WORK, iid, "gate.json"),
+                                          os.path.join(dest, f"{iid}_gate.json"))
         if revised:
-            shutil.copyfile(os.path.join(WORK, iid, "gate_revised.json"),
-                            os.path.join(dest, f"{iid}_{revised_name}"))
+            copy_unless_committed_differs(os.path.join(WORK, iid, "gate_revised.json"),
+                                          os.path.join(dest, f"{iid}_{revised_name}"))
         implants.append({
             "id": iid, "class": imp["class"], "chr20": imp["chr20"], "chr21": imp["chr21"],
             "source": imp["source"],
@@ -162,6 +179,6 @@ if __name__ == "__main__":
                     help="a committed record is never overwritten: a later stage gets a new, dated name")
     ap.add_argument("--revised-name", default="gate_revised_2026-09-25.json")
     a = ap.parse_args()
-    if os.path.exists(os.path.join(a.dest, a.name)) and a.name == "run_record.json":
-        raise SystemExit("run_record.json is committed; write a later stage under a new --name")
+    if tracked(os.path.join(a.dest, a.name)):
+        raise SystemExit(f"{a.name} is committed; write a later stage under a new --name")
     main(a.dest, a.name, a.revised_name)
