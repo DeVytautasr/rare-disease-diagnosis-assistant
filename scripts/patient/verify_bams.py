@@ -26,8 +26,8 @@ import time
 import pysam
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
-from common import (BACKGROUND, PHASE0, PHASE0_AH_CONTIGS, PHASE0_CONTIG_MD5, RUN_DIR, TERMS,
-                    contig_md5, die, locate)
+from common import (BACKGROUND, PHASE0, PHASE0_AH_CONTIGS, PHASE0_CONTIG_MD5,
+                    PHASE0_MAPPED_CONTIGS, RUN_DIR, TERMS, contig_md5, die, locate)
 from redact import compile_terms, load_terms  # noqa: E402  (scripts/redact.py)
 
 # Fixed test regions for the index check. Chosen before looking at any patient
@@ -85,6 +85,21 @@ def step_header(label):
     if os.path.exists(alt):
         names = {l.split("\t")[0] for l in open(alt) if l.strip() and not l.startswith("@")}
         rec["ah_set_equals_hs38DH_alt_file"] = ah == names
+        # Aligner facts from @PG: program names and versions only. A CL field can
+        # carry paths and the @RG string, so it is only searched for flags, never shown.
+        progs = {}
+        for pg in h.get("PG", []):
+            key = f"{pg.get('PN', pg.get('ID', '?'))} {pg.get('VN', '?')}"
+            progs[key] = progs.get(key, 0) + 1
+        rec["pg_programs"] = progs
+        bwa = [pg.get("CL", "") for pg in h.get("PG", [])
+               if pg.get("PN") == "bwa" or str(pg.get("ID", "")).startswith("bwa")]
+        rec["bwa_pg_records"] = len(bwa)
+        rec["bwa_cl_flags"] = [{"mem": " mem " in f" {cl} ", "-Y": " -Y" in cl, "-M": " -M" in cl,
+                                "-j (ignore .alt)": " -j" in cl,
+                                "-K": (cl.split(" -K ")[1].split()[0] if " -K " in cl else None)}
+                               for cl in bwa]
+        rec["rg_platforms"] = sorted({str(rg.get("PL", "?")) for rg in h.get("RG", [])})
     head = pysam.samtools.head(s["bam"])
     rec["pg_records_samtools_head"] = sum(1 for l in head.splitlines() if l.startswith("@PG\t"))
     # idxstats from the index alone
@@ -95,6 +110,9 @@ def step_header(label):
         unmapped += int(u)
     rec["idxstats_mapped_sum"] = mapped
     rec["idxstats_unmapped_sum"] = unmapped
+    rec["idxstats_mapped_chr1_22_X_Y"] = sum(
+        int(l.split("\t")[2]) for l in pysam.idxstats(s["bam"]).splitlines()
+        if l.split("\t")[0] in PHASE0_MAPPED_CONTIGS)
     # the header is the most identifier-dense text there is: filter it and check
     pat, repl = compile_terms(load_terms(TERMS))
     lines = head.splitlines()
@@ -143,7 +161,7 @@ def step_pa(label):
 
 
 def step_compare():
-    rows, ok = [], True
+    rows, ok, info = [], True, []
 
     def row(label, what, got, want):
         nonlocal ok
@@ -160,7 +178,8 @@ def step_compare():
             die(f"{label}: a step has not been run yet ({os.path.basename(e.filename)})")
         qp, qf = fs["flagstat"]["QC-passed reads"], fs["flagstat"]["QC-failed reads"]
         row(label, "bytes", h["bytes"], p0["bytes"])
-        row(label, "primary mapped (flagstat, QC-passed)", qp["primary mapped"], p0["primary_mapped"])
+        row(label, "Phase 0 'primary mapped': index-mapped, chr1-22+X+Y", h["idxstats_mapped_chr1_22_X_Y"],
+            p0["primary_mapped"])
         row(label, "@PG records (samtools head)", h["pg_records_samtools_head"], p0["pg_records"])
         row(label, "@PG records (parsed header)", h["pg_records_parsed"], p0["pg_records"])
         row(label, "contig (name,length) md5", h["contig_md5"], PHASE0_CONTIG_MD5)
@@ -174,11 +193,15 @@ def step_compare():
             f"{len(TEST_REGIONS)}/{len(TEST_REGIONS)}")
         row(label, "reads carrying pa (chr20+chr21) > 0", pa["pa_tagged"] > 0, True)
         row(label, "header: no term survives redaction", h["header_residual_matches_after_redaction"], 0)
+        info.append((label, "flagstat primary mapped (NOT the Phase 0 definition)",
+                     qp["primary mapped"] + qf["primary mapped"]))
     w = max(len(r[1]) for r in rows)
     for label, what, got, want, v in rows:
         g = f"{got:,}" if isinstance(got, int) and not isinstance(got, bool) else str(got)
         e = f"{want:,}" if isinstance(want, int) and not isinstance(want, bool) else str(want)
         print(f"{label}  {what:<{w}}  {g:>34}  {e:>34}  {v}")
+    for label, what, v in info:
+        print(f"{label}  info: {what}  {v:,}")
     print("\nALL FIGURES MATCH" if ok else "\nAT LEAST ONE FIGURE DIFFERS -- STOP")
     sys.exit(0 if ok else 1)
 

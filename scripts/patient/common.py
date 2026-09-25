@@ -15,7 +15,13 @@ DEID_DIR = os.path.join(PATIENT_DIR, "deid")
 RUN_DIR = os.path.join(PATIENT_DIR, "rerun_2026-09")
 TERMS = os.path.join(PATIENT_DIR, ".redact_terms")
 
-# The Phase 0 record, as given in the 2026-09-25 prompt.
+# The Phase 0 record, as given in the 2026-09-25 prompt. Its "primary mapped
+# reads" is NOT flagstat's primary-mapped count (which exceeds it by 5,163,213 and
+# 6,329,908): scripts/patient/mapped_definitions.py found that the only one of
+# 1,024 candidate definitions reproducing both figures exactly is idxstats
+# "mapped" (every mapped record, secondary and supplementary included) summed
+# over chr1-22, chrX and chrY -- reads mapped to the primary chromosomes.
+PHASE0_MAPPED_CONTIGS = [f"chr{i}" for i in range(1, 23)] + ["chrX", "chrY"]
 PHASE0 = {
     "SAMPLE_A": {"bytes": 38_959_428_903, "primary_mapped": 631_618_015, "pg_records": 34},
     "SAMPLE_B": {"bytes": 41_617_797_998, "primary_mapped": 677_604_873, "pg_records": 20},
