@@ -1,0 +1,50 @@
+record health: 0 dispatch errors, 0 tool error returns over 5398 calls
+chosen class rule reproduces the recorded classes: True
+SENSITIVITY junctions 16/24; translocations (>=1 junction) 8/12, (both) 8/12   [7/12 translocations, 14/24 junctions; clean 8/8, repeat-adjacent 6/8, low-mappability 0/8 [Phase 6]]
+  chosen_rule: clean_unique 8/8 junctions (IMP01,IMP02,IMP03,IMP04); repeat_adjacent 8/8 junctions (IMP05,IMP06,IMP07,IMP08); low_mappability 0/8 junctions (IMP09,IMP10,IMP11,IMP12)
+  strict_rule: clean_unique 6/6 junctions (IMP02,IMP03,IMP04); repeat_adjacent 10/10 junctions (IMP01,IMP05,IMP06,IMP07,IMP08); low_mappability 0/8 junctions (IMP09,IMP10,IMP11,IMP12)
+  per-class figures that change under the strict rule: ['clean_unique', 'repeat_adjacent']
+LOSSES {'discovery (no delly record)': 8}   [all at discovery [Phase 6]]
+  IMP09 J20: discovery (no delly record)
+  IMP09 J21: discovery (no delly record)
+  IMP10 J20: discovery (no delly record)
+  IMP10 J21: discovery (no delly record)
+  IMP11 J20: discovery (no delly record)
+  IMP11 J21: discovery (no delly record)
+  IMP12 J20: discovery (no delly record)
+  IMP12 J21: discovery (no delly record)
+BACKGROUND FUNNEL 894 junctions -> PASS 513 -> PE>=3 155 -> SR>=1 27 -> primary 27 -> unmasked 27   [894 -> 513 -> 155 -> 27 [Phase 6]]
+PRECISION non-implanted survivors per implant BAM [27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27] (background 27)
+  IMP01: 29 survivors = 2 implanted + 27 other; vs background by id: +0 / -0
+  IMP02: 29 survivors = 2 implanted + 27 other; vs background by id: +0 / -0
+  IMP03: 29 survivors = 2 implanted + 27 other; vs background by id: +0 / -0
+  IMP04: 29 survivors = 2 implanted + 27 other; vs background by id: +0 / -0
+  IMP05: 29 survivors = 2 implanted + 27 other; vs background by id: +0 / -0
+  IMP06: 29 survivors = 2 implanted + 27 other; vs background by id: +0 / -0
+  IMP07: 29 survivors = 2 implanted + 27 other; vs background by id: +0 / -0
+  IMP08: 29 survivors = 2 implanted + 27 other; vs background by id: +0 / -0
+  IMP09: 27 survivors = 0 implanted + 27 other; vs background by id: +0 / -0
+  IMP10: 27 survivors = 0 implanted + 27 other; vs background by id: +0 / -0
+  IMP11: 27 survivors = 0 implanted + 27 other; vs background by id: +0 / -0
+  IMP12: 27 survivors = 0 implanted + 27 other; vs background by id: +0 / -0
+LOCALISATION max |offset| histogram {0: 6, 1: 10} over 16 detected junctions   [12/14 at 0 bp, 2/14 at 2 bp [Phase 6]]
+GRID (implanted surviving / mean non-implanted per BAM / background)
+  PE>=1,SR>=0    16/24    156.0 156
+  PE>=1,SR>=1    16/24     28.0 28
+  PE>=1,SR>=2    16/24     28.0 28
+  PE>=2,SR>=0    16/24    156.0 156
+  PE>=2,SR>=1    16/24     28.0 28
+  PE>=2,SR>=2    16/24     28.0 28
+  PE>=3,SR>=0    16/24    155.0 155
+  PE>=3,SR>=1    16/24     27.0 27
+  PE>=3,SR>=2    16/24     27.0 27
+  PE>=5,SR>=0    16/24    118.0 118
+  PE>=5,SR>=1    16/24     25.0 25
+  PE>=5,SR>=2    16/24     25.0 25
+CEILING 32 breakends; score range [32.5, 55.0]; strengths {'moderate': 30, 'weak': 2}; max discordant fraction 0.164; attainable [57.5, 57.5]; strong reachable anywhere: False; depth contributions ['IMP04 J20 chr21:29200000', 'IMP04 J21 chr21:29199999', 'IMP05 J21 chr20:1900001', 'IMP07 J20 chr21:41200000', 'IMP07 J20 chr20:54999999', 'IMP07 J21 chr21:41199999', 'IMP07 J21 chr20:55000000']
+RESCUE IMP09: chr20:33,700,000 disc 10 clips 7 (max 1) split 9 score 22.5 weak lmf 0.364 provenance caller_supplied; chr21:5,900,000 disc 0 clips 0 (max 0) split 2 score None QUALITY-LIMITED lmf 1.0 provenance caller_supplied; all caller_supplied True
+RESCUE IMP10: chr20:25,800,000 disc 0 clips 0 (max 0) split 2 score None QUALITY-LIMITED lmf 1.0 provenance caller_supplied; chr21:7,600,000 disc 0 clips 0 (max 0) split 1 score None QUALITY-LIMITED lmf 1.0 provenance caller_supplied; all caller_supplied True
+RESCUE IMP11: chr20:31,100,000 disc 11 clips 4 (max 2) split 41 score None QUALITY-LIMITED lmf 0.606 provenance caller_supplied; chr21:20,200,000 disc 1 clips 2 (max 1) split 5 score None QUALITY-LIMITED lmf 0.454 provenance caller_supplied; all caller_supplied True
+RESCUE IMP12: chr20:47,900,000 disc 0 clips 0 (max 0) split 3 score None QUALITY-LIMITED lmf 0.877 provenance caller_supplied; chr21:44,100,000 disc 0 clips 0 (max 0) split 2 score None QUALITY-LIMITED lmf 1.0 provenance caller_supplied; all caller_supplied True
+REUSED COORDINATES {'IMP01': {'now': 'detected', 'junctions_detected': 2, 'phase6': 'detected', 'differs': False}, 'IMP06': {'now': 'detected', 'junctions_detected': 2, 'phase6': 'missed', 'differs': True}, 'IMP10': {'now': 'missed', 'junctions_detected': 0, 'phase6': 'missed', 'differs': False}}
+CALLER vs TOOL at 27 background survivors: r(|tool-delly|, low_mapq) = 0.689
