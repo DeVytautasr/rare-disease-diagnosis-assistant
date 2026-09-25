@@ -16,7 +16,8 @@ Rules -- mechanical, so nothing is judged case by case at gate time:
               whose NAME has identifier shape -- contains a digit once a trailing
               read-mate designator (R1, R2, _1, _2) is set aside, or ends in
               "-ready" as the real transferred BAMs do -- unless NAME is a public
-              reference sample, a synthetic implant, or a documented placeholder
+              reference sample, a synthetic implant, an ART profile code (HS25,
+              MSv3, ...), or a documented placeholder
   ID-lt-code  an 11-digit Lithuanian personal code with a valid date and checksum
   ID-email    an email address outside the allowlist below
   KEY         the actual API key (--keyfile), or a known secret format
@@ -57,6 +58,9 @@ SAMPLE_TOKEN = re.compile(rf"(?<![\w.+-])([A-Za-z0-9][\w.+-]*?)\.{EXT}(?!\w)")
 PUBLIC = re.compile(r"^(NA|HG|GM)\d{5}(?!\d)|^HG00[1-7](?!\d)|^HCC\d+|^CHM13|^GRCh3[78]")
 SYNTHETIC = re.compile(r"^IMP\d{2}$")
 MATE_SUFFIX = re.compile(r"(^|[._-])R?[12]$", re.I)
+# ART_Illumina's built-in profile codes: public product names, used as file names
+# by the synthetic control's profile comparison (HS25.bam, MSv3.bam, ...).
+ART_PROFILE = re.compile(r"^(GA1|GA2|HS10|HS20|HS25|HSXn|HSXt|MinS|MSv1|MSv3|NS50)$")
 PLACEHOLDER = re.compile(r"^SAMPLE_[A-Z](-ready)?$|^(patient|sample)_\d{3}$")
 LT_CODE = re.compile(r"(?<!\d)([1-6])(\d{2})(\d{2})(\d{2})(\d{3})(\d)(?!\d)")
 EMAIL = re.compile(r"(?<![\w.+-])[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
@@ -109,7 +113,8 @@ class Gate:
             # still fires on that NAME.
             core = MATE_SUFFIX.sub("", name)
             shaped = bool(re.search(r"\d", core)) or name.lower().endswith("-ready")
-            if shaped and not (PUBLIC.search(name) or SYNTHETIC.search(name) or PLACEHOLDER.search(name)):
+            if shaped and not (PUBLIC.search(name) or SYNTHETIC.search(name) or PLACEHOLDER.search(name)
+                               or ART_PROFILE.search(name)):
                 self.fired.append(("ID-sample", scope, where, mask(name)))
         for m in LT_CODE.finditer(text):
             if lt_code_valid(m):
@@ -441,11 +446,13 @@ def self_test():
     # Read-mate file names are not identifiers; a mate suffix must not hide one.
     ident8 = "ZQ" + rnd.choice(string.ascii_uppercase) + str(rnd.randint(1000, 9999))
     d8, base8 = repo_with(planted=False)
-    open(os.path.join(d8, "fq.md"), "w").write("reads R1.fq and R2.fq, pool_R1.fq, pre + \"1.fq\"\n")
+    open(os.path.join(d8, "fq.md"), "w").write("reads R1.fq and R2.fq, pool_R1.fq, pre + \"1.fq\"; "
+                                                "profiles HS25.bam and MSv3.bam\n")
     for a_ in (["add", "-A"], ["commit", "-qm", "fastq names"]):
         subprocess.run(["git", "-C", d8, *a_], capture_output=True, check=True, env=env5)
     g8, rc8 = run(d8, base8, ["SOMETHING-NOT-PRESENT"], None, quiet=True)
-    print(f"NEGATIVE  read-mate file names (R1.fq, pool_R1.fq, 1.fq) -> exit {rc8}, fired: {len(g8.fired)}")
+    print(f"NEGATIVE  read-mate file names (R1.fq, pool_R1.fq, 1.fq) and ART profile BAMs "
+          f"(HS25.bam, MSv3.bam) -> exit {rc8}, fired: {len(g8.fired)}")
     ok &= rc8 == 0 and not g8.fired
     open(os.path.join(d8, "fq.md"), "a").write(f"sample {ident8}_R1.fq\n")
     for a_ in (["add", "-A"], ["commit", "-qm", "a real-looking one"]):
