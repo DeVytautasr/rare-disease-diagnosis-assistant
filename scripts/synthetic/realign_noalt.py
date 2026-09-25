@@ -98,9 +98,17 @@ def step_align():
     exp = bwa(INDEX, sam, os.path.join(NOALT, "bwa.stderr"))
     heads = {"committed": header_counts(os.path.join(POOL, "pool.sam")), "control": header_counts(ctl_sam),
              "no_alt": header_counts(sam)}
-    stderr_alt = open(os.path.join(NOALT, "bwa.stderr")).read().count("ALT contigs")
+    # bwa reports "read N ALT contigs" in both modes; the number is what counts. (The
+    # first version of this check counted lines naming ALT contigs, so "read 0 ALT
+    # contigs" failed it -- a defect in the check, recorded in align_first_check_defective.json.)
+    def alt_read(path):
+        import re as _re
+        m = _re.search(r"read (\d+) ALT contigs", open(path).read())
+        return int(m.group(1)) if m else None
+    stderr_alt = alt_read(os.path.join(NOALT, "bwa.stderr"))
+    ctl_alt = alt_read(os.path.join(NOALT, "control", "bwa.stderr"))
     ok = (control_identical and heads["control"]["ah"] == heads["committed"]["ah"] > 0
-          and heads["no_alt"]["ah"] == 0 and stderr_alt == 0)
+          and heads["no_alt"]["ah"] == 0 and stderr_alt == 0 and ctl_alt == heads["committed"]["ah"])
     # split by implant, as make_implants.py align did
     ids = sorted(d for d in os.listdir(WORK) if d.startswith("IMP"))
     counts = {i: 0 for i in ids}
@@ -122,7 +130,7 @@ def step_align():
         subprocess.run([SAMTOOLS, "index", os.path.join(d, "sim.bam")], check=True)
         os.remove(os.path.join(d, "sim.unsorted.bam"))
     committed_counts = json.load(open(os.path.join(POOL, "align.json")))["records_per_implant"]
-    rec = {"control_with_alt": dict(ctl, alignment_records_identical_to_committed=control_identical),
+    rec = {"control_with_alt": dict(ctl, alignment_records_identical_to_committed=control_identical, alt_contigs_reported_by_bwa=ctl_alt),
            "no_alt": dict(exp, ah_lines=heads["no_alt"]["ah"], alt_contigs_reported_by_bwa=stderr_alt),
            "headers": heads, "records_per_implant_no_alt": counts,
            "records_per_implant_committed": committed_counts, "verified": ok}
