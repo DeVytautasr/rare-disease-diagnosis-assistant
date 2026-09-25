@@ -172,8 +172,13 @@ daroma sąmoningai — pilni failai svertų po 1,6 GB kiekvienas.
 
 | Mėginys | Kas jame palikta | Ką parodo |
 |---|---|---|
-| `DEMO_CLEAN` | `chr20:200 000` ir `chr21:14 100 000`, po ±10 000 bazių | visi keturi sluoksniai; įvertis 47,5/100 „moderate“ |
+| `DEMO_CLEAN` | `chr20:200 000` ir `chr21:14 100 000`, po ±10 000 bazių | trys iš keturių sluoksnių; įvertis 40,0/100 „moderate“; aukščiausia juosta čia nepasiekiama (daugiausia 57,5, reikia 70) |
 | `DEMO_REPEAT` | `chr20:25 800 000` ir `chr21:7 600 000`, po ±10 000 bazių | `QUALITY-LIMITED` — įvertis sulaikytas |
+
+> *Pataisyta 2026-09-25.* Čia buvo parašyta „visi keturi sluoksniai; įvertis
+> 47,5/100“ — tai pirmojo implantų rinkinio reikšmė; to rinkinio įrašai prarasti.
+> Rinkinys perkurtas, ir dabar `make_demo_bundle.py` šias reikšmes kiekvieną kartą
+> išmatuoja pačiame iškarpytame faile ir įrašo į `DEMO.md`.
 
 | Veikia visiškai | Veikia tik ruožuose |
 |---|---|
@@ -188,7 +193,7 @@ failus, o tie nesukarpyti.
 duomenyse tokio apribojimo nėra.
 
 > **Patikrinta:** tuose ruožuose iškarpytas failas duoda **tą patį** įvertį kaip
-> ir pilnas — 47,5/100. Tai nėra savaime suprantama: pirmasis bandymas davė
+> ir pilnas — 40,0/100 (pirmajame implantų rinkinyje buvo 47,5/100). Tai nėra savaime suprantama: pirmasis bandymas davė
 > 43,3, nes sluoksnių tinkamumas nustatomas pagal failo pradžios skaitinius, o
 > iškarpytame faile jie yra kitokie. Tai ištaisyta.
 
@@ -200,10 +205,16 @@ duomenyse tokio apribojimo nėra.
 atėjo iš kandidatų rinkinio, arba buvo įvesta ranka. Tikras lūžis, kurio
 neaptiko `delly` ir kurio niekas neįvedė, čia **niekada nepasirodys**.
 
-**Kontroliuotame teste rasti 14 iš 24 žinomų lūžio taškų.** Švarioje,
+**Kontroliuotame teste rasti 16 iš 24 žinomų lūžio taškų.** Švarioje,
 vienareikšmiškai skaitomoje sekoje — 8 iš 8. Šalia pasikartojančių sričių —
-6 iš 8. Ten, kur seka skaitoma dviprasmiškai — **0 iš 8**. Visi praleisti buvo
+8 iš 8. Ten, kur seka skaitoma dviprasmiškai — **0 iš 8**. Visi praleisti buvo
 prarasti kandidatų paieškos žingsnyje, ne filtruose.
+
+> *Pataisyta 2026-09-25.* Čia buvo parašyta „14 iš 24“ ir „šalia pasikartojančių
+> sričių 6 iš 8“ — tai pirmojo bandymo rezultatas; jo įrašai prarasti. Testas
+> perkurtas kaip naujas eksperimentas. Skirtumą lemia IMP06: tada praleistas,
+> dabar aptiktas; perlyginus jo skaitinius be `.alt` failo jis vėl prarandamas,
+> taigi skirtumą paaiškina ALT-aware lyginimas, o ne atsitiktinė imtis.
 
 **14 iš 16 ribų yra autoriaus sprendimas, o ne kalibruotos vertės.** Jos
 nepatikrintos su patvirtintų teigiamų ir neigiamų atvejų rinkiniu. Prie
