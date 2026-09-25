@@ -142,32 +142,49 @@ def ablate(rec, keys):
 
 SUMMARY = "breakpoint_evidence_summary"
 
+# ── the payload the model receives ──────────────────────────────────────────
+# The model loop (chat.run_turn / run_turn_api) passes every tool result through
+# chat.shrink_for_model (2,600 characters) before the model sees it, and the
+# ceiling keys are long enough to decide whether the summary is truncated. So the
+# switch cannot simply strip keys and leave truncation to the loop:
+#   * proof_strip_before_truncation_NOT_PROVEN.json -- stripping first: at IMP01 the
+#     WITH payload is truncated to its keep-list while the stripped one arrives whole;
+#   * qwen2.5-7b/WITHOUT__run2.json -- the second design (hand the loop a result it
+#     would shrink to the target) found no such result for that call (the target was
+#     2,647 characters, so the loop re-truncated it) and logged the run as not holding.
+# The switch therefore prepares the exact payload -- the WITH payload as
+# chat.shrink_for_model makes it, minus the ceiling keys -- and marks it; the
+# wrapper below, installed in THIS process only, hands a marked payload to the
+# model unchanged and sends every unmarked one (all of WITH, every other tool)
+# through chat.shrink_for_model exactly as before. The tool is not touched.
+_PREPARED = "_phase10_prepared_payload"
+_chat_shrink = chatmod.shrink_for_model
+
+
+def _shrink_passing_prepared(name, result, budget=2600):
+    if isinstance(result, dict) and result.get(_PREPARED) is True:
+        return {k: v for k, v in result.items() if k != _PREPARED}
+    return _chat_shrink(name, result, budget)
+
+
+chatmod.shrink_for_model = _shrink_passing_prepared
+
+
+def shrink_is_wrapped():
+    """Both loops look shrink_for_model up in chat's namespace at call time."""
+    return (chatmod.run_turn.__globals__.get("shrink_for_model") is _shrink_passing_prepared
+            and chatmod.run_turn_api.__globals__.get("shrink_for_model") is _shrink_passing_prepared)
+
 
 def without_result(W, keys):
-    """The WITHOUT result for one summary return W: one that the model loop turns,
-    through its own chat.shrink_for_model, into exactly what the WITH condition
-    would show the model, minus the ceiling keys.
-
-    Stripping the keys from W and letting the loop truncate afterwards is NOT that
-    (the first proof, proof_strip_before_truncation_NOT_PROVEN.json): the keys are
-    what push W over shrink_for_model's 2,600-character budget at IMP01, so WITH
-    reaches the model truncated to its keep-list while W minus the keys would reach
-    it whole -- a second difference. So: where W minus the keys already truncates to
-    the same payload, that is the result; otherwise the WITH payload itself, minus
-    the keys, which the loop's shrink leaves unchanged. Returns (result, how), or
-    (None, why) when neither holds."""
-    shrink = chatmod.shrink_for_model
-    target = {k: v for k, v in shrink(SUMMARY, W).items() if k not in keys}
-    stripped = {k: v for k, v in W.items() if k not in keys}
-    if shrink(SUMMARY, stripped) == target:
-        return stripped, "the tool return minus the keys"
-    if shrink(SUMMARY, target) == target:
-        return target, ("the WITH model-visible payload minus the keys (the keys are what pushed the WITH "
-                        "payload over the truncation budget)")
-    return None, "no result makes the two model-visible payloads differ in the keys alone"
+    """The WITHOUT payload for one summary return W: exactly what the WITH condition
+    shows the model, minus the ceiling keys, marked so the loop hands it over as is."""
+    target = {k: v for k, v in _chat_shrink(SUMMARY, W).items() if k not in keys}
+    return dict(target, **{_PREPARED: True}), "the WITH model-visible payload minus the keys, handed over as prepared"
 
 
 def visible_diff_holds(W, R, keys):
+    """What the model receives in each condition, through the loop's own call."""
     d = dict_diff(chatmod.shrink_for_model(SUMMARY, W), chatmod.shrink_for_model(SUMMARY, R))
     return set(d["only_in_first"]) <= set(keys) and not d["only_in_second"] and not d["changed"], d
 
@@ -271,7 +288,12 @@ PROOF_LOCI = [
     {"dataset": "IMP01", "chromosome": "chr21", "position": 14100000, "window_bp": 200,
      "applicable_layers": ["discordant_pairs", "soft_clipped_reads", "split_reads", "read_depth"]},
     {"dataset": "IMP10", "chromosome": "chr20", "position": 25800000},
+    # the arguments qwen2.5:7b passed in WITHOUT run 2, where the second design did not hold
+    {"dataset": "IMP01", "chromosome": "chr20", "position": 200000, "label": "chr20:200000_balanced_translocation",
+     "window_bp": 1500, "min_mapq": 20,
+     "applicable_layers": ["discordant_pairs", "soft_clipped_reads", "split_reads", "read_depth"]},
 ]
+PROOF_FILE = "proof_prepared_payload.json"
 
 
 def step_prove():
@@ -284,6 +306,7 @@ def step_prove():
         print(f"  {'PASS' if ok else 'FAIL'}  {name}" + (f"  -- {detail}" if detail is not None else ""))
 
     print(f"ceiling keys from {PHASE10_COMMIT}'s diff: {keys}")
+    check("both model loops look up the harness's shrink wrapper", shrink_is_wrapped())
     nf = new_fields_from_test()
     check("the diff's keys are the test's NEW_FIELDS plus the failure-path reason",
           set(keys) == set(nf) | {"attainable_ceiling_reason"}, sorted(set(keys) ^ (set(nf) | {"attainable_ceiling_reason"})))
@@ -326,6 +349,12 @@ def step_prove():
         forced = "_truncated_fields" in sW and "_truncated_fields" not in old
         check(f"  positive control: strip-before-truncation {'is caught' if forced else 'is identical here'}",
               old_differs == forced, {"keys_force_truncation": forced, "old_design_differs": old_differs})
+        # the second design: a result the loop's own shrink turns into the target
+        target = {k: v for k, v in _chat_shrink(SUMMARY, W).items() if k not in keys}
+        second_ok = _chat_shrink(SUMMARY, N) == target or _chat_shrink(SUMMARY, target) == target
+        edge = args.get("window_bp") == 1500
+        check(f"  positive control: the second design {'fails here, as it did in the run' if edge else 'holds here'}",
+              second_ok != edge, {"second_design_holds": second_ok, "target_chars": len(json.dumps(target))})
         loci.append({"args": args, "tool_return_diff": d, "model_visible_diff": d2, "switch_log": log,
                      "old_design_model_visible_diff": d_old,
                      "truncated": {"with": "_truncated_fields" in sW, "without": "_truncated_fields" in sR},
@@ -373,15 +402,15 @@ def step_prove():
            "kept_in_both_conditions": ["position_provenance", "min_mapq_applied (top level and the three sub-dicts)",
                                        "split_reads' min_mapq description paragraph"],
            "verdict": "PROVEN" if ok else "NOT PROVEN"}
-    write(os.path.join(OUT, "proof.json"), rec)
+    write(os.path.join(OUT, PROOF_FILE), rec)
     print(f"ablation proof: {rec['verdict']} ({sum(c['holds'] for c in checks)}/{len(checks)} checks)")
     return 0 if ok else 1
 
 
 def proof_is_current():
-    p = os.path.join(OUT, "proof.json")
+    p = os.path.join(OUT, PROOF_FILE)
     if not os.path.exists(p):
-        return False, "no proof.json -- run `prove` first"
+        return False, f"no {PROOF_FILE} -- run `prove` first"
     rec = json.load(open(p))
     if rec.get("verdict") != "PROVEN":
         return False, "the proof did not pass"
@@ -448,7 +477,10 @@ def slug(model):
     return model.replace(":", "-").replace("/", "-")
 
 
-def run_model(model, runs, keys, tools, where, reg, schema_hash, budget, spent):
+def run_model(model, runs, keys, tools, where, reg, schema_hash, budget, spent, replace=None):
+    """replace = (condition, run number, reason): one run in that condition, written
+    beside the run it replaces as <COND>__run<k>_replacement.json; the replaced run
+    stays on record."""
     is_api = model.startswith("claude-")
     meta = {"model": model, "backend": "anthropic" if is_api else "ollama", "git_head": git_head(),
             "schema_sha256": schema_hash, "registration": reg, "ceiling_keys": keys, "config": CONFIG,
@@ -484,11 +516,18 @@ def run_model(model, runs, keys, tools, where, reg, schema_hash, budget, spent):
                      "capabilities": sorted(chatmod.model_capabilities(model)),
                      "think_sent": "low" if chatmod.supports_thinking(model) else "omitted (no thinking capability)",
                      "gpu_before": nvidia()})
-    order = ["WITHOUT"] * runs + ["WITH"] * runs
-    random.Random(f"{ORDER_SEED}:{model}").shuffle(order)
-    meta["order"] = order
-    write(os.path.join(OUT, slug(model), "meta.json"), meta)
-    counters = {"WITHOUT": 0, "WITH": 0}
+    if replace:
+        cond_r, k_r, reason = replace
+        order, suffix = [cond_r], "_replacement"
+        counters = {"WITHOUT": 0, "WITH": 0, cond_r: k_r - 1}
+        meta.update({"replaces": f"{cond_r}__run{k_r}.json", "reason": reason, "order": order})
+        write(os.path.join(OUT, slug(model), f"meta_replacement_{cond_r}_run{k_r}.json"), meta)
+    else:
+        order, suffix = ["WITHOUT"] * runs + ["WITH"] * runs, ""
+        random.Random(f"{ORDER_SEED}:{model}").shuffle(order)
+        meta["order"] = order
+        write(os.path.join(OUT, slug(model), "meta.json"), meta)
+        counters = {"WITHOUT": 0, "WITH": 0}
     for pos, cond in enumerate(order):
         if is_api and spent >= budget:
             print(f"{model}: budget cap ${budget} reached (${spent:.4f}); stopping")
@@ -529,7 +568,9 @@ def run_model(model, runs, keys, tools, where, reg, schema_hash, budget, spent):
                                                                   timeout=30).stdout
             except Exception as e:
                 rec["ollama_ps_after_first_run"] = f"unavailable: {e}"
-        write(os.path.join(OUT, slug(model), f"{cond}__run{counters[cond]}.json"), rec)
+        if replace:
+            rec.update({"replaces": meta["replaces"], "replacement_reason": meta["reason"]})
+        write(os.path.join(OUT, slug(model), f"{cond}__run{counters[cond]}{suffix}.json"), rec)
         print(f"{model} {cond} run {counters[cond]}: answered={not res['ended_without_answer']} "
               f"tool_calls={res['n_tool_calls']} summaries={len(summaries)} ceiling_keys_seen="
               f"{len(rec['ceiling_keys_seen_by_model'])} wall={res['wall_s']}s"
@@ -537,18 +578,18 @@ def run_model(model, runs, keys, tools, where, reg, schema_hash, budget, spent):
     return 0, spent
 
 
-def step_run(models, runs, budget):
+def step_run(models, runs, budget, replace=None):
     ok, why = proof_is_current()
     if not ok:
         raise SystemExit(f"refusing to run: {why}")
     keys = ceiling_keys_from_commit()
     tools, where, reg, schema_hash = setup()
-    proof = json.load(open(os.path.join(OUT, "proof.json")))
+    proof = json.load(open(os.path.join(OUT, PROOF_FILE)))
     if proof["schema_sha256"] != schema_hash:
         raise SystemExit("the tool schemas differ from the ones the proof ran against")
     rc, spent = 0, 0.0
     for m in models:
-        r, spent = run_model(m, runs, keys, tools, where, reg, schema_hash, budget, spent)
+        r, spent = run_model(m, runs, keys, tools, where, reg, schema_hash, budget, spent, replace=replace)
         rc = rc or r
     return rc
 
@@ -559,7 +600,7 @@ def step_extract():
         if not os.path.isdir(d):
             continue
         for f in sorted(os.listdir(d)):
-            if "__run" not in f:
+            if "__run" not in f or not f.endswith(".json"):
                 continue
             rec = json.load(open(os.path.join(d, f)))
             r = rec["result"]
@@ -575,6 +616,8 @@ if __name__ == "__main__":
     ap.add_argument("models", nargs="*")
     ap.add_argument("--runs", type=int, default=5)
     ap.add_argument("--budget-usd", type=float, default=None)
+    ap.add_argument("--replace", help="COND:K -- one run replacing <COND>__run<K>.json (with --reason)")
+    ap.add_argument("--reason")
     a = ap.parse_args()
     if a.step == "prove":
         sys.exit(step_prove())
@@ -589,4 +632,10 @@ if __name__ == "__main__":
     if budget is None:
         p = os.path.join(OUT, "projection.json")
         budget = json.load(open(p))["budget_cap_usd"] if os.path.exists(p) else 5.0
-    sys.exit(step_run(a.models, a.runs, budget))
+    replace = None
+    if a.replace:
+        cond_r, k_r = a.replace.split(":")
+        if cond_r not in ("WITHOUT", "WITH") or not a.reason or len(a.models) != 1:
+            raise SystemExit("--replace COND:K needs one model and a --reason")
+        replace = (cond_r, int(k_r), a.reason)
+    sys.exit(step_run(a.models, a.runs, budget, replace=replace))
