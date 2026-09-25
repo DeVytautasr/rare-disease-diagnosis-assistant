@@ -39,6 +39,15 @@ system. That makes them unusable as current results and useful as the record
 of what changed — `BENCHMARK_CLAUDE_BASELINE.md` explains at length why the
 Claude baseline was regenerated rather than scored from these transcripts.
 
+## Figure map — 2026-09-25
+
+`FIGURE_MAP.md` sets every numeric claim of the conference abstract, the Phase 5,
+6 and 10 figures that survive only as text, and the patient figures against the
+records that now back them, with a status for each (reproduced exactly /
+replaced by the new experiment / record lost, not regenerated / no longer
+supported). The thesis file itself was not available on this machine and is not
+yet mapped.
+
 ## Not written up here — phases 5 to 11
 
 Everything indexed above predates a run of later work. That work produced
