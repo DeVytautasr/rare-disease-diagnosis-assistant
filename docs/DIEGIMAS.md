@@ -77,7 +77,7 @@ Pranešimas atrodo maždaug taip:
 
 ```
   available tier: MINIMAL
-    [x] MINIMAL   filter chain, four evidence layers, hand-entered coordinates
+    [x] MINIMAL   filter chain, four evidence layers, hand-entered coordinates — self-test passed (5 conditions)
     [ ] FULL      IGV panels — NOT AVAILABLE: igv.sh found by the panel tool's own search: searched /home/.../IGV_2.17.4/igv.sh, /home/.../igv/igv.sh, /opt/igv/igv.sh; panels will report the failure instead of rendering
     [ ] COMPLETE  ollama not reachable; the chat panel will be unavailable
     [x] exclude template  /home/.../human.hg38.excl.tsv  [built-in default]
@@ -283,9 +283,15 @@ IGV taip pat perspėja `IGV requires Java 17`, jei sistemoje yra naujesnė Java.
 Iki šiol tai veikė ir su naujesne, bet jei paveikslėliai nesikuria — verta
 pabandyti Java 17.
 
-### `[ ] FULL — IGV not found`
-Nėra IGV. Visa kita veikia; vietoj paveikslėlio matysite paaiškinimą, kur buvo
-ieškota. **Skaičiai nuo to nepriklauso** — juos duoda skaičiavimo įrankiai, ne IGV.
+### `[ ] FULL — NOT AVAILABLE`
+IGV paveikslėliams neįvykdyta bent viena sąlyga. Pranešimas įvardija pirmąją
+neįvykdytą, o `--check` išvardija visas, kiekvieną su `[PASS]` arba `[FAIL]`:
+`igv.sh` nerastas ten, kur jo ieško paveikslėlių įrankis (pranešime nurodyta,
+kur ieškota); `igv.sh` neturi vykdymo teisės; neperskaitomas IGV `lib/igv.jar`;
+nėra Java arba ji per sena šiai IGV versijai; nėra ekrano (`DISPLAY`) — WSL
+sistemoje padeda `export DISPLAY=:0`. Visa kita veikia; vietoj paveikslėlio
+matysite paaiškinimą. **Skaičiai nuo to nepriklauso** — juos duoda skaičiavimo
+įrankiai, ne IGV.
 
 ### `[ ] COMPLETE — ollama not reachable`
 Neveikia `ollama`. Pokalbio skydelio nebus; visa kita veikia.
