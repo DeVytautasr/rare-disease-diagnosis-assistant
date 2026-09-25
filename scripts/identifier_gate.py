@@ -127,6 +127,7 @@ def git(repo, *args):
 
 
 UNSCANNED = []          # binary blobs with no text container this gate can read
+EMPTY_TREE = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"   # git's empty tree: a root commit's "parent"
 
 
 def blob_texts(path, data):
@@ -167,7 +168,13 @@ def blob_texts(path, data):
     if b"\0" in data[:8192]:
         UNSCANNED.append(path)
         return
-    yield path, data.decode("latin-1")
+    # UTF-8 first. Decoding UTF-8 as latin-1 turned "ą" (C4 85) into "Ä" + NEL, which
+    # both shifted line numbers and meant an identifier with a diacritic could never
+    # match. latin-1 only for text that is not valid UTF-8.
+    try:
+        yield path, data.decode("utf-8")
+    except UnicodeDecodeError:
+        yield path, data.decode("latin-1")
 
 
 def run(repo, base, identifiers, key, quiet=False):
@@ -177,31 +184,38 @@ def run(repo, base, identifiers, key, quiet=False):
     for c in commits:
         g.scan("commits", f"commit {c[:10]} message", git(repo, "log", "-1", "--format=%B", c), paths=True)
     removed = []
-    # Binary files (a .docx is a zip) cannot be diffed as lines: each one changed in
-    # the range is scanned whole, as its new blob, the same way the tree scan does.
-    for rec in git(repo, "diff", "--numstat", "-z", f"{base}..HEAD").split("\0"):
-        parts = rec.split("\t")
-        if len(parts) == 3 and parts[0] == "-" and parts[1] == "-" and parts[2]:
-            try:
-                data = subprocess.run(["git", "-C", repo, "show", f"HEAD:{parts[2]}"],
-                                      capture_output=True, check=True).stdout
-            except subprocess.CalledProcessError:
-                continue                           # deleted in the range: nothing added
-            for where, text in blob_texts(parts[2], data):
-                for i, ln in enumerate(text.splitlines(), 1):
-                    g.scan("diff", f"{where}:{i} (binary, added)", ln, paths=True)
-    diff = git(repo, "diff", "--unified=0", "--no-color", f"{base}..HEAD")
-    f, line = None, 0
-    for raw in diff.splitlines():
-        if raw.startswith("+++ "):
-            f = raw[6:] if raw.startswith("+++ b/") else raw[4:]
-        elif raw.startswith("@@"):
-            line = int(re.search(r"\+(\d+)", raw).group(1))
-        elif raw.startswith("+") and not raw.startswith("+++"):
-            g.scan("diff", f"{f}:{line} (added)", raw[1:], paths=True)
-            line += 1
-        elif raw.startswith("-") and not raw.startswith("---"):
-            removed.append((f, raw[1:]))
+    # EVERY commit in the range is published, not just the end state: a line added
+    # by one commit and removed by a later one is absent from base..HEAD yet ships
+    # in history. So each commit's own changes are scanned, against its parent.
+    for c in commits:
+        parents = git(repo, "rev-list", "--parents", "-n", "1", c).split()[1:]
+        parent = parents[0] if parents else EMPTY_TREE
+        tag = c[:10]
+        # Binary files (a .docx is a zip) cannot be diffed as lines: each one changed
+        # by the commit is scanned whole, as its blob in that commit.
+        for rec in git(repo, "diff", "--numstat", "-z", parent, c).split("\0"):
+            parts = rec.split("\t")
+            if len(parts) == 3 and parts[0] == "-" and parts[1] == "-" and parts[2]:
+                try:
+                    data = subprocess.run(["git", "-C", repo, "show", f"{c}:{parts[2]}"],
+                                          capture_output=True, check=True).stdout
+                except subprocess.CalledProcessError:
+                    continue                       # deleted by this commit: nothing added
+                for where, text in blob_texts(parts[2], data):
+                    for i, ln in enumerate(text.split("\n"), 1):
+                        g.scan("diff", f"{tag} {where}:{i} (binary, added)", ln, paths=True)
+        diff = git(repo, "diff", "--unified=0", "--no-color", parent, c)
+        f, line = None, 0
+        for raw in diff.splitlines():
+            if raw.startswith("+++ "):
+                f = raw[6:] if raw.startswith("+++ b/") else raw[4:]
+            elif raw.startswith("@@"):
+                line = int(re.search(r"\+(\d+)", raw).group(1))
+            elif raw.startswith("+") and not raw.startswith("+++"):
+                g.scan("diff", f"{tag} {f}:{line} (added)", raw[1:], paths=True)
+                line += 1
+            elif raw.startswith("-") and not raw.startswith("---"):
+                removed.append((f"{tag} {f}", raw[1:]))
     for rec in git(repo, "ls-tree", "-r", "-z", "HEAD").split("\0"):
         if not rec:
             continue
@@ -211,13 +225,14 @@ def run(repo, base, identifiers, key, quiet=False):
         data = subprocess.run(["git", "-C", repo, "cat-file", "blob", meta.split()[2]],
                               capture_output=True, check=True).stdout
         for where, text in blob_texts(path, data):
-            for i, ln in enumerate(text.splitlines(), 1):
+            for i, ln in enumerate(text.split("\n"), 1):
                 g.scan("tree", f"{where}:{i}", ln)
     pre = Gate(identifiers, key, home, os.path.abspath(repo))
     for fpath, text in removed:
         pre.scan("diff", f"{fpath} (removed line)", text)
     if not quiet:
-        print(f"identifier gate: {len(commits)} commit(s) in {base[:10]}..HEAD; "
+        shown = base[:10] if re.fullmatch(r"[0-9a-f]{40}", base) else base
+        print(f"identifier gate: {len(commits)} commit(s) in {shown}..HEAD; "
               f"identifier list: {'%d entr%s' % (len(identifiers), 'y' if len(identifiers) == 1 else 'ies') if identifiers else 'NOT SUPPLIED'}")
         for rule, scope, where, tok in g.fired:
             print(f"  FIRED  {rule:10s} [{scope}] {where}  {tok}")
@@ -320,6 +335,39 @@ def self_test():
     g3, rc3 = run(d2, base2, ["SOMETHING-NOT-PRESENT"], None, quiet=True)
     print(f"NEGATIVE  with an identifier list that matches nothing -> exit {rc3} (0 = clean)")
     ok &= rc3 == 0
+    # An identifier added by one commit and removed by the next: absent from the end
+    # state and from base..HEAD, but published in history.
+    ident5 = "ZQ" + rnd.choice(string.ascii_uppercase) + str(rnd.randint(1000, 9999))
+    d5, base5 = repo_with(planted=False)
+    env5 = dict(os.environ, GIT_AUTHOR_NAME="c", GIT_AUTHOR_EMAIL="c@example.invalid",
+                GIT_COMMITTER_NAME="c", GIT_COMMITTER_EMAIL="c@example.invalid")
+    def commit5(body, msg):
+        open(os.path.join(d5, "later.md"), "w").write(body)
+        subprocess.run(["git", "-C", d5, "add", "-A"], capture_output=True, check=True, env=env5)
+        subprocess.run(["git", "-C", d5, "commit", "-qm", msg], capture_output=True, check=True, env=env5)
+    commit5(f"the sample {ident5}.bam\n", "add a note")
+    commit5("the sample SAMPLE_B.bam\n", "replace it with a placeholder")
+    g5, rc5 = run(d5, base5, ["SOMETHING-NOT-PRESENT"], None, quiet=True)
+    hit5 = any(r == "ID-sample" and s_ == "diff" for r, s_, _, _ in g5.fired)
+    tree5 = any(s_ == "tree" for _, s_, _, _ in g5.fired)
+    print(f"POSITIVE  identifier added by one commit and removed by the next -> "
+          f"{'fired' if hit5 else 'MISSED'} (exit {rc5}); end-state tree "
+          f"{'fired -- the case is not testing history' if tree5 else 'clean, as it must be'}")
+    ok &= hit5 and rc5 == 1 and not tree5
+    # A listed identifier with a diacritic, in a UTF-8 file whose earlier line has
+    # non-ASCII text: it must match, and be located on its true line.
+    ident6 = "ZQŠ" + str(rnd.randint(1000, 9999)) + "ė"
+    d6, base6 = repo_with(planted=False)
+    open(os.path.join(d6, "names.md"), "w", encoding="utf-8").write(
+        f"ąčęėįšųūž — first line\nsecond line names {ident6}\n")
+    for a in (["add", "-A"], ["commit", "-qm", "add names"]):
+        subprocess.run(["git", "-C", d6, *a], capture_output=True, check=True, env=env5)
+    g6, rc6 = run(d6, base6, [ident6], None, quiet=True)
+    where6 = [w for r, s_, w, _ in g6.fired if r == "ID-list" and s_ == "tree"]
+    ok6 = where6 == ["names.md:2"]
+    print(f"POSITIVE  listed identifier with a diacritic, after a non-ASCII line -> "
+          f"{'fired at names.md:2' if ok6 else 'MISSED or mislocated ' + repr(where6)} (exit {rc6})")
+    ok &= ok6 and rc6 == 1
     g4, rc4 = run(d, base, [ident2], None, quiet=True)
     print(f"POSITIVE  identifier list entry planted in .docx -> "
           f"{'fired' if any(r == 'ID-list' for r, *_ in g4.fired) else 'MISSED'} (exit {rc4})")
