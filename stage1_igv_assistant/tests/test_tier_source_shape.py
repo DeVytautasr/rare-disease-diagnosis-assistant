@@ -21,7 +21,8 @@ derive_bands() by replacing inspect.getsource for the duration of the case:
   ONE-LINE    derives tiers and bands identical to the real source's
   INDENTED    the whole function indented four spaces, as getsource returns a
               method, derives the same
-  BROKEN      a truncated source raises TierDerivationError ("could not parse")
+  BROKEN      a source with an unmatched ")" raises TierDerivationError
+              ("could not parse")
   NO SOURCE   getsource raising OSError raises TierDerivationError
   NO LADDER   a valid function without the tier chains raises TierDerivationError
               for both tiers and bands, not an unhandled exception
@@ -111,13 +112,17 @@ def main():
     check("bands identical to the real source's", got[1] == real[1], repr(got[1])[:200])
 
     print("\nBROKEN")
-    cut = real_src[: len(real_src) // 2]
+    # An unmatched ")" as the body's first line. (Truncating the source is not a
+    # reliable breakage: cut at a statement boundary, it still parses -- this
+    # test's own condition check caught exactly that in its first version.)
+    head, sep, body = real_src.partition(") -> dict:\n")
+    cut = head + sep + "    )\n" + body
     try:
         ast.parse(textwrap.dedent(cut))
         cut_parses = True
     except SyntaxError:
         cut_parses = False
-    check("condition: the truncated source really does not parse", not cut_parses)
+    check("condition: the damaged source really does not parse", bool(sep) and not cut_parses)
     got = derive_with(cut)
     for name, r in zip(("tiers", "bands"), got):
         check(f"{name}: TierDerivationError saying it could not parse",
