@@ -1,0 +1,455 @@
+{
+ "what": "patient delly rerun and Phase 0/Phase 3 reproduction, 2026-09-25",
+ "blinding": "counts only -- no coordinates, genes, candidates or interpretation",
+ "samples": "SAMPLE_A and SAMPLE_B, assigned by Phase 0 byte size; identifiers never leave ~/patient_data",
+ "machine": {
+  "MemTotal": "24608412 kB",
+  "SwapTotal": "8388608 kB",
+  "nproc": 16,
+  "note": "the two delly runs were concurrent with each other and with other work; wall times are new measurements, not comparable with Phase 3"
+ },
+ "task1_verification": {
+  "SAMPLE_A": {
+   "bytes": 38959428903,
+   "phase0_bytes": 38959428903,
+   "index_mapped_chr1_22_X_Y": 631618015,
+   "phase0_primary_mapped_figure": 631618015,
+   "flagstat_primary_mapped": 636781228,
+   "flagstat_total": 649000649,
+   "flagstat_mapped": 648221027,
+   "index_mapped_sum": 648221027,
+   "pg_records_samtools_head": 34,
+   "pg_records_parsed": 34,
+   "phase0_pg_records": 34,
+   "contig_md5": "c325b75cc2827f4e6a1b39091a12f718",
+   "ah_contigs": 3171,
+   "ah_set_equals_hs38DH_alt": true,
+   "pa_tagged_chr20_chr21": 648506,
+   "primary_reads_chr20_chr21": 24364354,
+   "bwa_flags_in_all_command_lines": {
+    "-M": true,
+    "-Y": false,
+    "-j": false
+   }
+  },
+  "SAMPLE_B": {
+   "bytes": 41617797998,
+   "phase0_bytes": 41617797998,
+   "index_mapped_chr1_22_X_Y": 677604873,
+   "phase0_primary_mapped_figure": 677604873,
+   "flagstat_primary_mapped": 683934781,
+   "flagstat_total": 697066053,
+   "flagstat_mapped": 694852708,
+   "index_mapped_sum": 694852708,
+   "pg_records_samtools_head": 20,
+   "pg_records_parsed": 20,
+   "phase0_pg_records": 20,
+   "contig_md5": "c325b75cc2827f4e6a1b39091a12f718",
+   "ah_contigs": 3171,
+   "ah_set_equals_hs38DH_alt": true,
+   "pa_tagged_chr20_chr21": 593172,
+   "primary_reads_chr20_chr21": 26296677,
+   "bwa_flags_in_all_command_lines": {
+    "-M": true,
+    "-Y": false,
+    "-j": false
+   }
+  }
+ },
+ "task1_finding": "the Phase 0 'primary mapped reads' figure equals idxstats-mapped over chr1-22, X and Y (every mapped record, secondary and supplementary included), the only one of 1,024 candidate definitions reproducing both figures; flagstat's primary-mapped count exceeds it by 5,163,213 and 6,329,908",
+ "delly": {
+  "SAMPLE_A": {
+   "exit_code": 0,
+   "delly_exit_reported": 0,
+   "wall_clock": "1:01:48",
+   "peak_rss_kbytes": 1186160,
+   "peak_rss_mib": 1158,
+   "user_seconds": "3556.37",
+   "cpu_percent": "99%",
+   "phases": [
+    {
+     "phase": "Paired-end and split-read scanning",
+     "started": "13:34:36",
+     "seconds": 256
+    },
+    {
+     "phase": "Split-read clustering",
+     "started": "13:38:52",
+     "seconds": 1
+    },
+    {
+     "phase": "Paired-end clustering",
+     "started": "13:38:53",
+     "seconds": 1
+    },
+    {
+     "phase": "Split-read assembly",
+     "started": "13:38:54",
+     "seconds": 395
+    },
+    {
+     "phase": "Generate REF and ALT probes",
+     "started": "13:45:29",
+     "seconds": 9
+    },
+    {
+     "phase": "SV annotation",
+     "started": "13:45:38",
+     "seconds": 3045
+    },
+    {
+     "phase": "Genotyping",
+     "started": "14:36:23",
+     "seconds": 0
+    },
+    {
+     "phase": "Sample statistics",
+     "started": "14:36:23",
+     "seconds": 0
+    },
+    {
+     "phase": "Done.",
+     "started": "14:36:23",
+     "seconds": 0
+    }
+   ],
+   "command": "OMP_NUM_THREADS=1 /usr/bin/time -v ~/tools/delly/delly sr -h 1 -g ~/reference/GRCh38_full_analysis_set_plus_decoy_hla.fa -x ~/reference/human.hg38.excl.tsv -o ~/patient_data/rerun_2026-09/delly/SAMPLE_A.bcf ~/patient_data/deid/SAMPLE_A.bam"
+  },
+  "SAMPLE_B": {
+   "exit_code": 0,
+   "delly_exit_reported": 0,
+   "wall_clock": "1:44:54",
+   "peak_rss_kbytes": 1215436,
+   "peak_rss_mib": 1187,
+   "user_seconds": "6181.65",
+   "cpu_percent": "99%",
+   "phases": [
+    {
+     "phase": "Paired-end and split-read scanning",
+     "started": "13:34:36",
+     "seconds": 272
+    },
+    {
+     "phase": "Split-read clustering",
+     "started": "13:39:08",
+     "seconds": 1
+    },
+    {
+     "phase": "Paired-end clustering",
+     "started": "13:39:09",
+     "seconds": 1
+    },
+    {
+     "phase": "Split-read assembly",
+     "started": "13:39:10",
+     "seconds": 390
+    },
+    {
+     "phase": "Generate REF and ALT probes",
+     "started": "13:45:40",
+     "seconds": 11
+    },
+    {
+     "phase": "SV annotation",
+     "started": "13:45:51",
+     "seconds": 5618
+    },
+    {
+     "phase": "Genotyping",
+     "started": "15:19:29",
+     "seconds": 0
+    },
+    {
+     "phase": "Sample statistics",
+     "started": "15:19:29",
+     "seconds": 0
+    },
+    {
+     "phase": "Done.",
+     "started": "15:19:29",
+     "seconds": 0
+    }
+   ],
+   "command": "OMP_NUM_THREADS=1 /usr/bin/time -v ~/tools/delly/delly sr -h 1 -g ~/reference/GRCh38_full_analysis_set_plus_decoy_hla.fa -x ~/reference/human.hg38.excl.tsv -o ~/patient_data/rerun_2026-09/delly/SAMPLE_B.bcf ~/patient_data/deid/SAMPLE_B.bam"
+  }
+ },
+ "funnel": {
+  "SAMPLE_A": {
+   "total_records": 30980,
+   "bnd_records": 9187,
+   "bnd_after_dedup": 9172,
+   "pass_bnd": 896,
+   "before_recurrence": 57,
+   "after_recurrence_500bp": 17,
+   "survivors_recurrent_in_other_sample": 40,
+   "per_step": [
+    {
+     "filter": "svtype",
+     "value": "BND",
+     "surviving_after_this_step": 9172,
+     "removed_cumulatively_here": 21424,
+     "would_remove_from_unfiltered_set": 21424
+    },
+    {
+     "filter": "filter_pass",
+     "value": true,
+     "surviving_after_this_step": 896,
+     "removed_cumulatively_here": 8276,
+     "would_remove_from_unfiltered_set": 8276
+    },
+    {
+     "filter": "min_pe",
+     "value": 3,
+     "surviving_after_this_step": 664,
+     "removed_cumulatively_here": 232,
+     "would_remove_from_unfiltered_set": 7424
+    },
+    {
+     "filter": "min_sr",
+     "value": 1,
+     "surviving_after_this_step": 57,
+     "removed_cumulatively_here": 607,
+     "would_remove_from_unfiltered_set": 4937
+    },
+    {
+     "filter": "primary_only",
+     "value": true,
+     "surviving_after_this_step": 57,
+     "removed_cumulatively_here": 0,
+     "would_remove_from_unfiltered_set": 0
+    },
+    {
+     "filter": "exclude_masked",
+     "value": true,
+     "surviving_after_this_step": 57,
+     "removed_cumulatively_here": 0,
+     "would_remove_from_unfiltered_set": 1
+    }
+   ],
+   "dedup": {
+    "junctions_before_dedup": 30980,
+    "junctions_after_dedup": 30596,
+    "records_merged_by_dedup": 384,
+    "malformed_records_skipped": 0,
+    "unpaired_mate_records": 0
+   },
+   "counts_by_filter": {
+    "LowQual": 19159,
+    "PASS": 11821
+   },
+   "counts_by_svtype": {
+    "DEL": 12873,
+    "DUP": 3969,
+    "INV": 3441,
+    "INS": 1510,
+    "BND": 9187
+   },
+   "caller_convention": "chr2_pos2"
+  },
+  "SAMPLE_B": {
+   "total_records": 32451,
+   "bnd_records": 9676,
+   "bnd_after_dedup": 9655,
+   "pass_bnd": 923,
+   "before_recurrence": 63,
+   "after_recurrence_500bp": 19,
+   "survivors_recurrent_in_other_sample": 44,
+   "per_step": [
+    {
+     "filter": "svtype",
+     "value": "BND",
+     "surviving_after_this_step": 9655,
+     "removed_cumulatively_here": 22386,
+     "would_remove_from_unfiltered_set": 22386
+    },
+    {
+     "filter": "filter_pass",
+     "value": true,
+     "surviving_after_this_step": 923,
+     "removed_cumulatively_here": 8732,
+     "would_remove_from_unfiltered_set": 8732
+    },
+    {
+     "filter": "min_pe",
+     "value": 3,
+     "surviving_after_this_step": 642,
+     "removed_cumulatively_here": 281,
+     "would_remove_from_unfiltered_set": 7803
+    },
+    {
+     "filter": "min_sr",
+     "value": 1,
+     "surviving_after_this_step": 63,
+     "removed_cumulatively_here": 579,
+     "would_remove_from_unfiltered_set": 5289
+    },
+    {
+     "filter": "primary_only",
+     "value": true,
+     "surviving_after_this_step": 63,
+     "removed_cumulatively_here": 0,
+     "would_remove_from_unfiltered_set": 0
+    },
+    {
+     "filter": "exclude_masked",
+     "value": true,
+     "surviving_after_this_step": 63,
+     "removed_cumulatively_here": 0,
+     "would_remove_from_unfiltered_set": 0
+    }
+   ],
+   "dedup": {
+    "junctions_before_dedup": 32451,
+    "junctions_after_dedup": 32041,
+    "records_merged_by_dedup": 410,
+    "malformed_records_skipped": 0,
+    "unpaired_mate_records": 0
+   },
+   "counts_by_filter": {
+    "PASS": 12433,
+    "LowQual": 20018
+   },
+   "counts_by_svtype": {
+    "DUP": 4132,
+    "DEL": 13297,
+    "INS": 1554,
+    "INV": 3792,
+    "BND": 9676
+   },
+   "caller_convention": "chr2_pos2"
+  }
+ },
+ "funnel_filters": {
+  "svtype": "BND",
+  "filter_pass": true,
+  "min_pe": 3,
+  "min_sr": 1,
+  "primary_only": true,
+  "exclude_template": "~/reference/human.hg38.excl.tsv (v2.6.0, unmodified)",
+  "dedup_tolerance_bp": 500,
+  "recurrence_tolerance_bp": 500
+ },
+ "comparison_whole_sets": {
+  "total_in_a": 30596,
+  "total_in_b": 32041,
+  "matched_in_a": 15640,
+  "matched_in_b": 15711,
+  "unmatched_in_a": 14956,
+  "unmatched_in_b": 16330
+ },
+ "phase3_targets": {
+  "SAMPLE_A": {
+   "total_records": 30980,
+   "bnd_records": 9187,
+   "bnd_after_dedup": 9172,
+   "pass_bnd": 896,
+   "before_recurrence": 57,
+   "after_recurrence_500bp": 17,
+   "peak_rss_mib_approx": 1184,
+   "wall_phase3": "45:33"
+  },
+  "SAMPLE_B": {
+   "total_records": 32451,
+   "bnd_records": 9676,
+   "bnd_after_dedup": 9655,
+   "pass_bnd": 923,
+   "before_recurrence": 63,
+   "after_recurrence_500bp": 19,
+   "peak_rss_mib_approx": 1187,
+   "wall_phase3": "2:03:43"
+  }
+ },
+ "reproduction": [
+  {
+   "sample": "SAMPLE_A",
+   "count": "total_records",
+   "rerun": 30980,
+   "phase3": 30980,
+   "verdict": "MATCH"
+  },
+  {
+   "sample": "SAMPLE_A",
+   "count": "bnd_records",
+   "rerun": 9187,
+   "phase3": 9187,
+   "verdict": "MATCH"
+  },
+  {
+   "sample": "SAMPLE_A",
+   "count": "bnd_after_dedup",
+   "rerun": 9172,
+   "phase3": 9172,
+   "verdict": "MATCH"
+  },
+  {
+   "sample": "SAMPLE_A",
+   "count": "pass_bnd",
+   "rerun": 896,
+   "phase3": 896,
+   "verdict": "MATCH"
+  },
+  {
+   "sample": "SAMPLE_A",
+   "count": "before_recurrence",
+   "rerun": 57,
+   "phase3": 57,
+   "verdict": "MATCH"
+  },
+  {
+   "sample": "SAMPLE_A",
+   "count": "after_recurrence_500bp",
+   "rerun": 17,
+   "phase3": 17,
+   "verdict": "MATCH"
+  },
+  {
+   "sample": "SAMPLE_B",
+   "count": "total_records",
+   "rerun": 32451,
+   "phase3": 32451,
+   "verdict": "MATCH"
+  },
+  {
+   "sample": "SAMPLE_B",
+   "count": "bnd_records",
+   "rerun": 9676,
+   "phase3": 9676,
+   "verdict": "MATCH"
+  },
+  {
+   "sample": "SAMPLE_B",
+   "count": "bnd_after_dedup",
+   "rerun": 9655,
+   "phase3": 9655,
+   "verdict": "MATCH"
+  },
+  {
+   "sample": "SAMPLE_B",
+   "count": "pass_bnd",
+   "rerun": 923,
+   "phase3": 923,
+   "verdict": "MATCH"
+  },
+  {
+   "sample": "SAMPLE_B",
+   "count": "before_recurrence",
+   "rerun": 63,
+   "phase3": 63,
+   "verdict": "MATCH"
+  },
+  {
+   "sample": "SAMPLE_B",
+   "count": "after_recurrence_500bp",
+   "rerun": 19,
+   "phase3": 19,
+   "verdict": "MATCH"
+  }
+ ],
+ "all_counts_match": true,
+ "code": [
+  "scripts/patient/verify_bams.py",
+  "scripts/patient/mapped_definitions.py",
+  "scripts/patient/run_delly.sh",
+  "scripts/patient/write_patient_record.py"
+ ]
+}
