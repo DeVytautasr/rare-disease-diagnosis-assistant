@@ -1,0 +1,73 @@
+ceiling keys from 912c3c9's diff: ['attainable_ceiling_derivable', 'attainable_ceiling_reason', 'score_bands', 'strong_band', 'max_all_layers', 'max_with_flat_depth', 'attainable_here', 'strong_band_reachable_here', 'attainable_basis', 'attainable_note']
+  PASS  both model loops look up the harness's shrink wrapper
+  PASS  the diff's keys are the test's NEW_FIELDS plus the failure-path reason  -- []
+  PASS  IMP01 chr20:200000: both calls ran
+  PASS    tool return: keys only WITH = the ceiling keys present  -- ['attainable_basis', 'attainable_ceiling_derivable', 'attainable_here', 'attainable_note', 'max_all_layers', 'max_with_flat_depth', 'score_bands', 'strong_band', 'strong_band_reachable_here']
+  PASS    tool return: nothing only WITHOUT  -- []
+  PASS    tool return: no shared key differs  -- []
+  PASS    the WITH return carries the ceiling  -- {'attainable_here': 57.5, 'strong_band': 70.0, 'strong_band_reachable_here': False}
+  PASS    the switch changes no other field of the record
+  PASS    model-visible payload: keys only WITH are ceiling keys  -- ['attainable_basis', 'attainable_ceiling_derivable', 'attainable_here', 'attainable_note', 'max_all_layers', 'max_with_flat_depth', 'score_bands', 'strong_band', 'strong_band_reachable_here']
+  PASS    model-visible payload: nothing only WITHOUT  -- []
+  PASS    model-visible payload: no shared key differs  -- []
+  PASS    the switch's own per-call check agrees  -- ['the WITH model-visible payload minus the keys, handed over as prepared']
+  PASS    positive control: strip-before-truncation is caught  -- {'keys_force_truncation': True, 'old_design_differs': True}
+  PASS    positive control: the second design holds here  -- {'second_design_holds': True, 'target_chars': 2585}
+  PASS  IMP01 chr21:14100000: both calls ran
+  PASS    tool return: keys only WITH = the ceiling keys present  -- ['attainable_basis', 'attainable_ceiling_derivable', 'attainable_here', 'attainable_note', 'max_all_layers', 'max_with_flat_depth', 'score_bands', 'strong_band', 'strong_band_reachable_here']
+  PASS    tool return: nothing only WITHOUT  -- []
+  PASS    tool return: no shared key differs  -- []
+  PASS    the WITH return carries the ceiling  -- {'attainable_here': 65.0, 'strong_band': 70.0, 'strong_band_reachable_here': False}
+  PASS    the switch changes no other field of the record
+  PASS    model-visible payload: keys only WITH are ceiling keys  -- ['attainable_basis', 'attainable_ceiling_derivable', 'attainable_here', 'attainable_note', 'max_all_layers', 'max_with_flat_depth', 'score_bands', 'strong_band', 'strong_band_reachable_here']
+  PASS    model-visible payload: nothing only WITHOUT  -- []
+  PASS    model-visible payload: no shared key differs  -- []
+  PASS    the switch's own per-call check agrees  -- ['the WITH model-visible payload minus the keys, handed over as prepared']
+  PASS    positive control: strip-before-truncation is caught  -- {'keys_force_truncation': True, 'old_design_differs': True}
+  PASS    positive control: the second design holds here  -- {'second_design_holds': True, 'target_chars': 2600}
+  PASS  IMP10 chr20:25800000: both calls ran
+  PASS    tool return: keys only WITH = the ceiling keys present  -- ['attainable_basis', 'attainable_ceiling_derivable', 'attainable_here', 'attainable_note', 'max_all_layers', 'max_with_flat_depth', 'score_bands', 'strong_band', 'strong_band_reachable_here']
+  PASS    tool return: nothing only WITHOUT  -- []
+  PASS    tool return: no shared key differs  -- []
+  PASS    the WITH return carries the ceiling  -- {'attainable_here': 50.0, 'strong_band': 70.0, 'strong_band_reachable_here': False}
+  PASS    the switch changes no other field of the record
+  PASS    model-visible payload: keys only WITH are ceiling keys  -- ['attainable_basis', 'attainable_ceiling_derivable', 'attainable_here', 'attainable_note', 'max_all_layers', 'max_with_flat_depth', 'score_bands', 'strong_band', 'strong_band_reachable_here']
+  PASS    model-visible payload: nothing only WITHOUT  -- []
+  PASS    model-visible payload: no shared key differs  -- []
+  PASS    the switch's own per-call check agrees  -- ['the WITH model-visible payload minus the keys, handed over as prepared']
+  PASS    positive control: strip-before-truncation is identical here  -- {'keys_force_truncation': False, 'old_design_differs': False}
+  PASS    positive control: the second design holds here  -- {'second_design_holds': True, 'target_chars': 3132}
+  PASS  IMP01 chr20:200000: both calls ran
+  PASS    tool return: keys only WITH = the ceiling keys present  -- ['attainable_basis', 'attainable_ceiling_derivable', 'attainable_here', 'attainable_note', 'max_all_layers', 'max_with_flat_depth', 'score_bands', 'strong_band', 'strong_band_reachable_here']
+  PASS    tool return: nothing only WITHOUT  -- []
+  PASS    tool return: no shared key differs  -- []
+  PASS    the WITH return carries the ceiling  -- {'attainable_here': 57.5, 'strong_band': 70.0, 'strong_band_reachable_here': False}
+  PASS    the switch changes no other field of the record
+  PASS    model-visible payload: keys only WITH are ceiling keys  -- ['attainable_basis', 'attainable_ceiling_derivable', 'attainable_here', 'attainable_note', 'max_all_layers', 'max_with_flat_depth', 'score_bands', 'strong_band', 'strong_band_reachable_here']
+  PASS    model-visible payload: nothing only WITHOUT  -- []
+  PASS    model-visible payload: no shared key differs  -- []
+  PASS    the switch's own per-call check agrees  -- ['the WITH model-visible payload minus the keys, handed over as prepared']
+  PASS    positive control: strip-before-truncation is caught  -- {'keys_force_truncation': True, 'old_design_differs': True}
+  PASS    positive control: the second design fails here, as it did in the run  -- {'second_design_holds': False, 'target_chars': 2647}
+  PASS  positive control: a changed score is caught
+  PASS  positive control: an added key is caught
+  PASS  positive control: a removed non-ceiling key is caught and is not a ceiling key  -- ['attainable_basis', 'attainable_ceiling_derivable', 'attainable_here', 'attainable_note', 'max_all_layers', 'max_with_flat_depth', 'score_bands', 'strong_band', 'strong_band_reachable_here', 'supporting_observations']
+  PASS  negative control: discordant_pairs passes through the switch unchanged
+  PASS    discordant_pairs returns no ceiling key
+  PASS  negative control: soft_clipped_reads passes through the switch unchanged
+  PASS    soft_clipped_reads returns no ceiling key
+  PASS  negative control: split_reads passes through the switch unchanged
+  PASS    split_reads returns no ceiling key
+  PASS  negative control: bam_stats_at_locus passes through the switch unchanged
+  PASS    bam_stats_at_locus returns no ceiling key
+  PASS  negative control: read_depth_profile passes through the switch unchanged
+  PASS    read_depth_profile returns no ceiling key
+  PASS  negative control: reciprocal_breakpoint passes through the switch unchanged
+  PASS    reciprocal_breakpoint returns no ceiling key
+  PASS  negative control: applicable_layers passes through the switch unchanged
+  PASS    applicable_layers returns no ceiling key
+  PASS  negative control: load_candidate_set passes through the switch unchanged
+  PASS    load_candidate_set returns no ceiling key
+  PASS  negative control: an error return from the summary passes through unchanged
+  PASS  no tool description names a ceiling key (descriptions are the same list in both conditions)  -- []
+ablation proof: PROVEN (71/71 checks)
