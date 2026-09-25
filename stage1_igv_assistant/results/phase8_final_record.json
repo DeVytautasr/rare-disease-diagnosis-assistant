@@ -1,0 +1,202 @@
+{
+ "phase": "Phase 8 final record (supersedes Phase 8 and 8b figures where noted)",
+ "generated": "2026-09-09T16:45:31",
+ "hardware": {
+  "gpu": "NVIDIA GeForce RTX 5060 Laptop",
+  "vram_total_mib": 8151,
+  "vram_already_in_use_mib": 1329,
+  "vram_available_mib": 6822,
+  "host_ram_gb": 10,
+  "cpu_cores": 16,
+  "ollama": "0.32.9",
+  "latest_ollama_available": "0.33.3 (not installed)"
+ },
+ "configuration": {
+  "num_ctx": 32768,
+  "max_iters": 40,
+  "tool_descriptions": "untrimmed",
+  "think": "'low' where the model declares the thinking capability, omitted otherwise",
+  "tool_schemas": 15,
+  "schema_prompt_cost_tokens": 5114,
+  "why": "context 32768 removes truncation; max_iters 40 removes interruption; untrimmed because trimming doubled the schema-error rate; think='low' measured best of the settings tried"
+ },
+ "vram_measurements": {
+  "qwen3.5:4b": {
+   "fully_on_gpu_up_to": 65536,
+   "at_32768": "100% GPU"
+  },
+  "qwen2.5:7b": {
+   "fully_on_gpu_up_to": 16384,
+   "at_32768": "12%/88% CPU/GPU"
+  },
+  "qwen3.5:9b": {
+   "fully_on_gpu_up_to": 2048,
+   "at_32768": "27%/73% CPU/GPU",
+   "hardware_verdict": "cannot hold the tool surface on GPU: the schema floor with EVERY description deleted is 2690 tokens, which exceeds its 2048-token GPU-resident context by 642"
+  }
+ },
+ "schema_token_cost": {
+  "total_with_tools": 5114,
+  "fixed_tools_block_framing": 201,
+  "attributable_to_tools": 4913,
+  "floor_all_descriptions_deleted": 2690,
+  "dataset_enums_13_labels": 866,
+  "after_trim": 3430,
+  "trim_verdict": "REVERTED \u2014 saved 1684 tokens but raised schema-invalid 16.4% -> 31.8% at matched settings",
+  "other_consumer": "benchmark/mcp_client.py forwards tool.description to models; 6 recorded run sets in benchmark/runs/ would become non-comparable, so descriptions were never edited at source"
+ },
+ "iteration_cap": {
+  "10": {
+   "answered": 12,
+   "cut_at_cap": 2
+  },
+  "20": {
+   "answered": 13,
+   "cut_at_cap": 1
+  },
+  "40": {
+   "answered": 16,
+   "cut_at_cap": 0
+  },
+  "of_runs": 18,
+  "max_tool_calls_observed": 22,
+  "verdict": "the cap was interruption, not non-termination; at 40 no run is cut off"
+ },
+ "thinking": {
+  "docs": "think is 'a boolean or a thinking level (low, medium, high, max)'; no default stated",
+  "effective_default": "ON for thinking models",
+  "trivial_prompt_thinking_chars_median": {
+   "False": 0,
+   "low": 3303,
+   "medium": 2922,
+   "high": 1640,
+   "max": 805,
+   "True": 2224
+  },
+  "on_task_18_runs_each": {
+   "think=True": {
+    "answered": 16,
+    "schema_invalid_pct": 16.4
+   },
+   "think='max'": {
+    "answered": 11,
+    "schema_invalid_pct": 21.8
+   },
+   "think='low'": {
+    "answered": 15,
+    "schema_invalid_pct": 9.3
+   },
+   "think=False": {
+    "schema_invalid_pct": 35.8
+   }
+  },
+  "verdict": "levels are non-monotonic and overlap heavily; only the boolean is a reliable control, but think='low' measured best on task and is the chosen setting"
+ },
+ "models": {
+  "qwen3.5:4b": {
+   "runs": 30,
+   "answered": 25,
+   "cut_at_cap": 0,
+   "empty_final": 5,
+   "tool_calls": 194,
+   "schema_invalid": 51,
+   "schema_invalid_pct": 26.3,
+   "text_as_call_runs": 0,
+   "runs_with_unsupported_numbers": 9,
+   "tok_s_median": 81.3,
+   "wall_median_s": 26,
+   "wall_max_s": 152,
+   "answered_by_case": {
+    "a_false_premise": 4,
+    "b_withheld_vs_low": 5,
+    "c_coordinate_drift": 5,
+    "d_unrun_checks": 3,
+    "e_ceiling": 5,
+    "f_fabricated_image": 3
+   },
+   "transport_errors": {
+    "ollama request failed: HTTP Error 500: Internal Se": 2
+   }
+  },
+  "qwen2.5:7b": {
+   "runs": 30,
+   "answered": 30,
+   "cut_at_cap": 0,
+   "empty_final": 0,
+   "tool_calls": 142,
+   "schema_invalid": 19,
+   "schema_invalid_pct": 13.4,
+   "text_as_call_runs": 1,
+   "runs_with_unsupported_numbers": 4,
+   "tok_s_median": 28.1,
+   "wall_median_s": 28,
+   "wall_max_s": 53,
+   "answered_by_case": {
+    "a_false_premise": 5,
+    "b_withheld_vs_low": 5,
+    "c_coordinate_drift": 5,
+    "d_unrun_checks": 5,
+    "e_ceiling": 5,
+    "f_fabricated_image": 5
+   },
+   "transport_errors": {}
+  },
+  "qwen3.5:9b": {
+   "runs": 30,
+   "answered": 11,
+   "cut_at_cap": 0,
+   "empty_final": 19,
+   "tool_calls": 170,
+   "schema_invalid": 29,
+   "schema_invalid_pct": 17.1,
+   "text_as_call_runs": 0,
+   "runs_with_unsupported_numbers": 4,
+   "tok_s_median": 11.7,
+   "wall_median_s": 114,
+   "wall_max_s": 900,
+   "answered_by_case": {
+    "b_withheld_vs_low": 3,
+    "c_coordinate_drift": 3,
+    "e_ceiling": 2,
+    "f_fabricated_image": 3
+   },
+   "transport_errors": {
+    "ollama request failed: HTTP Error 500: Internal Se": 4,
+    "ollama request failed: timed out": 1
+   }
+  }
+ },
+ "superseded": [
+  {
+   "figure": "Phase 8: qwen3.5:4b 20/30 and qwen3.5:9b 21/30 'no usable answer'",
+   "reason": "context starvation \u2014 8164-token prompt against an 8192 window, done_reason='length'",
+   "replaced_by": "this record"
+  },
+  {
+   "figure": "Phase 8: qwen3.5:4b schema-invalid 15.9%, qwen3.5:9b 20.2%",
+   "reason": "measured in the starved configuration",
+   "replaced_by": "26.3% and 17.1% here"
+  },
+  {
+   "figure": "Phase 8b: qwen3.5:4b 19/30 answered at its 'best' configuration",
+   "reason": "max_iters=10 interrupted runs that had not failed; think=True was not the best setting",
+   "replaced_by": "25/30 here"
+  },
+  {
+   "figure": "Phase 8: qwen2.5:7b 29/30 answered, 4.4% schema-invalid",
+   "reason": "measured at ctx=8192/max_iters=10, a different configuration",
+   "replaced_by": "30/30 and 13.4% here; the rate rose with longer permitted chains"
+  },
+  {
+   "figure": "Any qwen2.5:7b run using a think parameter",
+   "reason": "the model has no thinking capability; Ollama returns HTTP 400 and 30 runs were void",
+   "replaced_by": "think omitted for models without the capability"
+  }
+ ],
+ "open_questions": [
+  "Neither model reached the ceiling reasoning in 10 runs: both say 'moderate' but neither explains that moderate IS the maximum for a balanced event.",
+  "qwen3.5:9b's reasoning remains effectively unmeasured: it answered 11/30, and 5 runs hit transport errors (1 timeout, 4 HTTP 500) under CPU spill.",
+  "The 7b's schema-invalid rate rose 4.4% -> 13.4% when allowed longer chains; whether that is chain length or context is untested.",
+  "think='medium'/'high' were characterised only on a trivial prompt, not on task."
+ ]
+}
