@@ -140,12 +140,56 @@ def ablate(rec, keys):
     return out
 
 
-def make_exec(condition, keys):
+SUMMARY = "breakpoint_evidence_summary"
+
+
+def without_result(W, keys):
+    """The WITHOUT result for one summary return W: one that the model loop turns,
+    through its own chat.shrink_for_model, into exactly what the WITH condition
+    would show the model, minus the ceiling keys.
+
+    Stripping the keys from W and letting the loop truncate afterwards is NOT that
+    (the first proof, proof_strip_before_truncation_NOT_PROVEN.json): the keys are
+    what push W over shrink_for_model's 2,600-character budget at IMP01, so WITH
+    reaches the model truncated to its keep-list while W minus the keys would reach
+    it whole -- a second difference. So: where W minus the keys already truncates to
+    the same payload, that is the result; otherwise the WITH payload itself, minus
+    the keys, which the loop's shrink leaves unchanged. Returns (result, how), or
+    (None, why) when neither holds."""
+    shrink = chatmod.shrink_for_model
+    target = {k: v for k, v in shrink(SUMMARY, W).items() if k not in keys}
+    stripped = {k: v for k, v in W.items() if k not in keys}
+    if shrink(SUMMARY, stripped) == target:
+        return stripped, "the tool return minus the keys"
+    if shrink(SUMMARY, target) == target:
+        return target, ("the WITH model-visible payload minus the keys (the keys are what pushed the WITH "
+                        "payload over the truncation budget)")
+    return None, "no result makes the two model-visible payloads differ in the keys alone"
+
+
+def visible_diff_holds(W, R, keys):
+    d = dict_diff(chatmod.shrink_for_model(SUMMARY, W), chatmod.shrink_for_model(SUMMARY, R))
+    return set(d["only_in_first"]) <= set(keys) and not d["only_in_second"] and not d["changed"], d
+
+
+def make_exec(condition, keys, log):
+    """WITH: the committed path untouched. WITHOUT: every summary return replaced by
+    without_result(), with the model-visible difference re-checked on EVERY call
+    and logged; a call where it cannot hold is logged as such, never hidden."""
     def ex(name, args):
         rec, err = ui._chat_exec(name, args)
-        if err is not None or condition == "WITH":
+        if (err is not None or condition == "WITH" or not isinstance(rec, dict) or rec.get("tool") != SUMMARY
+                or not isinstance(rec.get("result"), dict) or not (set(rec["result"]) & set(keys))):
             return rec, err
-        return ablate(rec, keys), None
+        W = rec["result"]
+        R, how = without_result(W, keys)
+        if R is None:
+            R = {k: v for k, v in W.items() if k not in keys}
+        holds, d = visible_diff_holds(W, R, keys)
+        log.append({"call": rec.get("id"), "how": how, "holds": holds, "model_visible_diff": d})
+        out = dict(rec)
+        out["result"] = R
+        return out, None
     return ex
 
 
@@ -260,19 +304,36 @@ def step_prove():
               {k: W.get(k) for k in ("attainable_here", "strong_band", "strong_band_reachable_here")})
         check(f"  the switch changes no other field of the record",
               {k: v for k, v in without_rec.items() if k != "result"} == {k: v for k, v in second.items() if k != "result"})
-        sW = chatmod.shrink_for_model("breakpoint_evidence_summary", W)
-        sN = chatmod.shrink_for_model("breakpoint_evidence_summary", N)
-        d2 = dict_diff(sW, sN)
+        # what the model receives: the WITHOUT result goes through the loop's own
+        # shrink_for_model, exactly as run_turn / run_turn_api apply it
+        log = []
+        wo_rec, _ = make_exec("WITHOUT", keys, log)("breakpoint_evidence_summary", dict(args))
+        R = wo_rec["result"]
+        sW = chatmod.shrink_for_model(SUMMARY, W)
+        sR = chatmod.shrink_for_model(SUMMARY, R)
+        d2 = dict_diff(sW, sR)
         check(f"  model-visible payload: keys only WITH are ceiling keys", set(d2["only_in_first"]) <= set(keys),
               d2["only_in_first"])
         check(f"  model-visible payload: nothing only WITHOUT", not d2["only_in_second"], d2["only_in_second"])
         check(f"  model-visible payload: no shared key differs", not d2["changed"], d2["changed"])
-        loci.append({"args": args, "tool_return_diff": d, "model_visible_diff": d2,
-                     "truncated": {"with": "_truncated_fields" in sW, "without": "_truncated_fields" in sN},
-                     "model_visible_chars": {"with": len(json.dumps(sW)), "without": len(json.dumps(sN))},
-                     "with_result": W, "without_result": N})
+        check(f"  the switch's own per-call check agrees", bool(log) and all(e["holds"] for e in log),
+              [e["how"] for e in log])
+        # positive control: the first design (strip, then let the loop truncate) is
+        # caught by this same check wherever the keys are what forces truncation
+        old = chatmod.shrink_for_model(SUMMARY, N)
+        d_old = dict_diff(sW, old)
+        old_differs = bool(d_old["only_in_second"] or d_old["changed"] or set(d_old["only_in_first"]) - set(keys))
+        forced = "_truncated_fields" in sW and "_truncated_fields" not in old
+        check(f"  positive control: strip-before-truncation {'is caught' if forced else 'is identical here'}",
+              old_differs == forced, {"keys_force_truncation": forced, "old_design_differs": old_differs})
+        loci.append({"args": args, "tool_return_diff": d, "model_visible_diff": d2, "switch_log": log,
+                     "old_design_model_visible_diff": d_old,
+                     "truncated": {"with": "_truncated_fields" in sW, "without": "_truncated_fields" in sR},
+                     "model_visible_chars": {"with": len(json.dumps(sW)), "without": len(json.dumps(sR)),
+                                             "old_design": len(json.dumps(old))},
+                     "with_result": W, "without_tool_return": N, "without_result_handed_to_loop": R})
     # the diff can fire: planted differences
-    base = loci[0]["without_result"]
+    base = loci[0]["without_tool_return"]
     W0 = loci[0]["with_result"]
     p1 = dict(base, evidence_score=(base.get("evidence_score") or 0) + 1)
     check("positive control: a changed score is caught", dict_diff(W0, p1)["changed"] == ["evidence_score"])
@@ -435,15 +496,16 @@ def run_model(model, runs, keys, tools, where, reg, schema_hash, budget, spent):
         counters[cond] += 1
         vcf_tools.reset_registry()
         ui.RECORDER.calls = []
+        ablation_log = []
         started = datetime.datetime.now().isoformat(timespec="seconds")
         if is_api:
-            res = chatmod.run_turn_api(model, CASE_E, tools, set(where), make_exec(cond, keys),
+            res = chatmod.run_turn_api(model, CASE_E, tools, set(where), make_exec(cond, keys, ablation_log),
                                        max_iters=CONFIG["api"]["max_iters"], max_tokens=CONFIG["api"]["max_tokens"],
                                        effort=CONFIG["api"]["effort"], thinking=True, client=client)
             res["api_cost_usd_live_prices"] = live_cost(model, res.get("api_usage"))
             spent += res["api_cost_usd_live_prices"] or 0
         else:
-            res = chatmod.run_turn(model, CASE_E, tools, set(where), make_exec(cond, keys),
+            res = chatmod.run_turn(model, CASE_E, tools, set(where), make_exec(cond, keys, ablation_log),
                                    num_ctx=CONFIG["num_ctx"], max_iters=CONFIG["max_iters"], think=CONFIG["think"])
         summaries = [e for e in res["events"] if e.get("type") == "tool" and e.get("name") == "breakpoint_evidence_summary"
                      and isinstance(e.get("result"), dict)]
@@ -453,6 +515,13 @@ def run_model(model, runs, keys, tools, where, reg, schema_hash, budget, spent):
                "ended": datetime.datetime.now().isoformat(timespec="seconds"),
                "summary_calls_seen_by_model": len(summaries),
                "ceiling_keys_seen_by_model": sorted({k for e in summaries for k in e["result"] if k in keys}),
+               "ablation_log": ablation_log,
+               "ablation_held_on_every_call": all(e["holds"] for e in ablation_log),
+               # chat's own verify_numbers checks the prose against the recorded results; this one
+               # checks it against what the model was actually sent, the same way in both conditions
+               "verification_against_model_visible": chatmod.verify_numbers(
+                   res["final_text"], [chatmod.shrink_for_model(e["name"], e["result"]) for e in res["events"]
+                                       if e.get("type") == "tool" and isinstance(e.get("result"), dict)]),
                "result": res, "recorder_calls_unablated": ui.RECORDER.calls}
         if not is_api and pos == 0:
             try:
