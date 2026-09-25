@@ -318,52 +318,145 @@ def ceiling_for(observed):
 
 
 # ── limits panel (Addition 3) ───────────────────────────────────────────────
-LIMITS = {
-    "title": "What this tool cannot tell you",
-    "items": [
-        {"h": "It checks positions. It does not search for them.",
-         "b": "Every position examined here was either proposed by the variant caller or typed "
-              "in by hand. Nothing scans the genome. A real breakpoint that the caller missed "
-              "and nobody typed in will never appear here, however strong the evidence at it "
-              "would have been."},
-        {"h": "On a controlled test it found 14 of 24 known breakpoints.",
-         "b": "Twelve balanced translocations were built into real sequencing data at positions "
-              "known in advance, then looked for. Found: 8 of 8 in clean, uniquely mappable "
-              "sequence; 6 of 8 next to repeats; 0 of 8 where the surrounding sequence maps "
-              "ambiguously. Every one that was missed was lost at the variant-calling step, "
-              "because reads crossing those junctions could not be placed confidently enough "
-              "for the caller to use them. None was lost to the filters below — no filter "
-              "setting tested discarded a single true breakpoint. This is a measurement on "
-              "simulated reads and estimates performance on simulated reads."},
-        {"h": "14 of the 16 cut-offs are judgement calls, not calibrated values.",
-         "b": "They are not recommendations from the underlying tools, and they have not been "
-              "checked against a set of confirmed positive and negative cases. Every cut-off "
-              "shown on this page is labelled with where it came from. Read "
-              "'author judgement' as: a reasonable person could have chosen differently, and "
-              "the result would differ."},
-        {"h": "The read-depth measurement is unreliable at this coverage.",
-         "b": "Its cut-off was set using data at roughly ten times the coverage of a routine "
-              "genome, and at about 31x it flags roughly 26% of ordinary positions — so on its "
-              "own it distinguishes very little. (That 26% figure is carried over from earlier "
-              "testing and was not re-measured for this interface.) In the controlled test it "
-              "added points at two positions where no copy-number change had been built in. "
-              "Treat a depth contribution as weak support at best."},
-        {"h": "A balanced translocation can never score \"strong\" here.",
-         "b": "This is arithmetic, not an accident of the data. In a balanced rearrangement no "
-              "DNA is gained or lost, so the depth measurement correctly contributes nothing. "
-              "And when only one of the two copies of a chromosome is rearranged, roughly half "
-              "the reads at the breakpoint come from the intact copy, which caps the "
-              "paired-read measurement well below its top band. The highest score actually "
-              "reachable is calculated for each position and shown next to the score. Across 28 "
-              "test breakpoints the paired-read fraction never exceeded 0.175, against the 0.5 "
-              "its top band requires. Judge a balanced translocation on the four measurements, "
-              "not on the band it lands in."},
-        {"h": "\"Quality limited\" means no score was calculated.",
-         "b": "When too many reads at a position are ambiguously mapped, the combined score is "
-              "withheld instead of computed. It means this position cannot be scored, not that "
-              "it scored badly. The four individual measurements are still shown; read those."},
-    ],
-}
+# The controlled-test figures in this panel and in the hand-entry note used to be
+# literals ("14 of 24", "6 of 8", "0.175", "two positions", "44 discordant read
+# pairs, 20 soft-clipped reads and 14 split reads") from the first implant run,
+# whose records were lost; they went stale when the implants were rebuilt on
+# 2026-09-25. They are now read from the committed analysis records each time the
+# page asks. A record that cannot be read is named as missing and no figure is
+# shown in its place -- never a number that cannot be traced to a file.
+_ANALYSIS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "results",
+                             "synthetic_control_2026-09", "analysis_2026-09-25")
+
+
+def controlled_test_figures():
+    """The controlled-test figures the page quotes, from the committed records."""
+    try:
+        with open(os.path.join(_ANALYSIS_DIR, "figures.json")) as f:
+            fig = json.load(f)
+        with open(os.path.join(_ANALYSIS_DIR, "adjudication", "summary.json")) as f:
+            adj = json.load(f)
+        with open(os.path.join(_ANALYSIS_DIR, "ladder", "analysis.json")) as f:
+            lad = json.load(f)["summary"]
+    except (OSError, ValueError) as e:
+        return {"available": False,
+                "reason": f"the committed controlled-test record could not be read ({type(e).__name__})"}
+
+    def of(s):
+        a, b = s.split("/")
+        return f"{a} of {b}"
+    cls = fig["sensitivity"]["by_class"]["chosen_rule"]
+    cs = fig["ceiling_summary"]
+    missed = {i: r for i, r in fig["rescue"].items() if r["missed"]}
+    ends = [(i, c, e) for i, r in sorted(missed.items()) for c, e in sorted(r["ends"].items())]
+    best = max(ends, key=lambda x: x[2]["discordant_pairs"]) if ends else None
+    from_junction = None
+    if best:
+        tag = f"{best[0]} {best[1]}:{best[2]['position']}"
+        from_junction = next((p["genuine_m0"] for p in adj["a_tool_vs_delly_vs_truth"]["per_breakpoint"]
+                              if p["breakpoint"] == tag), None)
+    lmf = [e["low_mapq_fraction"] for _, _, e in ends]
+    lowest_q = lad.get("q0_r0", {})
+    return {
+        "available": True,
+        "junctions": of(fig["sensitivity"]["overall"]["junctions"]),
+        "clean": of(cls["clean_unique"]["junctions"]), "repeat": of(cls["repeat_adjacent"]["junctions"]),
+        "lowmap": of(cls["low_mappability"]["junctions"]),
+        "all_losses_at_discovery": set(fig["loss_summary"]) == {"discovery (no delly record)"},
+        "filters_kept_every_detected": len({g["implanted_junctions_surviving"] for g in fig["grid"].values()}) == 1,
+        "depth_breakends": len(cs["breakends_with_a_depth_contribution"]), "breakends": cs["breakends"],
+        "max_disc": cs["max_observed_discordant_fraction"],
+        "missed_implants": len(missed),
+        "missed_low_mapq_range": [min(lmf), max(lmf)] if lmf else None,
+        "q0_called": lowest_q.get("missed_junctions_called"), "q0_surviving": lowest_q.get("missed_junctions_surviving"),
+        "q0_of": lowest_q.get("of"),
+        "rescue": best and {"at": f"{best[1]}:{best[2]['position']:,}", "discordant": best[2]["discordant_pairs"],
+                            "clipped": best[2]["soft_clipped_reads"], "split": best[2]["split_reads_min_mapq_0"],
+                            "split_from_junction": from_junction, "strength": best[2]["evidence_strength"]},
+    }
+
+
+def hand_entry_note(t=None):
+    t = t or controlled_test_figures()
+    if not t["available"]:
+        return f"(The controlled-test figure normally quoted here is not shown: {t['reason']}.)"
+    r = t["rescue"]
+    if not r:
+        return "In the controlled test the caller reported every implanted breakpoint."
+    verdict = ("its score was withheld as quality-limited" if r["strength"] == "QUALITY-LIMITED"
+               else f"it scored {r['strength']}")
+    return (f"In the controlled test the caller missed {t['missed_implants']} of the 12 implanted "
+            f"translocations. Typed in by hand, the strongest of their breakpoints ({r['at']}) showed "
+            f"{r['discordant']} discordant read pairs, {r['clipped']} soft-clipped reads and {r['split']} "
+            f"split reads, of which {r['split_from_junction']} came from the junction; {verdict}.")
+
+
+def build_limits():
+    t = controlled_test_figures()
+    top = None
+    if TIERS and "discordant_pairs" in TIERS:
+        top = max(x["threshold"] for x in TIERS["discordant_pairs"]["tiers"])
+    gone = f"(Not shown: {t.get('reason')}.)"
+    if t["available"]:
+        found = (f"Twelve balanced translocations were built into real sequencing data at positions known in "
+                 f"advance, then looked for. Found: {t['clean']} in clean, uniquely mappable sequence; "
+                 f"{t['repeat']} next to repeats; {t['lowmap']} where the surrounding sequence maps ambiguously. "
+                 + ("Every one that was missed was lost at the variant-calling step: the caller reported nothing "
+                    "at those junctions, where the tools find "
+                    f"{t['missed_low_mapq_range'][0]:.0%}-{t['missed_low_mapq_range'][1]:.0%} of reads mapped "
+                    f"ambiguously; with the caller's own mapping-quality floors lowered to 0 it reported "
+                    f"{t['q0_called']} of those {t['q0_of']} junctions, and {t['q0_surviving']} survived the "
+                    f"filters. " if t["all_losses_at_discovery"] and t["missed_low_mapq_range"] else "")
+                 + ("None was lost to the filters below — no filter setting tested discarded a single true "
+                    "breakpoint. " if t["filters_kept_every_detected"] else "")
+                 + "This is a measurement on simulated reads and estimates performance on simulated reads. "
+                   "(The test was rebuilt on 2026-09-25 with new random draws; its first run, whose records "
+                   "were lost, found 14 of 24.)")
+        depth = (f" In the controlled test it added points at {t['depth_breakends']} of the {t['breakends']} "
+                 f"detected breakends, although no copy-number change had been built in.")
+        ceiling = (f" Across the {t['breakends']} breakends of the detected test junctions the paired-read "
+                   f"fraction never exceeded {t['max_disc']}"
+                   + (f", against the {top:g} its top band requires." if top is not None else "."))
+    else:
+        found, depth, ceiling = gone, " " + gone, " " + gone
+    return {
+        "title": "What this tool cannot tell you",
+        "source": "results/synthetic_control_2026-09/analysis_2026-09-25 (read when the page asks)",
+        "items": [
+            {"h": "It checks positions. It does not search for them.",
+             "b": "Every position examined here was either proposed by the variant caller or typed "
+                  "in by hand. Nothing scans the genome. A real breakpoint that the caller missed "
+                  "and nobody typed in will never appear here, however strong the evidence at it "
+                  "would have been."},
+            {"h": (f"On a controlled test it found {t['junctions']} known breakpoints." if t["available"]
+                   else "A controlled test measured how many known breakpoints it finds."),
+             "b": found},
+            {"h": "14 of the 16 cut-offs are judgement calls, not calibrated values.",
+             "b": "They are not recommendations from the underlying tools, and they have not been "
+                  "checked against a set of confirmed positive and negative cases. Every cut-off "
+                  "shown on this page is labelled with where it came from. Read "
+                  "'author judgement' as: a reasonable person could have chosen differently, and "
+                  "the result would differ."},
+            {"h": "The read-depth measurement is unreliable at this coverage.",
+             "b": "Its cut-off was set using data at roughly ten times the coverage of a routine "
+                  "genome, and at about 31x it flags roughly 26% of ordinary positions — so on its "
+                  "own it distinguishes very little. (That 26% figure is carried over from earlier "
+                  "testing and was not re-measured for this interface.)" + depth +
+                  " Treat a depth contribution as weak support at best."},
+            {"h": "A balanced translocation can never score \"strong\" here.",
+             "b": "This is arithmetic, not an accident of the data. In a balanced rearrangement no "
+                  "DNA is gained or lost, so the depth measurement correctly contributes nothing. "
+                  "And when only one of the two copies of a chromosome is rearranged, roughly half "
+                  "the reads at the breakpoint come from the intact copy, which caps the "
+                  "paired-read measurement well below its top band. The highest score actually "
+                  "reachable is calculated for each position and shown next to the score." + ceiling +
+                  " Judge a balanced translocation on the four measurements, not on the band it lands in."},
+            {"h": "\"Quality limited\" means no score was calculated.",
+             "b": "When too many reads at a position are ambiguously mapped, the combined score is "
+                  "withheld instead of computed. It means this position cannot be scored, not that "
+                  "it scored badly. The four individual measurements are still shown; read those."},
+        ],
+    }
 
 
 _CHAT_TOOLS = {}
@@ -431,7 +524,8 @@ def _api(path, body):
     if path == "/api/bootstrap":
         return {
             "datasets": sorted(DATASETS), "candidate_files": sorted(CANDIDATE_FILES),
-            "tiers": TIERS, "tier_error": TIER_ERROR, "limits": LIMITS,
+            "tiers": TIERS, "tier_error": TIER_ERROR, "limits": build_limits(),
+            "hand_entry_note": hand_entry_note(),
             "tool_counts": {"evidence": len(EXPECTED_EVIDENCE_TOOLS),
                             "bridge": len(EXPECTED_BRIDGE_TOOLS)},
         }
@@ -771,8 +865,7 @@ PAGE = r"""<!doctype html>
   <div>
     <b>B · Check a position you already have</b>
     <div class="mut">Type a breakpoint from a karyotype, a report, or another method and
-      examine it directly. On test data this route found 44 discordant read pairs, 20
-      soft-clipped reads and 14 split reads at a breakpoint the caller did not report.</div>
+      examine it directly. <span id="handnote"></span></div>
     <div class="row" style="margin-top:8px">
       <select id="hbam"></select>
       <input id="hchr" size="6" placeholder="chr20" value="chr20">
@@ -850,6 +943,7 @@ async function boot(){
   BOOT=await g('/api/bootstrap');
   document.getElementById('toolcount').textContent =
     `${BOOT.tool_counts.evidence} evidence tools + ${BOOT.tool_counts.bridge} bridge tools verified at startup`;
+  document.getElementById('handnote').textContent = BOOT.hand_entry_note || '';
   document.getElementById('cfile').innerHTML=BOOT.candidate_files.map(x=>`<option>${esc(x)}</option>`).join('');
   document.getElementById('hbam').innerHTML=BOOT.datasets.map(x=>`<option>${esc(x)}</option>`).join('');
   const opts=BOOT.candidate_files.map(x=>`<option>${esc(x)}</option>`).join('');

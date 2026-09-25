@@ -28,15 +28,47 @@ BUNDLE = {
         "bam": "~/public_data/sim/bams/IMP01.bam",
         "bcf": "~/public_data/sim/delly/IMP01.bcf",
         "regions": [("chr20", 200_000), ("chr21", 14_100_000)],
-        "why": "clean, uniquely mappable breakpoint: all four evidence layers fire",
+        "why": "clean, uniquely mappable breakpoint",
     },
     "DEMO_REPEAT": {
         "bam": "~/public_data/sim/bams/IMP10.bam",
         "bcf": "~/public_data/sim/delly/IMP10.bcf",
         "regions": [("chr20", 25_800_000), ("chr21", 7_600_000)],
-        "why": "low-mappability breakpoint: the score is WITHHELD as QUALITY-LIMITED",
+        "why": "low-mappability breakpoint",
     },
 }
+
+
+def measured(bam, chrom, pos):
+    """What DEMO.md says about a locus, measured on the slice just written.
+
+    DEMO.md used to carry literals ("all four layers; score 47.5/100") from the
+    first implant run; when the implants were rebuilt they no longer described the
+    data the bundle held. Now the numbers come from breakpoint_evidence_summary on
+    the sliced BAM itself, through the MCP dispatch and the applicable-layer
+    sampling (20,000 reads) the interface uses, so the text cannot drift from the
+    file beside it."""
+    import asyncio
+    from stage1_igv_assistant import server
+
+    def call(tool, params):
+        return asyncio.run(server.mcp.call_tool(tool, params)).structured_content
+    layers = call("applicable_layers", {"bam_path": bam, "sample_reads": 20000}).get("applicable_layers")
+    s = call("breakpoint_evidence_summary", {"bam_path": bam, "chromosome": chrom, "position": pos,
+                                             "label": f"{chrom}:{pos}", "applicable_layers": layers,
+                                             "window_bp": 500})
+    if "error" in s:
+        return f"the tool returned an error: {s['error']}"
+    comps = [s.get(k) for k in ("discordant_pair_score", "soft_clip_score", "split_read_score", "depth_score")]
+    fired = sum(1 for c in comps if c)
+    if s["evidence_strength"] == "QUALITY-LIMITED":
+        return (f"score WITHHELD, `QUALITY-LIMITED` — not a low score ({s['locus_stats']['low_mapq_fraction']:.0%} "
+                f"of reads below MAPQ 20); {fired} of 4 layers show signal")
+    out = f"{fired} of 4 layers show signal; score {s['evidence_score']}/100 `{s['evidence_strength']}`"
+    if s.get("strong_band_reachable_here") is False:
+        out += (f"; the top band is unreachable for a balanced event (at most {s['attainable_here']:g} "
+                f"reachable here, {s['strong_band']:g} needed)")
+    return out
 
 
 def slice_bam(src, dst, regions, window=WINDOW):
@@ -93,12 +125,15 @@ def main():
             f.write(f"  - {n} reads kept, in ±{WINDOW:,} bp windows around:\n")
             for c, p in regions:
                 f.write(f"    - `{c}:{p:,}`\n")
+        clean = measured(os.path.join(out, "DEMO_CLEAN.bam"), "chr20", 200_000)
+        repeat = measured(os.path.join(out, "DEMO_REPEAT.bam"), "chr20", 25_800_000)
         f.write("\n## Loci that mean something\n\n"
+                "Measured on these slices when the bundle was built, by breakpoint_evidence_summary "
+                "(window 500 bp, the layers applicable_layers finds in 20,000 sampled reads).\n\n"
                 "| dataset | coordinate | what it shows |\n|---|---|---|\n"
-                "| DEMO_CLEAN | chr20:200000 | all four layers; score 47.5/100 `moderate`; "
-                "the top band is unreachable for a balanced event |\n"
+                f"| DEMO_CLEAN | chr20:200000 | {clean} |\n"
                 "| DEMO_CLEAN | chr21:14100000 | the partner side of the same junction |\n"
-                "| DEMO_REPEAT | chr20:25800000 | score WITHHELD, `QUALITY-LIMITED` — not a low score |\n"
+                f"| DEMO_REPEAT | chr20:25800000 | {repeat} |\n"
                 "\n## Limits\n\n"
                 "Only the windows above contain reads. Any other coordinate returns zero reads and "
                 "the layers report `assessable: false`. That is honest, but it is not what the full "
