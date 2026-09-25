@@ -1,0 +1,9 @@
+{
+ "bam": "~/public_data/sim/noalt/bams/IMP10.bam",
+ "background_records": 29330868,
+ "removed_records": 80,
+ "simulated_records": 87,
+ "output_records": 29330875,
+ "record_arithmetic_holds": true,
+ "wall_seconds": 155.9
+}

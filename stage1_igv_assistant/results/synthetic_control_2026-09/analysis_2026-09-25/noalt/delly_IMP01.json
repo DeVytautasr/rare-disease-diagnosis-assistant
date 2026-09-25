@@ -1,0 +1,10 @@
+{
+ "exit_code": 0,
+ "peak_rss_kbytes": 316440,
+ "wall_clock": "0:47.40",
+ "samples_in_bcf": 1,
+ "sample_names": [
+  "NA12878"
+ ],
+ "records_in_bcf": 918
+}

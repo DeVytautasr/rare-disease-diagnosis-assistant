@@ -1,0 +1,69 @@
+{
+ "control_with_alt": {
+  "command": "~/miniconda3/envs/synth-bwa/bin/bwa mem -Y -K 100000000 -t 8 -R @RG\\tID:SIM\\tSM:NA12878\\tLB:NA12878\\tPL:illumina ~/reference/GRCh38_full_analysis_set_plus_decoy_hla.fa ~/public_data/sim/work/pool/R1.fq ~/public_data/sim/work/pool/R2.fq",
+  "wall_seconds": 23.4,
+  "alignment_records_identical_to_committed": true,
+  "alt_contigs_reported_by_bwa": 3171
+ },
+ "no_alt": {
+  "command": "~/miniconda3/envs/synth-bwa/bin/bwa mem -Y -K 100000000 -t 8 -R @RG\\tID:SIM\\tSM:NA12878\\tLB:NA12878\\tPL:illumina ~/public_data/sim/noalt/index/GRCh38_full_analysis_set_plus_decoy_hla.fa ~/public_data/sim/work/pool/R1.fq ~/public_data/sim/work/pool/R2.fq",
+  "wall_seconds": 3.6,
+  "ah_lines": 0,
+  "alt_contigs_reported_by_bwa": 0
+ },
+ "headers": {
+  "committed": {
+   "sq": 3366,
+   "ah": 3171
+  },
+  "control": {
+   "sq": 3366,
+   "ah": 3171
+  },
+  "no_alt": {
+   "sq": 3366,
+   "ah": 0
+  }
+ },
+ "records_per_implant_no_alt": {
+  "IMP01": 122,
+  "IMP02": 100,
+  "IMP03": 129,
+  "IMP04": 99,
+  "IMP05": 114,
+  "IMP06": 159,
+  "IMP07": 117,
+  "IMP08": 115,
+  "IMP09": 106,
+  "IMP10": 87,
+  "IMP11": 121,
+  "IMP12": 82
+ },
+ "records_per_implant_committed": {
+  "IMP01": 122,
+  "IMP02": 100,
+  "IMP03": 129,
+  "IMP04": 100,
+  "IMP05": 114,
+  "IMP06": 159,
+  "IMP07": 117,
+  "IMP08": 115,
+  "IMP09": 106,
+  "IMP10": 87,
+  "IMP11": 121,
+  "IMP12": 82
+ },
+ "verified": true
+}
+IMP06: {'bam': '~/public_data/sim/noalt/bams/IMP06.bam', 'background_records': 29330868, 'removed_records': 136, 'simulated_records': 159, 'output_records': 29330891, 'record_arithmetic_holds': True, 'wall_seconds': 134.1}
+IMP01: {'bam': '~/public_data/sim/noalt/bams/IMP01.bam', 'background_records': 29330868, 'removed_records': 116, 'simulated_records': 122, 'output_records': 29330874, 'record_arithmetic_holds': True, 'wall_seconds': 156.0}
+IMP10: {'bam': '~/public_data/sim/noalt/bams/IMP10.bam', 'background_records': 29330868, 'removed_records': 80, 'simulated_records': 87, 'output_records': 29330875, 'record_arithmetic_holds': True, 'wall_seconds': 155.9}
+pre-flight OK   delly sha256
+pre-flight OK   exclude template git blob (v2.6.0, unmodified)
+pre-flight OK   hs38DH .fai md5
+IMP06: {'exit_code': 0, 'peak_rss_kbytes': 316824, 'wall_clock': '0:47.11', 'samples_in_bcf': 1, 'sample_names': ['NA12878'], 'records_in_bcf': 916}
+IMP01: {'exit_code': 0, 'peak_rss_kbytes': 316440, 'wall_clock': '0:47.40', 'samples_in_bcf': 1, 'sample_names': ['NA12878'], 'records_in_bcf': 918}
+IMP10: {'exit_code': 0, 'peak_rss_kbytes': 316472, 'wall_clock': '0:47.48', 'samples_in_bcf': 1, 'sample_names': ['NA12878'], 'records_in_bcf': 916}
+IMP06: detection ALT-aware {'J20': {'called': True, 'survives_funnel': True, 'pe': 18, 'sr': 9, 'filter': 'PASS'}, 'J21': {'called': True, 'survives_funnel': True, 'pe': 19, 'sr': 14, 'filter': 'PASS'}, 'survivors': 29}; no-ALT {'J20': {'called': False, 'survives_funnel': False, 'pe': None, 'sr': None, 'filter': None}, 'J21': {'called': False, 'survives_funnel': False, 'pe': None, 'sr': None, 'filter': None}, 'survivors': 27}; identical False; reads changed {'position_or_contig': 32, 'mapq': 66, 'sa': 26, 'primary_in_only_one_alignment': 0}; {'interchromosomal_pairs': 38, 'both_mates_mapq_ge_20': 37, 'reads_with_pa_tag': 0} -> {'interchromosomal_pairs': 40, 'both_mates_mapq_ge_20': 0, 'reads_with_pa_tag': 0}
+IMP01: detection ALT-aware {'J20': {'called': True, 'survives_funnel': True, 'pe': 25, 'sr': 6, 'filter': 'PASS'}, 'J21': {'called': True, 'survives_funnel': True, 'pe': 19, 'sr': 12, 'filter': 'PASS'}, 'survivors': 29}; no-ALT {'J20': {'called': True, 'survives_funnel': True, 'pe': 25, 'sr': 6, 'filter': 'PASS'}, 'J21': {'called': True, 'survives_funnel': True, 'pe': 19, 'sr': 12, 'filter': 'PASS'}, 'survivors': 29}; identical True; reads changed {'position_or_contig': 0, 'mapq': 0, 'sa': 0, 'primary_in_only_one_alignment': 0}; {'interchromosomal_pairs': 44, 'both_mates_mapq_ge_20': 44, 'reads_with_pa_tag': 0} -> {'interchromosomal_pairs': 44, 'both_mates_mapq_ge_20': 44, 'reads_with_pa_tag': 0}
+IMP10: detection ALT-aware {'J20': {'called': False, 'survives_funnel': False, 'pe': None, 'sr': None, 'filter': None}, 'J21': {'called': False, 'survives_funnel': False, 'pe': None, 'sr': None, 'filter': None}, 'survivors': 27}; no-ALT {'J20': {'called': False, 'survives_funnel': False, 'pe': None, 'sr': None, 'filter': None}, 'J21': {'called': False, 'survives_funnel': False, 'pe': None, 'sr': None, 'filter': None}, 'survivors': 27}; identical True; reads changed {'position_or_contig': 0, 'mapq': 0, 'sa': 0, 'primary_in_only_one_alignment': 0}; {'interchromosomal_pairs': 28, 'both_mates_mapq_ge_20': 0, 'reads_with_pa_tag': 0} -> {'interchromosomal_pairs': 28, 'both_mates_mapq_ge_20': 0, 'reads_with_pa_tag': 0}
