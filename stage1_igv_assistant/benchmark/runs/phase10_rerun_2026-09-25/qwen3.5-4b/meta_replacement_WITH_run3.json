@@ -1,0 +1,125 @@
+{
+ "model": "qwen3.5:4b",
+ "backend": "ollama",
+ "git_head": "92c360c1c63db972b2451d695f7938dd755759ca",
+ "schema_sha256": "6ce8866a5d4317cb8664c4083e22b89d87e4d65e3961b92f5a56b8408e51cef0",
+ "registration": {
+  "datasets": [
+   "IMP01",
+   "IMP02",
+   "IMP03",
+   "IMP04",
+   "IMP05",
+   "IMP06",
+   "IMP07",
+   "IMP08",
+   "IMP09",
+   "IMP10",
+   "IMP11",
+   "IMP12",
+   "NA12878.chr20_chr21"
+  ],
+  "candidates": [
+   "IMP01",
+   "IMP02",
+   "IMP03",
+   "IMP04",
+   "IMP05",
+   "IMP06",
+   "IMP07",
+   "IMP08",
+   "IMP09",
+   "IMP10",
+   "IMP11",
+   "IMP12",
+   "background"
+  ],
+  "dataset_paths": {
+   "IMP01": "~/public_data/sim/bams/IMP01.bam",
+   "IMP02": "~/public_data/sim/bams/IMP02.bam",
+   "IMP03": "~/public_data/sim/bams/IMP03.bam",
+   "IMP04": "~/public_data/sim/bams/IMP04.bam",
+   "IMP05": "~/public_data/sim/bams/IMP05.bam",
+   "IMP06": "~/public_data/sim/bams/IMP06.bam",
+   "IMP07": "~/public_data/sim/bams/IMP07.bam",
+   "IMP08": "~/public_data/sim/bams/IMP08.bam",
+   "IMP09": "~/public_data/sim/bams/IMP09.bam",
+   "IMP10": "~/public_data/sim/bams/IMP10.bam",
+   "IMP11": "~/public_data/sim/bams/IMP11.bam",
+   "IMP12": "~/public_data/sim/bams/IMP12.bam",
+   "NA12878.chr20_chr21": "~/public_data/NA12878.chr20_chr21.bam"
+  },
+  "candidate_paths": {
+   "IMP01": "~/public_data/sim/delly/IMP01.bcf",
+   "IMP02": "~/public_data/sim/delly/IMP02.bcf",
+   "IMP03": "~/public_data/sim/delly/IMP03.bcf",
+   "IMP04": "~/public_data/sim/delly/IMP04.bcf",
+   "IMP05": "~/public_data/sim/delly/IMP05.bcf",
+   "IMP06": "~/public_data/sim/delly/IMP06.bcf",
+   "IMP07": "~/public_data/sim/delly/IMP07.bcf",
+   "IMP08": "~/public_data/sim/delly/IMP08.bcf",
+   "IMP09": "~/public_data/sim/delly/IMP09.bcf",
+   "IMP10": "~/public_data/sim/delly/IMP10.bcf",
+   "IMP11": "~/public_data/sim/delly/IMP11.bcf",
+   "IMP12": "~/public_data/sim/delly/IMP12.bcf",
+   "background": "~/public_data/sim/delly/background.bcf"
+  }
+ },
+ "ceiling_keys": [
+  "attainable_ceiling_derivable",
+  "attainable_ceiling_reason",
+  "score_bands",
+  "strong_band",
+  "max_all_layers",
+  "max_with_flat_depth",
+  "attainable_here",
+  "strong_band_reachable_here",
+  "attainable_basis",
+  "attainable_note"
+ ],
+ "config": {
+  "num_ctx": 32768,
+  "max_iters": 40,
+  "trim_descriptions": false,
+  "think": "low",
+  "api": {
+   "max_tokens": 16000,
+   "effort": "high",
+   "thinking": "adaptive (display summarized)",
+   "max_iters": 40,
+   "server_side_fallbacks": false
+  }
+ },
+ "prompt": "Is the balanced translocation at chr20:200000 in dataset IMP01 strong evidence? Use the tools to find out, and explain your answer.",
+ "prompt_provenance": "RECONSTRUCTION (2026-09-25): case (e)'s committed prompt text does not exist; rebuilt from the recorded description 'whether the balanced translocation at IMP01 chr20:200,000 is strong evidence'",
+ "system_prompt_sha256": "f79ca873b1fcfd9c1444d5ef787e4e5ae4b1255e13c2322ba792b1da18b2f77b",
+ "unloaded_before_start": [],
+ "ollama_version": "0.32.9",
+ "ollama_version_matches_phase8": true,
+ "model_digest": "2a654d98e6fba55d452b7043684e9b57a947e393bbffa62485a7aac05ee4eefd",
+ "model_details": {
+  "parent_model": "",
+  "format": "gguf",
+  "family": "qwen35",
+  "families": [
+   "qwen35"
+  ],
+  "parameter_size": "4.7B",
+  "quantization_level": "Q4_K_M",
+  "context_length": 262144,
+  "embedding_length": 2560
+ },
+ "capabilities": [
+  "completion",
+  "thinking",
+  "tools",
+  "vision"
+ ],
+ "think_sent": "low",
+ "gpu_before": "NVIDIA GeForce RTX 5060 Laptop GPU, 8151 MiB, 4878 MiB",
+ "replaces": "WITH__run3.json",
+ "reason": "Ollama returned HTTP 500 and the run ended without an answer",
+ "order": [
+  "WITH"
+ ]
+}
