@@ -4,9 +4,11 @@
     write_run_record.py [--dest DIR]
 
 Copies what the run produced under ~/public_data/sim (measurements, the scan,
-the selection, per-implant preparation summaries, the gate, build and delly
-records) into DIR (default stage1_igv_assistant/results/synthetic_control_2026-09)
-and writes run_record.json: commands, tool versions, seeds, class thresholds,
+the selection, per-implant preparation summaries, the gate and any revised gate,
+build and delly records) into DIR (default
+stage1_igv_assistant/results/synthetic_control_2026-09) and writes the record
+under --name (a committed record is never overwritten; a later stage gets a new,
+dated name): commands, tool versions, seeds, class thresholds,
 the gate result, delly exit codes and peak RSS where delly ran, and the run's
 status. It computes no new figure; it reports which steps exist and which do not.
 Large data (BAM, BCF, FASTQ, ART SAM) stays under ~/public_data/sim.
@@ -48,7 +50,20 @@ def delly_log(label):
             "records_in_bcf": int(records.group(1)) if records else None}
 
 
-def main(dest):
+LIMITATIONS = [
+    "The implants are aligned as their own NA12878 background was (bwa 0.7.15 mem -Y -K 100000000, "
+    "no -M): supplementary alignments soft-clipped and flagged 0x800. The two patient BAMs were aligned "
+    "with bwa mem -M and without -Y (every bwa @PG record), so their split alignments are represented "
+    "differently: hard-clipped, and marked secondary by -M (although flagstat still counts 3,694,802 and "
+    "3,726,497 supplementary records in them, which -M alone would not produce). Consistency with the "
+    "background was chosen over matching the clinical pipeline (user decision, 2026-09-25); the soft-clip "
+    "and split-read layers may therefore behave differently on patient data than on these implants.",
+    "Simulated reads come from the reference sequence and carry none of NA12878's own variants on the "
+    "rearranged haplotype.",
+]
+
+
+def main(dest, name, revised_name):
     os.makedirs(dest, exist_ok=True)
     copies = {"background_measurements.json": os.path.join(SIM, "measure", "background.json"),
               "art_profiles.json": os.path.join(SIM, "measure", "profiles.json"),
@@ -65,8 +80,12 @@ def main(dest):
         prep = load(os.path.join(WORK, iid, "prepare.json"))
         gate = load(os.path.join(WORK, iid, "gate.json"))
         build = load(os.path.join(WORK, iid, "build.json"))
+        revised = load(os.path.join(WORK, iid, "gate_revised.json"))
         if gate:
             shutil.copyfile(os.path.join(WORK, iid, "gate.json"), os.path.join(dest, f"{iid}_gate.json"))
+        if revised:
+            shutil.copyfile(os.path.join(WORK, iid, "gate_revised.json"),
+                            os.path.join(dest, f"{iid}_{revised_name}"))
         implants.append({
             "id": iid, "class": imp["class"], "chr20": imp["chr20"], "chr21": imp["chr21"],
             "source": imp["source"],
@@ -75,12 +94,22 @@ def main(dest):
                               "junctions": prep["junctions"]} if prep else None),
             "bam_built": build is not None and os.path.exists(os.path.join(BAMS, f"{iid}.bam")),
             "build": build, "gate_verdict": gate["verdict"] if gate else None,
+            "revised_gate_verdict": revised["verdict"] if revised else None,
             "delly": delly_log(iid)})
     gates = {i["id"]: i["gate_verdict"] for i in implants if i["gate_verdict"]}
+    revised = {i["id"]: i["revised_gate_verdict"] for i in implants if i["revised_gate_verdict"]}
     built = [i["id"] for i in implants if i["bam_built"]]
     delly_ran = {i["id"]: i["delly"] for i in implants if i["delly"]}
     bg_delly = delly_log("background")
-    if gates.get("IMP01") == "FAIL":
+    if revised.get("IMP01") == "PASS" and len(delly_ran) == 12 and bg_delly:
+        status = ("COMPLETE through delly (12 implants and the background) after the REVISED gate: "
+                  "criterion (a) was replaced on 2026-09-25, after the pre-registered gate failed, by "
+                  "(a1)/(a2) -- see the revised gate record; the evidence chain has not been run.")
+    elif revised.get("IMP01") == "PASS":
+        status = "IN PROGRESS after the REVISED gate passed (criterion (a) replaced after the pre-registered failure)."
+    elif revised.get("IMP01") == "FAIL":
+        status = "STOPPED at the REVISED gate: an SA-less truly spanning read is not explained by -T 30 / -k 19."
+    elif gates.get("IMP01") == "FAIL":
         status = ("STOPPED at the pre-registered IMP01 gate: at least one criterion failed. Nothing "
                   "downstream of the gate was run -- no further implant BAMs, no delly on the implants "
                   "or on the background, no demo bundle.")
@@ -115,9 +144,13 @@ def main(dest):
            "gate": {i: load(os.path.join(WORK, i, "gate.json")) and
                     {k: v for k, v in load(os.path.join(WORK, i, "gate.json")).items() if k != "per_read"}
                     for i in gates},
+           "revised_gate": {i: load(os.path.join(WORK, i, "gate_revised.json")) and
+                            {k: v for k, v in load(os.path.join(WORK, i, "gate_revised.json")).items()
+                             if k not in ("per_read",)} for i in revised},
+           "limitations": LIMITATIONS,
            "bams_built": built, "delly": delly_ran, "delly_background": bg_delly,
            "implants": implants}
-    write_json(os.path.join(dest, "run_record.json"), rec)
+    write_json(os.path.join(dest, name), rec)
     print(f"records -> {os.path.relpath(dest, REPO)}: {sorted(os.listdir(dest))}")
     print(f"status: {status}")
 
@@ -125,4 +158,10 @@ def main(dest):
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--dest", default=DEST)
-    main(ap.parse_args().dest)
+    ap.add_argument("--name", default="run_record.json",
+                    help="a committed record is never overwritten: a later stage gets a new, dated name")
+    ap.add_argument("--revised-name", default="gate_revised_2026-09-25.json")
+    a = ap.parse_args()
+    if os.path.exists(os.path.join(a.dest, a.name)) and a.name == "run_record.json":
+        raise SystemExit("run_record.json is committed; write a later stage under a new --name")
+    main(a.dest, a.name, a.revised_name)
