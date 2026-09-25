@@ -26,7 +26,8 @@ Rules -- mechanical, so nothing is judged case by case at gate time:
               Other added absolute paths are listed, not gated.
 
 Hits are printed with location and a MASKED token -- an identifier is never
-printed in full, and key material never at all.
+printed in full, an entry of the identifier list not even in part (only its
+position in the list and its length), and key material never at all.
 
 Exit codes: 0 clean, with an identifier list
             1 something fired -- do not push
@@ -92,9 +93,12 @@ class Gate:
 
     def scan(self, scope, where, text, paths=False):
         low = text.lower()
-        for ident in self.identifiers:
+        for k, ident in enumerate(self.identifiers, 1):
             if ident.lower() in low:
-                self.fired.append(("ID-list", scope, where, mask(ident)))
+                # A listed identifier is known to be real, so none of its characters
+                # is shown -- only its position in the list and its length.
+                self.fired.append(("ID-list", scope, where,
+                                   f"<entry {k} of the identifier list> (len {len(ident)})"))
         for m in SAMPLE_TOKEN.finditer(text):
             name = m.group(1)
             shaped = bool(re.search(r"\d", name)) or name.lower().endswith("-ready")
@@ -320,6 +324,11 @@ def self_test():
     print(f"POSITIVE  identifier list entry planted in .docx -> "
           f"{'fired' if any(r == 'ID-list' for r, *_ in g4.fired) else 'MISSED'} (exit {rc4})")
     ok &= any(r == "ID-list" for r, *_ in g4.fired)
+    shown = [tok for r, _, _, tok in g4.fired if r == "ID-list"]
+    leaks = [t for t in shown if any(ident2[i:i + 2] in t for i in range(len(ident2) - 1))]
+    print(f"  {'hidden' if shown and not leaks else 'SHOWN '}  no two consecutive characters of the "
+          f"listed identifier appear in its masked hit ({len(shown)} hits checked)")
+    ok &= bool(shown) and not leaks
     print(f"self-test: {'PASS' if ok else 'FAIL'}")
     return 0 if ok else 1
 
