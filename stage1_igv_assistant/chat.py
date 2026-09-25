@@ -535,11 +535,15 @@ def run_turn(model, user_msg, tools, tool_names, exec_fn, num_ctx=8192,
 # with a negative control that creates the leak to prove the check can fail.
 # ══════════════════════════════════════════════════════════════════════════════
 
-# $ per 1M tokens, first-party Anthropic API rates. Sonnet 5's introductory
-# $2/$10 ran through 2026-08-31 and has expired, so standard rates apply.
+# $ per 1M tokens, first-party Anthropic API rates. Corrected 2026-09-25 from
+# platform.claude.com/docs/en/about-claude/pricing: Sonnet 5's $2/$10, announced
+# as introductory pricing through 2026-08-31, is now its standard price -- the
+# increase to $3/$15 scheduled for 2026-09-01 did not happen. This table said
+# $3/$15 until then, so a Sonnet 5 cost computed here after 2026-08-31 was
+# overstated by half.
 API_PRICES = {
     "claude-opus-5":   {"in": 5.00, "out": 25.00},
-    "claude-sonnet-5": {"in": 3.00, "out": 15.00},
+    "claude-sonnet-5": {"in": 2.00, "out": 10.00},
     "claude-opus-4-8": {"in": 5.00, "out": 25.00},
     "claude-haiku-4-5": {"in": 1.00, "out": 5.00},
 }

@@ -89,7 +89,8 @@ ORDER_SEED = 20260925
 EXPECTED_OLLAMA = "0.32.9"
 # platform.claude.com/docs/en/about-claude/pricing, read 2026-09-25. Sonnet 5's
 # $2/$10 is its standard price: the increase to $3/$15 announced for 2026-09-01
-# did not happen. chat.API_PRICES still carries $3/$15 for it; both are recorded.
+# did not happen. chat.API_PRICES carried $3/$15 for it until it was corrected the
+# same day; a run records both chat.api_cost and the cost at these prices.
 PRICES_LIVE = {"claude-sonnet-5": {"in": 2.00, "cache_write_5m": 2.50, "cache_read": 0.20, "out": 10.00},
                "claude-opus-5": {"in": 5.00, "cache_write_5m": 6.25, "cache_read": 0.50, "out": 25.00}}
 PHASE10_QUOTED = {"api_spend": "$0.96 for 10 API runs",
