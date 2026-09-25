@@ -201,7 +201,10 @@ image session directory) and open it yourself. See
 Deduplication keys on orientation as well as position. It did not originally,
 and the two halves of a reciprocal junction — same coordinates, opposite
 orientation — collapsed into one. Keying on orientation took the public test
-set from 840 to 894 junctions and its survivors from 24 to 27.
+set from 840 to 894 junctions and its survivors from 24 to 27. (Rerun on
+2026-09-25 on the rebuilt background: 894 junctions, 513 after PASS, 155 after
+PE >= 3, 27 after SR >= 1, primary contigs and the exclude template — the same
+counts, from `analysis_2026-09-25/figures.json`.)
 
 ---
 
@@ -266,9 +269,13 @@ A balanced translocation can never score "strong" here. The reason is
 arithmetic, not data: the scoring bands start "strong" at 70 of 100, the depth
 layer correctly contributes 0 when no DNA is gained or lost, and the
 paired-read layer cannot reach its top tier because roughly half the reads
-crossing the breakpoint come from the intact homolog — across 28 test
-breakpoints the paired-read fraction never exceeded 0.175 against the 0.5 that
-tier requires. The highest score reachable at a typical such locus is 57.5.
+crossing the breakpoint come from the intact homolog — across the 32 breakends
+of the 16 implanted junctions detected in the 2026-09-25 rebuild the paired-read
+fraction never exceeded 0.164 against the 0.5 that tier requires, and the
+highest score reachable was 57.5 at every one of them.
+*(Correction, 2026-09-25: this passage gave the first implant run's figures,
+0.175 across 28 breakpoints; that run's records were lost and the figure is
+replaced by the rebuild's.)*
 
 Twenty runs were put to four models of very different capability — two local,
 two through the Anthropic API — asking whether the evidence at a known
@@ -293,6 +300,20 @@ tool arguments in a quarter of its calls — laid out the complete arithmetic in
 What a model can reach determines what it can say. That is a claim about tool
 design, and it is measurable.
 
+*Correction, 2026-09-25.* The run counts in this section (one in twenty before,
+19 and 17 of twenty after, 5 of 5 for the 4-billion-parameter model) come from
+Phase 9 and 10 records lost in the 2026-09-23 reinstall; they could not be
+regenerated. A rerun on the rebuilt implants made the nine fields the only
+difference between the two conditions (the first comparison set runs before the
+commit against runs after it; the commit also added two other fields to the same
+return, and — measured in the rerun — the nine fields alone push that return across
+the loop's 2,600-character truncation budget) and could run only the two
+local models, the API key having been rejected. Without the fields: 0 of 10 runs
+state the ceiling. With them: 2 of 10 state it and give the full argument, both
+from `qwen3.5:4b` (2 of 5), and `qwen2.5:7b` states it in none of 5 — although
+the fields reached it in 4 of those runs. Every run and its deciding sentence:
+`stage1_igv_assistant/benchmark/runs/phase10_rerun_2026-09-25/`.
+
 ---
 
 ## Validation performed
@@ -305,7 +326,7 @@ design, and it is measurable.
 | GIAB HG002, Illumina 300x | Same deletion, different technology and aligner | Detected; soft-clip consensus matched PacBio to the base |
 | Blind test, three positions | Two controls plus the confirmed deletion, undisclosed | Both controls correctly negative at high confidence, variant correctly positive, sixfold separation |
 | Model comparison, 3 models × 3 cases | Adversarial case asserts a translocation the data does not support | `claude-sonnet-5` rejects the false premise 3/3; `qwen2.5:7b` confirms it in 5 of 6 runs; `llama3.1:8b` could not use the tools reliably enough to assess |
-| Controlled positive test, 12 implanted translocations | Heterozygous balanced events planted in real NA12878 reads at known positions | 14 of 24 breakends recovered: 8/8 in clean unique sequence, 6/8 next to repeats, 0/8 where mapping is ambiguous. Every loss occurred at variant calling; no filter setting tested discarded a true breakend |
+| Controlled positive test, 12 implanted translocations | Heterozygous balanced events planted in real NA12878 reads at known positions | Rebuilt 2026-09-25: 16 of 24 junctions recovered: 8/8 in clean unique sequence, 8/8 next to repeats, 0/8 where mapping is ambiguous. Every loss occurred at variant calling; no filter setting tested discarded a true junction. *(Correction, 2026-09-25: the first run, whose records were lost, found 14 of 24 with 6/8 next to repeats; the difference is IMP06, explained by ALT-aware alignment — see `analysis_2026-09-25/noalt/`)* |
 | Model comparison, 5 models × 6 cases × 5 runs | Same server, tools and scoring for every model | Malformed tool arguments: `qwen3.5:4b` 26.3%, `qwen3.5:9b` 17.1%, `qwen2.5:7b` 13.4%; `claude-sonnet-5` and `claude-opus-5` 0 of 313 calls. On the false-premise case `qwen2.5:7b` confirmed it 2/5, `qwen3.5:4b` rejected it 4/5, both API models 5/5. No local model is usable unsupervised on 8 GB |
 
 Ten defects were found across Stage 1 development, and the model-comparison

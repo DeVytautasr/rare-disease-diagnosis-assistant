@@ -87,11 +87,21 @@ than file paths, and any number in its prose that no tool returned is marked
 on screen. Backends: a local model via ollama, or the Anthropic API.
 
 **Controlled positive test.** Twelve heterozygous balanced translocations were
-implanted into real NA12878 reads at positions known in advance. 14 of 24
-breakends were recovered: 8 of 8 in clean unique sequence, 6 of 8 next to
-repeats, 0 of 8 where the surrounding sequence maps ambiguously. Every loss
-occurred at variant calling, not at any filter threshold — no filter setting
-tested discarded a single true breakend.
+implanted into real NA12878 reads at positions known in advance. In the rebuild
+of 2026-09-25, 16 of 24 junctions were recovered: 8 of 8 in clean unique
+sequence, 8 of 8 next to repeats, 0 of 8 where the surrounding sequence maps
+ambiguously. Every loss occurred at variant calling — delly reported nothing at
+those junctions — and no filter setting tested discarded a single true junction.
+Record: `stage1_igv_assistant/results/synthetic_control_2026-09/analysis_2026-09-25/`.
+
+> *Correction, 2026-09-25.* This paragraph gave the first run's result: 14 of 24,
+> with 6 of 8 next to repeats. That run's records were lost in the 2026-09-23
+> reinstall and it could not be regenerated; the test was rebuilt as a new
+> experiment (new random draws, an ALT-aware index, partly new breakpoints). The
+> class that changed is repeat-adjacent. Its implant at the reused coordinates,
+> IMP06, was missed then and is detected now; realigned without the `.alt` file,
+> it loses both junctions again, so ALT-aware alignment rather than the random draw
+> accounts for that difference (`analysis_2026-09-25/noalt/compare.json`).
 
 **Model comparison.** Six adversarial cases, 5 runs each, same server, same
 tools, same scoring. Local models on an 8 GB GPU (`qwen3.5:4b`, `qwen2.5:7b`,
@@ -114,5 +124,24 @@ could state this — 1 of 20 runs — because the score at which "strong" begins
 appeared in no tool return and no tool description. After adding nine fields
 and one sentence to one tool's return, with no change to any model, 19 of 20
 runs state it. What a model can reach determines what it can say.
+
+> *Correction, 2026-09-25.* The run counts above (1 of 20 before, 19 of 20 after)
+> come from Phase 9 and 10 records that were lost in the 2026-09-23 reinstall and
+> could not be regenerated. The arithmetic stands, re-measured on the rebuilt
+> implants: at all 32 breakends of the 16 detected junctions the tool's own
+> attainable ceiling is 57.5, below the 70 at which "strong" begins. The model
+> comparison was rerun with the nine fields as the only difference between
+> conditions — stripped in the harness, proven at four loci, everything else
+> identical. (The original comparison set runs before the commit against runs after
+> it, and that commit added two other fields to the same return; measured here, the
+> nine fields alone also push the return across the 2,600-character budget at which
+> the model loop truncates it, which changes what else the model sees — the rerun
+> holds that fixed.) Only the two local models could run; the stored
+> API key was rejected. Without the fields 0 of 10 runs stated the ceiling; with
+> them 2 of 10 did, and gave the full argument — both from `qwen3.5:4b` (2 of 5;
+> the lost record said 5 of 5). `qwen2.5:7b` stated it in none of its 5 runs,
+> including the 4 in which the fields reached it. Record:
+> `stage1_igv_assistant/benchmark/runs/phase10_rerun_2026-09-25/` (`tally.json`,
+> `scores.json` with every deciding sentence quoted).
 
 Stage 2 (variant/gene + phenotype prioritization) has not been started.
