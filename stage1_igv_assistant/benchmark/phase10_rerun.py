@@ -594,6 +594,57 @@ def step_run(models, runs, budget, replace=None):
     return rc
 
 
+def step_tally():
+    """Counts from scores.json (the per-run judgements, made by reading), two views:
+    the scheduled runs as run, and with every invalid or unanswered scheduled run
+    replaced by its recorded replacement. Every quote is checked against its trace."""
+    S = json.load(open(os.path.join(OUT, "scores.json")))
+    runs = S["runs"]
+    for r in runs:
+        text = json.load(open(os.path.join(OUT, r["file"])))["result"]["final_text"]
+        if not r["deciding"].startswith("(") and r["deciding"] not in text:
+            raise SystemExit(f"{r['file']}: the deciding sentence is not in the trace")
+    crit = ("answered", "ceiling_seen", "C1", "C1b", "C2", "C3")
+
+    def view(replaced):
+        out = {}
+        for r in runs:
+            if r.get("replacement"):
+                continue
+            use = r
+            if replaced:
+                rep_file = r["file"].replace(".json", "_replacement.json")
+                use = next((x for x in runs if x["file"] == rep_file), r)
+            key = f"{r['model']} {r['condition']}"
+            cell = out.setdefault(key, {"runs": 0, **{c: 0 for c in crit}, "files": []})
+            cell["runs"] += 1
+            cell["files"].append(use["file"])
+            for c in crit:
+                cell[c] += bool(use[c])
+        for cond in ("WITHOUT", "WITH"):
+            tot = {"runs": 0, **{c: 0 for c in crit}}
+            for k, v in out.items():
+                if k.endswith(" " + cond):
+                    for c in tot:
+                        tot[c] += v[c]
+            out[f"local models {cond}"] = tot
+        return out
+    seen = [r for r in runs if r["condition"] == "WITH" and r["ceiling_seen"]]
+    rec = {"scheduled_runs": view(False), "with_replacements": view(True),
+           "WITH_runs_that_saw_the_ceiling": {m: {"saw": sum(1 for r in seen if r["model"] == m),
+                                                  "C2": sum(1 for r in seen if r["model"] == m and r["C2"]),
+                                                  "C3": sum(1 for r in seen if r["model"] == m and r["C3"])}
+                                              for m in LOCAL},
+           "phase10_quoted": PHASE10_QUOTED, "api_models": S.get("api_models")}
+    write(os.path.join(OUT, "tally.json"), rec)
+    for name in ("scheduled_runs", "with_replacements"):
+        print(name)
+        for k, v in rec[name].items():
+            print(f"  {k:28s} " + " ".join(f"{c}={v[c]}/{v['runs']}" for c in crit))
+    print("WITH runs that saw the ceiling:", rec["WITH_runs_that_saw_the_ceiling"])
+    return 0
+
+
 def step_extract():
     for model in LOCAL + API:
         d = os.path.join(OUT, slug(model))
@@ -612,7 +663,7 @@ def step_extract():
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("step", choices=["prove", "project", "run", "extract"])
+    ap.add_argument("step", choices=["prove", "project", "run", "extract", "tally"])
     ap.add_argument("models", nargs="*")
     ap.add_argument("--runs", type=int, default=5)
     ap.add_argument("--budget-usd", type=float, default=None)
@@ -625,6 +676,8 @@ if __name__ == "__main__":
         sys.exit(step_project())
     if a.step == "extract":
         sys.exit(step_extract())
+    if a.step == "tally":
+        sys.exit(step_tally())
     bad = [m for m in a.models if m not in LOCAL + API]
     if bad or not a.models:
         raise SystemExit(f"models must be from {LOCAL + API}")
