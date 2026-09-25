@@ -1,0 +1,44 @@
+pre-flight OK   delly sha256
+pre-flight OK   exclude template git blob (v2.6.0, unmodified)
+pre-flight OK   hs38DH .fai md5
+launched q1_r20 IMP09 (pid 172422)
+launched q1_r20 IMP10 (pid 172423)
+launched q1_r20 IMP11 (pid 172425)
+launched q1_r20 IMP12 (pid 172426)
+launched q1_r20 background (pid 172429)
+launched q1_r5 IMP09 (pid 172432)
+launched q1_r5 IMP10 (pid 172433)
+launched q1_r5 IMP11 (pid 172436)
+launched q1_r5 IMP12 (pid 172438)
+launched q1_r5 background (pid 172440)
+launched q0_r5 IMP09 (pid 172443)
+launched q0_r5 IMP10 (pid 172444)
+launched q0_r5 IMP11 (pid 172446)
+launched q0_r5 IMP12 (pid 172448)
+launched q0_r5 background (pid 172450)
+launched q0_r0 IMP09 (pid 172453)
+launched q0_r0 IMP10 (pid 172455)
+launched q0_r0 IMP11 (pid 172457)
+launched q0_r0 IMP12 (pid 172459)
+launched q0_r0 background (pid 172461)
+q1_r20 IMP09: exit 0, {'exit_code': 0, 'peak_rss_kbytes': 315072, 'wall_clock': '1:57.98', 'samples_in_bcf': 1, 'sample_names': ['NA12878'], 'records_in_bcf': 916}
+q1_r20 IMP10: exit 0, {'exit_code': 0, 'peak_rss_kbytes': 315100, 'wall_clock': '1:57.02', 'samples_in_bcf': 1, 'sample_names': ['NA12878'], 'records_in_bcf': 916}
+q1_r20 IMP11: exit 0, {'exit_code': 0, 'peak_rss_kbytes': 315896, 'wall_clock': '2:00.36', 'samples_in_bcf': 1, 'sample_names': ['NA12878'], 'records_in_bcf': 916}
+q1_r20 IMP12: exit 0, {'exit_code': 0, 'peak_rss_kbytes': 315360, 'wall_clock': '1:53.20', 'samples_in_bcf': 1, 'sample_names': ['NA12878'], 'records_in_bcf': 916}
+q1_r20 background: exit 0, {'exit_code': 0, 'peak_rss_kbytes': 315216, 'wall_clock': '1:56.46', 'samples_in_bcf': 1, 'sample_names': ['NA12878'], 'records_in_bcf': 916}
+q1_r5 IMP09: exit 0, {'exit_code': 0, 'peak_rss_kbytes': 313324, 'wall_clock': '1:58.93', 'samples_in_bcf': 1, 'sample_names': ['NA12878'], 'records_in_bcf': 984}
+q1_r5 IMP10: exit 0, {'exit_code': 0, 'peak_rss_kbytes': 313140, 'wall_clock': '1:57.30', 'samples_in_bcf': 1, 'sample_names': ['NA12878'], 'records_in_bcf': 984}
+q1_r5 IMP11: exit 0, {'exit_code': 0, 'peak_rss_kbytes': 313992, 'wall_clock': '1:55.51', 'samples_in_bcf': 1, 'sample_names': ['NA12878'], 'records_in_bcf': 984}
+q1_r5 IMP12: exit 0, {'exit_code': 0, 'peak_rss_kbytes': 313364, 'wall_clock': '1:49.86', 'samples_in_bcf': 1, 'sample_names': ['NA12878'], 'records_in_bcf': 984}
+q1_r5 background: exit 0, {'exit_code': 0, 'peak_rss_kbytes': 313100, 'wall_clock': '1:53.22', 'samples_in_bcf': 1, 'sample_names': ['NA12878'], 'records_in_bcf': 984}
+q0_r5 IMP09: exit 0, {'exit_code': 0, 'peak_rss_kbytes': 356924, 'wall_clock': '2:04.82', 'samples_in_bcf': 1, 'sample_names': ['NA12878'], 'records_in_bcf': 970}
+q0_r5 IMP10: exit 0, {'exit_code': 0, 'peak_rss_kbytes': 323796, 'wall_clock': '2:03.56', 'samples_in_bcf': 1, 'sample_names': ['NA12878'], 'records_in_bcf': 970}
+q0_r5 IMP11: exit 0, {'exit_code': 0, 'peak_rss_kbytes': 1066808, 'wall_clock': '2:08.71', 'samples_in_bcf': 1, 'sample_names': ['NA12878'], 'records_in_bcf': 971}
+q0_r5 IMP12: exit 0, {'exit_code': 0, 'peak_rss_kbytes': 323856, 'wall_clock': '2:03.02', 'samples_in_bcf': 1, 'sample_names': ['NA12878'], 'records_in_bcf': 970}
+q0_r5 background: exit 0, {'exit_code': 0, 'peak_rss_kbytes': 324072, 'wall_clock': '2:03.34', 'samples_in_bcf': 1, 'sample_names': ['NA12878'], 'records_in_bcf': 970}
+q0_r0 IMP09: exit 0, {'exit_code': 0, 'peak_rss_kbytes': 357052, 'wall_clock': '2:02.42', 'samples_in_bcf': 1, 'sample_names': ['NA12878'], 'records_in_bcf': 962}
+q0_r0 IMP10: exit 0, {'exit_code': 0, 'peak_rss_kbytes': 324252, 'wall_clock': '2:04.57', 'samples_in_bcf': 1, 'sample_names': ['NA12878'], 'records_in_bcf': 962}
+q0_r0 IMP11: exit 0, {'exit_code': 0, 'peak_rss_kbytes': 1066772, 'wall_clock': '2:08.76', 'samples_in_bcf': 1, 'sample_names': ['NA12878'], 'records_in_bcf': 963}
+q0_r0 IMP12: exit 0, {'exit_code': 0, 'peak_rss_kbytes': 324252, 'wall_clock': '2:02.65', 'samples_in_bcf': 1, 'sample_names': ['NA12878'], 'records_in_bcf': 962}
+q0_r0 background: exit 0, {'exit_code': 0, 'peak_rss_kbytes': 323968, 'wall_clock': '2:05.82', 'samples_in_bcf': 1, 'sample_names': ['NA12878'], 'records_in_bcf': 962}
+default rerun record-for-record identical to the committed run: {'IMP09': True, 'IMP10': True, 'IMP11': True, 'IMP12': True, 'background': True}
