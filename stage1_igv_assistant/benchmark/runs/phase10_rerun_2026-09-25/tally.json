@@ -1,0 +1,190 @@
+{
+ "scheduled_runs": {
+  "qwen2.5:7b WITHOUT": {
+   "runs": 5,
+   "answered": 5,
+   "ceiling_seen": 0,
+   "C1": 0,
+   "C1b": 3,
+   "C2": 0,
+   "C3": 0,
+   "files": [
+    "qwen2.5-7b/WITHOUT__run1.json",
+    "qwen2.5-7b/WITHOUT__run2.json",
+    "qwen2.5-7b/WITHOUT__run3.json",
+    "qwen2.5-7b/WITHOUT__run4.json",
+    "qwen2.5-7b/WITHOUT__run5.json"
+   ]
+  },
+  "qwen2.5:7b WITH": {
+   "runs": 5,
+   "answered": 5,
+   "ceiling_seen": 4,
+   "C1": 2,
+   "C1b": 3,
+   "C2": 0,
+   "C3": 0,
+   "files": [
+    "qwen2.5-7b/WITH__run1.json",
+    "qwen2.5-7b/WITH__run2.json",
+    "qwen2.5-7b/WITH__run3.json",
+    "qwen2.5-7b/WITH__run4.json",
+    "qwen2.5-7b/WITH__run5.json"
+   ]
+  },
+  "qwen3.5:4b WITHOUT": {
+   "runs": 5,
+   "answered": 3,
+   "ceiling_seen": 0,
+   "C1": 1,
+   "C1b": 3,
+   "C2": 0,
+   "C3": 0,
+   "files": [
+    "qwen3.5-4b/WITHOUT__run1.json",
+    "qwen3.5-4b/WITHOUT__run2.json",
+    "qwen3.5-4b/WITHOUT__run3.json",
+    "qwen3.5-4b/WITHOUT__run4.json",
+    "qwen3.5-4b/WITHOUT__run5.json"
+   ]
+  },
+  "qwen3.5:4b WITH": {
+   "runs": 5,
+   "answered": 4,
+   "ceiling_seen": 3,
+   "C1": 0,
+   "C1b": 4,
+   "C2": 2,
+   "C3": 2,
+   "files": [
+    "qwen3.5-4b/WITH__run1.json",
+    "qwen3.5-4b/WITH__run2.json",
+    "qwen3.5-4b/WITH__run3.json",
+    "qwen3.5-4b/WITH__run4.json",
+    "qwen3.5-4b/WITH__run5.json"
+   ]
+  },
+  "local models WITHOUT": {
+   "runs": 10,
+   "answered": 8,
+   "ceiling_seen": 0,
+   "C1": 1,
+   "C1b": 6,
+   "C2": 0,
+   "C3": 0
+  },
+  "local models WITH": {
+   "runs": 10,
+   "answered": 9,
+   "ceiling_seen": 7,
+   "C1": 2,
+   "C1b": 7,
+   "C2": 2,
+   "C3": 2
+  }
+ },
+ "with_replacements": {
+  "qwen2.5:7b WITHOUT": {
+   "runs": 5,
+   "answered": 5,
+   "ceiling_seen": 0,
+   "C1": 0,
+   "C1b": 2,
+   "C2": 0,
+   "C3": 0,
+   "files": [
+    "qwen2.5-7b/WITHOUT__run1.json",
+    "qwen2.5-7b/WITHOUT__run2_replacement.json",
+    "qwen2.5-7b/WITHOUT__run3.json",
+    "qwen2.5-7b/WITHOUT__run4.json",
+    "qwen2.5-7b/WITHOUT__run5.json"
+   ]
+  },
+  "qwen2.5:7b WITH": {
+   "runs": 5,
+   "answered": 5,
+   "ceiling_seen": 4,
+   "C1": 2,
+   "C1b": 3,
+   "C2": 0,
+   "C3": 0,
+   "files": [
+    "qwen2.5-7b/WITH__run1.json",
+    "qwen2.5-7b/WITH__run2.json",
+    "qwen2.5-7b/WITH__run3.json",
+    "qwen2.5-7b/WITH__run4.json",
+    "qwen2.5-7b/WITH__run5.json"
+   ]
+  },
+  "qwen3.5:4b WITHOUT": {
+   "runs": 5,
+   "answered": 4,
+   "ceiling_seen": 0,
+   "C1": 1,
+   "C1b": 4,
+   "C2": 0,
+   "C3": 0,
+   "files": [
+    "qwen3.5-4b/WITHOUT__run1.json",
+    "qwen3.5-4b/WITHOUT__run2.json",
+    "qwen3.5-4b/WITHOUT__run3.json",
+    "qwen3.5-4b/WITHOUT__run4_replacement.json",
+    "qwen3.5-4b/WITHOUT__run5.json"
+   ]
+  },
+  "qwen3.5:4b WITH": {
+   "runs": 5,
+   "answered": 5,
+   "ceiling_seen": 3,
+   "C1": 0,
+   "C1b": 5,
+   "C2": 2,
+   "C3": 2,
+   "files": [
+    "qwen3.5-4b/WITH__run1.json",
+    "qwen3.5-4b/WITH__run2.json",
+    "qwen3.5-4b/WITH__run3_replacement.json",
+    "qwen3.5-4b/WITH__run4.json",
+    "qwen3.5-4b/WITH__run5.json"
+   ]
+  },
+  "local models WITHOUT": {
+   "runs": 10,
+   "answered": 9,
+   "ceiling_seen": 0,
+   "C1": 1,
+   "C1b": 6,
+   "C2": 0,
+   "C3": 0
+  },
+  "local models WITH": {
+   "runs": 10,
+   "answered": 10,
+   "ceiling_seen": 7,
+   "C1": 2,
+   "C1b": 8,
+   "C2": 2,
+   "C3": 2
+  }
+ },
+ "WITH_runs_that_saw_the_ceiling": {
+  "qwen2.5:7b": {
+   "saw": 4,
+   "C2": 0,
+   "C3": 0
+  },
+  "qwen3.5:4b": {
+   "saw": 3,
+   "C2": 2,
+   "C3": 2
+  }
+ },
+ "phase10_quoted": {
+  "api_spend": "$0.96 for 10 API runs",
+  "without": "1/20 assert, 0/20 complete",
+  "with": "19/20 assert, 17/20 complete",
+  "qwen3.5:4b": "completed it 5/5",
+  "qwen2.5:7b": "misused the ceiling in 2 of 5"
+ },
+ "api_models": "claude-sonnet-5 and claude-opus-5 were not run: the stored Anthropic key was rejected (HTTP 401); see claude-sonnet-5/status.json and claude-opus-5/status.json"
+}
