@@ -40,6 +40,12 @@ Kiek tai trunka — išmatuota:
 | ~1,6 GB (dvi chromosomos) | **39 s** | mažas |
 | ~40 GB (visas genomas) | **46 min** ir **2 val. 4 min** | apie **1,2 GB** |
 
+> *Papildyta 2026-09-26.* 46 min ir 2 val. 4 min — pirmojo paleidimo laikai. Tuos pačius
+> mėginius 2026-09-25 apdorojus iš naujo ta pačia `delly` versija ir viena gija, tai užtruko
+> 1 val. 2 min ir 1 val. 45 min, o atminties prireikė 1 158 ir 1 187 MiB
+> (`stage1_igv_assistant/results/patient_rerun_2026-09.json`): trukmė priklauso nuo
+> kompiuterio apkrovos, atminties poreikis beveik nesikeičia.
+
 Tai daroma **vieną kartą** kiekvienam mėginiui. Gautą `.bcf` failą (paprastai
 apie 130 KB) po to galima skaityti šiuo įrankiu kiek nori kartų.
 
