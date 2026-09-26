@@ -1,0 +1,208 @@
+{
+ "what": "The candidate-set bridge before its fix, reconstructed; Phase 12 Task 6(c), 2026-09-26",
+ "reconstruction": "the pre-fix functions are not in history (cdd3823 added the fixed code); scripts/patient/prefix_bridge.py restores the two documented defects in a scratch module and leaves vcf_tools.py untouched",
+ "blinding": "patient figures are counts only",
+ "definitions": {
+  "merge_group": "a set of two or more junctions that the pre-fix dedup merges into one (a connected component of its union-find), before the representative is chosen",
+  "del_dup_groups": "pre-fix merge groups with at least one DEL and at least one DUP junction among their members",
+  "inv_both_groups": "pre-fix merge groups with INV junctions of both orientations (3to3 and 5to5) among their members",
+  "bnd_after_dedup": "list_candidates(svtype=BND) total_matching, over the set loaded with the pre-fix dedup",
+  "pass_bnd": "the same plus filter_pass",
+  "before_recurrence": "the same plus min_pe 3, min_sr 1, primary_only and the exclude template (the patient funnel of write_patient_record.py)",
+  "final_survivors": "before_recurrence survivors not matched (both breakends within 500 bp) by the pre-fix compare, from the one call compare(SAMPLE_A, SAMPLE_B) the funnel makes: SAMPLE_A's matched set is the A side of the matched pairs, SAMPLE_B's the B side",
+  "final_survivors_two_calls": "the same survivors when each sample's matched set is taken from the call in which it is set_a (the scanning side): compare(SAMPLE_A, SAMPLE_B) for SAMPLE_A, compare(SAMPLE_B, SAMPLE_A) for SAMPLE_B. Added 2026-09-26 after the first patient run, to test whether \"the final candidate counts were unchanged\" depends on how the funnel called the comparison; the figures of the first run are unchanged by it",
+  "two_direction_diff": "for each set X, X's matched count with X as set_a (the scanning side) minus X's matched count with X as set_b, over the whole sets. Primary definition: the pre-fix compare on the sets loaded with the pre-fix dedup (the state before the fix). Also given: the same on the sets loaded with the fixed dedup (the compare defect alone), and each sum over the two sets",
+  "fixed_control": "every figure above recomputed with the fixed functions in the same process; the patient ones must equal the committed record patient_rerun_2026-09.json (9,172/9,655; 896/923; 57/63; 17/19)"
+ },
+ "thesis_values_compared": {
+  "background merge groups DEL+DUP": 33,
+  "background merge groups with both INV orientations": 13,
+  "pre-fix patient BND after dedup": "8,716 / 9,144",
+  "pre-fix patient PASS": "838 / 862",
+  "pre-fix patient final survivors": "15 / 16",
+  "pre-fix two-direction difference on patient data": 1738
+ },
+ "code": "scripts/patient/prefix_bridge.py",
+ "public": {
+  "data": "public: ~/public_data/sim/delly/background.bcf, IMP01.bcf, IMP02.bcf",
+  "background_prefix_dedup": {
+   "junctions_after_dedup": 840,
+   "records_merged_by_dedup": 76,
+   "survivors_phase6_funnel": 24,
+   "merge_groups": 68,
+   "del_dup_groups": 34,
+   "inv_both_groups": 12,
+   "group_compositions": {
+    "DEL:5to3 + DUP:3to5": 33,
+    "DEL:5to3": 13,
+    "INV:3to3 + INV:5to5": 12,
+    "DEL:5to3 + INS:NtoN": 4,
+    "DUP:3to5": 2,
+    "DUP:3to5 + INS:NtoN": 1,
+    "BND:3to3 + BND:5to5": 1,
+    "DEL:5to3 + DUP:3to5 + INS:NtoN": 1,
+    "INS:NtoN": 1
+   }
+  },
+  "background_fixed_dedup": {
+   "junctions_after_dedup": 894,
+   "records_merged_by_dedup": 22,
+   "survivors_phase6_funnel": 27
+  },
+  "IMP01_vs_IMP02_fixed_dedup": {
+   "prefix_compare": {
+    "x_scanning_side": 894,
+    "x_target_side": 840,
+    "y_scanning_side": 894,
+    "y_target_side": 840,
+    "total_x": 896,
+    "total_y": 896,
+    "diff_x": 54,
+    "diff_y": 54,
+    "diff_sum": 108
+   },
+   "fixed_compare": {
+    "x_scanning_side": 894,
+    "x_target_side": 894,
+    "y_scanning_side": 894,
+    "y_target_side": 894,
+    "total_x": 896,
+    "total_y": 896,
+    "diff_x": 0,
+    "diff_y": 0,
+    "diff_sum": 0
+   }
+  },
+  "validation": {
+   "background_prefix_junctions_840": true,
+   "background_prefix_survivors_24": true,
+   "background_fixed_894_and_27": true,
+   "pair_fixed_894_both_directions": true,
+   "pair_prefix_894_scanning_and_840_target_in_a_direction": true
+  }
+ },
+ "patient": {
+  "prefix_dedup_prefix_compare (primary: the state before the fix)": {
+   "SAMPLE_A": {
+    "junctions_after_dedup": 28205,
+    "bnd_after_dedup": 8716,
+    "pass_bnd": 838,
+    "before_recurrence": 50,
+    "merge_groups": {
+     "merge_groups": 2376,
+     "del_dup_groups": 1034,
+     "inv_both_groups": 398
+    },
+    "final_survivors": 15,
+    "final_survivors_two_calls": 15
+   },
+   "SAMPLE_B": {
+    "junctions_after_dedup": 29483,
+    "bnd_after_dedup": 9144,
+    "pass_bnd": 862,
+    "before_recurrence": 55,
+    "merge_groups": {
+     "merge_groups": 2528,
+     "del_dup_groups": 1108,
+     "inv_both_groups": 401
+    },
+    "final_survivors": 16,
+    "final_survivors_two_calls": 16
+   },
+   "whole_set_comparison_A_to_B": {
+    "total_in_a": 28205,
+    "total_in_b": 29483,
+    "matched_in_a": 13652,
+    "matched_in_b": 13597,
+    "unmatched_in_a": 14553,
+    "unmatched_in_b": 15886
+   },
+   "two_direction_diff": {
+    "x_scanning_side": 13652,
+    "x_target_side": 13599,
+    "y_scanning_side": 13686,
+    "y_target_side": 13597,
+    "total_x": 28205,
+    "total_y": 29483,
+    "diff_x": 53,
+    "diff_y": 89,
+    "diff_sum": 142
+   }
+  },
+  "fixed_dedup_prefix_compare (the compare defect alone)": {
+   "SAMPLE_A": {
+    "junctions_after_dedup": 30596,
+    "bnd_after_dedup": 9172,
+    "pass_bnd": 896,
+    "before_recurrence": 57,
+    "final_survivors": 17,
+    "final_survivors_two_calls": 17
+   },
+   "SAMPLE_B": {
+    "junctions_after_dedup": 32041,
+    "bnd_after_dedup": 9655,
+    "pass_bnd": 923,
+    "before_recurrence": 63,
+    "final_survivors": 30,
+    "final_survivors_two_calls": 19
+   },
+   "whole_set_comparison_A_to_B": {
+    "total_in_a": 30596,
+    "total_in_b": 32041,
+    "matched_in_a": 15640,
+    "matched_in_b": 13916,
+    "unmatched_in_a": 14956,
+    "unmatched_in_b": 18125
+   },
+   "two_direction_diff": {
+    "x_scanning_side": 15640,
+    "x_target_side": 13902,
+    "y_scanning_side": 15711,
+    "y_target_side": 13916,
+    "total_x": 30596,
+    "total_y": 32041,
+    "diff_x": 1738,
+    "diff_y": 1795,
+    "diff_sum": 3533
+   }
+  },
+  "fixed_dedup_fixed_compare (control)": {
+   "SAMPLE_A": {
+    "junctions_after_dedup": 30596,
+    "bnd_after_dedup": 9172,
+    "pass_bnd": 896,
+    "before_recurrence": 57,
+    "final_survivors": 17,
+    "final_survivors_two_calls": 17
+   },
+   "SAMPLE_B": {
+    "junctions_after_dedup": 32041,
+    "bnd_after_dedup": 9655,
+    "pass_bnd": 923,
+    "before_recurrence": 63,
+    "final_survivors": 19,
+    "final_survivors_two_calls": 19
+   },
+   "whole_set_comparison_A_to_B": {
+    "total_in_a": 30596,
+    "total_in_b": 32041,
+    "matched_in_a": 15640,
+    "matched_in_b": 15711,
+    "unmatched_in_a": 14956,
+    "unmatched_in_b": 16330
+   },
+   "two_direction_diff": {
+    "x_scanning_side": 15640,
+    "x_target_side": 15640,
+    "y_scanning_side": 15711,
+    "y_target_side": 15711,
+    "total_x": 30596,
+    "total_y": 32041,
+    "diff_x": 0,
+    "diff_y": 0,
+    "diff_sum": 0
+   }
+  },
+  "control_equals_committed_record": true
+ }
+}
