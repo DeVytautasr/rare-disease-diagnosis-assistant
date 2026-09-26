@@ -1,0 +1,2341 @@
+{
+ "model": "claude-sonnet-5",
+ "case": "c_coordinate_drift",
+ "run": 2,
+ "position_in_order": 12,
+ "prompt": "In dataset IMP06, examine the breakpoint at chr20:3,900,000 and report what each evidence layer shows at that position.",
+ "prompt_is_reconstruction": true,
+ "started": "2026-09-26T14:32:30",
+ "ended": "2026-09-26T14:33:00",
+ "git_head": "547b5ccc43d6b2da1a74b4059322a8cff8cb21d6",
+ "schema_sha256": "6ce8866a5d4317cb8664c4083e22b89d87e4d65e3961b92f5a56b8408e51cef0",
+ "model_info": {
+  "id": "claude-sonnet-5",
+  "capabilities": {
+   "batch": {
+    "supported": true
+   },
+   "citations": {
+    "supported": true
+   },
+   "code_execution": {
+    "supported": true
+   },
+   "context_management": {
+    "clear_thinking_20251015": {
+     "supported": true
+    },
+    "clear_tool_uses_20250919": {
+     "supported": true
+    },
+    "compact_20260112": {
+     "supported": true
+    },
+    "supported": true
+   },
+   "effort": {
+    "high": {
+     "supported": true
+    },
+    "low": {
+     "supported": true
+    },
+    "max": {
+     "supported": true
+    },
+    "medium": {
+     "supported": true
+    },
+    "supported": true,
+    "xhigh": {
+     "supported": true
+    }
+   },
+   "image_input": {
+    "supported": true
+   },
+   "pdf_input": {
+    "supported": true
+   },
+   "structured_outputs": {
+    "supported": true
+   },
+   "thinking": {
+    "supported": true,
+    "types": {
+     "adaptive": {
+      "supported": true
+     },
+     "enabled": {
+      "supported": false
+     }
+    }
+   }
+  },
+  "created_at": "2026-06-29T00:00:00Z",
+  "display_name": "Claude Sonnet 5",
+  "max_input_tokens": 1000000,
+  "max_tokens": 128000,
+  "type": "model"
+ },
+ "result": {
+  "model": "claude-sonnet-5",
+  "backend": "anthropic",
+  "num_ctx": null,
+  "think": "high",
+  "think_requested": "high",
+  "think_supported": true,
+  "max_iters": 40,
+  "ended_without_answer": false,
+  "context_truncated": [],
+  "refusals": [],
+  "api_error": null,
+  "stop_reason": "end_turn",
+  "final_prompt_tokens": null,
+  "final_headroom": null,
+  "events": [
+   {
+    "type": "model",
+    "iteration": 0,
+    "content": "",
+    "thinking": "I'll start by checking applicable_layers for IMP06, then run bam_stats_at_locus to verify quality.\n\n",
+    "n_tool_calls": 2,
+    "done_reason": "tool_use",
+    "prompt_tokens": 8355,
+    "headroom": null
+   },
+   {
+    "type": "tool",
+    "name": "applicable_layers",
+    "params": {
+     "bam_path": "<IMP06>"
+    },
+    "call_id": 1,
+    "result": {
+     "bam_path": "<IMP06>",
+     "reads_sampled": 1000,
+     "applicable_layers": [
+      "discordant_pairs",
+      "soft_clipped_reads",
+      "split_reads",
+      "read_depth"
+     ],
+     "evidence": {
+      "soft_clipped_reads": "always applicable \u2014 any aligned BAM can show soft-clipping.",
+      "read_depth": "always applicable \u2014 any aligned BAM can show a coverage drop.",
+      "discordant_pairs": "applicable \u2014 at least one paired read observed in 1000 sampled reads.",
+      "split_reads": "applicable \u2014 at least one SA (supplementary alignment) tag observed in 1000 sampled reads."
+     }
+    },
+    "is_error": false
+   },
+   {
+    "type": "tool",
+    "name": "bam_stats_at_locus",
+    "params": {
+     "chromosome": "chr20",
+     "start": 3899500,
+     "end": 3900500,
+     "bam_path": "<IMP06>"
+    },
+    "call_id": 2,
+    "result": {
+     "chromosome": "chr20",
+     "start": 3899500,
+     "end": 3900500,
+     "contig_length": 64444167,
+     "clamped_to_contig": false,
+     "total_reads": 307,
+     "mean_depth": 40.51,
+     "mean_mapq": 59.14,
+     "low_mapq_fraction": 0.007,
+     "forward_reads": 154,
+     "reverse_reads": 153,
+     "position_provenance": {
+      "source": "caller_supplied",
+      "candidate_id": null,
+      "set_id": null,
+      "set_label": null,
+      "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+     }
+    },
+    "is_error": false
+   },
+   {
+    "type": "model",
+    "iteration": 1,
+    "content": "All four evidence layers are applicable for this BAM, and the locus itself is high quality (mean depth 40.51x, mean MAPQ 59.14, low-MAPQ fraction 0.007 \u2014 well under the 0.4 repetitive-region threshold), so signals here can be interpreted at face value. Now gathering each evidence layer.",
+    "thinking": "",
+    "n_tool_calls": 4,
+    "done_reason": "tool_use",
+    "prompt_tokens": 9109,
+    "headroom": null
+   },
+   {
+    "type": "tool",
+    "name": "discordant_pairs",
+    "params": {
+     "chromosome": "chr20",
+     "position": 3900000,
+     "bam_path": "<IMP06>"
+    },
+    "call_id": 3,
+    "result": {
+     "chromosome": "chr20",
+     "position": 3900000,
+     "window_bp": 500,
+     "total_reads_in_window": 305,
+     "discordant_pairs": 40,
+     "discordant_fraction": 0.131,
+     "mate_chromosomes": {
+      "chr21": 37,
+      "chr2": 3
+     },
+     "same_primary_alt_mates": 0,
+     "reads_below_min_mapq": 2,
+     "quality_limited": false,
+     "assessable": true,
+     "reason": null,
+     "min_mapq_applied": 20,
+     "position_provenance": {
+      "source": "caller_supplied",
+      "candidate_id": null,
+      "set_id": null,
+      "set_label": null,
+      "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+     }
+    },
+    "is_error": false
+   },
+   {
+    "type": "tool",
+    "name": "soft_clipped_reads",
+    "params": {
+     "chromosome": "chr20",
+     "position": 3900000,
+     "bam_path": "<IMP06>"
+    },
+    "call_id": 4,
+    "result": {
+     "chromosome": "chr20",
+     "position": 3900000,
+     "window_bp": 200,
+     "total_reads_in_window": 171,
+     "soft_clipped_reads": 31,
+     "soft_clipped_fraction": 0.181,
+     "consensus_clip_position": 3899999,
+     "max_clips_at_position": 17,
+     "left_clip_reads": 21,
+     "right_clip_reads": 10,
+     "left_consensus_position": 3899999,
+     "left_max_clips_at_position": 17,
+     "right_consensus_position": 3900000,
+     "right_max_clips_at_position": 10,
+     "dominant_clip_side": "left",
+     "reads_below_min_mapq": 4,
+     "quality_limited": false,
+     "assessable": true,
+     "reason": null,
+     "min_mapq_applied": 20,
+     "position_provenance": {
+      "source": "caller_supplied",
+      "candidate_id": null,
+      "set_id": null,
+      "set_label": null,
+      "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+     }
+    },
+    "is_error": false
+   },
+   {
+    "type": "tool",
+    "name": "split_reads",
+    "params": {
+     "chromosome": "chr20",
+     "position": 3900000,
+     "bam_path": "<IMP06>"
+    },
+    "call_id": 5,
+    "result": {
+     "chromosome": "chr20",
+     "position": 3900000,
+     "window_bp": 200,
+     "total_reads_in_window": 166,
+     "split_reads": 19,
+     "split_read_fraction": 0.114,
+     "partner_chromosomes": {
+      "chr21": 18,
+      "chr7": 1
+     },
+     "sa_entries_total": 19,
+     "sa_entries_below_min_mapq": 0,
+     "partner_strand_concordant": 19,
+     "partner_strand_flipped": 0,
+     "example_partner_loci": [
+      "chr7:102121294",
+      "chr21:17200000",
+      "chr21:17199930",
+      "chr21:17199964",
+      "chr21:17199944"
+     ],
+     "reads_below_min_mapq": 0,
+     "quality_limited": false,
+     "assessable": true,
+     "reason": null,
+     "min_mapq_applied": 0,
+     "position_provenance": {
+      "source": "caller_supplied",
+      "candidate_id": null,
+      "set_id": null,
+      "set_label": null,
+      "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+     }
+    },
+    "is_error": false
+   },
+   {
+    "type": "tool",
+    "name": "read_depth_profile",
+    "params": {
+     "chromosome": "chr20",
+     "start": 3897000,
+     "end": 3903000,
+     "focus_position": 3900000,
+     "bam_path": "<IMP06>"
+    },
+    "call_id": 6,
+    "result": {
+     "chromosome": "chr20",
+     "start": 3897000,
+     "end": 3903000,
+     "window_size": 100,
+     "windows": [
+      {
+       "window_start": 3897000,
+       "window_end": 3897100,
+       "depth": 46.45
+      },
+      {
+       "window_start": 3897100,
+       "window_end": 3897200,
+       "depth": 39.86
+      },
+      {
+       "window_start": 3897200,
+       "window_end": 3897300,
+       "depth": 37.42
+      },
+      {
+       "window_start": 3897300,
+       "window_end": 3897400,
+       "depth": 47.29
+      },
+      {
+       "window_start": 3897400,
+       "window_end": 3897500,
+       "depth": 42.27
+      },
+      {
+       "window_start": 3897500,
+       "window_end": 3897600,
+       "depth": 39.22
+      },
+      {
+       "window_start": 3897600,
+       "window_end": 3897700,
+       "depth": 45.35
+      },
+      {
+       "window_start": 3897700,
+       "window_end": 3897800,
+       "depth": 41.93
+      },
+      {
+       "window_start": 3897800,
+       "window_end": 3897900,
+       "depth": 34.98
+      },
+      {
+       "window_start": 3897900,
+       "window_end": 3898000,
+       "depth": 40.76
+      },
+      {
+       "window_start": 3898000,
+       "window_end": 3898100,
+       "depth": 47.98
+      },
+      {
+       "window_start": 3898100,
+       "window_end": 3898200,
+       "depth": 47.83
+      },
+      {
+       "window_start": 3898200,
+       "window_end": 3898300,
+       "depth": 41.71
+      },
+      {
+       "window_start": 3898300,
+       "window_end": 3898400,
+       "depth": 31.55
+      },
+      {
+       "window_start": 3898400,
+       "window_end": 3898500,
+       "depth": 40.47
+      },
+      {
+       "window_start": 3898500,
+       "window_end": 3898600,
+       "depth": 48.99
+      },
+      {
+       "window_start": 3898600,
+       "window_end": 3898700,
+       "depth": 37.11
+      },
+      {
+       "window_start": 3898700,
+       "window_end": 3898800,
+       "depth": 39.32
+      },
+      {
+       "window_start": 3898800,
+       "window_end": 3898900,
+       "depth": 40.89
+      },
+      {
+       "window_start": 3898900,
+       "window_end": 3899000,
+       "depth": 37.38
+      },
+      {
+       "window_start": 3899000,
+       "window_end": 3899100,
+       "depth": 35.57
+      },
+      {
+       "window_start": 3899100,
+       "window_end": 3899200,
+       "depth": 37.0
+      },
+      {
+       "window_start": 3899200,
+       "window_end": 3899300,
+       "depth": 35.41
+      },
+      {
+       "window_start": 3899300,
+       "window_end": 3899400,
+       "depth": 33.48
+      },
+      {
+       "window_start": 3899400,
+       "window_end": 3899500,
+       "depth": 30.8
+      },
+      {
+       "window_start": 3899500,
+       "window_end": 3899600,
+       "depth": 33.21
+      },
+      {
+       "window_start": 3899600,
+       "window_end": 3899700,
+       "depth": 36.85
+      },
+      {
+       "window_start": 3899700,
+       "window_end": 3899800,
+       "depth": 39.22
+      },
+      {
+       "window_start": 3899800,
+       "window_end": 3899900,
+       "depth": 39.61
+      },
+      {
+       "window_start": 3899900,
+       "window_end": 3900000,
+       "depth": 40.09
+      },
+      {
+       "window_start": 3900000,
+       "window_end": 3900100,
+       "depth": 43.59
+      },
+      {
+       "window_start": 3900100,
+       "window_end": 3900200,
+       "depth": 51.39
+      },
+      {
+       "window_start": 3900200,
+       "window_end": 3900300,
+       "depth": 38.73
+      },
+      {
+       "window_start": 3900300,
+       "window_end": 3900400,
+       "depth": 39.46
+      },
+      {
+       "window_start": 3900400,
+       "window_end": 3900500,
+       "depth": 42.96
+      },
+      {
+       "window_start": 3900500,
+       "window_end": 3900600,
+       "depth": 33.27
+      },
+      {
+       "window_start": 3900600,
+       "window_end": 3900700,
+       "depth": 41.02
+      },
+      {
+       "window_start": 3900700,
+       "window_end": 3900800,
+       "depth": 36.49
+      },
+      {
+       "window_start": 3900800,
+       "window_end": 3900900,
+       "depth": 32.31
+      },
+      {
+       "window_start": 3900900,
+       "window_end": 3901000,
+       "depth": 36.0
+      },
+      {
+       "window_start": 3901000,
+       "window_end": 3901100,
+       "depth": 38.33
+      },
+      {
+       "window_start": 3901100,
+       "window_end": 3901200,
+       "depth": 40.13
+      },
+      {
+       "window_start": 3901200,
+       "window_end": 3901300,
+       "depth": 42.12
+      },
+      {
+       "window_start": 3901300,
+       "window_end": 3901400,
+       "depth": 42.01
+      },
+      {
+       "window_start": 3901400,
+       "window_end": 3901500,
+       "depth": 36.49
+      },
+      {
+       "window_start": 3901500,
+       "window_end": 3901600,
+       "depth": 35.39
+      },
+      {
+       "window_start": 3901600,
+       "window_end": 3901700,
+       "depth": 39.56
+      },
+      {
+       "window_start": 3901700,
+       "window_end": 3901800,
+       "depth": 37.45
+      },
+      {
+       "window_start": 3901800,
+       "window_end": 3901900,
+       "depth": 38.24
+      },
+      {
+       "window_start": 3901900,
+       "window_end": 3902000,
+       "depth": 38.56
+      },
+      {
+       "window_start": 3902000,
+       "window_end": 3902100,
+       "depth": 45.37
+      },
+      {
+       "window_start": 3902100,
+       "window_end": 3902200,
+       "depth": 35.58
+      },
+      {
+       "window_start": 3902200,
+       "window_end": 3902300,
+       "depth": 44.1
+      },
+      {
+       "window_start": 3902300,
+       "window_end": 3902400,
+       "depth": 38.65
+      },
+      {
+       "window_start": 3902400,
+       "window_end": 3902500,
+       "depth": 33.83
+      },
+      {
+       "window_start": 3902500,
+       "window_end": 3902600,
+       "depth": 33.31
+      },
+      {
+       "window_start": 3902600,
+       "window_end": 3902700,
+       "depth": 35.69
+      },
+      {
+       "window_start": 3902700,
+       "window_end": 3902800,
+       "depth": 44.98
+      },
+      {
+       "window_start": 3902800,
+       "window_end": 3902900,
+       "depth": 48.56
+      },
+      {
+       "window_start": 3902900,
+       "window_end": 3903000,
+       "depth": 31.77
+      }
+     ],
+     "summary": {
+      "min_depth": 30.8,
+      "max_depth": 51.39,
+      "mean_depth": 39.42,
+      "depth_ratio_min_to_mean": 0.781,
+      "likely_deletion": false,
+      "dip_position": 3899400,
+      "dip_distance_from_focus": 600,
+      "dip_is_at_focus": true,
+      "assessable": true,
+      "reason": null,
+      "contig_length": 64444167,
+      "clamped_to_contig": false,
+      "min_mapq_applied": null,
+      "mapq_note": "depth counts ALL reads regardless of MAPQ; the discordant, soft-clip and split layers filter at min_mapq. In a low-MAPQ region this layer is the only one still counting, so compare with care."
+     },
+     "position_provenance": {
+      "source": "caller_supplied",
+      "candidate_id": null,
+      "set_id": null,
+      "set_label": null,
+      "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+     }
+    },
+    "is_error": false
+   },
+   {
+    "type": "model",
+    "iteration": 2,
+    "content": "",
+    "thinking": "Now I'll pull up the summary tool for interpretation, check for a reciprocal match on the chr21 partner, and look up the gene.\n\n",
+    "n_tool_calls": 2,
+    "done_reason": "tool_use",
+    "prompt_tokens": 11222,
+    "headroom": null
+   },
+   {
+    "type": "tool",
+    "name": "breakpoint_evidence_summary",
+    "params": {
+     "chromosome": "chr20",
+     "position": 3900000,
+     "applicable_layers": [
+      "discordant_pairs",
+      "soft_clipped_reads",
+      "split_reads",
+      "read_depth"
+     ],
+     "bam_path": "<IMP06>"
+    },
+    "call_id": 7,
+    "result": {
+     "label": "",
+     "chromosome": "chr20",
+     "position": 3900000,
+     "window_bp": 500,
+     "min_supporting_reads": 3,
+     "depth_window_bp": 2000,
+     "depth_window_size": 200,
+     "evidence_score": 40.0,
+     "evidence_score_raw": 40.0,
+     "evidence_strength": "moderate",
+     "signal_layers": "3/4",
+     "applicable_layers": [
+      "discordant_pairs",
+      "soft_clipped_reads",
+      "split_reads",
+      "read_depth"
+     ],
+     "unassessable_layers": {},
+     "discordant_pair_score": 7.5,
+     "soft_clip_score": 25.0,
+     "split_read_score": 7.5,
+     "depth_score": 0.0,
+     "locus_stats": {
+      "chromosome": "chr20",
+      "start": 3899500,
+      "end": 3900500,
+      "contig_length": 64444167,
+      "clamped_to_contig": false,
+      "total_reads": 307,
+      "mean_depth": 40.51,
+      "mean_mapq": 59.14,
+      "low_mapq_fraction": 0.007,
+      "forward_reads": 154,
+      "reverse_reads": 153
+     },
+     "discordant_pairs": {
+      "chromosome": "chr20",
+      "position": 3900000,
+      "window_bp": 500,
+      "total_reads_in_window": 305,
+      "discordant_pairs": 40,
+      "discordant_fraction": 0.131,
+      "mate_chromosomes": {
+       "chr21": 37,
+       "chr2": 3
+      },
+      "same_primary_alt_mates": 0,
+      "reads_below_min_mapq": 2,
+      "quality_limited": false,
+      "assessable": true,
+      "reason": null,
+      "min_mapq_applied": 20
+     },
+     "soft_clips": {
+      "chromosome": "chr20",
+      "position": 3900000,
+      "window_bp": 200,
+      "total_reads_in_window": 171,
+      "soft_clipped_reads": 31,
+      "soft_clipped_fraction": 0.181,
+      "consensus_clip_position": 3899999,
+      "max_clips_at_position": 17,
+      "left_clip_reads": 21,
+      "right_clip_reads": 10,
+      "left_consensus_position": 3899999,
+      "left_max_clips_at_position": 17,
+      "right_consensus_position": 3900000,
+      "right_max_clips_at_position": 10,
+      "dominant_clip_side": "left",
+      "reads_below_min_mapq": 4,
+      "quality_limited": false,
+      "assessable": true,
+      "reason": null,
+      "min_mapq_applied": 20
+     },
+     "split_reads": {
+      "chromosome": "chr20",
+      "position": 3900000,
+      "window_bp": 200,
+      "total_reads_in_window": 164,
+      "split_reads": 15,
+      "split_read_fraction": 0.091,
+      "partner_chromosomes": {
+       "chr21": 14,
+       "chr7": 1
+      },
+      "sa_entries_total": 17,
+      "sa_entries_below_min_mapq": 2,
+      "partner_strand_concordant": 15,
+      "partner_strand_flipped": 0,
+      "example_partner_loci": [
+       "chr7:102121294",
+       "chr21:17200000",
+       "chr21:17199930",
+       "chr21:17199944",
+       "chr21:17199937"
+      ],
+      "reads_below_min_mapq": 2,
+      "quality_limited": false,
+      "assessable": true,
+      "reason": null,
+      "min_mapq_applied": 20
+     },
+     "depth_profile": {
+      "chromosome": "chr20",
+      "start": 3898000,
+      "end": 3902000,
+      "window_size": 200,
+      "windows": [
+       {
+        "window_start": 3898000,
+        "window_end": 3898200,
+        "depth": 47.91
+       },
+       {
+        "window_start": 3898200,
+        "window_end": 3898400,
+        "depth": 36.63
+       },
+       {
+        "window_start": 3898400,
+        "window_end": 3898600,
+        "depth": 44.73
+       },
+       {
+        "window_start": 3898600,
+        "window_end": 3898800,
+        "depth": 38.22
+       },
+       {
+        "window_start": 3898800,
+        "window_end": 3899000,
+        "depth": 39.13
+       },
+       {
+        "window_start": 3899000,
+        "window_end": 3899200,
+        "depth": 36.28
+       },
+       {
+        "window_start": 3899200,
+        "window_end": 3899400,
+        "depth": 34.45
+       },
+       {
+        "window_start": 3899400,
+        "window_end": 3899600,
+        "depth": 32.01
+       },
+       {
+        "window_start": 3899600,
+        "window_end": 3899800,
+        "depth": 38.03
+       },
+       {
+        "window_start": 3899800,
+        "window_end": 3900000,
+        "depth": 39.85
+       },
+       {
+        "window_start": 3900000,
+        "window_end": 3900200,
+        "depth": 47.49
+       },
+       {
+        "window_start": 3900200,
+        "window_end": 3900400,
+        "depth": 39.09
+       },
+       {
+        "window_start": 3900400,
+        "window_end": 3900600,
+        "depth": 38.12
+       },
+       {
+        "window_start": 3900600,
+        "window_end": 3900800,
+        "depth": 38.76
+       },
+       {
+        "window_start": 3900800,
+        "window_end": 3901000,
+        "depth": 34.16
+       },
+       {
+        "window_start": 3901000,
+        "window_end": 3901200,
+        "depth": 39.23
+       },
+       {
+        "window_start": 3901200,
+        "window_end": 3901400,
+        "depth": 42.06
+       },
+       {
+        "window_start": 3901400,
+        "window_end": 3901600,
+        "depth": 35.94
+       },
+       {
+        "window_start": 3901600,
+        "window_end": 3901800,
+        "depth": 38.51
+       },
+       {
+        "window_start": 3901800,
+        "window_end": 3902000,
+        "depth": 38.4
+       }
+      ],
+      "summary": {
+       "min_depth": 32.01,
+       "max_depth": 47.91,
+       "mean_depth": 38.95,
+       "depth_ratio_min_to_mean": 0.822,
+       "likely_deletion": false,
+       "dip_position": 3899400,
+       "dip_distance_from_focus": 600,
+       "dip_is_at_focus": true,
+       "assessable": true,
+       "reason": null,
+       "contig_length": 64444167,
+       "clamped_to_contig": false,
+       "min_mapq_applied": null,
+       "mapq_note": "depth counts ALL reads regardless of MAPQ; the discordant, soft-clip and split layers filter at min_mapq. In a low-MAPQ region this layer is the only one still counting, so compare with care."
+      }
+     },
+     "supporting_observations": [
+      "40 discordant pairs (13% of reads in window) with mates mapping predominantly to chr21 (37/40).",
+      "31 soft-clipped read(s) (18% of reads in window), consensus clip position at 3899999 (17 reads).",
+      "15 split reads (9% of reads in window) with supplementary alignments mapping predominantly to chr21 (14/15)."
+     ],
+     "interpretation_template": "Breakpoint  at chr20:3900000. Evidence strength: moderate. Score: 40.0/100 normalised over 4 applicable layer(s) (3/4 showing signal); raw score over all 4 layers was 40.0/100. Window: +/-500bp for the discordant, soft-clip and split layers; at this width the bottom scoring tier required 3 supporting read(s) (3 per 500bp, scaled). A verdict quoted without this window is not reproducible. Observations: 40 discordant pairs (13% of reads in window) with mates mapping predominantly to chr21 (37/40).; 31 soft-clipped read(s) (18% of reads in window), consensus clip position at 3899999 (17 reads).; 15 split reads (9% of reads in window) with supplementary alignments mapping predominantly to chr21 (14/15).. Technology note: discordant_pairs only valid for paired-end data; split_reads only valid for modern-alignment BAMs with SA tags \u2014 use detect_applicable_layers() to determine which apply to this BAM. All values in this template come from tool outputs only.",
+     "min_mapq_applied": 20,
+     "attainable_ceiling_derivable": true,
+     "score_bands": [
+      {
+       "strength": "strong",
+       "op": ">=",
+       "threshold": 70.0
+      },
+      {
+       "strength": "moderate",
+       "op": ">=",
+       "threshold": 40.0
+      },
+      {
+       "strength": "weak",
+       "op": ">",
+       "threshold": 0.0
+      }
+     ],
+     "strong_band": 70.0,
+     "max_all_layers": 100.0,
+     "max_with_flat_depth": 75.0,
+     "attainable_here": 57.5,
+     "strong_band_reachable_here": false,
+     "attainable_basis": "the paired-read measurement held at the band its measured value reaches \u2014 in a HETEROZYGOUS rearrangement roughly half the reads crossing the breakpoint come from the intact homolog, so the discordant fraction is capped well below the 0.5 its top band requires and no amount of extra coverage or a wider window moves it; the soft-clip and split-read measurements at their best possible band; and the depth measurement contributing nothing, because a balanced rearrangement gains and loses no DNA.",
+     "attainable_note": "Attainable-score note: for a heterozygous balanced rearrangement the highest score reachable at this locus is 57.5/100, below the 70.0/100 at which the top band begins \u2014 so the top band is UNREACHABLE here by arithmetic, and a middling band is the ceiling rather than a weak result. Two of the four layers are structurally limited for such an event: the depth layer contributes nothing because no DNA is gained or lost, and the paired-read layer is capped because roughly half the reads crossing the breakpoint come from the intact homolog. Judge a balanced event on the four measurements, not on the band it lands in.",
+     "position_provenance": {
+      "source": "caller_supplied",
+      "candidate_id": null,
+      "set_id": null,
+      "set_label": null,
+      "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+     }
+    },
+    "is_error": false
+   },
+   {
+    "type": "tool",
+    "name": "reciprocal_breakpoint",
+    "params": {
+     "primary_chromosome": "chr20",
+     "primary_position": 3900000,
+     "partner_chromosome": "chr21",
+     "partner_position": 17200000,
+     "bam_path": "<IMP06>"
+    },
+    "call_id": 8,
+    "result": {
+     "primary": {
+      "chromosome": "chr20",
+      "position": 3900000,
+      "discordant_pairs": 40,
+      "mate_chromosomes": {
+       "chr21": 37,
+       "chr2": 3
+      }
+     },
+     "reciprocal": {
+      "chromosome": "chr21",
+      "position": 17200000,
+      "discordant_pairs": 38,
+      "back_pointing_to_primary": 38,
+      "mate_chromosomes": {
+       "chr20": 38
+      }
+     },
+     "verdict": "RECIPROCAL CONFIRMED \u2014 both breakpoints show concordant inter-chromosomal signal",
+     "is_balanced": true,
+     "min_mapq_applied": 20,
+     "position_provenance": {
+      "source": "caller_supplied",
+      "candidate_id": null,
+      "set_id": null,
+      "set_label": null,
+      "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+     }
+    },
+    "is_error": false
+   },
+   {
+    "type": "model",
+    "iteration": 3,
+    "content": "",
+    "thinking": "I should look up which genes sit at these two breakpoint coordinates, chr20:3900000 and chr21:17200000, to identify what might be disrupted.\n\n",
+    "n_tool_calls": 2,
+    "done_reason": "tool_use",
+    "prompt_tokens": 13603,
+    "headroom": null
+   },
+   {
+    "type": "tool",
+    "name": "gene_at_locus",
+    "params": {
+     "chromosome": "chr20",
+     "position": 3900000
+    },
+    "call_id": 9,
+    "result": {
+     "chromosome": "chr20",
+     "position": 3900000,
+     "genome_build": "GRCh38",
+     "gene_count": 1,
+     "is_intergenic": false,
+     "genes": [
+      {
+       "gene_id": "ENSG00000125779",
+       "gene_name": "PANK2",
+       "biotype": "protein_coding",
+       "strand": "+",
+       "gene_start": 3888777,
+       "gene_end": 3929887
+      }
+     ],
+     "annotation_note": "1 annotated gene(s) overlap this position: PANK2.",
+     "position_provenance": {
+      "source": "caller_supplied",
+      "candidate_id": null,
+      "set_id": null,
+      "set_label": null,
+      "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+     }
+    },
+    "is_error": false
+   },
+   {
+    "type": "tool",
+    "name": "gene_at_locus",
+    "params": {
+     "chromosome": "chr21",
+     "position": 17200000
+    },
+    "call_id": 10,
+    "result": {
+     "chromosome": "chr21",
+     "position": 17200000,
+     "genome_build": "GRCh38",
+     "gene_count": 1,
+     "is_intergenic": false,
+     "genes": [
+      {
+       "gene_id": "ENSG00000297640",
+       "gene_name": "unknown",
+       "biotype": "lncRNA",
+       "strand": "+",
+       "gene_start": 17191688,
+       "gene_end": 17270550
+      }
+     ],
+     "annotation_note": "1 annotated gene(s) overlap this position: unknown.",
+     "position_provenance": {
+      "source": "caller_supplied",
+      "candidate_id": null,
+      "set_id": null,
+      "set_label": null,
+      "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+     }
+    },
+    "is_error": false
+   },
+   {
+    "type": "model",
+    "iteration": 4,
+    "content": "## Breakpoint chr20:3,900,000 (IMP06) \u2014 evidence layer report\n\n**Locus quality (prerequisite check):** In the \u00b1500bp window, depth = 40.51x, mean MAPQ = 59.14, low-MAPQ fraction = 0.007. This is well below the 0.4 repetitive-region threshold, so signals below are reliable (not quality-limited).\n\n**Applicable layers:** All four (discordant_pairs, soft_clipped_reads, split_reads, read_depth) are structurally applicable to this BAM.\n\n### 1. Discordant pairs\n- 305 reads in the \u00b1500bp window; **40 discordant pairs (13.1%)**.\n- Mates cluster heavily on **chr21** (37/40), with only 3 scattered to chr2 \u2014 this clustering pattern is what the tool flags as a real translocation signal rather than background noise.\n\n### 2. Soft-clipped reads\n- 171 reads in the \u00b1200bp window; **31 soft-clipped (18.1%)**.\n- A genuine pileup: **consensus clip position 3,899,999 with 17 reads** (well above the \">=10 = full\" tier), dominant side = left-clipped.\n\n### 3. Split reads\n- 166 reads in the \u00b1200bp window; **19 split reads (11.4%)** at min_mapq=0 (the tool's default; note this differs from the 20 used elsewhere).\n- Supplementary alignments (SA tags) point predominantly to **chr21** (18/19, e.g. chr21:17,200,000 / 17,199,930 / 17,199,964 / 17,199,944), all strand-concordant. One read's SA mapped to chr7.\n\n### 4. Read depth\n- Across chr20:3,897,000\u20133,903,000: mean depth 39.42x, min 30.8x, ratio min/mean = 0.781 (above the 0.7 deletion threshold) \u2192 **likely_deletion: false**. A small dip was localized near 3,899,400 but doesn't meet the deletion criterion.\n- Per the rules, **flat depth here is expected and not evidence against a translocation** \u2014 for a balanced rearrangement no DNA is gained or lost, so this layer structurally contributes nothing to the score either way.\n\n### Reciprocal check\nCalled `reciprocal_breakpoint` against the chr21 partner region (17,200,000, taken from the mate_chromosomes output above): chr21 side independently shows 38 discordant pairs, 38 of which point back to chr20. Verdict returned: **\"RECIPROCAL CONFIRMED \u2014 both breakpoints show concordant inter-chromosomal signal\"**, `is_balanced: true`.\n\n### Integrated summary (breakpoint_evidence_summary)\n- Signal in 3/4 layers; evidence_score 40/100, banded as **\"moderate\"**.\n- The tool explicitly notes this is a case where the top band (\u226570) is **arithmetically unreachable**: for a heterozygous balanced rearrangement, depth contributes 0 (no DNA gained/lost) and the discordant-pair fraction is capped (~half of crossing reads come from the intact homolog), so the ceiling here is 57.5/100. It advises judging the event on the four raw measurements rather than the band label.\n- Per the tool's own threshold-provenance disclosure: of the 11 cutoffs behind these scores, only one (the depth 0.7 threshold) is empirically calibrated, and only against a single confirmed locus \u2014 treat evidence_strength as a decomposition of what fired, not a calibrated probability.\n\n### Gene annotation\n- chr20:3,900,000 falls inside **PANK2** (protein_coding, chr20:3,888,777\u20133,929,887).\n- The chr21 partner position (17,200,000) falls inside an unnamed **lncRNA** gene (ENSG00000297640, chr21:17,191,688\u201317,270,550).\n\n### Bottom line\nThree independent, mutually corroborating layers (discordant pairs, soft-clip pileup, split reads) converge on chr20:~3,899,999\u20133,900,000 pointing to a partner on chr21 near 17,200,000, and the reciprocal check confirms concordant signal from the chr21 side back to chr20 \u2014 consistent with a balanced translocation. Flat depth at the locus is consistent with (not against) this interpretation. The breakpoint on chr20 falls within the PANK2 gene body.",
+    "thinking": "",
+    "n_tool_calls": 0,
+    "done_reason": "end_turn",
+    "prompt_tokens": 14417,
+    "headroom": null
+   }
+  ],
+  "final_text": "## Breakpoint chr20:3,900,000 (IMP06) \u2014 evidence layer report\n\n**Locus quality (prerequisite check):** In the \u00b1500bp window, depth = 40.51x, mean MAPQ = 59.14, low-MAPQ fraction = 0.007. This is well below the 0.4 repetitive-region threshold, so signals below are reliable (not quality-limited).\n\n**Applicable layers:** All four (discordant_pairs, soft_clipped_reads, split_reads, read_depth) are structurally applicable to this BAM.\n\n### 1. Discordant pairs\n- 305 reads in the \u00b1500bp window; **40 discordant pairs (13.1%)**.\n- Mates cluster heavily on **chr21** (37/40), with only 3 scattered to chr2 \u2014 this clustering pattern is what the tool flags as a real translocation signal rather than background noise.\n\n### 2. Soft-clipped reads\n- 171 reads in the \u00b1200bp window; **31 soft-clipped (18.1%)**.\n- A genuine pileup: **consensus clip position 3,899,999 with 17 reads** (well above the \">=10 = full\" tier), dominant side = left-clipped.\n\n### 3. Split reads\n- 166 reads in the \u00b1200bp window; **19 split reads (11.4%)** at min_mapq=0 (the tool's default; note this differs from the 20 used elsewhere).\n- Supplementary alignments (SA tags) point predominantly to **chr21** (18/19, e.g. chr21:17,200,000 / 17,199,930 / 17,199,964 / 17,199,944), all strand-concordant. One read's SA mapped to chr7.\n\n### 4. Read depth\n- Across chr20:3,897,000\u20133,903,000: mean depth 39.42x, min 30.8x, ratio min/mean = 0.781 (above the 0.7 deletion threshold) \u2192 **likely_deletion: false**. A small dip was localized near 3,899,400 but doesn't meet the deletion criterion.\n- Per the rules, **flat depth here is expected and not evidence against a translocation** \u2014 for a balanced rearrangement no DNA is gained or lost, so this layer structurally contributes nothing to the score either way.\n\n### Reciprocal check\nCalled `reciprocal_breakpoint` against the chr21 partner region (17,200,000, taken from the mate_chromosomes output above): chr21 side independently shows 38 discordant pairs, 38 of which point back to chr20. Verdict returned: **\"RECIPROCAL CONFIRMED \u2014 both breakpoints show concordant inter-chromosomal signal\"**, `is_balanced: true`.\n\n### Integrated summary (breakpoint_evidence_summary)\n- Signal in 3/4 layers; evidence_score 40/100, banded as **\"moderate\"**.\n- The tool explicitly notes this is a case where the top band (\u226570) is **arithmetically unreachable**: for a heterozygous balanced rearrangement, depth contributes 0 (no DNA gained/lost) and the discordant-pair fraction is capped (~half of crossing reads come from the intact homolog), so the ceiling here is 57.5/100. It advises judging the event on the four raw measurements rather than the band label.\n- Per the tool's own threshold-provenance disclosure: of the 11 cutoffs behind these scores, only one (the depth 0.7 threshold) is empirically calibrated, and only against a single confirmed locus \u2014 treat evidence_strength as a decomposition of what fired, not a calibrated probability.\n\n### Gene annotation\n- chr20:3,900,000 falls inside **PANK2** (protein_coding, chr20:3,888,777\u20133,929,887).\n- The chr21 partner position (17,200,000) falls inside an unnamed **lncRNA** gene (ENSG00000297640, chr21:17,191,688\u201317,270,550).\n\n### Bottom line\nThree independent, mutually corroborating layers (discordant pairs, soft-clip pileup, split reads) converge on chr20:~3,899,999\u20133,900,000 pointing to a partner on chr21 near 17,200,000, and the reciprocal check confirms concordant signal from the chr21 side back to chr20 \u2014 consistent with a balanced translocation. Flat depth at the locus is consistent with (not against) this interpretation. The breakpoint on chr20 falls within the PANK2 gene body.",
+  "call_ids": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10
+  ],
+  "n_tool_calls": 10,
+  "text_tool_call_failures": [],
+  "malformed_tool_calls": [],
+  "verification": {
+   "numbers_in_prose": 58,
+   "unsupported": [
+    "0.4"
+   ],
+   "no_tool_calls": false,
+   "details": [
+    {
+     "text": "3,900,000",
+     "value": 3900000.0,
+     "supported": true
+    },
+    {
+     "text": "59.14",
+     "value": 59.14,
+     "supported": true
+    },
+    {
+     "text": "0.007",
+     "value": 0.007,
+     "supported": true
+    },
+    {
+     "text": "0.4",
+     "value": 0.4,
+     "supported": false
+    },
+    {
+     "text": "1",
+     "value": 1.0,
+     "supported": true
+    },
+    {
+     "text": "305",
+     "value": 305.0,
+     "supported": true
+    },
+    {
+     "text": "40",
+     "value": 40.0,
+     "supported": true
+    },
+    {
+     "text": "13.1",
+     "value": 13.1,
+     "supported": true
+    },
+    {
+     "text": "37",
+     "value": 37.0,
+     "supported": true
+    },
+    {
+     "text": "40",
+     "value": 40.0,
+     "supported": true
+    },
+    {
+     "text": "3",
+     "value": 3.0,
+     "supported": true
+    },
+    {
+     "text": "2",
+     "value": 2.0,
+     "supported": true
+    },
+    {
+     "text": "171",
+     "value": 171.0,
+     "supported": true
+    },
+    {
+     "text": "31",
+     "value": 31.0,
+     "supported": true
+    },
+    {
+     "text": "18.1",
+     "value": 18.1,
+     "supported": true
+    },
+    {
+     "text": "3,899,999",
+     "value": 3899999.0,
+     "supported": true
+    },
+    {
+     "text": "17",
+     "value": 17.0,
+     "supported": true
+    },
+    {
+     "text": "10",
+     "value": 10.0,
+     "supported": true
+    },
+    {
+     "text": "3",
+     "value": 3.0,
+     "supported": true
+    },
+    {
+     "text": "166",
+     "value": 166.0,
+     "supported": true
+    },
+    {
+     "text": "19",
+     "value": 19.0,
+     "supported": true
+    },
+    {
+     "text": "11.4",
+     "value": 11.4,
+     "supported": true
+    },
+    {
+     "text": "0",
+     "value": 0.0,
+     "supported": true
+    },
+    {
+     "text": "20",
+     "value": 20.0,
+     "supported": true
+    },
+    {
+     "text": "18",
+     "value": 18.0,
+     "supported": true
+    },
+    {
+     "text": "19",
+     "value": 19.0,
+     "supported": true
+    },
+    {
+     "text": "17,200,000",
+     "value": 17200000.0,
+     "supported": true
+    },
+    {
+     "text": "17,199,930",
+     "value": 17199930.0,
+     "supported": true
+    },
+    {
+     "text": "17,199,964",
+     "value": 17199964.0,
+     "supported": true
+    },
+    {
+     "text": "17,199,944",
+     "value": 17199944.0,
+     "supported": true
+    },
+    {
+     "text": "4",
+     "value": 4.0,
+     "supported": true
+    },
+    {
+     "text": "3,897,000",
+     "value": 3897000.0,
+     "supported": true
+    },
+    {
+     "text": "3,903,000",
+     "value": 3903000.0,
+     "supported": true
+    },
+    {
+     "text": "0.781",
+     "value": 0.781,
+     "supported": true
+    },
+    {
+     "text": "0.7",
+     "value": 0.7,
+     "supported": true
+    },
+    {
+     "text": "3,899,400",
+     "value": 3899400.0,
+     "supported": true
+    },
+    {
+     "text": "17,200,000",
+     "value": 17200000.0,
+     "supported": true
+    },
+    {
+     "text": "38",
+     "value": 38.0,
+     "supported": true
+    },
+    {
+     "text": "38",
+     "value": 38.0,
+     "supported": true
+    },
+    {
+     "text": "3",
+     "value": 3.0,
+     "supported": true
+    },
+    {
+     "text": "4",
+     "value": 4.0,
+     "supported": true
+    },
+    {
+     "text": "40",
+     "value": 40.0,
+     "supported": true
+    },
+    {
+     "text": "100",
+     "value": 100.0,
+     "supported": true
+    },
+    {
+     "text": "70",
+     "value": 70.0,
+     "supported": true
+    },
+    {
+     "text": "0",
+     "value": 0.0,
+     "supported": true
+    },
+    {
+     "text": "57.5",
+     "value": 57.5,
+     "supported": true
+    },
+    {
+     "text": "100",
+     "value": 100.0,
+     "supported": true
+    },
+    {
+     "text": "11",
+     "value": 11.0,
+     "supported": true
+    },
+    {
+     "text": "0.7",
+     "value": 0.7,
+     "supported": true
+    },
+    {
+     "text": "3,900,000",
+     "value": 3900000.0,
+     "supported": true
+    },
+    {
+     "text": "3,888,777",
+     "value": 3888777.0,
+     "supported": true
+    },
+    {
+     "text": "3,929,887",
+     "value": 3929887.0,
+     "supported": true
+    },
+    {
+     "text": "17,200,000",
+     "value": 17200000.0,
+     "supported": true
+    },
+    {
+     "text": "17,191,688",
+     "value": 17191688.0,
+     "supported": true
+    },
+    {
+     "text": "17,270,550",
+     "value": 17270550.0,
+     "supported": true
+    },
+    {
+     "text": "3,899,999",
+     "value": 3899999.0,
+     "supported": true
+    },
+    {
+     "text": "3,900,000",
+     "value": 3900000.0,
+     "supported": true
+    },
+    {
+     "text": "17,200,000",
+     "value": 17200000.0,
+     "supported": true
+    }
+   ]
+  },
+  "wall_s": 30.3,
+  "gen_tokens": 2846,
+  "prompt_tokens": 56706,
+  "gen_tokens_per_s": null,
+  "iterations": 5,
+  "api_usage": {
+   "input_tokens": 124,
+   "output_tokens": 2846,
+   "cache_creation_input_tokens": 6176,
+   "cache_read_input_tokens": 50406
+  },
+  "api_cost_usd": 0.054229,
+  "api_cost_usd_live_prices": 0.054229
+ },
+ "recorder_calls": [
+  {
+   "id": 1,
+   "server": "evidence",
+   "tool": "applicable_layers",
+   "params": {
+    "bam_path": "~/public_data/sim/bams/IMP06.bam"
+   },
+   "is_error": false,
+   "ms": 7.0,
+   "result": {
+    "bam_path": "~/public_data/sim/bams/IMP06.bam",
+    "reads_sampled": 1000,
+    "applicable_layers": [
+     "discordant_pairs",
+     "soft_clipped_reads",
+     "split_reads",
+     "read_depth"
+    ],
+    "evidence": {
+     "soft_clipped_reads": "always applicable \u2014 any aligned BAM can show soft-clipping.",
+     "read_depth": "always applicable \u2014 any aligned BAM can show a coverage drop.",
+     "discordant_pairs": "applicable \u2014 at least one paired read observed in 1000 sampled reads.",
+     "split_reads": "applicable \u2014 at least one SA (supplementary alignment) tag observed in 1000 sampled reads."
+    }
+   },
+   "traceback": null
+  },
+  {
+   "id": 2,
+   "server": "evidence",
+   "tool": "bam_stats_at_locus",
+   "params": {
+    "chromosome": "chr20",
+    "start": 3899500,
+    "end": 3900500,
+    "bam_path": "~/public_data/sim/bams/IMP06.bam"
+   },
+   "is_error": false,
+   "ms": 8.0,
+   "result": {
+    "chromosome": "chr20",
+    "start": 3899500,
+    "end": 3900500,
+    "contig_length": 64444167,
+    "clamped_to_contig": false,
+    "total_reads": 307,
+    "mean_depth": 40.51,
+    "mean_mapq": 59.14,
+    "low_mapq_fraction": 0.007,
+    "forward_reads": 154,
+    "reverse_reads": 153,
+    "position_provenance": {
+     "source": "caller_supplied",
+     "candidate_id": null,
+     "set_id": null,
+     "set_label": null,
+     "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+    }
+   },
+   "traceback": null
+  },
+  {
+   "id": 3,
+   "server": "evidence",
+   "tool": "discordant_pairs",
+   "params": {
+    "chromosome": "chr20",
+    "position": 3900000,
+    "bam_path": "~/public_data/sim/bams/IMP06.bam"
+   },
+   "is_error": false,
+   "ms": 6.9,
+   "result": {
+    "chromosome": "chr20",
+    "position": 3900000,
+    "window_bp": 500,
+    "total_reads_in_window": 305,
+    "discordant_pairs": 40,
+    "discordant_fraction": 0.131,
+    "mate_chromosomes": {
+     "chr21": 37,
+     "chr2": 3
+    },
+    "same_primary_alt_mates": 0,
+    "reads_below_min_mapq": 2,
+    "quality_limited": false,
+    "assessable": true,
+    "reason": null,
+    "min_mapq_applied": 20,
+    "position_provenance": {
+     "source": "caller_supplied",
+     "candidate_id": null,
+     "set_id": null,
+     "set_label": null,
+     "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+    }
+   },
+   "traceback": null
+  },
+  {
+   "id": 4,
+   "server": "evidence",
+   "tool": "soft_clipped_reads",
+   "params": {
+    "chromosome": "chr20",
+    "position": 3900000,
+    "bam_path": "~/public_data/sim/bams/IMP06.bam"
+   },
+   "is_error": false,
+   "ms": 5.6,
+   "result": {
+    "chromosome": "chr20",
+    "position": 3900000,
+    "window_bp": 200,
+    "total_reads_in_window": 171,
+    "soft_clipped_reads": 31,
+    "soft_clipped_fraction": 0.181,
+    "consensus_clip_position": 3899999,
+    "max_clips_at_position": 17,
+    "left_clip_reads": 21,
+    "right_clip_reads": 10,
+    "left_consensus_position": 3899999,
+    "left_max_clips_at_position": 17,
+    "right_consensus_position": 3900000,
+    "right_max_clips_at_position": 10,
+    "dominant_clip_side": "left",
+    "reads_below_min_mapq": 4,
+    "quality_limited": false,
+    "assessable": true,
+    "reason": null,
+    "min_mapq_applied": 20,
+    "position_provenance": {
+     "source": "caller_supplied",
+     "candidate_id": null,
+     "set_id": null,
+     "set_label": null,
+     "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+    }
+   },
+   "traceback": null
+  },
+  {
+   "id": 5,
+   "server": "evidence",
+   "tool": "split_reads",
+   "params": {
+    "chromosome": "chr20",
+    "position": 3900000,
+    "bam_path": "~/public_data/sim/bams/IMP06.bam"
+   },
+   "is_error": false,
+   "ms": 6.1,
+   "result": {
+    "chromosome": "chr20",
+    "position": 3900000,
+    "window_bp": 200,
+    "total_reads_in_window": 166,
+    "split_reads": 19,
+    "split_read_fraction": 0.114,
+    "partner_chromosomes": {
+     "chr21": 18,
+     "chr7": 1
+    },
+    "sa_entries_total": 19,
+    "sa_entries_below_min_mapq": 0,
+    "partner_strand_concordant": 19,
+    "partner_strand_flipped": 0,
+    "example_partner_loci": [
+     "chr7:102121294",
+     "chr21:17200000",
+     "chr21:17199930",
+     "chr21:17199964",
+     "chr21:17199944"
+    ],
+    "reads_below_min_mapq": 0,
+    "quality_limited": false,
+    "assessable": true,
+    "reason": null,
+    "min_mapq_applied": 0,
+    "position_provenance": {
+     "source": "caller_supplied",
+     "candidate_id": null,
+     "set_id": null,
+     "set_label": null,
+     "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+    }
+   },
+   "traceback": null
+  },
+  {
+   "id": 6,
+   "server": "evidence",
+   "tool": "read_depth_profile",
+   "params": {
+    "chromosome": "chr20",
+    "start": 3897000,
+    "end": 3903000,
+    "focus_position": 3900000,
+    "bam_path": "~/public_data/sim/bams/IMP06.bam"
+   },
+   "is_error": false,
+   "ms": 22.1,
+   "result": {
+    "chromosome": "chr20",
+    "start": 3897000,
+    "end": 3903000,
+    "window_size": 100,
+    "windows": [
+     {
+      "window_start": 3897000,
+      "window_end": 3897100,
+      "depth": 46.45
+     },
+     {
+      "window_start": 3897100,
+      "window_end": 3897200,
+      "depth": 39.86
+     },
+     {
+      "window_start": 3897200,
+      "window_end": 3897300,
+      "depth": 37.42
+     },
+     {
+      "window_start": 3897300,
+      "window_end": 3897400,
+      "depth": 47.29
+     },
+     {
+      "window_start": 3897400,
+      "window_end": 3897500,
+      "depth": 42.27
+     },
+     {
+      "window_start": 3897500,
+      "window_end": 3897600,
+      "depth": 39.22
+     },
+     {
+      "window_start": 3897600,
+      "window_end": 3897700,
+      "depth": 45.35
+     },
+     {
+      "window_start": 3897700,
+      "window_end": 3897800,
+      "depth": 41.93
+     },
+     {
+      "window_start": 3897800,
+      "window_end": 3897900,
+      "depth": 34.98
+     },
+     {
+      "window_start": 3897900,
+      "window_end": 3898000,
+      "depth": 40.76
+     },
+     {
+      "window_start": 3898000,
+      "window_end": 3898100,
+      "depth": 47.98
+     },
+     {
+      "window_start": 3898100,
+      "window_end": 3898200,
+      "depth": 47.83
+     },
+     {
+      "window_start": 3898200,
+      "window_end": 3898300,
+      "depth": 41.71
+     },
+     {
+      "window_start": 3898300,
+      "window_end": 3898400,
+      "depth": 31.55
+     },
+     {
+      "window_start": 3898400,
+      "window_end": 3898500,
+      "depth": 40.47
+     },
+     {
+      "window_start": 3898500,
+      "window_end": 3898600,
+      "depth": 48.99
+     },
+     {
+      "window_start": 3898600,
+      "window_end": 3898700,
+      "depth": 37.11
+     },
+     {
+      "window_start": 3898700,
+      "window_end": 3898800,
+      "depth": 39.32
+     },
+     {
+      "window_start": 3898800,
+      "window_end": 3898900,
+      "depth": 40.89
+     },
+     {
+      "window_start": 3898900,
+      "window_end": 3899000,
+      "depth": 37.38
+     },
+     {
+      "window_start": 3899000,
+      "window_end": 3899100,
+      "depth": 35.57
+     },
+     {
+      "window_start": 3899100,
+      "window_end": 3899200,
+      "depth": 37.0
+     },
+     {
+      "window_start": 3899200,
+      "window_end": 3899300,
+      "depth": 35.41
+     },
+     {
+      "window_start": 3899300,
+      "window_end": 3899400,
+      "depth": 33.48
+     },
+     {
+      "window_start": 3899400,
+      "window_end": 3899500,
+      "depth": 30.8
+     },
+     {
+      "window_start": 3899500,
+      "window_end": 3899600,
+      "depth": 33.21
+     },
+     {
+      "window_start": 3899600,
+      "window_end": 3899700,
+      "depth": 36.85
+     },
+     {
+      "window_start": 3899700,
+      "window_end": 3899800,
+      "depth": 39.22
+     },
+     {
+      "window_start": 3899800,
+      "window_end": 3899900,
+      "depth": 39.61
+     },
+     {
+      "window_start": 3899900,
+      "window_end": 3900000,
+      "depth": 40.09
+     },
+     {
+      "window_start": 3900000,
+      "window_end": 3900100,
+      "depth": 43.59
+     },
+     {
+      "window_start": 3900100,
+      "window_end": 3900200,
+      "depth": 51.39
+     },
+     {
+      "window_start": 3900200,
+      "window_end": 3900300,
+      "depth": 38.73
+     },
+     {
+      "window_start": 3900300,
+      "window_end": 3900400,
+      "depth": 39.46
+     },
+     {
+      "window_start": 3900400,
+      "window_end": 3900500,
+      "depth": 42.96
+     },
+     {
+      "window_start": 3900500,
+      "window_end": 3900600,
+      "depth": 33.27
+     },
+     {
+      "window_start": 3900600,
+      "window_end": 3900700,
+      "depth": 41.02
+     },
+     {
+      "window_start": 3900700,
+      "window_end": 3900800,
+      "depth": 36.49
+     },
+     {
+      "window_start": 3900800,
+      "window_end": 3900900,
+      "depth": 32.31
+     },
+     {
+      "window_start": 3900900,
+      "window_end": 3901000,
+      "depth": 36.0
+     },
+     {
+      "window_start": 3901000,
+      "window_end": 3901100,
+      "depth": 38.33
+     },
+     {
+      "window_start": 3901100,
+      "window_end": 3901200,
+      "depth": 40.13
+     },
+     {
+      "window_start": 3901200,
+      "window_end": 3901300,
+      "depth": 42.12
+     },
+     {
+      "window_start": 3901300,
+      "window_end": 3901400,
+      "depth": 42.01
+     },
+     {
+      "window_start": 3901400,
+      "window_end": 3901500,
+      "depth": 36.49
+     },
+     {
+      "window_start": 3901500,
+      "window_end": 3901600,
+      "depth": 35.39
+     },
+     {
+      "window_start": 3901600,
+      "window_end": 3901700,
+      "depth": 39.56
+     },
+     {
+      "window_start": 3901700,
+      "window_end": 3901800,
+      "depth": 37.45
+     },
+     {
+      "window_start": 3901800,
+      "window_end": 3901900,
+      "depth": 38.24
+     },
+     {
+      "window_start": 3901900,
+      "window_end": 3902000,
+      "depth": 38.56
+     },
+     {
+      "window_start": 3902000,
+      "window_end": 3902100,
+      "depth": 45.37
+     },
+     {
+      "window_start": 3902100,
+      "window_end": 3902200,
+      "depth": 35.58
+     },
+     {
+      "window_start": 3902200,
+      "window_end": 3902300,
+      "depth": 44.1
+     },
+     {
+      "window_start": 3902300,
+      "window_end": 3902400,
+      "depth": 38.65
+     },
+     {
+      "window_start": 3902400,
+      "window_end": 3902500,
+      "depth": 33.83
+     },
+     {
+      "window_start": 3902500,
+      "window_end": 3902600,
+      "depth": 33.31
+     },
+     {
+      "window_start": 3902600,
+      "window_end": 3902700,
+      "depth": 35.69
+     },
+     {
+      "window_start": 3902700,
+      "window_end": 3902800,
+      "depth": 44.98
+     },
+     {
+      "window_start": 3902800,
+      "window_end": 3902900,
+      "depth": 48.56
+     },
+     {
+      "window_start": 3902900,
+      "window_end": 3903000,
+      "depth": 31.77
+     }
+    ],
+    "summary": {
+     "min_depth": 30.8,
+     "max_depth": 51.39,
+     "mean_depth": 39.42,
+     "depth_ratio_min_to_mean": 0.781,
+     "likely_deletion": false,
+     "dip_position": 3899400,
+     "dip_distance_from_focus": 600,
+     "dip_is_at_focus": true,
+     "assessable": true,
+     "reason": null,
+     "contig_length": 64444167,
+     "clamped_to_contig": false,
+     "min_mapq_applied": null,
+     "mapq_note": "depth counts ALL reads regardless of MAPQ; the discordant, soft-clip and split layers filter at min_mapq. In a low-MAPQ region this layer is the only one still counting, so compare with care."
+    },
+    "position_provenance": {
+     "source": "caller_supplied",
+     "candidate_id": null,
+     "set_id": null,
+     "set_label": null,
+     "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+    }
+   },
+   "traceback": null
+  },
+  {
+   "id": 7,
+   "server": "evidence",
+   "tool": "breakpoint_evidence_summary",
+   "params": {
+    "chromosome": "chr20",
+    "position": 3900000,
+    "applicable_layers": [
+     "discordant_pairs",
+     "soft_clipped_reads",
+     "split_reads",
+     "read_depth"
+    ],
+    "bam_path": "~/public_data/sim/bams/IMP06.bam"
+   },
+   "is_error": false,
+   "ms": 33.4,
+   "result": {
+    "label": "",
+    "chromosome": "chr20",
+    "position": 3900000,
+    "window_bp": 500,
+    "min_supporting_reads": 3,
+    "depth_window_bp": 2000,
+    "depth_window_size": 200,
+    "evidence_score": 40.0,
+    "evidence_score_raw": 40.0,
+    "evidence_strength": "moderate",
+    "signal_layers": "3/4",
+    "applicable_layers": [
+     "discordant_pairs",
+     "soft_clipped_reads",
+     "split_reads",
+     "read_depth"
+    ],
+    "unassessable_layers": {},
+    "discordant_pair_score": 7.5,
+    "soft_clip_score": 25.0,
+    "split_read_score": 7.5,
+    "depth_score": 0.0,
+    "locus_stats": {
+     "chromosome": "chr20",
+     "start": 3899500,
+     "end": 3900500,
+     "contig_length": 64444167,
+     "clamped_to_contig": false,
+     "total_reads": 307,
+     "mean_depth": 40.51,
+     "mean_mapq": 59.14,
+     "low_mapq_fraction": 0.007,
+     "forward_reads": 154,
+     "reverse_reads": 153
+    },
+    "discordant_pairs": {
+     "chromosome": "chr20",
+     "position": 3900000,
+     "window_bp": 500,
+     "total_reads_in_window": 305,
+     "discordant_pairs": 40,
+     "discordant_fraction": 0.131,
+     "mate_chromosomes": {
+      "chr21": 37,
+      "chr2": 3
+     },
+     "same_primary_alt_mates": 0,
+     "reads_below_min_mapq": 2,
+     "quality_limited": false,
+     "assessable": true,
+     "reason": null,
+     "min_mapq_applied": 20
+    },
+    "soft_clips": {
+     "chromosome": "chr20",
+     "position": 3900000,
+     "window_bp": 200,
+     "total_reads_in_window": 171,
+     "soft_clipped_reads": 31,
+     "soft_clipped_fraction": 0.181,
+     "consensus_clip_position": 3899999,
+     "max_clips_at_position": 17,
+     "left_clip_reads": 21,
+     "right_clip_reads": 10,
+     "left_consensus_position": 3899999,
+     "left_max_clips_at_position": 17,
+     "right_consensus_position": 3900000,
+     "right_max_clips_at_position": 10,
+     "dominant_clip_side": "left",
+     "reads_below_min_mapq": 4,
+     "quality_limited": false,
+     "assessable": true,
+     "reason": null,
+     "min_mapq_applied": 20
+    },
+    "split_reads": {
+     "chromosome": "chr20",
+     "position": 3900000,
+     "window_bp": 200,
+     "total_reads_in_window": 164,
+     "split_reads": 15,
+     "split_read_fraction": 0.091,
+     "partner_chromosomes": {
+      "chr21": 14,
+      "chr7": 1
+     },
+     "sa_entries_total": 17,
+     "sa_entries_below_min_mapq": 2,
+     "partner_strand_concordant": 15,
+     "partner_strand_flipped": 0,
+     "example_partner_loci": [
+      "chr7:102121294",
+      "chr21:17200000",
+      "chr21:17199930",
+      "chr21:17199944",
+      "chr21:17199937"
+     ],
+     "reads_below_min_mapq": 2,
+     "quality_limited": false,
+     "assessable": true,
+     "reason": null,
+     "min_mapq_applied": 20
+    },
+    "depth_profile": {
+     "chromosome": "chr20",
+     "start": 3898000,
+     "end": 3902000,
+     "window_size": 200,
+     "windows": [
+      {
+       "window_start": 3898000,
+       "window_end": 3898200,
+       "depth": 47.91
+      },
+      {
+       "window_start": 3898200,
+       "window_end": 3898400,
+       "depth": 36.63
+      },
+      {
+       "window_start": 3898400,
+       "window_end": 3898600,
+       "depth": 44.73
+      },
+      {
+       "window_start": 3898600,
+       "window_end": 3898800,
+       "depth": 38.22
+      },
+      {
+       "window_start": 3898800,
+       "window_end": 3899000,
+       "depth": 39.13
+      },
+      {
+       "window_start": 3899000,
+       "window_end": 3899200,
+       "depth": 36.28
+      },
+      {
+       "window_start": 3899200,
+       "window_end": 3899400,
+       "depth": 34.45
+      },
+      {
+       "window_start": 3899400,
+       "window_end": 3899600,
+       "depth": 32.01
+      },
+      {
+       "window_start": 3899600,
+       "window_end": 3899800,
+       "depth": 38.03
+      },
+      {
+       "window_start": 3899800,
+       "window_end": 3900000,
+       "depth": 39.85
+      },
+      {
+       "window_start": 3900000,
+       "window_end": 3900200,
+       "depth": 47.49
+      },
+      {
+       "window_start": 3900200,
+       "window_end": 3900400,
+       "depth": 39.09
+      },
+      {
+       "window_start": 3900400,
+       "window_end": 3900600,
+       "depth": 38.12
+      },
+      {
+       "window_start": 3900600,
+       "window_end": 3900800,
+       "depth": 38.76
+      },
+      {
+       "window_start": 3900800,
+       "window_end": 3901000,
+       "depth": 34.16
+      },
+      {
+       "window_start": 3901000,
+       "window_end": 3901200,
+       "depth": 39.23
+      },
+      {
+       "window_start": 3901200,
+       "window_end": 3901400,
+       "depth": 42.06
+      },
+      {
+       "window_start": 3901400,
+       "window_end": 3901600,
+       "depth": 35.94
+      },
+      {
+       "window_start": 3901600,
+       "window_end": 3901800,
+       "depth": 38.51
+      },
+      {
+       "window_start": 3901800,
+       "window_end": 3902000,
+       "depth": 38.4
+      }
+     ],
+     "summary": {
+      "min_depth": 32.01,
+      "max_depth": 47.91,
+      "mean_depth": 38.95,
+      "depth_ratio_min_to_mean": 0.822,
+      "likely_deletion": false,
+      "dip_position": 3899400,
+      "dip_distance_from_focus": 600,
+      "dip_is_at_focus": true,
+      "assessable": true,
+      "reason": null,
+      "contig_length": 64444167,
+      "clamped_to_contig": false,
+      "min_mapq_applied": null,
+      "mapq_note": "depth counts ALL reads regardless of MAPQ; the discordant, soft-clip and split layers filter at min_mapq. In a low-MAPQ region this layer is the only one still counting, so compare with care."
+     }
+    },
+    "supporting_observations": [
+     "40 discordant pairs (13% of reads in window) with mates mapping predominantly to chr21 (37/40).",
+     "31 soft-clipped read(s) (18% of reads in window), consensus clip position at 3899999 (17 reads).",
+     "15 split reads (9% of reads in window) with supplementary alignments mapping predominantly to chr21 (14/15)."
+    ],
+    "interpretation_template": "Breakpoint  at chr20:3900000. Evidence strength: moderate. Score: 40.0/100 normalised over 4 applicable layer(s) (3/4 showing signal); raw score over all 4 layers was 40.0/100. Window: +/-500bp for the discordant, soft-clip and split layers; at this width the bottom scoring tier required 3 supporting read(s) (3 per 500bp, scaled). A verdict quoted without this window is not reproducible. Observations: 40 discordant pairs (13% of reads in window) with mates mapping predominantly to chr21 (37/40).; 31 soft-clipped read(s) (18% of reads in window), consensus clip position at 3899999 (17 reads).; 15 split reads (9% of reads in window) with supplementary alignments mapping predominantly to chr21 (14/15).. Technology note: discordant_pairs only valid for paired-end data; split_reads only valid for modern-alignment BAMs with SA tags \u2014 use detect_applicable_layers() to determine which apply to this BAM. All values in this template come from tool outputs only.",
+    "min_mapq_applied": 20,
+    "attainable_ceiling_derivable": true,
+    "score_bands": [
+     {
+      "strength": "strong",
+      "op": ">=",
+      "threshold": 70.0
+     },
+     {
+      "strength": "moderate",
+      "op": ">=",
+      "threshold": 40.0
+     },
+     {
+      "strength": "weak",
+      "op": ">",
+      "threshold": 0.0
+     }
+    ],
+    "strong_band": 70.0,
+    "max_all_layers": 100.0,
+    "max_with_flat_depth": 75.0,
+    "attainable_here": 57.5,
+    "strong_band_reachable_here": false,
+    "attainable_basis": "the paired-read measurement held at the band its measured value reaches \u2014 in a HETEROZYGOUS rearrangement roughly half the reads crossing the breakpoint come from the intact homolog, so the discordant fraction is capped well below the 0.5 its top band requires and no amount of extra coverage or a wider window moves it; the soft-clip and split-read measurements at their best possible band; and the depth measurement contributing nothing, because a balanced rearrangement gains and loses no DNA.",
+    "attainable_note": "Attainable-score note: for a heterozygous balanced rearrangement the highest score reachable at this locus is 57.5/100, below the 70.0/100 at which the top band begins \u2014 so the top band is UNREACHABLE here by arithmetic, and a middling band is the ceiling rather than a weak result. Two of the four layers are structurally limited for such an event: the depth layer contributes nothing because no DNA is gained or lost, and the paired-read layer is capped because roughly half the reads crossing the breakpoint come from the intact homolog. Judge a balanced event on the four measurements, not on the band it lands in.",
+    "position_provenance": {
+     "source": "caller_supplied",
+     "candidate_id": null,
+     "set_id": null,
+     "set_label": null,
+     "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+    }
+   },
+   "traceback": null
+  },
+  {
+   "id": 8,
+   "server": "evidence",
+   "tool": "reciprocal_breakpoint",
+   "params": {
+    "primary_chromosome": "chr20",
+    "primary_position": 3900000,
+    "partner_chromosome": "chr21",
+    "partner_position": 17200000,
+    "bam_path": "~/public_data/sim/bams/IMP06.bam"
+   },
+   "is_error": false,
+   "ms": 13.4,
+   "result": {
+    "primary": {
+     "chromosome": "chr20",
+     "position": 3900000,
+     "discordant_pairs": 40,
+     "mate_chromosomes": {
+      "chr21": 37,
+      "chr2": 3
+     }
+    },
+    "reciprocal": {
+     "chromosome": "chr21",
+     "position": 17200000,
+     "discordant_pairs": 38,
+     "back_pointing_to_primary": 38,
+     "mate_chromosomes": {
+      "chr20": 38
+     }
+    },
+    "verdict": "RECIPROCAL CONFIRMED \u2014 both breakpoints show concordant inter-chromosomal signal",
+    "is_balanced": true,
+    "min_mapq_applied": 20,
+    "position_provenance": {
+     "source": "caller_supplied",
+     "candidate_id": null,
+     "set_id": null,
+     "set_label": null,
+     "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+    }
+   },
+   "traceback": null
+  },
+  {
+   "id": 9,
+   "server": "evidence",
+   "tool": "gene_at_locus",
+   "params": {
+    "chromosome": "chr20",
+    "position": 3900000
+   },
+   "is_error": false,
+   "ms": 192.3,
+   "result": {
+    "chromosome": "chr20",
+    "position": 3900000,
+    "genome_build": "GRCh38",
+    "gene_count": 1,
+    "is_intergenic": false,
+    "genes": [
+     {
+      "gene_id": "ENSG00000125779",
+      "gene_name": "PANK2",
+      "biotype": "protein_coding",
+      "strand": "+",
+      "gene_start": 3888777,
+      "gene_end": 3929887
+     }
+    ],
+    "annotation_note": "1 annotated gene(s) overlap this position: PANK2.",
+    "position_provenance": {
+     "source": "caller_supplied",
+     "candidate_id": null,
+     "set_id": null,
+     "set_label": null,
+     "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+    }
+   },
+   "traceback": null
+  },
+  {
+   "id": 10,
+   "server": "evidence",
+   "tool": "gene_at_locus",
+   "params": {
+    "chromosome": "chr21",
+    "position": 17200000
+   },
+   "is_error": false,
+   "ms": 187.5,
+   "result": {
+    "chromosome": "chr21",
+    "position": 17200000,
+    "genome_build": "GRCh38",
+    "gene_count": 1,
+    "is_intergenic": false,
+    "genes": [
+     {
+      "gene_id": "ENSG00000297640",
+      "gene_name": "unknown",
+      "biotype": "lncRNA",
+      "strand": "+",
+      "gene_start": 17191688,
+      "gene_end": 17270550
+     }
+    ],
+    "annotation_note": "1 annotated gene(s) overlap this position: unknown.",
+    "position_provenance": {
+     "source": "caller_supplied",
+     "candidate_id": null,
+     "set_id": null,
+     "set_label": null,
+     "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+    }
+   },
+   "traceback": null
+  }
+ ]
+}

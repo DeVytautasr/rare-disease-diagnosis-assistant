@@ -1,0 +1,908 @@
+{
+ "model": "claude-sonnet-5",
+ "case": "b_withheld_vs_low",
+ "run": 1,
+ "position_in_order": 21,
+ "prompt": "What evidence score does the breakpoint at chr20:25800000 in dataset IMP10 receive, and what does that score mean?",
+ "prompt_is_reconstruction": true,
+ "started": "2026-09-26T14:36:52",
+ "ended": "2026-09-26T14:37:07",
+ "git_head": "547b5ccc43d6b2da1a74b4059322a8cff8cb21d6",
+ "schema_sha256": "6ce8866a5d4317cb8664c4083e22b89d87e4d65e3961b92f5a56b8408e51cef0",
+ "model_info": {
+  "id": "claude-sonnet-5",
+  "capabilities": {
+   "batch": {
+    "supported": true
+   },
+   "citations": {
+    "supported": true
+   },
+   "code_execution": {
+    "supported": true
+   },
+   "context_management": {
+    "clear_thinking_20251015": {
+     "supported": true
+    },
+    "clear_tool_uses_20250919": {
+     "supported": true
+    },
+    "compact_20260112": {
+     "supported": true
+    },
+    "supported": true
+   },
+   "effort": {
+    "high": {
+     "supported": true
+    },
+    "low": {
+     "supported": true
+    },
+    "max": {
+     "supported": true
+    },
+    "medium": {
+     "supported": true
+    },
+    "supported": true,
+    "xhigh": {
+     "supported": true
+    }
+   },
+   "image_input": {
+    "supported": true
+   },
+   "pdf_input": {
+    "supported": true
+   },
+   "structured_outputs": {
+    "supported": true
+   },
+   "thinking": {
+    "supported": true,
+    "types": {
+     "adaptive": {
+      "supported": true
+     },
+     "enabled": {
+      "supported": false
+     }
+    }
+   }
+  },
+  "created_at": "2026-06-29T00:00:00Z",
+  "display_name": "Claude Sonnet 5",
+  "max_input_tokens": 1000000,
+  "max_tokens": 128000,
+  "type": "model"
+ },
+ "result": {
+  "model": "claude-sonnet-5",
+  "backend": "anthropic",
+  "num_ctx": null,
+  "think": "high",
+  "think_requested": "high",
+  "think_supported": true,
+  "max_iters": 40,
+  "ended_without_answer": false,
+  "context_truncated": [],
+  "refusals": [],
+  "api_error": null,
+  "stop_reason": "end_turn",
+  "final_prompt_tokens": null,
+  "final_headroom": null,
+  "events": [
+   {
+    "type": "model",
+    "iteration": 0,
+    "content": "",
+    "thinking": "I should call applicable_layers first, then follow up with breakpoint_evidence_summary.\n\n",
+    "n_tool_calls": 2,
+    "done_reason": "tool_use",
+    "prompt_tokens": 8353,
+    "headroom": null
+   },
+   {
+    "type": "tool",
+    "name": "applicable_layers",
+    "params": {
+     "bam_path": "<IMP10>"
+    },
+    "call_id": 1,
+    "result": {
+     "bam_path": "<IMP10>",
+     "reads_sampled": 1000,
+     "applicable_layers": [
+      "discordant_pairs",
+      "soft_clipped_reads",
+      "split_reads",
+      "read_depth"
+     ],
+     "evidence": {
+      "soft_clipped_reads": "always applicable \u2014 any aligned BAM can show soft-clipping.",
+      "read_depth": "always applicable \u2014 any aligned BAM can show a coverage drop.",
+      "discordant_pairs": "applicable \u2014 at least one paired read observed in 1000 sampled reads.",
+      "split_reads": "applicable \u2014 at least one SA (supplementary alignment) tag observed in 1000 sampled reads."
+     }
+    },
+    "is_error": false
+   },
+   {
+    "type": "tool",
+    "name": "bam_stats_at_locus",
+    "params": {
+     "chromosome": "chr20",
+     "start": 25799500,
+     "end": 25800500,
+     "bam_path": "<IMP10>"
+    },
+    "call_id": 2,
+    "result": {
+     "chromosome": "chr20",
+     "start": 25799500,
+     "end": 25800500,
+     "contig_length": 64444167,
+     "clamped_to_contig": false,
+     "total_reads": 206,
+     "mean_depth": 25.96,
+     "mean_mapq": 0.0,
+     "low_mapq_fraction": 1.0,
+     "forward_reads": 103,
+     "reverse_reads": 103,
+     "position_provenance": {
+      "source": "caller_supplied",
+      "candidate_id": null,
+      "set_id": null,
+      "set_label": null,
+      "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+     }
+    },
+    "is_error": false
+   },
+   {
+    "type": "model",
+    "iteration": 1,
+    "content": "",
+    "thinking": "With a low mapq fraction of 1.0 and mean mapq of 0, this looks like a highly repetitive, quality-limited region. I'll still call breakpoint_evidence_summary to confirm the score is withheld.\n\n",
+    "n_tool_calls": 1,
+    "done_reason": "tool_use",
+    "prompt_tokens": 9100,
+    "headroom": null
+   },
+   {
+    "type": "tool",
+    "name": "breakpoint_evidence_summary",
+    "params": {
+     "chromosome": "chr20",
+     "position": 25800000,
+     "applicable_layers": [
+      "discordant_pairs",
+      "soft_clipped_reads",
+      "split_reads",
+      "read_depth"
+     ],
+     "bam_path": "<IMP10>"
+    },
+    "call_id": 3,
+    "result": {
+     "label": "",
+     "chromosome": "chr20",
+     "position": 25800000,
+     "window_bp": 500,
+     "min_supporting_reads": 3,
+     "depth_window_bp": 2000,
+     "depth_window_size": 200,
+     "evidence_score": null,
+     "evidence_score_raw": 0.0,
+     "evidence_strength": "QUALITY-LIMITED",
+     "signal_layers": "0/4",
+     "applicable_layers": [
+      "discordant_pairs",
+      "soft_clipped_reads",
+      "split_reads",
+      "read_depth"
+     ],
+     "unassessable_layers": {},
+     "discordant_pair_score": 0.0,
+     "soft_clip_score": 0.0,
+     "split_read_score": 0.0,
+     "depth_score": 0.0,
+     "locus_stats": {
+      "chromosome": "chr20",
+      "start": 25799500,
+      "end": 25800500,
+      "contig_length": 64444167,
+      "clamped_to_contig": false,
+      "total_reads": 206,
+      "mean_depth": 25.96,
+      "mean_mapq": 0.0,
+      "low_mapq_fraction": 1.0,
+      "forward_reads": 103,
+      "reverse_reads": 103
+     },
+     "discordant_pairs": {
+      "chromosome": "chr20",
+      "position": 25800000,
+      "window_bp": 500,
+      "total_reads_in_window": 0,
+      "discordant_pairs": 0,
+      "discordant_fraction": 0.0,
+      "mate_chromosomes": {},
+      "same_primary_alt_mates": 0,
+      "reads_below_min_mapq": 206,
+      "quality_limited": true,
+      "assessable": true,
+      "reason": null,
+      "min_mapq_applied": 20
+     },
+     "soft_clips": {
+      "chromosome": "chr20",
+      "position": 25800000,
+      "window_bp": 200,
+      "total_reads_in_window": 0,
+      "soft_clipped_reads": 0,
+      "soft_clipped_fraction": 0.0,
+      "consensus_clip_position": null,
+      "max_clips_at_position": 0,
+      "left_clip_reads": 0,
+      "right_clip_reads": 0,
+      "left_consensus_position": null,
+      "left_max_clips_at_position": 0,
+      "right_consensus_position": null,
+      "right_max_clips_at_position": 0,
+      "dominant_clip_side": null,
+      "reads_below_min_mapq": 94,
+      "quality_limited": true,
+      "assessable": true,
+      "reason": null,
+      "min_mapq_applied": 20
+     },
+     "split_reads": {
+      "chromosome": "chr20",
+      "position": 25800000,
+      "window_bp": 200,
+      "total_reads_in_window": 0,
+      "split_reads": 0,
+      "split_read_fraction": 0.0,
+      "partner_chromosomes": {},
+      "sa_entries_total": 0,
+      "sa_entries_below_min_mapq": 0,
+      "partner_strand_concordant": 0,
+      "partner_strand_flipped": 0,
+      "example_partner_loci": [],
+      "reads_below_min_mapq": 92,
+      "quality_limited": true,
+      "assessable": true,
+      "reason": null,
+      "min_mapq_applied": 20
+     },
+     "depth_profile": {
+      "chromosome": "chr20",
+      "start": 25798000,
+      "end": 25802000,
+      "window_size": 200,
+      "windows": [
+       {
+        "window_start": 25798000,
+        "window_end": 25798200,
+        "depth": 31.55
+       },
+       {
+        "window_start": 25798200,
+        "window_end": 25798400,
+        "depth": 31.61
+       },
+       {
+        "window_start": 25798400,
+        "window_end": 25798600,
+        "depth": 35.3
+       },
+       {
+        "window_start": 25798600,
+        "window_end": 25798800,
+        "depth": 32.52
+       },
+       {
+        "window_start": 25798800,
+        "window_end": 25799000,
+        "depth": 34.42
+       },
+       {
+        "window_start": 25799000,
+        "window_end": 25799200,
+        "depth": 34.7
+       },
+       {
+        "window_start": 25799200,
+        "window_end": 25799400,
+        "depth": 31.38
+       },
+       {
+        "window_start": 25799400,
+        "window_end": 25799600,
+        "depth": 30.89
+       },
+       {
+        "window_start": 25799600,
+        "window_end": 25799800,
+        "depth": 23.49
+       },
+       {
+        "window_start": 25799800,
+        "window_end": 25800000,
+        "depth": 26.18
+       },
+       {
+        "window_start": 25800000,
+        "window_end": 25800200,
+        "depth": 24.02
+       },
+       {
+        "window_start": 25800200,
+        "window_end": 25800400,
+        "depth": 27.61
+       },
+       {
+        "window_start": 25800400,
+        "window_end": 25800600,
+        "depth": 27.4
+       },
+       {
+        "window_start": 25800600,
+        "window_end": 25800800,
+        "depth": 34.45
+       },
+       {
+        "window_start": 25800800,
+        "window_end": 25801000,
+        "depth": 30.51
+       },
+       {
+        "window_start": 25801000,
+        "window_end": 25801200,
+        "depth": 32.5
+       },
+       {
+        "window_start": 25801200,
+        "window_end": 25801400,
+        "depth": 26.35
+       },
+       {
+        "window_start": 25801400,
+        "window_end": 25801600,
+        "depth": 27.75
+       },
+       {
+        "window_start": 25801600,
+        "window_end": 25801800,
+        "depth": 26.58
+       },
+       {
+        "window_start": 25801800,
+        "window_end": 25802000,
+        "depth": 30.51
+       }
+      ],
+      "summary": {
+       "min_depth": 23.49,
+       "max_depth": 35.3,
+       "mean_depth": 29.99,
+       "depth_ratio_min_to_mean": 0.783,
+       "likely_deletion": false,
+       "dip_position": 25799600,
+       "dip_distance_from_focus": 400,
+       "dip_is_at_focus": true,
+       "assessable": true,
+       "reason": null,
+       "contig_length": 64444167,
+       "clamped_to_contig": false,
+       "min_mapq_applied": null,
+       "mapq_note": "depth counts ALL reads regardless of MAPQ; the discordant, soft-clip and split layers filter at min_mapq. In a low-MAPQ region this layer is the only one still counting, so compare with care."
+      }
+     },
+     "supporting_observations": [
+      "discordant_pairs: all 206 reads in the window were below MAPQ 20; layer assessed as zero, not excluded from the score.",
+      "soft_clipped_reads: all 94 reads in the window were below MAPQ 20; layer assessed as zero, not excluded from the score.",
+      "split_reads: all 92 reads in the window were below MAPQ 20; layer assessed as zero, not excluded from the score.",
+      "Quality gate: 100.0% of reads at this locus are below MAPQ 20 (threshold 40%). Mapping here is mostly ambiguous, so no normalised evidence score is reported."
+     ],
+     "interpretation_template": "Breakpoint  at chr20:25800000. Evidence strength: QUALITY-LIMITED. Score: withheld \u2014 100.0% of reads here are below MAPQ 20, above the 40% quality gate, so a normalised score would overstate what the data supports (raw score over all 4 layers was 0.0/100, shown for reference only). Window: +/-500bp for the discordant, soft-clip and split layers; at this width the bottom scoring tier required 3 supporting read(s) (3 per 500bp, scaled). A verdict quoted without this window is not reproducible. Observations: discordant_pairs: all 206 reads in the window were below MAPQ 20; layer assessed as zero, not excluded from the score.; soft_clipped_reads: all 94 reads in the window were below MAPQ 20; layer assessed as zero, not excluded from the score.; split_reads: all 92 reads in the window were below MAPQ 20; layer assessed as zero, not excluded from the score.; Quality gate: 100.0% of reads at this locus are below MAPQ 20 (threshold 40%). Mapping here is mostly ambiguous, so no normalised evidence score is reported.. Technology note: discordant_pairs only valid for paired-end data; split_reads only valid for modern-alignment BAMs with SA tags \u2014 use detect_applicable_layers() to determine which apply to this BAM. All values in this template come from tool outputs only.",
+     "min_mapq_applied": 20,
+     "attainable_ceiling_derivable": true,
+     "score_bands": [
+      {
+       "strength": "strong",
+       "op": ">=",
+       "threshold": 70.0
+      },
+      {
+       "strength": "moderate",
+       "op": ">=",
+       "threshold": 40.0
+      },
+      {
+       "strength": "weak",
+       "op": ">",
+       "threshold": 0.0
+      }
+     ],
+     "strong_band": 70.0,
+     "max_all_layers": 100.0,
+     "max_with_flat_depth": 75.0,
+     "attainable_here": 50.0,
+     "strong_band_reachable_here": false,
+     "attainable_basis": "the paired-read measurement held at the band its measured value reaches \u2014 in a HETEROZYGOUS rearrangement roughly half the reads crossing the breakpoint come from the intact homolog, so the discordant fraction is capped well below the 0.5 its top band requires and no amount of extra coverage or a wider window moves it; the soft-clip and split-read measurements at their best possible band; and the depth measurement contributing nothing, because a balanced rearrangement gains and loses no DNA.",
+     "attainable_note": "Attainable-score note: for a heterozygous balanced rearrangement the highest score reachable at this locus is 50.0/100, below the 70.0/100 at which the top band begins \u2014 so the top band is UNREACHABLE here by arithmetic, and a middling band is the ceiling rather than a weak result. Two of the four layers are structurally limited for such an event: the depth layer contributes nothing because no DNA is gained or lost, and the paired-read layer is capped because roughly half the reads crossing the breakpoint come from the intact homolog. Judge a balanced event on the four measurements, not on the band it lands in.",
+     "position_provenance": {
+      "source": "caller_supplied",
+      "candidate_id": null,
+      "set_id": null,
+      "set_label": null,
+      "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+     }
+    },
+    "is_error": false
+   },
+   {
+    "type": "model",
+    "iteration": 2,
+    "content": "## Result: Score withheld \u2014 QUALITY-LIMITED\n\nFor chr20:25,800,000 in **IMP10**, `breakpoint_evidence_summary` returned:\n\n- **evidence_score: null**\n- **evidence_strength: \"QUALITY-LIMITED\"**\n- **signal_layers: 0/4**\n\n### Why the score was withheld\nThis is not a low score \u2014 it means the tool declined to compute a normalized score at all. The reason: **100% of reads in the \u00b1500bp window (206 reads for the discordant-pair layer, 94 for soft-clip, 92 for split-read) had MAPQ below 20**, far above the 40% low-MAPQ quality gate that triggers withholding. This matches the initial `bam_stats_at_locus` check, which showed `mean_mapq: 0.0` and `low_mapq_fraction: 1.0` \u2014 this locus is highly repetitive/ambiguously mapped.\n\nPer the tool's own note, a raw score across all 4 layers was computed as 0.0/100 \"for reference only,\" but this is explicitly flagged as unreliable and not to be reported as a real score, since mapping ambiguity here means the underlying signals (discordant pairs, soft-clips, split reads \u2014 all zero, and flat depth) cannot be trusted as true absence of a breakpoint versus an artifact of poor mapping.\n\n### What this means practically\n- I cannot tell you whether there is or isn't a structural variant at this position based on this evidence \u2014 the data quality at this specific locus is too poor to support a conclusion either way.\n- Per rule 6, note that the read-depth layer here isn't diagnostic on its own regardless of quality (flat depth is also what a balanced rearrangement would show), but that point is moot here since the whole result is withheld on mapping-quality grounds, not being interpreted as evidence of absence.\n- If this position came from a candidate list/VCF, note that it was **not** supplied via a registered candidate set in this conversation \u2014 I have no corroboration that 25,800,000 is a genuine caller-nominated breakpoint versus an arbitrary coordinate.\n\nIf you want, I can check a registered candidate set for IMP10 (if one exists) to see if this position \u2014 or a nearby one \u2014 was actually called, or look at MAPQ-independent visual confirmation via `igv_screenshot`, though repetitive-region caveats would still apply.",
+    "thinking": "",
+    "n_tool_calls": 0,
+    "done_reason": "end_turn",
+    "prompt_tokens": 11148,
+    "headroom": null
+   }
+  ],
+  "final_text": "## Result: Score withheld \u2014 QUALITY-LIMITED\n\nFor chr20:25,800,000 in **IMP10**, `breakpoint_evidence_summary` returned:\n\n- **evidence_score: null**\n- **evidence_strength: \"QUALITY-LIMITED\"**\n- **signal_layers: 0/4**\n\n### Why the score was withheld\nThis is not a low score \u2014 it means the tool declined to compute a normalized score at all. The reason: **100% of reads in the \u00b1500bp window (206 reads for the discordant-pair layer, 94 for soft-clip, 92 for split-read) had MAPQ below 20**, far above the 40% low-MAPQ quality gate that triggers withholding. This matches the initial `bam_stats_at_locus` check, which showed `mean_mapq: 0.0` and `low_mapq_fraction: 1.0` \u2014 this locus is highly repetitive/ambiguously mapped.\n\nPer the tool's own note, a raw score across all 4 layers was computed as 0.0/100 \"for reference only,\" but this is explicitly flagged as unreliable and not to be reported as a real score, since mapping ambiguity here means the underlying signals (discordant pairs, soft-clips, split reads \u2014 all zero, and flat depth) cannot be trusted as true absence of a breakpoint versus an artifact of poor mapping.\n\n### What this means practically\n- I cannot tell you whether there is or isn't a structural variant at this position based on this evidence \u2014 the data quality at this specific locus is too poor to support a conclusion either way.\n- Per rule 6, note that the read-depth layer here isn't diagnostic on its own regardless of quality (flat depth is also what a balanced rearrangement would show), but that point is moot here since the whole result is withheld on mapping-quality grounds, not being interpreted as evidence of absence.\n- If this position came from a candidate list/VCF, note that it was **not** supplied via a registered candidate set in this conversation \u2014 I have no corroboration that 25,800,000 is a genuine caller-nominated breakpoint versus an arbitrary coordinate.\n\nIf you want, I can check a registered candidate set for IMP10 (if one exists) to see if this position \u2014 or a nearby one \u2014 was actually called, or look at MAPQ-independent visual confirmation via `igv_screenshot`, though repetitive-region caveats would still apply.",
+  "call_ids": [
+   1,
+   2,
+   3
+  ],
+  "n_tool_calls": 3,
+  "text_tool_call_failures": [],
+  "malformed_tool_calls": [],
+  "verification": {
+   "numbers_in_prose": 16,
+   "unsupported": [],
+   "no_tool_calls": false,
+   "details": [
+    {
+     "text": "25,800,000",
+     "value": 25800000.0,
+     "supported": true
+    },
+    {
+     "text": "0",
+     "value": 0.0,
+     "supported": true
+    },
+    {
+     "text": "4",
+     "value": 4.0,
+     "supported": true
+    },
+    {
+     "text": "100",
+     "value": 100.0,
+     "supported": true
+    },
+    {
+     "text": "206",
+     "value": 206.0,
+     "supported": true
+    },
+    {
+     "text": "94",
+     "value": 94.0,
+     "supported": true
+    },
+    {
+     "text": "92",
+     "value": 92.0,
+     "supported": true
+    },
+    {
+     "text": "20",
+     "value": 20.0,
+     "supported": true
+    },
+    {
+     "text": "40",
+     "value": 40.0,
+     "supported": true
+    },
+    {
+     "text": "0.0",
+     "value": 0.0,
+     "supported": true
+    },
+    {
+     "text": "1.0",
+     "value": 1.0,
+     "supported": true
+    },
+    {
+     "text": "4",
+     "value": 4.0,
+     "supported": true
+    },
+    {
+     "text": "0.0",
+     "value": 0.0,
+     "supported": true
+    },
+    {
+     "text": "100",
+     "value": 100.0,
+     "supported": true
+    },
+    {
+     "text": "6",
+     "value": 6.0,
+     "supported": true
+    },
+    {
+     "text": "25,800,000",
+     "value": 25800000.0,
+     "supported": true
+    }
+   ]
+  },
+  "wall_s": 15.4,
+  "gen_tokens": 1235,
+  "prompt_tokens": 28601,
+  "gen_tokens_per_s": null,
+  "iterations": 3,
+  "api_usage": {
+   "input_tokens": 118,
+   "output_tokens": 1235,
+   "cache_creation_input_tokens": 2907,
+   "cache_read_input_tokens": 25576
+  },
+  "api_cost_usd": 0.024969,
+  "api_cost_usd_live_prices": 0.024969
+ },
+ "recorder_calls": [
+  {
+   "id": 1,
+   "server": "evidence",
+   "tool": "applicable_layers",
+   "params": {
+    "bam_path": "~/public_data/sim/bams/IMP10.bam"
+   },
+   "is_error": false,
+   "ms": 6.6,
+   "result": {
+    "bam_path": "~/public_data/sim/bams/IMP10.bam",
+    "reads_sampled": 1000,
+    "applicable_layers": [
+     "discordant_pairs",
+     "soft_clipped_reads",
+     "split_reads",
+     "read_depth"
+    ],
+    "evidence": {
+     "soft_clipped_reads": "always applicable \u2014 any aligned BAM can show soft-clipping.",
+     "read_depth": "always applicable \u2014 any aligned BAM can show a coverage drop.",
+     "discordant_pairs": "applicable \u2014 at least one paired read observed in 1000 sampled reads.",
+     "split_reads": "applicable \u2014 at least one SA (supplementary alignment) tag observed in 1000 sampled reads."
+    }
+   },
+   "traceback": null
+  },
+  {
+   "id": 2,
+   "server": "evidence",
+   "tool": "bam_stats_at_locus",
+   "params": {
+    "chromosome": "chr20",
+    "start": 25799500,
+    "end": 25800500,
+    "bam_path": "~/public_data/sim/bams/IMP10.bam"
+   },
+   "is_error": false,
+   "ms": 8.8,
+   "result": {
+    "chromosome": "chr20",
+    "start": 25799500,
+    "end": 25800500,
+    "contig_length": 64444167,
+    "clamped_to_contig": false,
+    "total_reads": 206,
+    "mean_depth": 25.96,
+    "mean_mapq": 0.0,
+    "low_mapq_fraction": 1.0,
+    "forward_reads": 103,
+    "reverse_reads": 103,
+    "position_provenance": {
+     "source": "caller_supplied",
+     "candidate_id": null,
+     "set_id": null,
+     "set_label": null,
+     "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+    }
+   },
+   "traceback": null
+  },
+  {
+   "id": 3,
+   "server": "evidence",
+   "tool": "breakpoint_evidence_summary",
+   "params": {
+    "chromosome": "chr20",
+    "position": 25800000,
+    "applicable_layers": [
+     "discordant_pairs",
+     "soft_clipped_reads",
+     "split_reads",
+     "read_depth"
+    ],
+    "bam_path": "~/public_data/sim/bams/IMP10.bam"
+   },
+   "is_error": false,
+   "ms": 44.6,
+   "result": {
+    "label": "",
+    "chromosome": "chr20",
+    "position": 25800000,
+    "window_bp": 500,
+    "min_supporting_reads": 3,
+    "depth_window_bp": 2000,
+    "depth_window_size": 200,
+    "evidence_score": null,
+    "evidence_score_raw": 0.0,
+    "evidence_strength": "QUALITY-LIMITED",
+    "signal_layers": "0/4",
+    "applicable_layers": [
+     "discordant_pairs",
+     "soft_clipped_reads",
+     "split_reads",
+     "read_depth"
+    ],
+    "unassessable_layers": {},
+    "discordant_pair_score": 0.0,
+    "soft_clip_score": 0.0,
+    "split_read_score": 0.0,
+    "depth_score": 0.0,
+    "locus_stats": {
+     "chromosome": "chr20",
+     "start": 25799500,
+     "end": 25800500,
+     "contig_length": 64444167,
+     "clamped_to_contig": false,
+     "total_reads": 206,
+     "mean_depth": 25.96,
+     "mean_mapq": 0.0,
+     "low_mapq_fraction": 1.0,
+     "forward_reads": 103,
+     "reverse_reads": 103
+    },
+    "discordant_pairs": {
+     "chromosome": "chr20",
+     "position": 25800000,
+     "window_bp": 500,
+     "total_reads_in_window": 0,
+     "discordant_pairs": 0,
+     "discordant_fraction": 0.0,
+     "mate_chromosomes": {},
+     "same_primary_alt_mates": 0,
+     "reads_below_min_mapq": 206,
+     "quality_limited": true,
+     "assessable": true,
+     "reason": null,
+     "min_mapq_applied": 20
+    },
+    "soft_clips": {
+     "chromosome": "chr20",
+     "position": 25800000,
+     "window_bp": 200,
+     "total_reads_in_window": 0,
+     "soft_clipped_reads": 0,
+     "soft_clipped_fraction": 0.0,
+     "consensus_clip_position": null,
+     "max_clips_at_position": 0,
+     "left_clip_reads": 0,
+     "right_clip_reads": 0,
+     "left_consensus_position": null,
+     "left_max_clips_at_position": 0,
+     "right_consensus_position": null,
+     "right_max_clips_at_position": 0,
+     "dominant_clip_side": null,
+     "reads_below_min_mapq": 94,
+     "quality_limited": true,
+     "assessable": true,
+     "reason": null,
+     "min_mapq_applied": 20
+    },
+    "split_reads": {
+     "chromosome": "chr20",
+     "position": 25800000,
+     "window_bp": 200,
+     "total_reads_in_window": 0,
+     "split_reads": 0,
+     "split_read_fraction": 0.0,
+     "partner_chromosomes": {},
+     "sa_entries_total": 0,
+     "sa_entries_below_min_mapq": 0,
+     "partner_strand_concordant": 0,
+     "partner_strand_flipped": 0,
+     "example_partner_loci": [],
+     "reads_below_min_mapq": 92,
+     "quality_limited": true,
+     "assessable": true,
+     "reason": null,
+     "min_mapq_applied": 20
+    },
+    "depth_profile": {
+     "chromosome": "chr20",
+     "start": 25798000,
+     "end": 25802000,
+     "window_size": 200,
+     "windows": [
+      {
+       "window_start": 25798000,
+       "window_end": 25798200,
+       "depth": 31.55
+      },
+      {
+       "window_start": 25798200,
+       "window_end": 25798400,
+       "depth": 31.61
+      },
+      {
+       "window_start": 25798400,
+       "window_end": 25798600,
+       "depth": 35.3
+      },
+      {
+       "window_start": 25798600,
+       "window_end": 25798800,
+       "depth": 32.52
+      },
+      {
+       "window_start": 25798800,
+       "window_end": 25799000,
+       "depth": 34.42
+      },
+      {
+       "window_start": 25799000,
+       "window_end": 25799200,
+       "depth": 34.7
+      },
+      {
+       "window_start": 25799200,
+       "window_end": 25799400,
+       "depth": 31.38
+      },
+      {
+       "window_start": 25799400,
+       "window_end": 25799600,
+       "depth": 30.89
+      },
+      {
+       "window_start": 25799600,
+       "window_end": 25799800,
+       "depth": 23.49
+      },
+      {
+       "window_start": 25799800,
+       "window_end": 25800000,
+       "depth": 26.18
+      },
+      {
+       "window_start": 25800000,
+       "window_end": 25800200,
+       "depth": 24.02
+      },
+      {
+       "window_start": 25800200,
+       "window_end": 25800400,
+       "depth": 27.61
+      },
+      {
+       "window_start": 25800400,
+       "window_end": 25800600,
+       "depth": 27.4
+      },
+      {
+       "window_start": 25800600,
+       "window_end": 25800800,
+       "depth": 34.45
+      },
+      {
+       "window_start": 25800800,
+       "window_end": 25801000,
+       "depth": 30.51
+      },
+      {
+       "window_start": 25801000,
+       "window_end": 25801200,
+       "depth": 32.5
+      },
+      {
+       "window_start": 25801200,
+       "window_end": 25801400,
+       "depth": 26.35
+      },
+      {
+       "window_start": 25801400,
+       "window_end": 25801600,
+       "depth": 27.75
+      },
+      {
+       "window_start": 25801600,
+       "window_end": 25801800,
+       "depth": 26.58
+      },
+      {
+       "window_start": 25801800,
+       "window_end": 25802000,
+       "depth": 30.51
+      }
+     ],
+     "summary": {
+      "min_depth": 23.49,
+      "max_depth": 35.3,
+      "mean_depth": 29.99,
+      "depth_ratio_min_to_mean": 0.783,
+      "likely_deletion": false,
+      "dip_position": 25799600,
+      "dip_distance_from_focus": 400,
+      "dip_is_at_focus": true,
+      "assessable": true,
+      "reason": null,
+      "contig_length": 64444167,
+      "clamped_to_contig": false,
+      "min_mapq_applied": null,
+      "mapq_note": "depth counts ALL reads regardless of MAPQ; the discordant, soft-clip and split layers filter at min_mapq. In a low-MAPQ region this layer is the only one still counting, so compare with care."
+     }
+    },
+    "supporting_observations": [
+     "discordant_pairs: all 206 reads in the window were below MAPQ 20; layer assessed as zero, not excluded from the score.",
+     "soft_clipped_reads: all 94 reads in the window were below MAPQ 20; layer assessed as zero, not excluded from the score.",
+     "split_reads: all 92 reads in the window were below MAPQ 20; layer assessed as zero, not excluded from the score.",
+     "Quality gate: 100.0% of reads at this locus are below MAPQ 20 (threshold 40%). Mapping here is mostly ambiguous, so no normalised evidence score is reported."
+    ],
+    "interpretation_template": "Breakpoint  at chr20:25800000. Evidence strength: QUALITY-LIMITED. Score: withheld \u2014 100.0% of reads here are below MAPQ 20, above the 40% quality gate, so a normalised score would overstate what the data supports (raw score over all 4 layers was 0.0/100, shown for reference only). Window: +/-500bp for the discordant, soft-clip and split layers; at this width the bottom scoring tier required 3 supporting read(s) (3 per 500bp, scaled). A verdict quoted without this window is not reproducible. Observations: discordant_pairs: all 206 reads in the window were below MAPQ 20; layer assessed as zero, not excluded from the score.; soft_clipped_reads: all 94 reads in the window were below MAPQ 20; layer assessed as zero, not excluded from the score.; split_reads: all 92 reads in the window were below MAPQ 20; layer assessed as zero, not excluded from the score.; Quality gate: 100.0% of reads at this locus are below MAPQ 20 (threshold 40%). Mapping here is mostly ambiguous, so no normalised evidence score is reported.. Technology note: discordant_pairs only valid for paired-end data; split_reads only valid for modern-alignment BAMs with SA tags \u2014 use detect_applicable_layers() to determine which apply to this BAM. All values in this template come from tool outputs only.",
+    "min_mapq_applied": 20,
+    "attainable_ceiling_derivable": true,
+    "score_bands": [
+     {
+      "strength": "strong",
+      "op": ">=",
+      "threshold": 70.0
+     },
+     {
+      "strength": "moderate",
+      "op": ">=",
+      "threshold": 40.0
+     },
+     {
+      "strength": "weak",
+      "op": ">",
+      "threshold": 0.0
+     }
+    ],
+    "strong_band": 70.0,
+    "max_all_layers": 100.0,
+    "max_with_flat_depth": 75.0,
+    "attainable_here": 50.0,
+    "strong_band_reachable_here": false,
+    "attainable_basis": "the paired-read measurement held at the band its measured value reaches \u2014 in a HETEROZYGOUS rearrangement roughly half the reads crossing the breakpoint come from the intact homolog, so the discordant fraction is capped well below the 0.5 its top band requires and no amount of extra coverage or a wider window moves it; the soft-clip and split-read measurements at their best possible band; and the depth measurement contributing nothing, because a balanced rearrangement gains and loses no DNA.",
+    "attainable_note": "Attainable-score note: for a heterozygous balanced rearrangement the highest score reachable at this locus is 50.0/100, below the 70.0/100 at which the top band begins \u2014 so the top band is UNREACHABLE here by arithmetic, and a middling band is the ceiling rather than a weak result. Two of the four layers are structurally limited for such an event: the depth layer contributes nothing because no DNA is gained or lost, and the paired-read layer is capped because roughly half the reads crossing the breakpoint come from the intact homolog. Judge a balanced event on the four measurements, not on the band it lands in.",
+    "position_provenance": {
+     "source": "caller_supplied",
+     "candidate_id": null,
+     "set_id": null,
+     "set_label": null,
+     "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+    }
+   },
+   "traceback": null
+  }
+ ]
+}

@@ -1,0 +1,2385 @@
+{
+ "model": "claude-opus-5",
+ "case": "b_withheld_vs_low",
+ "run": 2,
+ "position_in_order": 20,
+ "prompt": "What evidence score does the breakpoint at chr20:25800000 in dataset IMP10 receive, and what does that score mean?",
+ "prompt_is_reconstruction": true,
+ "started": "2026-09-26T14:36:17",
+ "ended": "2026-09-26T14:36:52",
+ "git_head": "547b5ccc43d6b2da1a74b4059322a8cff8cb21d6",
+ "schema_sha256": "6ce8866a5d4317cb8664c4083e22b89d87e4d65e3961b92f5a56b8408e51cef0",
+ "model_info": {
+  "id": "claude-opus-5",
+  "capabilities": {
+   "batch": {
+    "supported": true
+   },
+   "citations": {
+    "supported": true
+   },
+   "code_execution": {
+    "supported": true
+   },
+   "context_management": {
+    "clear_thinking_20251015": {
+     "supported": true
+    },
+    "clear_tool_uses_20250919": {
+     "supported": true
+    },
+    "compact_20260112": {
+     "supported": true
+    },
+    "supported": true
+   },
+   "effort": {
+    "high": {
+     "supported": true
+    },
+    "low": {
+     "supported": true
+    },
+    "max": {
+     "supported": true
+    },
+    "medium": {
+     "supported": true
+    },
+    "supported": true,
+    "xhigh": {
+     "supported": true
+    }
+   },
+   "image_input": {
+    "supported": true
+   },
+   "pdf_input": {
+    "supported": true
+   },
+   "structured_outputs": {
+    "supported": true
+   },
+   "thinking": {
+    "supported": true,
+    "types": {
+     "adaptive": {
+      "supported": true
+     },
+     "enabled": {
+      "supported": false
+     }
+    }
+   }
+  },
+  "created_at": "2026-07-24T00:00:00Z",
+  "display_name": "Claude Opus 5",
+  "max_input_tokens": 1000000,
+  "max_tokens": 128000,
+  "type": "model"
+ },
+ "result": {
+  "model": "claude-opus-5",
+  "backend": "anthropic",
+  "num_ctx": null,
+  "think": "high",
+  "think_requested": "high",
+  "think_supported": true,
+  "max_iters": 40,
+  "ended_without_answer": false,
+  "context_truncated": [],
+  "refusals": [],
+  "api_error": null,
+  "stop_reason": "end_turn",
+  "final_prompt_tokens": null,
+  "final_headroom": null,
+  "events": [
+   {
+    "type": "model",
+    "iteration": 0,
+    "content": "I'll start by checking which evidence layers this dataset can structurally support, plus a basic quality check at the locus.",
+    "thinking": "",
+    "n_tool_calls": 2,
+    "done_reason": "tool_use",
+    "prompt_tokens": 8285,
+    "headroom": null
+   },
+   {
+    "type": "tool",
+    "name": "applicable_layers",
+    "params": {
+     "bam_path": "<IMP10>"
+    },
+    "call_id": 1,
+    "result": {
+     "bam_path": "<IMP10>",
+     "reads_sampled": 1000,
+     "applicable_layers": [
+      "discordant_pairs",
+      "soft_clipped_reads",
+      "split_reads",
+      "read_depth"
+     ],
+     "evidence": {
+      "soft_clipped_reads": "always applicable \u2014 any aligned BAM can show soft-clipping.",
+      "read_depth": "always applicable \u2014 any aligned BAM can show a coverage drop.",
+      "discordant_pairs": "applicable \u2014 at least one paired read observed in 1000 sampled reads.",
+      "split_reads": "applicable \u2014 at least one SA (supplementary alignment) tag observed in 1000 sampled reads."
+     }
+    },
+    "is_error": false
+   },
+   {
+    "type": "tool",
+    "name": "bam_stats_at_locus",
+    "params": {
+     "chromosome": "chr20",
+     "start": 25799500,
+     "end": 25800500,
+     "bam_path": "<IMP10>"
+    },
+    "call_id": 2,
+    "result": {
+     "chromosome": "chr20",
+     "start": 25799500,
+     "end": 25800500,
+     "contig_length": 64444167,
+     "clamped_to_contig": false,
+     "total_reads": 206,
+     "mean_depth": 25.96,
+     "mean_mapq": 0.0,
+     "low_mapq_fraction": 1.0,
+     "forward_reads": 103,
+     "reverse_reads": 103,
+     "position_provenance": {
+      "source": "caller_supplied",
+      "candidate_id": null,
+      "set_id": null,
+      "set_label": null,
+      "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+     }
+    },
+    "is_error": false
+   },
+   {
+    "type": "model",
+    "iteration": 1,
+    "content": "Mean MAPQ is 0.0 with 100% of reads low-MAPQ \u2014 this region is entirely ambiguously mapped. Let me gather the individual layers and the integrated summary.",
+    "thinking": "With every read having a MAPQ of 0, this region looks entirely repetitive or ambiguous, so I expect the summary to flag it as quality-limited. I'll go ahead and run the individual layers plus the summary to confirm.\n\n",
+    "n_tool_calls": 4,
+    "done_reason": "tool_use",
+    "prompt_tokens": 9040,
+    "headroom": null
+   },
+   {
+    "type": "tool",
+    "name": "discordant_pairs",
+    "params": {
+     "chromosome": "chr20",
+     "position": 25800000,
+     "bam_path": "<IMP10>"
+    },
+    "call_id": 3,
+    "result": {
+     "chromosome": "chr20",
+     "position": 25800000,
+     "window_bp": 500,
+     "total_reads_in_window": 0,
+     "discordant_pairs": 0,
+     "discordant_fraction": 0.0,
+     "mate_chromosomes": {},
+     "same_primary_alt_mates": 0,
+     "reads_below_min_mapq": 206,
+     "quality_limited": true,
+     "assessable": true,
+     "reason": null,
+     "min_mapq_applied": 20,
+     "position_provenance": {
+      "source": "caller_supplied",
+      "candidate_id": null,
+      "set_id": null,
+      "set_label": null,
+      "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+     }
+    },
+    "is_error": false
+   },
+   {
+    "type": "tool",
+    "name": "soft_clipped_reads",
+    "params": {
+     "chromosome": "chr20",
+     "position": 25800000,
+     "bam_path": "<IMP10>"
+    },
+    "call_id": 4,
+    "result": {
+     "chromosome": "chr20",
+     "position": 25800000,
+     "window_bp": 200,
+     "total_reads_in_window": 0,
+     "soft_clipped_reads": 0,
+     "soft_clipped_fraction": 0.0,
+     "consensus_clip_position": null,
+     "max_clips_at_position": 0,
+     "left_clip_reads": 0,
+     "right_clip_reads": 0,
+     "left_consensus_position": null,
+     "left_max_clips_at_position": 0,
+     "right_consensus_position": null,
+     "right_max_clips_at_position": 0,
+     "dominant_clip_side": null,
+     "reads_below_min_mapq": 94,
+     "quality_limited": true,
+     "assessable": true,
+     "reason": null,
+     "min_mapq_applied": 20,
+     "position_provenance": {
+      "source": "caller_supplied",
+      "candidate_id": null,
+      "set_id": null,
+      "set_label": null,
+      "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+     }
+    },
+    "is_error": false
+   },
+   {
+    "type": "tool",
+    "name": "split_reads",
+    "params": {
+     "chromosome": "chr20",
+     "position": 25800000,
+     "bam_path": "<IMP10>"
+    },
+    "call_id": 5,
+    "result": {
+     "chromosome": "chr20",
+     "position": 25800000,
+     "window_bp": 200,
+     "total_reads_in_window": 92,
+     "split_reads": 2,
+     "split_read_fraction": 0.022,
+     "partner_chromosomes": {
+      "chr22_KI270733v1_random": 1,
+      "chr21": 1
+     },
+     "sa_entries_total": 2,
+     "sa_entries_below_min_mapq": 0,
+     "partner_strand_concordant": 1,
+     "partner_strand_flipped": 1,
+     "example_partner_loci": [
+      "chr22_KI270733v1_random:38854",
+      "chr21:7599999"
+     ],
+     "reads_below_min_mapq": 0,
+     "quality_limited": false,
+     "assessable": true,
+     "reason": null,
+     "min_mapq_applied": 0,
+     "position_provenance": {
+      "source": "caller_supplied",
+      "candidate_id": null,
+      "set_id": null,
+      "set_label": null,
+      "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+     }
+    },
+    "is_error": false
+   },
+   {
+    "type": "tool",
+    "name": "read_depth_profile",
+    "params": {
+     "chromosome": "chr20",
+     "start": 25795000,
+     "end": 25805000,
+     "focus_position": 25800000,
+     "bam_path": "<IMP10>"
+    },
+    "call_id": 6,
+    "result": {
+     "chromosome": "chr20",
+     "start": 25795000,
+     "end": 25805000,
+     "window_size": 100,
+     "windows": [
+      {
+       "window_start": 25795000,
+       "window_end": 25795100,
+       "depth": 32.5
+      },
+      {
+       "window_start": 25795100,
+       "window_end": 25795200,
+       "depth": 43.0
+      },
+      {
+       "window_start": 25795200,
+       "window_end": 25795300,
+       "depth": 31.09
+      },
+      {
+       "window_start": 25795300,
+       "window_end": 25795400,
+       "depth": 24.31
+      },
+      {
+       "window_start": 25795400,
+       "window_end": 25795500,
+       "depth": 25.67
+      },
+      {
+       "window_start": 25795500,
+       "window_end": 25795600,
+       "depth": 28.36
+      },
+      {
+       "window_start": 25795600,
+       "window_end": 25795700,
+       "depth": 34.07
+      },
+      {
+       "window_start": 25795700,
+       "window_end": 25795800,
+       "depth": 37.19
+      },
+      {
+       "window_start": 25795800,
+       "window_end": 25795900,
+       "depth": 32.0
+      },
+      {
+       "window_start": 25795900,
+       "window_end": 25796000,
+       "depth": 41.61
+      },
+      {
+       "window_start": 25796000,
+       "window_end": 25796100,
+       "depth": 38.14
+      },
+      {
+       "window_start": 25796100,
+       "window_end": 25796200,
+       "depth": 35.2
+      },
+      {
+       "window_start": 25796200,
+       "window_end": 25796300,
+       "depth": 39.17
+      },
+      {
+       "window_start": 25796300,
+       "window_end": 25796400,
+       "depth": 44.73
+      },
+      {
+       "window_start": 25796400,
+       "window_end": 25796500,
+       "depth": 44.68
+      },
+      {
+       "window_start": 25796500,
+       "window_end": 25796600,
+       "depth": 40.46
+      },
+      {
+       "window_start": 25796600,
+       "window_end": 25796700,
+       "depth": 39.47
+      },
+      {
+       "window_start": 25796700,
+       "window_end": 25796800,
+       "depth": 52.2
+      },
+      {
+       "window_start": 25796800,
+       "window_end": 25796900,
+       "depth": 38.22
+      },
+      {
+       "window_start": 25796900,
+       "window_end": 25797000,
+       "depth": 34.28
+      },
+      {
+       "window_start": 25797000,
+       "window_end": 25797100,
+       "depth": 35.67
+      },
+      {
+       "window_start": 25797100,
+       "window_end": 25797200,
+       "depth": 29.39
+      },
+      {
+       "window_start": 25797200,
+       "window_end": 25797300,
+       "depth": 30.26
+      },
+      {
+       "window_start": 25797300,
+       "window_end": 25797400,
+       "depth": 27.45
+      },
+      {
+       "window_start": 25797400,
+       "window_end": 25797500,
+       "depth": 27.04
+      },
+      {
+       "window_start": 25797500,
+       "window_end": 25797600,
+       "depth": 23.88
+      },
+      {
+       "window_start": 25797600,
+       "window_end": 25797700,
+       "depth": 29.24
+      },
+      {
+       "window_start": 25797700,
+       "window_end": 25797800,
+       "depth": 26.21
+      },
+      {
+       "window_start": 25797800,
+       "window_end": 25797900,
+       "depth": 25.24
+      },
+      {
+       "window_start": 25797900,
+       "window_end": 25798000,
+       "depth": 29.91
+      },
+      {
+       "window_start": 25798000,
+       "window_end": 25798100,
+       "depth": 31.68
+      },
+      {
+       "window_start": 25798100,
+       "window_end": 25798200,
+       "depth": 31.41
+      },
+      {
+       "window_start": 25798200,
+       "window_end": 25798300,
+       "depth": 30.71
+      },
+      {
+       "window_start": 25798300,
+       "window_end": 25798400,
+       "depth": 32.51
+      },
+      {
+       "window_start": 25798400,
+       "window_end": 25798500,
+       "depth": 37.57
+      },
+      {
+       "window_start": 25798500,
+       "window_end": 25798600,
+       "depth": 33.03
+      },
+      {
+       "window_start": 25798600,
+       "window_end": 25798700,
+       "depth": 31.0
+      },
+      {
+       "window_start": 25798700,
+       "window_end": 25798800,
+       "depth": 34.05
+      },
+      {
+       "window_start": 25798800,
+       "window_end": 25798900,
+       "depth": 30.77
+      },
+      {
+       "window_start": 25798900,
+       "window_end": 25799000,
+       "depth": 38.08
+      },
+      {
+       "window_start": 25799000,
+       "window_end": 25799100,
+       "depth": 37.69
+      },
+      {
+       "window_start": 25799100,
+       "window_end": 25799200,
+       "depth": 31.71
+      },
+      {
+       "window_start": 25799200,
+       "window_end": 25799300,
+       "depth": 32.93
+      },
+      {
+       "window_start": 25799300,
+       "window_end": 25799400,
+       "depth": 29.82
+      },
+      {
+       "window_start": 25799400,
+       "window_end": 25799500,
+       "depth": 31.82
+      },
+      {
+       "window_start": 25799500,
+       "window_end": 25799600,
+       "depth": 29.95
+      },
+      {
+       "window_start": 25799600,
+       "window_end": 25799700,
+       "depth": 24.51
+      },
+      {
+       "window_start": 25799700,
+       "window_end": 25799800,
+       "depth": 22.47
+      },
+      {
+       "window_start": 25799800,
+       "window_end": 25799900,
+       "depth": 30.85
+      },
+      {
+       "window_start": 25799900,
+       "window_end": 25800000,
+       "depth": 21.5
+      },
+      {
+       "window_start": 25800000,
+       "window_end": 25800100,
+       "depth": 18.29
+      },
+      {
+       "window_start": 25800100,
+       "window_end": 25800200,
+       "depth": 29.76
+      },
+      {
+       "window_start": 25800200,
+       "window_end": 25800300,
+       "depth": 26.6
+      },
+      {
+       "window_start": 25800300,
+       "window_end": 25800400,
+       "depth": 28.61
+      },
+      {
+       "window_start": 25800400,
+       "window_end": 25800500,
+       "depth": 27.03
+      },
+      {
+       "window_start": 25800500,
+       "window_end": 25800600,
+       "depth": 27.77
+      },
+      {
+       "window_start": 25800600,
+       "window_end": 25800700,
+       "depth": 29.16
+      },
+      {
+       "window_start": 25800700,
+       "window_end": 25800800,
+       "depth": 39.75
+      },
+      {
+       "window_start": 25800800,
+       "window_end": 25800900,
+       "depth": 34.05
+      },
+      {
+       "window_start": 25800900,
+       "window_end": 25801000,
+       "depth": 26.97
+      },
+      {
+       "window_start": 25801000,
+       "window_end": 25801100,
+       "depth": 35.08
+      },
+      {
+       "window_start": 25801100,
+       "window_end": 25801200,
+       "depth": 29.92
+      },
+      {
+       "window_start": 25801200,
+       "window_end": 25801300,
+       "depth": 27.35
+      },
+      {
+       "window_start": 25801300,
+       "window_end": 25801400,
+       "depth": 25.35
+      },
+      {
+       "window_start": 25801400,
+       "window_end": 25801500,
+       "depth": 29.2
+      },
+      {
+       "window_start": 25801500,
+       "window_end": 25801600,
+       "depth": 26.29
+      },
+      {
+       "window_start": 25801600,
+       "window_end": 25801700,
+       "depth": 20.48
+      },
+      {
+       "window_start": 25801700,
+       "window_end": 25801800,
+       "depth": 32.68
+      },
+      {
+       "window_start": 25801800,
+       "window_end": 25801900,
+       "depth": 31.93
+      },
+      {
+       "window_start": 25801900,
+       "window_end": 25802000,
+       "depth": 29.09
+      },
+      {
+       "window_start": 25802000,
+       "window_end": 25802100,
+       "depth": 42.14
+      },
+      {
+       "window_start": 25802100,
+       "window_end": 25802200,
+       "depth": 33.26
+      },
+      {
+       "window_start": 25802200,
+       "window_end": 25802300,
+       "depth": 28.69
+      },
+      {
+       "window_start": 25802300,
+       "window_end": 25802400,
+       "depth": 28.66
+      },
+      {
+       "window_start": 25802400,
+       "window_end": 25802500,
+       "depth": 25.1
+      },
+      {
+       "window_start": 25802500,
+       "window_end": 25802600,
+       "depth": 30.44
+      },
+      {
+       "window_start": 25802600,
+       "window_end": 25802700,
+       "depth": 32.07
+      },
+      {
+       "window_start": 25802700,
+       "window_end": 25802800,
+       "depth": 24.63
+      },
+      {
+       "window_start": 25802800,
+       "window_end": 25802900,
+       "depth": 24.85
+      },
+      {
+       "window_start": 25802900,
+       "window_end": 25803000,
+       "depth": 30.79
+      },
+      {
+       "window_start": 25803000,
+       "window_end": 25803100,
+       "depth": 23.78
+      },
+      {
+       "window_start": 25803100,
+       "window_end": 25803200,
+       "depth": 19.36
+      },
+      {
+       "window_start": 25803200,
+       "window_end": 25803300,
+       "depth": 22.9
+      },
+      {
+       "window_start": 25803300,
+       "window_end": 25803400,
+       "depth": 24.88
+      },
+      {
+       "window_start": 25803400,
+       "window_end": 25803500,
+       "depth": 31.05
+      },
+      {
+       "window_start": 25803500,
+       "window_end": 25803600,
+       "depth": 22.91
+      },
+      {
+       "window_start": 25803600,
+       "window_end": 25803700,
+       "depth": 21.82
+      },
+      {
+       "window_start": 25803700,
+       "window_end": 25803800,
+       "depth": 20.97
+      },
+      {
+       "window_start": 25803800,
+       "window_end": 25803900,
+       "depth": 20.82
+      },
+      {
+       "window_start": 25803900,
+       "window_end": 25804000,
+       "depth": 34.46
+      },
+      {
+       "window_start": 25804000,
+       "window_end": 25804100,
+       "depth": 26.98
+      },
+      {
+       "window_start": 25804100,
+       "window_end": 25804200,
+       "depth": 25.84
+      },
+      {
+       "window_start": 25804200,
+       "window_end": 25804300,
+       "depth": 27.47
+      },
+      {
+       "window_start": 25804300,
+       "window_end": 25804400,
+       "depth": 26.82
+      },
+      {
+       "window_start": 25804400,
+       "window_end": 25804500,
+       "depth": 26.64
+      },
+      {
+       "window_start": 25804500,
+       "window_end": 25804600,
+       "depth": 19.99
+      },
+      {
+       "window_start": 25804600,
+       "window_end": 25804700,
+       "depth": 21.83
+      },
+      {
+       "window_start": 25804700,
+       "window_end": 25804800,
+       "depth": 30.0
+      },
+      {
+       "window_start": 25804800,
+       "window_end": 25804900,
+       "depth": 27.12
+      },
+      {
+       "window_start": 25804900,
+       "window_end": 25805000,
+       "depth": 21.61
+      }
+     ],
+     "summary": {
+      "min_depth": 18.29,
+      "max_depth": 52.2,
+      "mean_depth": 30.18,
+      "depth_ratio_min_to_mean": 0.606,
+      "likely_deletion": true,
+      "dip_position": 25800000,
+      "dip_distance_from_focus": 0,
+      "dip_is_at_focus": true,
+      "assessable": true,
+      "reason": null,
+      "contig_length": 64444167,
+      "clamped_to_contig": false,
+      "min_mapq_applied": null,
+      "mapq_note": "depth counts ALL reads regardless of MAPQ; the discordant, soft-clip and split layers filter at min_mapq. In a low-MAPQ region this layer is the only one still counting, so compare with care."
+     },
+     "position_provenance": {
+      "source": "caller_supplied",
+      "candidate_id": null,
+      "set_id": null,
+      "set_label": null,
+      "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+     }
+    },
+    "is_error": false
+   },
+   {
+    "type": "model",
+    "iteration": 2,
+    "content": "",
+    "thinking": "",
+    "n_tool_calls": 1,
+    "done_reason": "tool_use",
+    "prompt_tokens": 11144,
+    "headroom": null
+   },
+   {
+    "type": "tool",
+    "name": "breakpoint_evidence_summary",
+    "params": {
+     "chromosome": "chr20",
+     "position": 25800000,
+     "applicable_layers": [
+      "discordant_pairs",
+      "soft_clipped_reads",
+      "split_reads",
+      "read_depth"
+     ],
+     "label": "chr20:25800000 IMP10 user-supplied",
+     "bam_path": "<IMP10>"
+    },
+    "call_id": 7,
+    "result": {
+     "label": "chr20:25800000 IMP10 user-supplied",
+     "chromosome": "chr20",
+     "position": 25800000,
+     "window_bp": 500,
+     "min_supporting_reads": 3,
+     "depth_window_bp": 2000,
+     "depth_window_size": 200,
+     "evidence_score": null,
+     "evidence_score_raw": 0.0,
+     "evidence_strength": "QUALITY-LIMITED",
+     "signal_layers": "0/4",
+     "applicable_layers": [
+      "discordant_pairs",
+      "soft_clipped_reads",
+      "split_reads",
+      "read_depth"
+     ],
+     "unassessable_layers": {},
+     "discordant_pair_score": 0.0,
+     "soft_clip_score": 0.0,
+     "split_read_score": 0.0,
+     "depth_score": 0.0,
+     "locus_stats": {
+      "chromosome": "chr20",
+      "start": 25799500,
+      "end": 25800500,
+      "contig_length": 64444167,
+      "clamped_to_contig": false,
+      "total_reads": 206,
+      "mean_depth": 25.96,
+      "mean_mapq": 0.0,
+      "low_mapq_fraction": 1.0,
+      "forward_reads": 103,
+      "reverse_reads": 103
+     },
+     "discordant_pairs": {
+      "chromosome": "chr20",
+      "position": 25800000,
+      "window_bp": 500,
+      "total_reads_in_window": 0,
+      "discordant_pairs": 0,
+      "discordant_fraction": 0.0,
+      "mate_chromosomes": {},
+      "same_primary_alt_mates": 0,
+      "reads_below_min_mapq": 206,
+      "quality_limited": true,
+      "assessable": true,
+      "reason": null,
+      "min_mapq_applied": 20
+     },
+     "soft_clips": {
+      "chromosome": "chr20",
+      "position": 25800000,
+      "window_bp": 200,
+      "total_reads_in_window": 0,
+      "soft_clipped_reads": 0,
+      "soft_clipped_fraction": 0.0,
+      "consensus_clip_position": null,
+      "max_clips_at_position": 0,
+      "left_clip_reads": 0,
+      "right_clip_reads": 0,
+      "left_consensus_position": null,
+      "left_max_clips_at_position": 0,
+      "right_consensus_position": null,
+      "right_max_clips_at_position": 0,
+      "dominant_clip_side": null,
+      "reads_below_min_mapq": 94,
+      "quality_limited": true,
+      "assessable": true,
+      "reason": null,
+      "min_mapq_applied": 20
+     },
+     "split_reads": {
+      "chromosome": "chr20",
+      "position": 25800000,
+      "window_bp": 200,
+      "total_reads_in_window": 0,
+      "split_reads": 0,
+      "split_read_fraction": 0.0,
+      "partner_chromosomes": {},
+      "sa_entries_total": 0,
+      "sa_entries_below_min_mapq": 0,
+      "partner_strand_concordant": 0,
+      "partner_strand_flipped": 0,
+      "example_partner_loci": [],
+      "reads_below_min_mapq": 92,
+      "quality_limited": true,
+      "assessable": true,
+      "reason": null,
+      "min_mapq_applied": 20
+     },
+     "depth_profile": {
+      "chromosome": "chr20",
+      "start": 25798000,
+      "end": 25802000,
+      "window_size": 200,
+      "windows": [
+       {
+        "window_start": 25798000,
+        "window_end": 25798200,
+        "depth": 31.55
+       },
+       {
+        "window_start": 25798200,
+        "window_end": 25798400,
+        "depth": 31.61
+       },
+       {
+        "window_start": 25798400,
+        "window_end": 25798600,
+        "depth": 35.3
+       },
+       {
+        "window_start": 25798600,
+        "window_end": 25798800,
+        "depth": 32.52
+       },
+       {
+        "window_start": 25798800,
+        "window_end": 25799000,
+        "depth": 34.42
+       },
+       {
+        "window_start": 25799000,
+        "window_end": 25799200,
+        "depth": 34.7
+       },
+       {
+        "window_start": 25799200,
+        "window_end": 25799400,
+        "depth": 31.38
+       },
+       {
+        "window_start": 25799400,
+        "window_end": 25799600,
+        "depth": 30.89
+       },
+       {
+        "window_start": 25799600,
+        "window_end": 25799800,
+        "depth": 23.49
+       },
+       {
+        "window_start": 25799800,
+        "window_end": 25800000,
+        "depth": 26.18
+       },
+       {
+        "window_start": 25800000,
+        "window_end": 25800200,
+        "depth": 24.02
+       },
+       {
+        "window_start": 25800200,
+        "window_end": 25800400,
+        "depth": 27.61
+       },
+       {
+        "window_start": 25800400,
+        "window_end": 25800600,
+        "depth": 27.4
+       },
+       {
+        "window_start": 25800600,
+        "window_end": 25800800,
+        "depth": 34.45
+       },
+       {
+        "window_start": 25800800,
+        "window_end": 25801000,
+        "depth": 30.51
+       },
+       {
+        "window_start": 25801000,
+        "window_end": 25801200,
+        "depth": 32.5
+       },
+       {
+        "window_start": 25801200,
+        "window_end": 25801400,
+        "depth": 26.35
+       },
+       {
+        "window_start": 25801400,
+        "window_end": 25801600,
+        "depth": 27.75
+       },
+       {
+        "window_start": 25801600,
+        "window_end": 25801800,
+        "depth": 26.58
+       },
+       {
+        "window_start": 25801800,
+        "window_end": 25802000,
+        "depth": 30.51
+       }
+      ],
+      "summary": {
+       "min_depth": 23.49,
+       "max_depth": 35.3,
+       "mean_depth": 29.99,
+       "depth_ratio_min_to_mean": 0.783,
+       "likely_deletion": false,
+       "dip_position": 25799600,
+       "dip_distance_from_focus": 400,
+       "dip_is_at_focus": true,
+       "assessable": true,
+       "reason": null,
+       "contig_length": 64444167,
+       "clamped_to_contig": false,
+       "min_mapq_applied": null,
+       "mapq_note": "depth counts ALL reads regardless of MAPQ; the discordant, soft-clip and split layers filter at min_mapq. In a low-MAPQ region this layer is the only one still counting, so compare with care."
+      }
+     },
+     "supporting_observations": [
+      "discordant_pairs: all 206 reads in the window were below MAPQ 20; layer assessed as zero, not excluded from the score.",
+      "soft_clipped_reads: all 94 reads in the window were below MAPQ 20; layer assessed as zero, not excluded from the score.",
+      "split_reads: all 92 reads in the window were below MAPQ 20; layer assessed as zero, not excluded from the score.",
+      "Quality gate: 100.0% of reads at this locus are below MAPQ 20 (threshold 40%). Mapping here is mostly ambiguous, so no normalised evidence score is reported."
+     ],
+     "interpretation_template": "Breakpoint chr20:25800000 IMP10 user-supplied at chr20:25800000. Evidence strength: QUALITY-LIMITED. Score: withheld \u2014 100.0% of reads here are below MAPQ 20, above the 40% quality gate, so a normalised score would overstate what the data supports (raw score over all 4 layers was 0.0/100, shown for reference only). Window: +/-500bp for the discordant, soft-clip and split layers; at this width the bottom scoring tier required 3 supporting read(s) (3 per 500bp, scaled). A verdict quoted without this window is not reproducible. Observations: discordant_pairs: all 206 reads in the window were below MAPQ 20; layer assessed as zero, not excluded from the score.; soft_clipped_reads: all 94 reads in the window were below MAPQ 20; layer assessed as zero, not excluded from the score.; split_reads: all 92 reads in the window were below MAPQ 20; layer assessed as zero, not excluded from the score.; Quality gate: 100.0% of reads at this locus are below MAPQ 20 (threshold 40%). Mapping here is mostly ambiguous, so no normalised evidence score is reported.. Technology note: discordant_pairs only valid for paired-end data; split_reads only valid for modern-alignment BAMs with SA tags \u2014 use detect_applicable_layers() to determine which apply to this BAM. All values in this template come from tool outputs only.",
+     "min_mapq_applied": 20,
+     "attainable_ceiling_derivable": true,
+     "score_bands": [
+      {
+       "strength": "strong",
+       "op": ">=",
+       "threshold": 70.0
+      },
+      {
+       "strength": "moderate",
+       "op": ">=",
+       "threshold": 40.0
+      },
+      {
+       "strength": "weak",
+       "op": ">",
+       "threshold": 0.0
+      }
+     ],
+     "strong_band": 70.0,
+     "max_all_layers": 100.0,
+     "max_with_flat_depth": 75.0,
+     "attainable_here": 50.0,
+     "strong_band_reachable_here": false,
+     "attainable_basis": "the paired-read measurement held at the band its measured value reaches \u2014 in a HETEROZYGOUS rearrangement roughly half the reads crossing the breakpoint come from the intact homolog, so the discordant fraction is capped well below the 0.5 its top band requires and no amount of extra coverage or a wider window moves it; the soft-clip and split-read measurements at their best possible band; and the depth measurement contributing nothing, because a balanced rearrangement gains and loses no DNA.",
+     "attainable_note": "Attainable-score note: for a heterozygous balanced rearrangement the highest score reachable at this locus is 50.0/100, below the 70.0/100 at which the top band begins \u2014 so the top band is UNREACHABLE here by arithmetic, and a middling band is the ceiling rather than a weak result. Two of the four layers are structurally limited for such an event: the depth layer contributes nothing because no DNA is gained or lost, and the paired-read layer is capped because roughly half the reads crossing the breakpoint come from the intact homolog. Judge a balanced event on the four measurements, not on the band it lands in.",
+     "position_provenance": {
+      "source": "caller_supplied",
+      "candidate_id": null,
+      "set_id": null,
+      "set_label": null,
+      "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+     }
+    },
+    "is_error": false
+   },
+   {
+    "type": "model",
+    "iteration": 3,
+    "content": "## Answer\n\n**The breakpoint at chr20:25,800,000 in IMP10 receives NO numeric evidence score. `breakpoint_evidence_summary` returned `evidence_score: null` with `evidence_strength: \"QUALITY-LIMITED\"` \u2014 the score was *withheld*, not computed as low.**\n\n### What \"QUALITY-LIMITED\" means here\n\nThe summary applied a quality gate: **100.0% of reads at this locus are below MAPQ 20**, against a 40% gate threshold. Because mapping here is almost entirely ambiguous, the tool declined to report a normalised score, stating that one \"would overstate what the data supports.\" A raw figure of 0.0/100 over all 4 layers was returned *for reference only* \u2014 that 0.0 is an artifact of every read being filtered out, not a measurement that the locus is clean.\n\nThis is **not** a \"score of zero\" and it is **not** evidence against a variant. It is a refusal to score.\n\n### Why the reads were unusable\n\n`bam_stats_at_locus` (chr20:25,799,500\u201325,800,500) returned 206 reads, **mean MAPQ 0.0**, low-MAPQ fraction **1.0**. Strand balance was even (103 forward / 103 reverse). A mean MAPQ of exactly 0 across the whole window is the signature of a repetitive region where the aligner could not place reads uniquely.\n\n### Layer-by-layer\n\nAll four layers were structurally applicable to this BAM (`applicable_layers` confirmed paired reads and SA tags are present), so nothing was excluded on technology grounds. At MAPQ \u2265 20:\n\n| Layer | Result |\n|---|---|\n| Discordant pairs | 0 \u2014 all 206 reads in window below MAPQ 20 |\n| Soft-clipped reads | 0 \u2014 all 94 reads below MAPQ 20; `max_clips_at_position` 0 |\n| Split reads | 0 at MAPQ \u2265 20 |\n| Read depth | score 0.0 |\n\nTwo caveats worth flagging to a reviewer:\n\n- **Split reads disagree by MAPQ setting.** Called standalone at the tool's default `min_mapq_applied: 0`, `split_reads` found **2 split reads** (fraction 0.022) among 92 reads, with partners at `chr22_KI270733v1_random:38854` and `chr21:7,599,999`. The summary, filtering at MAPQ 20, counted zero. Two reads is below the 3-read floor the summary used at this window width, and partners scattered across two different contigs (one of them an unplaced random contig) is the pattern the tooling describes as background noise rather than a real junction.\n- **Depth looks like a dip, but cannot be trusted here.** `read_depth_profile` reported `depth_ratio_min_to_mean: 0.606` and `likely_deletion: true`, with the dip landing exactly on 25,800,000. However, that tool's own note states depth counts **all** reads regardless of MAPQ \u2014 it is the only layer still counting in a region where every read is MAPQ 0. In a repetitive region, coverage fluctuation of this kind is expected from mapping behaviour and is not usable as deletion evidence on its own.\n\n### On the framing of the question\n\nYou referred to \"the breakpoint\" at this position. I should flag that every tool return carried a `position_provenance` note: this coordinate was **supplied directly in the call and did not come from a registered candidate set**, so nothing in these results corroborates that a breakpoint exists here. No SV caller output was loaded for IMP10 in this session.\n\n### Threshold provenance\n\nOf the 11 cutoffs behind the four component scores, only one (the read-depth 0.7 moderate tier) is empirically calibrated, and only against a single confirmed locus. The 40% low-MAPQ quality gate that triggered the withholding here is explicitly a heuristic judgement call, never validated against real data. `evidence_strength` is an interpretable decomposition of what fired, not a calibrated probability.\n\n### Bottom line\n\nNo conclusion can be drawn about a structural variant at chr20:25,800,000 in IMP10 from short-read alignment evidence. The locus is unmappable at this read length \u2014 the correct next step would be orthogonal data (long reads, or a targeted assay), not a re-run with looser MAPQ filters, which would only re-admit the same ambiguously placed reads.",
+    "thinking": "I need to be clear that this score is WITHHELD due to quality limitations, not an actual low score. I should also flag that \"the breakpoint\" is really a user-supplied position rather than something pulled from a candidate set, and note that the depth layer's likely_deletion flag (ratio 0.606) is unreliable since it counts all reads regardless of MAPQ in a region that's entirely low-MAPQ \u2014 which is why the depth_score in the summary was 0.0.\n\nI'm also seeing a min_mapq discrepancy worth mentioning: the split-read count of 2 was found using the tool's default min_mapq=0, while the main summary was run at min_mapq=20 and found everything below that threshold. I'll report both findings honestly rather than trying to resolve the inconsistency myself.\n\n",
+    "n_tool_calls": 0,
+    "done_reason": "end_turn",
+    "prompt_tokens": 13191,
+    "headroom": null
+   }
+  ],
+  "final_text": "## Answer\n\n**The breakpoint at chr20:25,800,000 in IMP10 receives NO numeric evidence score. `breakpoint_evidence_summary` returned `evidence_score: null` with `evidence_strength: \"QUALITY-LIMITED\"` \u2014 the score was *withheld*, not computed as low.**\n\n### What \"QUALITY-LIMITED\" means here\n\nThe summary applied a quality gate: **100.0% of reads at this locus are below MAPQ 20**, against a 40% gate threshold. Because mapping here is almost entirely ambiguous, the tool declined to report a normalised score, stating that one \"would overstate what the data supports.\" A raw figure of 0.0/100 over all 4 layers was returned *for reference only* \u2014 that 0.0 is an artifact of every read being filtered out, not a measurement that the locus is clean.\n\nThis is **not** a \"score of zero\" and it is **not** evidence against a variant. It is a refusal to score.\n\n### Why the reads were unusable\n\n`bam_stats_at_locus` (chr20:25,799,500\u201325,800,500) returned 206 reads, **mean MAPQ 0.0**, low-MAPQ fraction **1.0**. Strand balance was even (103 forward / 103 reverse). A mean MAPQ of exactly 0 across the whole window is the signature of a repetitive region where the aligner could not place reads uniquely.\n\n### Layer-by-layer\n\nAll four layers were structurally applicable to this BAM (`applicable_layers` confirmed paired reads and SA tags are present), so nothing was excluded on technology grounds. At MAPQ \u2265 20:\n\n| Layer | Result |\n|---|---|\n| Discordant pairs | 0 \u2014 all 206 reads in window below MAPQ 20 |\n| Soft-clipped reads | 0 \u2014 all 94 reads below MAPQ 20; `max_clips_at_position` 0 |\n| Split reads | 0 at MAPQ \u2265 20 |\n| Read depth | score 0.0 |\n\nTwo caveats worth flagging to a reviewer:\n\n- **Split reads disagree by MAPQ setting.** Called standalone at the tool's default `min_mapq_applied: 0`, `split_reads` found **2 split reads** (fraction 0.022) among 92 reads, with partners at `chr22_KI270733v1_random:38854` and `chr21:7,599,999`. The summary, filtering at MAPQ 20, counted zero. Two reads is below the 3-read floor the summary used at this window width, and partners scattered across two different contigs (one of them an unplaced random contig) is the pattern the tooling describes as background noise rather than a real junction.\n- **Depth looks like a dip, but cannot be trusted here.** `read_depth_profile` reported `depth_ratio_min_to_mean: 0.606` and `likely_deletion: true`, with the dip landing exactly on 25,800,000. However, that tool's own note states depth counts **all** reads regardless of MAPQ \u2014 it is the only layer still counting in a region where every read is MAPQ 0. In a repetitive region, coverage fluctuation of this kind is expected from mapping behaviour and is not usable as deletion evidence on its own.\n\n### On the framing of the question\n\nYou referred to \"the breakpoint\" at this position. I should flag that every tool return carried a `position_provenance` note: this coordinate was **supplied directly in the call and did not come from a registered candidate set**, so nothing in these results corroborates that a breakpoint exists here. No SV caller output was loaded for IMP10 in this session.\n\n### Threshold provenance\n\nOf the 11 cutoffs behind the four component scores, only one (the read-depth 0.7 moderate tier) is empirically calibrated, and only against a single confirmed locus. The 40% low-MAPQ quality gate that triggered the withholding here is explicitly a heuristic judgement call, never validated against real data. `evidence_strength` is an interpretable decomposition of what fired, not a calibrated probability.\n\n### Bottom line\n\nNo conclusion can be drawn about a structural variant at chr20:25,800,000 in IMP10 from short-read alignment evidence. The locus is unmappable at this read length \u2014 the correct next step would be orthogonal data (long reads, or a targeted assay), not a re-run with looser MAPQ filters, which would only re-admit the same ambiguously placed reads.",
+  "call_ids": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7
+  ],
+  "n_tool_calls": 7,
+  "text_tool_call_failures": [],
+  "malformed_tool_calls": [],
+  "verification": {
+   "numbers_in_prose": 42,
+   "unsupported": [
+    "11",
+    "0.7"
+   ],
+   "no_tool_calls": false,
+   "details": [
+    {
+     "text": "25,800,000",
+     "value": 25800000.0,
+     "supported": true
+    },
+    {
+     "text": "100.0",
+     "value": 100.0,
+     "supported": true
+    },
+    {
+     "text": "20",
+     "value": 20.0,
+     "supported": true
+    },
+    {
+     "text": "40",
+     "value": 40.0,
+     "supported": true
+    },
+    {
+     "text": "0.0",
+     "value": 0.0,
+     "supported": true
+    },
+    {
+     "text": "100",
+     "value": 100.0,
+     "supported": true
+    },
+    {
+     "text": "4",
+     "value": 4.0,
+     "supported": true
+    },
+    {
+     "text": "0.0",
+     "value": 0.0,
+     "supported": true
+    },
+    {
+     "text": "25,799,500",
+     "value": 25799500.0,
+     "supported": true
+    },
+    {
+     "text": "25,800,500",
+     "value": 25800500.0,
+     "supported": true
+    },
+    {
+     "text": "206",
+     "value": 206.0,
+     "supported": true
+    },
+    {
+     "text": "0.0",
+     "value": 0.0,
+     "supported": true
+    },
+    {
+     "text": "1.0",
+     "value": 1.0,
+     "supported": true
+    },
+    {
+     "text": "103",
+     "value": 103.0,
+     "supported": true
+    },
+    {
+     "text": "103",
+     "value": 103.0,
+     "supported": true
+    },
+    {
+     "text": "0",
+     "value": 0.0,
+     "supported": true
+    },
+    {
+     "text": "20",
+     "value": 20.0,
+     "supported": true
+    },
+    {
+     "text": "0",
+     "value": 0.0,
+     "supported": true
+    },
+    {
+     "text": "206",
+     "value": 206.0,
+     "supported": true
+    },
+    {
+     "text": "20",
+     "value": 20.0,
+     "supported": true
+    },
+    {
+     "text": "0",
+     "value": 0.0,
+     "supported": true
+    },
+    {
+     "text": "94",
+     "value": 94.0,
+     "supported": true
+    },
+    {
+     "text": "20",
+     "value": 20.0,
+     "supported": true
+    },
+    {
+     "text": "0",
+     "value": 0.0,
+     "supported": true
+    },
+    {
+     "text": "0",
+     "value": 0.0,
+     "supported": true
+    },
+    {
+     "text": "20",
+     "value": 20.0,
+     "supported": true
+    },
+    {
+     "text": "0.0",
+     "value": 0.0,
+     "supported": true
+    },
+    {
+     "text": "0",
+     "value": 0.0,
+     "supported": true
+    },
+    {
+     "text": "2",
+     "value": 2.0,
+     "supported": true
+    },
+    {
+     "text": "0.022",
+     "value": 0.022,
+     "supported": true
+    },
+    {
+     "text": "92",
+     "value": 92.0,
+     "supported": true
+    },
+    {
+     "text": "38854",
+     "value": 38854.0,
+     "supported": true
+    },
+    {
+     "text": "7,599,999",
+     "value": 7599999.0,
+     "supported": true
+    },
+    {
+     "text": "20",
+     "value": 20.0,
+     "supported": true
+    },
+    {
+     "text": "3",
+     "value": 3.0,
+     "supported": true
+    },
+    {
+     "text": "0.606",
+     "value": 0.606,
+     "supported": true
+    },
+    {
+     "text": "25,800,000",
+     "value": 25800000.0,
+     "supported": true
+    },
+    {
+     "text": "0",
+     "value": 0.0,
+     "supported": true
+    },
+    {
+     "text": "11",
+     "value": 11.0,
+     "supported": false
+    },
+    {
+     "text": "0.7",
+     "value": 0.7,
+     "supported": false
+    },
+    {
+     "text": "40",
+     "value": 40.0,
+     "supported": true
+    },
+    {
+     "text": "25,800,000",
+     "value": 25800000.0,
+     "supported": true
+    }
+   ]
+  },
+  "wall_s": 34.9,
+  "gen_tokens": 2779,
+  "prompt_tokens": 41660,
+  "gen_tokens_per_s": null,
+  "iterations": 4,
+  "api_usage": {
+   "input_tokens": 120,
+   "output_tokens": 2779,
+   "cache_creation_input_tokens": 5018,
+   "cache_read_input_tokens": 36522
+  },
+  "api_cost_usd": 0.119698,
+  "api_cost_usd_live_prices": 0.119698
+ },
+ "recorder_calls": [
+  {
+   "id": 1,
+   "server": "evidence",
+   "tool": "applicable_layers",
+   "params": {
+    "bam_path": "~/public_data/sim/bams/IMP10.bam"
+   },
+   "is_error": false,
+   "ms": 6.6,
+   "result": {
+    "bam_path": "~/public_data/sim/bams/IMP10.bam",
+    "reads_sampled": 1000,
+    "applicable_layers": [
+     "discordant_pairs",
+     "soft_clipped_reads",
+     "split_reads",
+     "read_depth"
+    ],
+    "evidence": {
+     "soft_clipped_reads": "always applicable \u2014 any aligned BAM can show soft-clipping.",
+     "read_depth": "always applicable \u2014 any aligned BAM can show a coverage drop.",
+     "discordant_pairs": "applicable \u2014 at least one paired read observed in 1000 sampled reads.",
+     "split_reads": "applicable \u2014 at least one SA (supplementary alignment) tag observed in 1000 sampled reads."
+    }
+   },
+   "traceback": null
+  },
+  {
+   "id": 2,
+   "server": "evidence",
+   "tool": "bam_stats_at_locus",
+   "params": {
+    "chromosome": "chr20",
+    "start": 25799500,
+    "end": 25800500,
+    "bam_path": "~/public_data/sim/bams/IMP10.bam"
+   },
+   "is_error": false,
+   "ms": 8.7,
+   "result": {
+    "chromosome": "chr20",
+    "start": 25799500,
+    "end": 25800500,
+    "contig_length": 64444167,
+    "clamped_to_contig": false,
+    "total_reads": 206,
+    "mean_depth": 25.96,
+    "mean_mapq": 0.0,
+    "low_mapq_fraction": 1.0,
+    "forward_reads": 103,
+    "reverse_reads": 103,
+    "position_provenance": {
+     "source": "caller_supplied",
+     "candidate_id": null,
+     "set_id": null,
+     "set_label": null,
+     "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+    }
+   },
+   "traceback": null
+  },
+  {
+   "id": 3,
+   "server": "evidence",
+   "tool": "discordant_pairs",
+   "params": {
+    "chromosome": "chr20",
+    "position": 25800000,
+    "bam_path": "~/public_data/sim/bams/IMP10.bam"
+   },
+   "is_error": false,
+   "ms": 8.0,
+   "result": {
+    "chromosome": "chr20",
+    "position": 25800000,
+    "window_bp": 500,
+    "total_reads_in_window": 0,
+    "discordant_pairs": 0,
+    "discordant_fraction": 0.0,
+    "mate_chromosomes": {},
+    "same_primary_alt_mates": 0,
+    "reads_below_min_mapq": 206,
+    "quality_limited": true,
+    "assessable": true,
+    "reason": null,
+    "min_mapq_applied": 20,
+    "position_provenance": {
+     "source": "caller_supplied",
+     "candidate_id": null,
+     "set_id": null,
+     "set_label": null,
+     "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+    }
+   },
+   "traceback": null
+  },
+  {
+   "id": 4,
+   "server": "evidence",
+   "tool": "soft_clipped_reads",
+   "params": {
+    "chromosome": "chr20",
+    "position": 25800000,
+    "bam_path": "~/public_data/sim/bams/IMP10.bam"
+   },
+   "is_error": false,
+   "ms": 7.5,
+   "result": {
+    "chromosome": "chr20",
+    "position": 25800000,
+    "window_bp": 200,
+    "total_reads_in_window": 0,
+    "soft_clipped_reads": 0,
+    "soft_clipped_fraction": 0.0,
+    "consensus_clip_position": null,
+    "max_clips_at_position": 0,
+    "left_clip_reads": 0,
+    "right_clip_reads": 0,
+    "left_consensus_position": null,
+    "left_max_clips_at_position": 0,
+    "right_consensus_position": null,
+    "right_max_clips_at_position": 0,
+    "dominant_clip_side": null,
+    "reads_below_min_mapq": 94,
+    "quality_limited": true,
+    "assessable": true,
+    "reason": null,
+    "min_mapq_applied": 20,
+    "position_provenance": {
+     "source": "caller_supplied",
+     "candidate_id": null,
+     "set_id": null,
+     "set_label": null,
+     "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+    }
+   },
+   "traceback": null
+  },
+  {
+   "id": 5,
+   "server": "evidence",
+   "tool": "split_reads",
+   "params": {
+    "chromosome": "chr20",
+    "position": 25800000,
+    "bam_path": "~/public_data/sim/bams/IMP10.bam"
+   },
+   "is_error": false,
+   "ms": 7.6,
+   "result": {
+    "chromosome": "chr20",
+    "position": 25800000,
+    "window_bp": 200,
+    "total_reads_in_window": 92,
+    "split_reads": 2,
+    "split_read_fraction": 0.022,
+    "partner_chromosomes": {
+     "chr22_KI270733v1_random": 1,
+     "chr21": 1
+    },
+    "sa_entries_total": 2,
+    "sa_entries_below_min_mapq": 0,
+    "partner_strand_concordant": 1,
+    "partner_strand_flipped": 1,
+    "example_partner_loci": [
+     "chr22_KI270733v1_random:38854",
+     "chr21:7599999"
+    ],
+    "reads_below_min_mapq": 0,
+    "quality_limited": false,
+    "assessable": true,
+    "reason": null,
+    "min_mapq_applied": 0,
+    "position_provenance": {
+     "source": "caller_supplied",
+     "candidate_id": null,
+     "set_id": null,
+     "set_label": null,
+     "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+    }
+   },
+   "traceback": null
+  },
+  {
+   "id": 6,
+   "server": "evidence",
+   "tool": "read_depth_profile",
+   "params": {
+    "chromosome": "chr20",
+    "start": 25795000,
+    "end": 25805000,
+    "focus_position": 25800000,
+    "bam_path": "~/public_data/sim/bams/IMP10.bam"
+   },
+   "is_error": false,
+   "ms": 25.8,
+   "result": {
+    "chromosome": "chr20",
+    "start": 25795000,
+    "end": 25805000,
+    "window_size": 100,
+    "windows": [
+     {
+      "window_start": 25795000,
+      "window_end": 25795100,
+      "depth": 32.5
+     },
+     {
+      "window_start": 25795100,
+      "window_end": 25795200,
+      "depth": 43.0
+     },
+     {
+      "window_start": 25795200,
+      "window_end": 25795300,
+      "depth": 31.09
+     },
+     {
+      "window_start": 25795300,
+      "window_end": 25795400,
+      "depth": 24.31
+     },
+     {
+      "window_start": 25795400,
+      "window_end": 25795500,
+      "depth": 25.67
+     },
+     {
+      "window_start": 25795500,
+      "window_end": 25795600,
+      "depth": 28.36
+     },
+     {
+      "window_start": 25795600,
+      "window_end": 25795700,
+      "depth": 34.07
+     },
+     {
+      "window_start": 25795700,
+      "window_end": 25795800,
+      "depth": 37.19
+     },
+     {
+      "window_start": 25795800,
+      "window_end": 25795900,
+      "depth": 32.0
+     },
+     {
+      "window_start": 25795900,
+      "window_end": 25796000,
+      "depth": 41.61
+     },
+     {
+      "window_start": 25796000,
+      "window_end": 25796100,
+      "depth": 38.14
+     },
+     {
+      "window_start": 25796100,
+      "window_end": 25796200,
+      "depth": 35.2
+     },
+     {
+      "window_start": 25796200,
+      "window_end": 25796300,
+      "depth": 39.17
+     },
+     {
+      "window_start": 25796300,
+      "window_end": 25796400,
+      "depth": 44.73
+     },
+     {
+      "window_start": 25796400,
+      "window_end": 25796500,
+      "depth": 44.68
+     },
+     {
+      "window_start": 25796500,
+      "window_end": 25796600,
+      "depth": 40.46
+     },
+     {
+      "window_start": 25796600,
+      "window_end": 25796700,
+      "depth": 39.47
+     },
+     {
+      "window_start": 25796700,
+      "window_end": 25796800,
+      "depth": 52.2
+     },
+     {
+      "window_start": 25796800,
+      "window_end": 25796900,
+      "depth": 38.22
+     },
+     {
+      "window_start": 25796900,
+      "window_end": 25797000,
+      "depth": 34.28
+     },
+     {
+      "window_start": 25797000,
+      "window_end": 25797100,
+      "depth": 35.67
+     },
+     {
+      "window_start": 25797100,
+      "window_end": 25797200,
+      "depth": 29.39
+     },
+     {
+      "window_start": 25797200,
+      "window_end": 25797300,
+      "depth": 30.26
+     },
+     {
+      "window_start": 25797300,
+      "window_end": 25797400,
+      "depth": 27.45
+     },
+     {
+      "window_start": 25797400,
+      "window_end": 25797500,
+      "depth": 27.04
+     },
+     {
+      "window_start": 25797500,
+      "window_end": 25797600,
+      "depth": 23.88
+     },
+     {
+      "window_start": 25797600,
+      "window_end": 25797700,
+      "depth": 29.24
+     },
+     {
+      "window_start": 25797700,
+      "window_end": 25797800,
+      "depth": 26.21
+     },
+     {
+      "window_start": 25797800,
+      "window_end": 25797900,
+      "depth": 25.24
+     },
+     {
+      "window_start": 25797900,
+      "window_end": 25798000,
+      "depth": 29.91
+     },
+     {
+      "window_start": 25798000,
+      "window_end": 25798100,
+      "depth": 31.68
+     },
+     {
+      "window_start": 25798100,
+      "window_end": 25798200,
+      "depth": 31.41
+     },
+     {
+      "window_start": 25798200,
+      "window_end": 25798300,
+      "depth": 30.71
+     },
+     {
+      "window_start": 25798300,
+      "window_end": 25798400,
+      "depth": 32.51
+     },
+     {
+      "window_start": 25798400,
+      "window_end": 25798500,
+      "depth": 37.57
+     },
+     {
+      "window_start": 25798500,
+      "window_end": 25798600,
+      "depth": 33.03
+     },
+     {
+      "window_start": 25798600,
+      "window_end": 25798700,
+      "depth": 31.0
+     },
+     {
+      "window_start": 25798700,
+      "window_end": 25798800,
+      "depth": 34.05
+     },
+     {
+      "window_start": 25798800,
+      "window_end": 25798900,
+      "depth": 30.77
+     },
+     {
+      "window_start": 25798900,
+      "window_end": 25799000,
+      "depth": 38.08
+     },
+     {
+      "window_start": 25799000,
+      "window_end": 25799100,
+      "depth": 37.69
+     },
+     {
+      "window_start": 25799100,
+      "window_end": 25799200,
+      "depth": 31.71
+     },
+     {
+      "window_start": 25799200,
+      "window_end": 25799300,
+      "depth": 32.93
+     },
+     {
+      "window_start": 25799300,
+      "window_end": 25799400,
+      "depth": 29.82
+     },
+     {
+      "window_start": 25799400,
+      "window_end": 25799500,
+      "depth": 31.82
+     },
+     {
+      "window_start": 25799500,
+      "window_end": 25799600,
+      "depth": 29.95
+     },
+     {
+      "window_start": 25799600,
+      "window_end": 25799700,
+      "depth": 24.51
+     },
+     {
+      "window_start": 25799700,
+      "window_end": 25799800,
+      "depth": 22.47
+     },
+     {
+      "window_start": 25799800,
+      "window_end": 25799900,
+      "depth": 30.85
+     },
+     {
+      "window_start": 25799900,
+      "window_end": 25800000,
+      "depth": 21.5
+     },
+     {
+      "window_start": 25800000,
+      "window_end": 25800100,
+      "depth": 18.29
+     },
+     {
+      "window_start": 25800100,
+      "window_end": 25800200,
+      "depth": 29.76
+     },
+     {
+      "window_start": 25800200,
+      "window_end": 25800300,
+      "depth": 26.6
+     },
+     {
+      "window_start": 25800300,
+      "window_end": 25800400,
+      "depth": 28.61
+     },
+     {
+      "window_start": 25800400,
+      "window_end": 25800500,
+      "depth": 27.03
+     },
+     {
+      "window_start": 25800500,
+      "window_end": 25800600,
+      "depth": 27.77
+     },
+     {
+      "window_start": 25800600,
+      "window_end": 25800700,
+      "depth": 29.16
+     },
+     {
+      "window_start": 25800700,
+      "window_end": 25800800,
+      "depth": 39.75
+     },
+     {
+      "window_start": 25800800,
+      "window_end": 25800900,
+      "depth": 34.05
+     },
+     {
+      "window_start": 25800900,
+      "window_end": 25801000,
+      "depth": 26.97
+     },
+     {
+      "window_start": 25801000,
+      "window_end": 25801100,
+      "depth": 35.08
+     },
+     {
+      "window_start": 25801100,
+      "window_end": 25801200,
+      "depth": 29.92
+     },
+     {
+      "window_start": 25801200,
+      "window_end": 25801300,
+      "depth": 27.35
+     },
+     {
+      "window_start": 25801300,
+      "window_end": 25801400,
+      "depth": 25.35
+     },
+     {
+      "window_start": 25801400,
+      "window_end": 25801500,
+      "depth": 29.2
+     },
+     {
+      "window_start": 25801500,
+      "window_end": 25801600,
+      "depth": 26.29
+     },
+     {
+      "window_start": 25801600,
+      "window_end": 25801700,
+      "depth": 20.48
+     },
+     {
+      "window_start": 25801700,
+      "window_end": 25801800,
+      "depth": 32.68
+     },
+     {
+      "window_start": 25801800,
+      "window_end": 25801900,
+      "depth": 31.93
+     },
+     {
+      "window_start": 25801900,
+      "window_end": 25802000,
+      "depth": 29.09
+     },
+     {
+      "window_start": 25802000,
+      "window_end": 25802100,
+      "depth": 42.14
+     },
+     {
+      "window_start": 25802100,
+      "window_end": 25802200,
+      "depth": 33.26
+     },
+     {
+      "window_start": 25802200,
+      "window_end": 25802300,
+      "depth": 28.69
+     },
+     {
+      "window_start": 25802300,
+      "window_end": 25802400,
+      "depth": 28.66
+     },
+     {
+      "window_start": 25802400,
+      "window_end": 25802500,
+      "depth": 25.1
+     },
+     {
+      "window_start": 25802500,
+      "window_end": 25802600,
+      "depth": 30.44
+     },
+     {
+      "window_start": 25802600,
+      "window_end": 25802700,
+      "depth": 32.07
+     },
+     {
+      "window_start": 25802700,
+      "window_end": 25802800,
+      "depth": 24.63
+     },
+     {
+      "window_start": 25802800,
+      "window_end": 25802900,
+      "depth": 24.85
+     },
+     {
+      "window_start": 25802900,
+      "window_end": 25803000,
+      "depth": 30.79
+     },
+     {
+      "window_start": 25803000,
+      "window_end": 25803100,
+      "depth": 23.78
+     },
+     {
+      "window_start": 25803100,
+      "window_end": 25803200,
+      "depth": 19.36
+     },
+     {
+      "window_start": 25803200,
+      "window_end": 25803300,
+      "depth": 22.9
+     },
+     {
+      "window_start": 25803300,
+      "window_end": 25803400,
+      "depth": 24.88
+     },
+     {
+      "window_start": 25803400,
+      "window_end": 25803500,
+      "depth": 31.05
+     },
+     {
+      "window_start": 25803500,
+      "window_end": 25803600,
+      "depth": 22.91
+     },
+     {
+      "window_start": 25803600,
+      "window_end": 25803700,
+      "depth": 21.82
+     },
+     {
+      "window_start": 25803700,
+      "window_end": 25803800,
+      "depth": 20.97
+     },
+     {
+      "window_start": 25803800,
+      "window_end": 25803900,
+      "depth": 20.82
+     },
+     {
+      "window_start": 25803900,
+      "window_end": 25804000,
+      "depth": 34.46
+     },
+     {
+      "window_start": 25804000,
+      "window_end": 25804100,
+      "depth": 26.98
+     },
+     {
+      "window_start": 25804100,
+      "window_end": 25804200,
+      "depth": 25.84
+     },
+     {
+      "window_start": 25804200,
+      "window_end": 25804300,
+      "depth": 27.47
+     },
+     {
+      "window_start": 25804300,
+      "window_end": 25804400,
+      "depth": 26.82
+     },
+     {
+      "window_start": 25804400,
+      "window_end": 25804500,
+      "depth": 26.64
+     },
+     {
+      "window_start": 25804500,
+      "window_end": 25804600,
+      "depth": 19.99
+     },
+     {
+      "window_start": 25804600,
+      "window_end": 25804700,
+      "depth": 21.83
+     },
+     {
+      "window_start": 25804700,
+      "window_end": 25804800,
+      "depth": 30.0
+     },
+     {
+      "window_start": 25804800,
+      "window_end": 25804900,
+      "depth": 27.12
+     },
+     {
+      "window_start": 25804900,
+      "window_end": 25805000,
+      "depth": 21.61
+     }
+    ],
+    "summary": {
+     "min_depth": 18.29,
+     "max_depth": 52.2,
+     "mean_depth": 30.18,
+     "depth_ratio_min_to_mean": 0.606,
+     "likely_deletion": true,
+     "dip_position": 25800000,
+     "dip_distance_from_focus": 0,
+     "dip_is_at_focus": true,
+     "assessable": true,
+     "reason": null,
+     "contig_length": 64444167,
+     "clamped_to_contig": false,
+     "min_mapq_applied": null,
+     "mapq_note": "depth counts ALL reads regardless of MAPQ; the discordant, soft-clip and split layers filter at min_mapq. In a low-MAPQ region this layer is the only one still counting, so compare with care."
+    },
+    "position_provenance": {
+     "source": "caller_supplied",
+     "candidate_id": null,
+     "set_id": null,
+     "set_label": null,
+     "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+    }
+   },
+   "traceback": null
+  },
+  {
+   "id": 7,
+   "server": "evidence",
+   "tool": "breakpoint_evidence_summary",
+   "params": {
+    "chromosome": "chr20",
+    "position": 25800000,
+    "applicable_layers": [
+     "discordant_pairs",
+     "soft_clipped_reads",
+     "split_reads",
+     "read_depth"
+    ],
+    "label": "chr20:25800000 IMP10 user-supplied",
+    "bam_path": "~/public_data/sim/bams/IMP10.bam"
+   },
+   "is_error": false,
+   "ms": 33.7,
+   "result": {
+    "label": "chr20:25800000 IMP10 user-supplied",
+    "chromosome": "chr20",
+    "position": 25800000,
+    "window_bp": 500,
+    "min_supporting_reads": 3,
+    "depth_window_bp": 2000,
+    "depth_window_size": 200,
+    "evidence_score": null,
+    "evidence_score_raw": 0.0,
+    "evidence_strength": "QUALITY-LIMITED",
+    "signal_layers": "0/4",
+    "applicable_layers": [
+     "discordant_pairs",
+     "soft_clipped_reads",
+     "split_reads",
+     "read_depth"
+    ],
+    "unassessable_layers": {},
+    "discordant_pair_score": 0.0,
+    "soft_clip_score": 0.0,
+    "split_read_score": 0.0,
+    "depth_score": 0.0,
+    "locus_stats": {
+     "chromosome": "chr20",
+     "start": 25799500,
+     "end": 25800500,
+     "contig_length": 64444167,
+     "clamped_to_contig": false,
+     "total_reads": 206,
+     "mean_depth": 25.96,
+     "mean_mapq": 0.0,
+     "low_mapq_fraction": 1.0,
+     "forward_reads": 103,
+     "reverse_reads": 103
+    },
+    "discordant_pairs": {
+     "chromosome": "chr20",
+     "position": 25800000,
+     "window_bp": 500,
+     "total_reads_in_window": 0,
+     "discordant_pairs": 0,
+     "discordant_fraction": 0.0,
+     "mate_chromosomes": {},
+     "same_primary_alt_mates": 0,
+     "reads_below_min_mapq": 206,
+     "quality_limited": true,
+     "assessable": true,
+     "reason": null,
+     "min_mapq_applied": 20
+    },
+    "soft_clips": {
+     "chromosome": "chr20",
+     "position": 25800000,
+     "window_bp": 200,
+     "total_reads_in_window": 0,
+     "soft_clipped_reads": 0,
+     "soft_clipped_fraction": 0.0,
+     "consensus_clip_position": null,
+     "max_clips_at_position": 0,
+     "left_clip_reads": 0,
+     "right_clip_reads": 0,
+     "left_consensus_position": null,
+     "left_max_clips_at_position": 0,
+     "right_consensus_position": null,
+     "right_max_clips_at_position": 0,
+     "dominant_clip_side": null,
+     "reads_below_min_mapq": 94,
+     "quality_limited": true,
+     "assessable": true,
+     "reason": null,
+     "min_mapq_applied": 20
+    },
+    "split_reads": {
+     "chromosome": "chr20",
+     "position": 25800000,
+     "window_bp": 200,
+     "total_reads_in_window": 0,
+     "split_reads": 0,
+     "split_read_fraction": 0.0,
+     "partner_chromosomes": {},
+     "sa_entries_total": 0,
+     "sa_entries_below_min_mapq": 0,
+     "partner_strand_concordant": 0,
+     "partner_strand_flipped": 0,
+     "example_partner_loci": [],
+     "reads_below_min_mapq": 92,
+     "quality_limited": true,
+     "assessable": true,
+     "reason": null,
+     "min_mapq_applied": 20
+    },
+    "depth_profile": {
+     "chromosome": "chr20",
+     "start": 25798000,
+     "end": 25802000,
+     "window_size": 200,
+     "windows": [
+      {
+       "window_start": 25798000,
+       "window_end": 25798200,
+       "depth": 31.55
+      },
+      {
+       "window_start": 25798200,
+       "window_end": 25798400,
+       "depth": 31.61
+      },
+      {
+       "window_start": 25798400,
+       "window_end": 25798600,
+       "depth": 35.3
+      },
+      {
+       "window_start": 25798600,
+       "window_end": 25798800,
+       "depth": 32.52
+      },
+      {
+       "window_start": 25798800,
+       "window_end": 25799000,
+       "depth": 34.42
+      },
+      {
+       "window_start": 25799000,
+       "window_end": 25799200,
+       "depth": 34.7
+      },
+      {
+       "window_start": 25799200,
+       "window_end": 25799400,
+       "depth": 31.38
+      },
+      {
+       "window_start": 25799400,
+       "window_end": 25799600,
+       "depth": 30.89
+      },
+      {
+       "window_start": 25799600,
+       "window_end": 25799800,
+       "depth": 23.49
+      },
+      {
+       "window_start": 25799800,
+       "window_end": 25800000,
+       "depth": 26.18
+      },
+      {
+       "window_start": 25800000,
+       "window_end": 25800200,
+       "depth": 24.02
+      },
+      {
+       "window_start": 25800200,
+       "window_end": 25800400,
+       "depth": 27.61
+      },
+      {
+       "window_start": 25800400,
+       "window_end": 25800600,
+       "depth": 27.4
+      },
+      {
+       "window_start": 25800600,
+       "window_end": 25800800,
+       "depth": 34.45
+      },
+      {
+       "window_start": 25800800,
+       "window_end": 25801000,
+       "depth": 30.51
+      },
+      {
+       "window_start": 25801000,
+       "window_end": 25801200,
+       "depth": 32.5
+      },
+      {
+       "window_start": 25801200,
+       "window_end": 25801400,
+       "depth": 26.35
+      },
+      {
+       "window_start": 25801400,
+       "window_end": 25801600,
+       "depth": 27.75
+      },
+      {
+       "window_start": 25801600,
+       "window_end": 25801800,
+       "depth": 26.58
+      },
+      {
+       "window_start": 25801800,
+       "window_end": 25802000,
+       "depth": 30.51
+      }
+     ],
+     "summary": {
+      "min_depth": 23.49,
+      "max_depth": 35.3,
+      "mean_depth": 29.99,
+      "depth_ratio_min_to_mean": 0.783,
+      "likely_deletion": false,
+      "dip_position": 25799600,
+      "dip_distance_from_focus": 400,
+      "dip_is_at_focus": true,
+      "assessable": true,
+      "reason": null,
+      "contig_length": 64444167,
+      "clamped_to_contig": false,
+      "min_mapq_applied": null,
+      "mapq_note": "depth counts ALL reads regardless of MAPQ; the discordant, soft-clip and split layers filter at min_mapq. In a low-MAPQ region this layer is the only one still counting, so compare with care."
+     }
+    },
+    "supporting_observations": [
+     "discordant_pairs: all 206 reads in the window were below MAPQ 20; layer assessed as zero, not excluded from the score.",
+     "soft_clipped_reads: all 94 reads in the window were below MAPQ 20; layer assessed as zero, not excluded from the score.",
+     "split_reads: all 92 reads in the window were below MAPQ 20; layer assessed as zero, not excluded from the score.",
+     "Quality gate: 100.0% of reads at this locus are below MAPQ 20 (threshold 40%). Mapping here is mostly ambiguous, so no normalised evidence score is reported."
+    ],
+    "interpretation_template": "Breakpoint chr20:25800000 IMP10 user-supplied at chr20:25800000. Evidence strength: QUALITY-LIMITED. Score: withheld \u2014 100.0% of reads here are below MAPQ 20, above the 40% quality gate, so a normalised score would overstate what the data supports (raw score over all 4 layers was 0.0/100, shown for reference only). Window: +/-500bp for the discordant, soft-clip and split layers; at this width the bottom scoring tier required 3 supporting read(s) (3 per 500bp, scaled). A verdict quoted without this window is not reproducible. Observations: discordant_pairs: all 206 reads in the window were below MAPQ 20; layer assessed as zero, not excluded from the score.; soft_clipped_reads: all 94 reads in the window were below MAPQ 20; layer assessed as zero, not excluded from the score.; split_reads: all 92 reads in the window were below MAPQ 20; layer assessed as zero, not excluded from the score.; Quality gate: 100.0% of reads at this locus are below MAPQ 20 (threshold 40%). Mapping here is mostly ambiguous, so no normalised evidence score is reported.. Technology note: discordant_pairs only valid for paired-end data; split_reads only valid for modern-alignment BAMs with SA tags \u2014 use detect_applicable_layers() to determine which apply to this BAM. All values in this template come from tool outputs only.",
+    "min_mapq_applied": 20,
+    "attainable_ceiling_derivable": true,
+    "score_bands": [
+     {
+      "strength": "strong",
+      "op": ">=",
+      "threshold": 70.0
+     },
+     {
+      "strength": "moderate",
+      "op": ">=",
+      "threshold": 40.0
+     },
+     {
+      "strength": "weak",
+      "op": ">",
+      "threshold": 0.0
+     }
+    ],
+    "strong_band": 70.0,
+    "max_all_layers": 100.0,
+    "max_with_flat_depth": 75.0,
+    "attainable_here": 50.0,
+    "strong_band_reachable_here": false,
+    "attainable_basis": "the paired-read measurement held at the band its measured value reaches \u2014 in a HETEROZYGOUS rearrangement roughly half the reads crossing the breakpoint come from the intact homolog, so the discordant fraction is capped well below the 0.5 its top band requires and no amount of extra coverage or a wider window moves it; the soft-clip and split-read measurements at their best possible band; and the depth measurement contributing nothing, because a balanced rearrangement gains and loses no DNA.",
+    "attainable_note": "Attainable-score note: for a heterozygous balanced rearrangement the highest score reachable at this locus is 50.0/100, below the 70.0/100 at which the top band begins \u2014 so the top band is UNREACHABLE here by arithmetic, and a middling band is the ceiling rather than a weak result. Two of the four layers are structurally limited for such an event: the depth layer contributes nothing because no DNA is gained or lost, and the paired-read layer is capped because roughly half the reads crossing the breakpoint come from the intact homolog. Judge a balanced event on the four measurements, not on the band it lands in.",
+    "position_provenance": {
+     "source": "caller_supplied",
+     "candidate_id": null,
+     "set_id": null,
+     "set_label": null,
+     "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+    }
+   },
+   "traceback": null
+  }
+ ]
+}
