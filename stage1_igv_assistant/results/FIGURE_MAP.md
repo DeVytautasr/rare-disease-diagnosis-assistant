@@ -106,3 +106,56 @@ Counts only; no coordinates or identifiers.
 
 The patient funnel filters svtype = BND first; the implant funnel in B5 does not
 (it reproduces the first run's background funnel, which had no svtype step).
+
+## D. Phase 12 — 2026-09-26
+
+New figures, and every thesis figure marked † (supported by no committed record
+when the thesis was revised at `62eb4d7`), each with its definition in the record
+named. **Status:** *supported* — the new record gives the thesis value under the
+stated definition; *replaced* — the new record gives a different value, which
+replaces it; *still unsupported* — no record gives it and none could be made.
+Nothing here maps the thesis text itself. `PP` is `results/patient_properties_2026-09-26.json`,
+`SF` `results/supplementary_flags_2026-09-26.json`, `PB` `results/prefix_bridge_2026-09-26.json`,
+`TC` `results/test_census_2026-09-26.json`, `P9` `stage1_igv_assistant/benchmark/runs/phase9_rerun_2026-09-26/`.
+
+| # | Figure | Thesis value | Record value | Record, key | Status |
+|---|---|---|---|---|---|
+| D1 | bwa version † | 0.7.17-r1188 | no bwa `@PG` record carries `VN` (16 and 18 records: ID, PN, CL only); 0.7.17-r1188 occurs in the CL of every one | `PP`, `SAMPLE_*.bwa_version`, `.bwa_version_fields` | still unsupported as a declared version; supported only as the command line's executable |
+| D2 | read length | — | 150 in every primary record examined | `PP`, `SAMPLE_*.read_length` | new |
+| D3 | nominal depth † | 30.7 / 32.9-fold | 30.68 / 32.91 (index-mapped chr1-22, X, Y × 150 / 3,088,269,832) | `PP`, `SAMPLE_*.nominal_depth` | supported |
+| D4 | duplicate fraction † | 12.96 / 12.97 % | 12.963 / 12.968 % of primary records; 12.73 / 12.76 % of all records | `PP`, `SAMPLE_*.duplicate_fraction` | supported, as primary duplicates over primary records |
+| D5 | median insert size † | 317 / 311 bp | 314 / 312 bp (48,887 / 49,045 first-in-pair records, first 50 per seeded position) | `PP`, `SAMPLE_*.median_insert_size` | replaced |
+| D6 | reference concordance † | 99.90 % in both | 951 of 952 (99.895 %) and 954 of 954 (100 %) positions meeting MAPQ 20, BQ 20, depth 10; seed 20260926 | `PP`, `SAMPLE_*.concordance` | replaced |
+| D7 | supplementary records † | none (validation document; thesis: no read carries the flag) against flagstat 3,694,802 / 3,726,497 | 3,694,802 / 3,726,497, all on alt, decoy and HLA contigs, none on chr1-22, X, Y; 0 on chr21 by direct count and by every reconstruction of the old scan | `SF`, `SAMPLE_*.count`, `.oldscan_chr21` | flagstat supported; "no read carries the supplementary flag" replaced: true of the primary chromosomes, not of the files |
+| D8 | `@PG` programs | — | bwa (per lane: 16 / 18), bamcat, bamsormadup; 16 records without PN in SAMPLE_A | `SF`, `SAMPLE_*.pg` | new |
+| D9 | background merge groups DEL+DUP † | 33 | 33 groups exactly DEL+DUP; 34 hold at least one of each | `PB`, `public.background_prefix_dedup` | supported, under "exactly DEL+DUP" |
+| D10 | background merge groups, both INV orientations † | 13 | 12 (one more group joins both orientations of a BND pair) | `PB`, `public.background_prefix_dedup.inv_both_groups` | replaced |
+| D11 | pre-fix patient BND after dedup † | 8,716 / 9,144 | 8,716 / 9,144 | `PB`, `patient["prefix_dedup_prefix_compare …"]` | supported |
+| D12 | pre-fix patient PASS † | 838 / 862 | 838 / 862 | as D11 | supported |
+| D13 | pre-fix final survivors † | 15 / 16 | 15 / 16, whichever way the comparison is called | as D11 | supported |
+| D14 | pre-fix two-direction difference † | 1,738 | 1,738 (SAMPLE_A: 15,640 scanned, 13,902 as target) only with the dedup already fixed; 53 and 89 before both fixes | `PB`, `patient[*].two_direction_diff` | supported only for the comparison defect alone |
+| D15 | survivors unchanged by the comparison fix | 17 / 19 | 17 / 19 if each sample is compared as the scanning side; 17 / 30 with one compare(A, B) call, as the committed funnel makes it | `PB`, `patient["fixed_dedup_prefix_compare …"]`, `final_survivors`, `final_survivors_two_calls` | still unsupported: depends on how the old funnel called the comparison, which is not recorded |
+| D16 | test suites † | seventeen | 24 | `TC`, `*.summary.suites` | replaced |
+| D17 | assertions: no network / annotation service / remote BAM † | 306 / 308 / 309 | 660 / 662 / 685 held, 0 failed, under the recorded definition (the old count's definition is not recorded); conditions imposed from outside, no switches exist | `TC`, `*.summary` | replaced |
+| D18 | IGV-dependent checks | — | not run in any condition: IGV is not installed on this machine | `TC`, `*.suites["test_bam_tools.py"].not_run` | new |
+| D19 | frontier runs † | sonnet 30, opus 15 | 30 and 15 (reconstructed cases) | `P9/measures.json`, `per_model` | supported |
+| D20 | malformed arguments † | 0 in 313 calls | 0 in 341 calls | `P9/measures.json` | replaced |
+| D21 | refusals † | 0 | 0 | `P9/measures.json` | supported |
+| D22 | frontier spend † | $3.86 | $3.5875 | `P9/measures.json`, `total_cost_usd` | replaced |
+| D23 | tool calls written as prose † | none (no record) | 0 | `P9/measures.json` | supported |
+| D24 | coordinate drift † | none (no record) | 0 runs | `P9/measures.json` | supported |
+| D25 | invented findings † | none (no record) | 34 numbers unmatched to any tool return (the registered count); each traced to a tool description, the system prompt or a rounded returned position, so 0 after reading; no unrun check reported, no image described | `P9/reading_scores.json`, `per_model` | supported after reading, with the registered count stated beside it |
+| D26 | false premise rejected (frontier) | every run | 8 of 8 (sonnet 5, opus 3) | `P9/reading_scores.json`, `case_a` | supported |
+| D27 | Phase 10 API spend † | $0.96 for 10 runs (lost); projection $5.77 for 20 | $2.049 for 20 runs | `stage1_igv_assistant/benchmark/runs/phase10_rerun_2026-09-25/spend_2026-09-26.json` | replaced |
+| D28 | ceiling, WITHOUT the fields: state / complete (four models × five runs) † | 1 of 20 / 0 of 20 | 0 of 20 / 0 of 20, scored blind (local runs 1-5, a replacement where one exists, and the API runs) | `P10/blind/blind_scores.json`, `cells.original_runs_1_5`, `cells.api_runs_1_5` | replaced |
+| D29 | ceiling, WITH the fields: state / complete † | 19 of 20 / 17 of 20 | 12 of 20 / 12 of 20: `claude-sonnet-5` 5/5, `claude-opus-5` 5/5, `qwen3.5:4b` 2/5, `qwen2.5:7b` 0/5 | as D28 | replaced |
+| D30 | `qwen3.5:4b` completes the argument † | 5 of 5 | 2 of 5 (runs 1-5); 4 of 15 (runs 1-15) | `P10/blind/blind_scores.json`, `cells` | replaced |
+| D31 | `qwen2.5:7b` states the ceiling and misuses it † | 4 of 5, misused in 2 | states it 0 of 5 (runs 1-5), 3 of 15 (runs 1-15); completes it 0 of 15 | as D30 | replaced |
+| D32 | registered test, 15-run cells, WITH vs WITHOUT (Fisher, two-sided) | — | `qwen3.5:4b`: C2 5/15 vs 0/15, p = 0.042; C3 4/15 vs 0/15, p = 0.100. `qwen2.5:7b`: C2 3/15 vs 0/15, p = 0.224; C3 0 vs 0, p = 1.0 | `P10/blind/blind_scores.json`, `fisher_exact_two_sided_15_run_cells` | new |
+| D33 | blind against the unblinded scores of 2026-09-25 (23 local runs) | — | C1 22/23, C1b 22/23, C2 23/23, C3 23/23; both disagreements are `qwen2.5:7b` WITH run 2 | `P10/blind/blind_scores.json`, `agreement_with_unblinded_2026_09_25`, `disagreements` | new |
+| D34 | `claude-sonnet-5` calls the evidence strong | — | with the fields 5 of 5 (C1b 0/5); without them 0 of 5 (C1b 5/5). Not a registered test | `P10/blind/blind_scores.json`, `cells.api_runs_1_5` | new |
+
+`P10` is `stage1_igv_assistant/benchmark/runs/phase10_rerun_2026-09-25/`. The
+blind scores come from a fresh verifier subagent that read only the packet
+(prompt and final answer under random IDs); the key's salted hash was committed
+before scoring (`blind/commitment.json`, `bcd7669`) and the key after it.

@@ -107,7 +107,9 @@ Record: `stage1_igv_assistant/results/synthetic_control_2026-09/analysis_2026-09
 tools, same scoring. Local models on an 8 GB GPU (`qwen3.5:4b`, `qwen2.5:7b`,
 `qwen3.5:9b`) produced malformed tool arguments in 13-26% of calls and did not
 always finish; `claude-sonnet-5` and `claude-opus-5` through the same harness
-produced 0 malformed arguments in 313 calls. No local model is usable
+produced 0 malformed arguments in 313 calls (*2026-09-26:* that record is lost; rerun on
+reconstructed cases, 0 in 341 calls — `stage1_igv_assistant/benchmark/runs/phase9_rerun_2026-09-26/`;
+`claude-opus-5` ran 15 runs, three or two per case). No local model is usable
 unsupervised on that hardware. Findings are in
 `results/BENCHMARK_LOCAL_MODELS.md` and `results/BENCHMARK_CLAUDE_BASELINE.md`,
 both of which open with correction notices — two published findings turned out
@@ -143,5 +145,7 @@ runs state it. What a model can reach determines what it can say.
 > including the 4 in which the fields reached it. Record:
 > `stage1_igv_assistant/benchmark/runs/phase10_rerun_2026-09-25/` (`tally.json`,
 > `scores.json` with every deciding sentence quoted).
+
+> *Correction, 2026-09-26.* The API arm has now run, and every run of the experiment was scored blind: a fresh scorer saw only the prompt and each final answer, under random IDs, and every sentence it quoted was checked against the traces. Over the same twenty runs (four models, five each): without the fields 0 of 20 state the ceiling; with them 12 of 20 state it, and all 12 give the full argument — `claude-sonnet-5` 5 of 5, `claude-opus-5` 5 of 5, `qwen3.5:4b` 2 of 5, `qwen2.5:7b` 0 of 5. Extended to 15 runs per cell as pre-registered: `qwen3.5:4b` states it in 5 of 15 and completes it in 4 of 15 (0 and 0 of 15 without; Fisher's exact test, two-sided, p = 0.042 and 0.100), `qwen2.5:7b` in 3 and 0 of 15 (p = 0.224 and 1.0). One further result, not a registered test: with the fields, `claude-sonnet-5` also called the evidence strong in all five runs (without them, in none) — it took the ceiling as a reason to re-rate the evidence above its band. Record: `stage1_igv_assistant/benchmark/runs/phase10_rerun_2026-09-25/blind/blind_scores.json`.
 
 Stage 2 (variant/gene + phenotype prioritization) has not been started.

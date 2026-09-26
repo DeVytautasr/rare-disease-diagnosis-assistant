@@ -314,6 +314,8 @@ from `qwen3.5:4b` (2 of 5), and `qwen2.5:7b` states it in none of 5 — although
 the fields reached it in 4 of those runs. Every run and its deciding sentence:
 `stage1_igv_assistant/benchmark/runs/phase10_rerun_2026-09-25/`.
 
+*Correction, 2026-09-26.* The API arm has now run, and every run of the experiment was scored blind: a fresh scorer saw only the prompt and each final answer, under random IDs, and every sentence it quoted was checked against the traces. Over the same twenty runs (four models, five each): without the fields 0 of 20 state the ceiling; with them 12 of 20 state it, and all 12 give the full argument — `claude-sonnet-5` 5 of 5, `claude-opus-5` 5 of 5, `qwen3.5:4b` 2 of 5, `qwen2.5:7b` 0 of 5. Extended to 15 runs per cell as pre-registered: `qwen3.5:4b` states it in 5 of 15 and completes it in 4 of 15 (0 and 0 of 15 without; Fisher's exact test, two-sided, p = 0.042 and 0.100), `qwen2.5:7b` in 3 and 0 of 15 (p = 0.224 and 1.0). One further result, not a registered test: with the fields, `claude-sonnet-5` also called the evidence strong in all five runs (without them, in none) — it took the ceiling as a reason to re-rate the evidence above its band. Record: `stage1_igv_assistant/benchmark/runs/phase10_rerun_2026-09-25/blind/blind_scores.json`.
+
 ---
 
 ## Validation performed
