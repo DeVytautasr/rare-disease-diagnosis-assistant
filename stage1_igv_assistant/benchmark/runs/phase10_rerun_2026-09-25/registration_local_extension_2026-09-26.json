@@ -1,0 +1,35 @@
+{
+ "what": "Pre-registration of the local-arm extension of the Phase 10 rerun (Phase 12, Task 4). Committed before any of its runs.",
+ "date": "2026-09-26",
+ "design": {
+  "models": ["qwen2.5:7b", "qwen3.5:4b"],
+  "cells": "each model x each condition (WITHOUT, WITH the ceiling fields)",
+  "new_runs_per_cell": 10,
+  "run_numbers": "6-15 in each cell, beside runs 1-5 already on record",
+  "new_runs_total": 40,
+  "cells_after_extension": "15 runs per model per condition",
+  "gpu": "one model at a time: qwen2.5:7b, then qwen3.5:4b (the harness unloads any other resident model first)",
+  "command": "python -m stage1_igv_assistant.benchmark.phase10_rerun run qwen2.5:7b qwen3.5:4b --start-run 6 --runs 10"
+ },
+ "unchanged_from_runs_1_5": {
+  "switch": "the prepared-payload switch (WITHOUT: the WITH model-visible payload minus the ceiling keys, handed over as prepared)",
+  "proof": "proof_prepared_payload_2026-09-26.json, PROVEN 71 of 71, on the HEAD these runs use; run refuses to start without the newest proof passing",
+  "prompt": "CASE_E in stage1_igv_assistant/benchmark/phase10_rerun.py -- a reconstruction, as recorded in every run file",
+  "config": "num_ctx 32768, max_iters 40, untrimmed tool descriptions, think='low' where Ollama's /api/show declares the thinking capability (qwen3.5:4b), omitted otherwise (qwen2.5:7b)",
+  "system_prompt": "chat.SYSTEM_PROMPT, unchanged"
+ },
+ "seeds": {
+  "order": "each model's 20 new runs (10 WITHOUT, 10 WITH) are interleaved by random.Random(seed).shuffle with seed '20260925:<model>:start6'; the resulting order is written to meta_runs6-15.json",
+  "sampling": "no Ollama sampling seed is sent, exactly as in runs 1-5, so each run samples with Ollama's default random seed; that seed is not exposed and is not recorded"
+ },
+ "stopping_rule": "none: all 40 runs are made",
+ "replacements": "as in the local arm: a run whose per-call ablation check did not hold, or that ended on a transport error (an Ollama request failure), is replaced once and the replacement is recorded beside it as <COND>__run<k>_replacement.json; an empty answer is a result and is not replaced",
+ "analysis_fixed_in_advance": {
+  "scores": "the blind scores of Phase 12 Task 5 (every item scored from the prompt and the final answer alone, on C1, C1b, C2 and C3 as written in scores.json), unblinded after scoring",
+  "cells_reported": ["the original 5-run cells (runs 1-5)", "the 15-run cells (runs 1-15)"],
+  "run_used_in_a_cell": "a run's recorded replacement where it has one, otherwise the run itself",
+  "test": "Fisher's exact test, two-sided, WITH vs WITHOUT, per model, on the 15-run cells",
+  "outcomes": "C3 (completes the argument) and C2 (asserts the ceiling is unattainable) as the two tested outcomes; C1b reported descriptively",
+  "no_other_tests": "no further tests, subsets or pooling across models are added after the results are seen"
+ }
+}
