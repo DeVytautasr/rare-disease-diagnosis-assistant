@@ -1,0 +1,1130 @@
+{
+ "what": "Every test suite run once per network condition, Phase 12 Task 6(d), 2026-09-26",
+ "switches": "the suites have no environment switch for the network conditions; they were imposed from outside as described under conditions",
+ "conditions": "The suites have no switch for the network: no suite reads an environment variable that turns the annotation service or the remote BAM on or off. The three conditions are therefore imposed from outside, and the record says how: network the machine as it is no_network a new network namespace with only loopback up (unshare -rn, then ip link set lo up): no DNS and no route out; servers on 127.0.0.1 still work annotation_only an APPROXIMATION: http_proxy and https_proxy (both cases) point at 127.0.0.1:9, where nothing listens, with no_proxy = rest.ensembl.org,localhost,127.0.0.1, so a client that honours the proxy variables reaches Ensembl directly and nothing else. requests (the annotation client) and libcurl inside htslib (the remote BAM) both honour them; a client that ignored them would not be confined. The reachability probes, run inside the condition, show what was actually reachable.",
+ "definitions": {
+  "assertion": "one evaluation of a condition that can fail the suite: a call of the suite's own module-level check() (held when its condition argument is truthy), or one execution of an assert statement in the suite file (held when its condition is truthy). Counted by instrumenting the suite before it runs: its source is parsed and compiled here, each assert's condition is passed through a counter that returns it unchanged, a counter call is inserted as the first statement of check(), and the result runs as __main__; nothing else changes. Conditions a suite evaluates any other way are not counted: its own counters (test_api_leak.py, test_server.py), or anything in a child process (test_checks_can_fail.py). Each suite's static count of assert statements and check() definitions is recorded beside it",
+  "suite_outcome": "the suite's exit status: 0 passed, 1 failed, 2 incomplete (a check did not run), anything else an error; a suite killed at the time limit is recorded as a timeout",
+  "not_run": "the lines a suite prints that begin with NOT RUN or SKIPPED, counted, with the check each names (home directory shortened to ~)",
+  "reachability": "probes run inside each condition before the suites: DNS for rest.ensembl.org; an HTTPS GET of Ensembl's /info/ping (status, or exception type); the remote GIAB BAM's header through pysam (read, or exception type), from a scratch working directory; and the local Ollama endpoint 127.0.0.1:11434/api/tags (status, or exception type)"
+ },
+ "thesis_values_compared": {
+  "suites": "seventeen",
+  "assertions no network": 306,
+  "assertions with the annotation service": 308,
+  "assertions with the remote BAM": 309
+ },
+ "code": "scripts/test_census.py",
+ "network": {
+  "condition": "network",
+  "started": "2026-09-26T14:46:55",
+  "proxy_env": {},
+  "reachability": {
+   "dns_rest_ensembl_org": "resolved",
+   "ensembl_ping": 200,
+   "giab_remote_bam_header": "read 2580",
+   "local_ollama": 200
+  },
+  "suites": {
+   "test_alt_contig_pairs.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 20
+    },
+    "assertions_held": 20,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.5
+   },
+   "test_api_leak.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 3,
+     "static_check_defs": 0,
+     "assert_held": 3
+    },
+    "assertions_held": 3,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 2.7
+   },
+   "test_bam_tools.py": {
+    "exit": 2,
+    "counts": {
+     "exit": 2,
+     "ended": "normal",
+     "static_asserts": 152,
+     "static_check_defs": 0,
+     "assert_held": 209
+    },
+    "assertions_held": 209,
+    "assertions_failed": 0,
+    "not_run": [
+     "NOT RUN \u2014 IGV not installed on this machine \u2014 an optional dependency is missing, so the real-screenshot check did not run",
+     "NOT RUN \u2014 IGV not installed on this machine \u2014 an optional dependency is missing, so the real 4-panel generation check did not run",
+     "NOT RUN TEST 10 (real IGV screenshot): IGV not installed on this machine \u2014 an optional dependency is missing, so the real-screenshot check did not run",
+     "NOT RUN TEST 13 (real 4-panel generation): IGV not installed on this machine \u2014 an optional dependency is missing, so the real 4-panel generation check did not run"
+    ],
+    "wall_s": 190.2
+   },
+   "test_browser_path_rule.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 7
+    },
+    "assertions_held": 7,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 4.3
+   },
+   "test_ceiling_echo.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 28
+    },
+    "assertions_held": 28,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 2.1
+   },
+   "test_checks_can_fail.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 18
+    },
+    "assertions_held": 18,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 4.5
+   },
+   "test_contig_bounds.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 15
+    },
+    "assertions_held": 15,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.3
+   },
+   "test_contig_naming.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 24
+    },
+    "assertions_held": 24,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.3
+   },
+   "test_depth_geometry.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 16
+    },
+    "assertions_held": 16,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.3
+   },
+   "test_depth_units.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 6
+    },
+    "assertions_held": 6,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.3
+   },
+   "test_gate_window_display.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 14
+    },
+    "assertions_held": 14,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 1.9
+   },
+   "test_gene_annotation_note.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 12
+    },
+    "assertions_held": 12,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.3
+   },
+   "test_minimum_support.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 14
+    },
+    "assertions_held": 14,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.4
+   },
+   "test_parameter_domain.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 33
+    },
+    "assertions_held": 33,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.3
+   },
+   "test_partner_distribution.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 22
+    },
+    "assertions_held": 22,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.3
+   },
+   "test_prose_coordinates.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 11
+    },
+    "assertions_held": 11,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.3
+   },
+   "test_quality_gate.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 29
+    },
+    "assertions_held": 29,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.3
+   },
+   "test_reciprocal_verdict.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 24
+    },
+    "assertions_held": 24,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.3
+   },
+   "test_sa_mapq_strand.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 17
+    },
+    "assertions_held": 17,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.3
+   },
+   "test_server.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 3,
+     "static_check_defs": 0,
+     "assert_held": 3
+    },
+    "assertions_held": 3,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 1.7
+   },
+   "test_split_partner_units.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 11
+    },
+    "assertions_held": 11,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.3
+   },
+   "test_subthreshold_observations.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 35
+    },
+    "assertions_held": 35,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.5
+   },
+   "test_tier_source_shape.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 15
+    },
+    "assertions_held": 15,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.3
+   },
+   "test_vcf_tools.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 99
+    },
+    "assertions_held": 99,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.1
+   }
+  },
+  "summary": {
+   "suites": 24,
+   "passed": 23,
+   "failed": 0,
+   "incomplete": 1,
+   "other": 0,
+   "assertions_held": 685,
+   "assertions_failed": 0,
+   "not_run_lines": 4
+  },
+  "finished": "2026-09-26T14:50:46"
+ },
+ "no_network": {
+  "condition": "no_network",
+  "started": "2026-09-26T14:50:46",
+  "proxy_env": {},
+  "reachability": {
+   "dns_rest_ensembl_org": "gaierror",
+   "ensembl_ping": "ConnectionError",
+   "giab_remote_bam_header": "OSError 89",
+   "local_ollama": "ConnectionError"
+  },
+  "suites": {
+   "test_alt_contig_pairs.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 20
+    },
+    "assertions_held": 20,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.2
+   },
+   "test_api_leak.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 3,
+     "static_check_defs": 0,
+     "assert_held": 3
+    },
+    "assertions_held": 3,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 1.2
+   },
+   "test_bam_tools.py": {
+    "exit": 2,
+    "counts": {
+     "exit": 2,
+     "ended": "normal",
+     "static_asserts": 152,
+     "static_check_defs": 0,
+     "assert_held": 184
+    },
+    "assertions_held": 184,
+    "assertions_failed": 0,
+    "not_run": [
+     "NOT RUN \u2014 Ensembl did not answer (ConnectionError); the annotation logic is still covered offline by TEST 7b",
+     "NOT RUN \u2014 IGV not installed on this machine \u2014 an optional dependency is missing, so the real-screenshot check did not run",
+     "NOT RUN \u2014 IGV not installed on this machine \u2014 an optional dependency is missing, so the real 4-panel generation check did not run",
+     "NOT RUN \u2014 the GIAB BAM is unreachable (OSError, errno 89) \u2014 no network",
+     "NOT RUN \u2014 the GIAB BAM is unreachable (OSError, errno 89) \u2014 no network",
+     "NOT RUN TEST 7 (live Ensembl): Ensembl did not answer (ConnectionError); the annotation logic is still covered offline by TEST 7b",
+     "NOT RUN TEST 10 (real IGV screenshot): IGV not installed on this machine \u2014 an optional dependency is missing, so the real-screenshot check did not run",
+     "NOT RUN TEST 13 (real 4-panel generation): IGV not installed on this machine \u2014 an optional dependency is missing, so the real 4-panel generation check did not run",
+     "NOT RUN TEST 17 (real HG002 BAM, FIX 1+2): the GIAB BAM is unreachable (OSError, errno 89) \u2014 no network",
+     "NOT RUN TEST 18 (real HG002 BAM, FIX 3): the GIAB BAM is unreachable (OSError, errno 89) \u2014 no network"
+    ],
+    "wall_s": 38.3
+   },
+   "test_browser_path_rule.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 7
+    },
+    "assertions_held": 7,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 2.1
+   },
+   "test_ceiling_echo.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 28
+    },
+    "assertions_held": 28,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 1.2
+   },
+   "test_checks_can_fail.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 18
+    },
+    "assertions_held": 18,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 2.5
+   },
+   "test_contig_bounds.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 15
+    },
+    "assertions_held": 15,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.2
+   },
+   "test_contig_naming.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 24
+    },
+    "assertions_held": 24,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.2
+   },
+   "test_depth_geometry.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 16
+    },
+    "assertions_held": 16,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.2
+   },
+   "test_depth_units.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 6
+    },
+    "assertions_held": 6,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.2
+   },
+   "test_gate_window_display.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 14
+    },
+    "assertions_held": 14,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 1.0
+   },
+   "test_gene_annotation_note.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 12
+    },
+    "assertions_held": 12,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.4
+   },
+   "test_minimum_support.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 14
+    },
+    "assertions_held": 14,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.2
+   },
+   "test_parameter_domain.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 33
+    },
+    "assertions_held": 33,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.5
+   },
+   "test_partner_distribution.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 22
+    },
+    "assertions_held": 22,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.2
+   },
+   "test_prose_coordinates.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 11
+    },
+    "assertions_held": 11,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.2
+   },
+   "test_quality_gate.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 29
+    },
+    "assertions_held": 29,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.2
+   },
+   "test_reciprocal_verdict.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 24
+    },
+    "assertions_held": 24,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.2
+   },
+   "test_sa_mapq_strand.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 17
+    },
+    "assertions_held": 17,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.2
+   },
+   "test_server.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 3,
+     "static_check_defs": 0,
+     "assert_held": 3
+    },
+    "assertions_held": 3,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.9
+   },
+   "test_split_partner_units.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 11
+    },
+    "assertions_held": 11,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.2
+   },
+   "test_subthreshold_observations.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 35
+    },
+    "assertions_held": 35,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.3
+   },
+   "test_tier_source_shape.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 15
+    },
+    "assertions_held": 15,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.4
+   },
+   "test_vcf_tools.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 99
+    },
+    "assertions_held": 99,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.1
+   }
+  },
+  "summary": {
+   "suites": 24,
+   "passed": 23,
+   "failed": 0,
+   "incomplete": 1,
+   "other": 0,
+   "assertions_held": 660,
+   "assertions_failed": 0,
+   "not_run_lines": 10
+  },
+  "finished": "2026-09-26T14:51:37"
+ },
+ "annotation_only": {
+  "condition": "annotation_only",
+  "started": "2026-09-26T14:51:37",
+  "proxy_env": {
+   "http_proxy": "http://127.0.0.1:9",
+   "https_proxy": "http://127.0.0.1:9",
+   "HTTP_PROXY": "http://127.0.0.1:9",
+   "HTTPS_PROXY": "http://127.0.0.1:9",
+   "no_proxy": "rest.ensembl.org,localhost,127.0.0.1",
+   "NO_PROXY": "rest.ensembl.org,localhost,127.0.0.1"
+  },
+  "reachability": {
+   "dns_rest_ensembl_org": "resolved",
+   "ensembl_ping": 200,
+   "giab_remote_bam_header": "ConnectionRefusedError 111",
+   "local_ollama": 200
+  },
+  "suites": {
+   "test_alt_contig_pairs.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 20
+    },
+    "assertions_held": 20,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.2
+   },
+   "test_api_leak.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 3,
+     "static_check_defs": 0,
+     "assert_held": 3
+    },
+    "assertions_held": 3,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 1.0
+   },
+   "test_bam_tools.py": {
+    "exit": 2,
+    "counts": {
+     "exit": 2,
+     "ended": "normal",
+     "static_asserts": 152,
+     "static_check_defs": 0,
+     "assert_held": 186
+    },
+    "assertions_held": 186,
+    "assertions_failed": 0,
+    "not_run": [
+     "NOT RUN \u2014 IGV not installed on this machine \u2014 an optional dependency is missing, so the real-screenshot check did not run",
+     "NOT RUN \u2014 IGV not installed on this machine \u2014 an optional dependency is missing, so the real 4-panel generation check did not run",
+     "NOT RUN \u2014 the GIAB BAM is unreachable (ConnectionRefusedError, errno 111) \u2014 no network",
+     "NOT RUN \u2014 the GIAB BAM is unreachable (ConnectionRefusedError, errno 111) \u2014 no network",
+     "NOT RUN TEST 10 (real IGV screenshot): IGV not installed on this machine \u2014 an optional dependency is missing, so the real-screenshot check did not run",
+     "NOT RUN TEST 13 (real 4-panel generation): IGV not installed on this machine \u2014 an optional dependency is missing, so the real 4-panel generation check did not run",
+     "NOT RUN TEST 17 (real HG002 BAM, FIX 1+2): the GIAB BAM is unreachable (ConnectionRefusedError, errno 111) \u2014 no network",
+     "NOT RUN TEST 18 (real HG002 BAM, FIX 3): the GIAB BAM is unreachable (ConnectionRefusedError, errno 111) \u2014 no network"
+    ],
+    "wall_s": 0.7
+   },
+   "test_browser_path_rule.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 7
+    },
+    "assertions_held": 7,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 2.6
+   },
+   "test_ceiling_echo.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 28
+    },
+    "assertions_held": 28,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 1.0
+   },
+   "test_checks_can_fail.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 18
+    },
+    "assertions_held": 18,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 2.6
+   },
+   "test_contig_bounds.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 15
+    },
+    "assertions_held": 15,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.2
+   },
+   "test_contig_naming.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 24
+    },
+    "assertions_held": 24,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.2
+   },
+   "test_depth_geometry.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 16
+    },
+    "assertions_held": 16,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.2
+   },
+   "test_depth_units.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 6
+    },
+    "assertions_held": 6,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.2
+   },
+   "test_gate_window_display.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 14
+    },
+    "assertions_held": 14,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 1.0
+   },
+   "test_gene_annotation_note.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 12
+    },
+    "assertions_held": 12,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.2
+   },
+   "test_minimum_support.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 14
+    },
+    "assertions_held": 14,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.2
+   },
+   "test_parameter_domain.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 33
+    },
+    "assertions_held": 33,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.2
+   },
+   "test_partner_distribution.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 22
+    },
+    "assertions_held": 22,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.2
+   },
+   "test_prose_coordinates.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 11
+    },
+    "assertions_held": 11,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.2
+   },
+   "test_quality_gate.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 29
+    },
+    "assertions_held": 29,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.2
+   },
+   "test_reciprocal_verdict.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 24
+    },
+    "assertions_held": 24,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.2
+   },
+   "test_sa_mapq_strand.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 17
+    },
+    "assertions_held": 17,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.2
+   },
+   "test_server.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 3,
+     "static_check_defs": 0,
+     "assert_held": 3
+    },
+    "assertions_held": 3,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.9
+   },
+   "test_split_partner_units.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 11
+    },
+    "assertions_held": 11,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.2
+   },
+   "test_subthreshold_observations.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 35
+    },
+    "assertions_held": 35,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.3
+   },
+   "test_tier_source_shape.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 15
+    },
+    "assertions_held": 15,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.2
+   },
+   "test_vcf_tools.py": {
+    "exit": 0,
+    "counts": {
+     "exit": 0,
+     "ended": "normal",
+     "static_asserts": 0,
+     "static_check_defs": 1,
+     "check_held": 99
+    },
+    "assertions_held": 99,
+    "assertions_failed": 0,
+    "not_run": [],
+    "wall_s": 0.1
+   }
+  },
+  "summary": {
+   "suites": 24,
+   "passed": 23,
+   "failed": 0,
+   "incomplete": 1,
+   "other": 0,
+   "assertions_held": 662,
+   "assertions_failed": 0,
+   "not_run_lines": 8
+  },
+  "finished": "2026-09-26T14:51:59"
+ }
+}
