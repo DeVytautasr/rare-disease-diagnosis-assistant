@@ -1,0 +1,73 @@
+{
+ "what": "One IGV evidence panel through the MCP interface on public data (Phase 13 Task 0, 2026-09-27)",
+ "definitions": "per layer the tool's success flag, image_ref and image_dimensions as returned to the caller; whether the return carries any file path (it must not); and, resolved on disk from the session directory, that a PNG file of those dimensions exists (size and sha256 only -- the picture itself is not interpreted).",
+ "locus": "IMP01 chr20:200000 (public synthetic control)",
+ "environment": {
+  "igv": "2.17.4 at ~/IGV_2.17.4",
+  "java": "conda-forge openjdk 21 (env igv-java)",
+  "display": ":0"
+ },
+ "panels": {
+  "discordant_pairs": {
+   "success": true,
+   "image_ref": "IMG_d1fb",
+   "image_dimensions": "1140x1112",
+   "error": null,
+   "region": "chr20:198500-201500",
+   "color_by": "UNEXPECTED_PAIR"
+  },
+  "soft_clipped_reads": {
+   "success": true,
+   "image_ref": "IMG_96b7",
+   "image_dimensions": "1140x1112",
+   "error": null,
+   "region": "chr20:199850-200150",
+   "color_by": "NONE"
+  },
+  "split_reads": {
+   "success": true,
+   "image_ref": "IMG_0578",
+   "image_dimensions": "1074x883",
+   "error": null,
+   "region": "chr20:198500-201500",
+   "color_by": "UNEXPECTED_PAIR"
+  },
+  "read_depth": {
+   "success": true,
+   "image_ref": "IMG_535f",
+   "image_dimensions": "1140x1112",
+   "error": null,
+   "region": "chr20:197000-203000",
+   "color_by": "NONE"
+  }
+ },
+ "return_contains_a_path": true,
+ "files_in_session_dir": {
+  "discordant_pairs.png": {
+   "bytes": 39426,
+   "sha256": "39929b27c454f9d9",
+   "png_header": true,
+   "dimensions": "1140x1112"
+  },
+  "read_depth.png": {
+   "bytes": 24435,
+   "sha256": "8a7b32080d6b3750",
+   "png_header": true,
+   "dimensions": "1140x1112"
+  },
+  "soft_clipped_reads.png": {
+   "bytes": 42811,
+   "sha256": "ac68e0e22436a274",
+   "png_header": true,
+   "dimensions": "1140x1112"
+  },
+  "split_reads.png": {
+   "bytes": 45790,
+   "sha256": "b433cc5a65c96d5c",
+   "png_header": true,
+   "dimensions": "1074x883"
+  }
+ },
+ "code": "scripts/igv_panel_demo.py",
+ "end_to_end": false
+}

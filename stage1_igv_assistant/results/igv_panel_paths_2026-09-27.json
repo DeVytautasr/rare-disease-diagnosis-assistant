@@ -1,0 +1,13 @@
+{
+ "what": "Phase 13 Task 0 follow-up: which fields of the MCP evidence_panel return carry a",
+ "definitions": "Phase 13 Task 0 follow-up: which fields of the MCP evidence_panel return carry a path. igv_panel_demo.py flagged its return as containing one, by a coarse test (\"/home/\", \".png\" or the session directory anywhere in the text). This repeats the same call (public IMP01 chr20:200000; refuses non-public BAMs) and lists every string field whose value contains \"/home/\", \"~/\", \".png\" or the image session directory, with the kind of path -- the input BAM echoed back, or an image file -- and never the image. -> stage1_igv_assistant/results/igv_panel_paths_2026-09-27.json",
+ "path_bearing_fields": [
+  {
+   "field": ".bam_paths[0]",
+   "kind": "input BAM echoed",
+   "value": "~/public_data/sim/bams/IMP01.bam"
+  }
+ ],
+ "image_paths_returned": 0,
+ "code": "scripts/igv_panel_paths.py"
+}

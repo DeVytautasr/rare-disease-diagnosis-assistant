@@ -1,0 +1,39 @@
+{
+ "what": "stage1_igv_assistant/tests/test_bam_tools.py with IGV reinstalled (Phase 13 Task 0, 2026-09-27)",
+ "environment": {
+  "igv": "2.17.4 at ~/IGV_2.17.4 (scripts/install_igv.sh)",
+  "java": "OpenJDK 21.0.10, conda-forge openjdk=21 in env igv-java (no administrator rights; the defaults channels were not used because their terms of service have not been accepted)",
+  "display": ":0 (WSLg)",
+  "network": "as the machine is (Ensembl and the remote GIAB BAM reachable)"
+ },
+ "exit_status": 0,
+ "started": "2026-09-27T01:09:37+03:00",
+ "ended": "2026-09-27T01:17:05+03:00",
+ "final_line": "ALL TESTS PASSED",
+ "not_run_lines": [],
+ "tests_seen": [
+  "TEST 1",
+  "TEST 2",
+  "TEST 3",
+  "TEST 4",
+  "TEST 5",
+  "TEST 6",
+  "TEST 7",
+  "TEST 7b",
+  "TEST 8",
+  "TEST 9",
+  "TEST 10",
+  "TEST 11",
+  "TEST 12",
+  "TEST 13",
+  "TEST 14",
+  "TEST 15",
+  "TEST 16",
+  "TEST 17",
+  "TEST 18"
+ ],
+ "passed_markers": 38,
+ "definitions": "exit_status: the suite's own exit code (0 every check ran and passed, 1 failed, 2 incomplete). not_run_lines: output lines beginning NOT RUN. tests_seen: the numbered TEST headings the suite printed.",
+ "compared_with": "test_census_2026-09-26.json: exit 2 in all three conditions, TESTs 10 and 13 NOT RUN because IGV was not installed",
+ "log": "not committed (~/public_data/sim/logs/phase13_2026-09-27/test_bam_tools.log)"
+}
