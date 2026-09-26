@@ -159,3 +159,181 @@ Nothing here maps the thesis text itself. `PP` is `results/patient_properties_20
 blind scores come from a fresh verifier subagent that read only the packet
 (prompt and final answer under random IDs); the key's salted hash was committed
 before scoring (`blind/commitment.json`, `bcd7669`) and the key after it.
+
+## E. The thesis and the abstract — 2026-09-27
+
+Mapped from `docs/thesis/Rimas_MSc_Thesis.docx` (working draft of 26 September,
+modified 2026-09-27 01:00; 24,776 words, 12 † marks) and the abstract
+`Rimas_tezes_DI_medicinoje_LT.docx` (Desktop, same time; 520 words), read only:
+text extracted from `word/document.xml`. Scope: Methods through both summaries of
+the thesis (literature review and references skipped) and the whole abstract.
+Every numeric claim is listed; a figure repeated in several places is listed once,
+with its places. **Status:** *supported* — a committed record gives the value;
+*differs* — a committed record gives another value; *unsupported* — no committed
+record gives it. **†** marks a figure the thesis marks as resting on lost records.
+"Derived" means computed here from the named record's own fields, the derivation
+stated. Short names: `PP`, `SF`, `PB`, `TC`, `P9`, `P10`, `AN` as in sections A–D;
+`PR` = `results/patient_rerun_2026-09.json`; `P8` = `results/phase8_final_record.json`;
+`RPD` = `results/REAL_PATIENT_DATA_VALIDATION.md`; `SC` = `results/synthetic_control_2026-09/`;
+`P9F` = `stage1_igv_assistant/benchmark/runs/phase9_case_f_2026-09-27/`.
+
+### E.1 Flags — what the thesis or abstract should change
+
+| # | Where | Claim | Record | Flag |
+|---|---|---|---|---|
+| E1 | Results, calibration | initial window "returning ratios of 0.66–0.71" | `GIAB_PUBLIC_DATA_VALIDATION.md` line 70: 0.618–0.707 (PacBio), 0.662 (Illumina) | **differs**: the range is 0.62–0.71 |
+| E2 | Results, second round; Discussion; Conclusion 4 | the 7B model confirmed the false premise "in two of five runs" | `P8` has no false-premise judgement (only answered-by-case) | **unsupported, unmarked** |
+| E3 | Results, second round | the 4B model "rejected the false premise in four of five" | as E2 (`P8`: case a answered 4 of 5) | **unsupported, unmarked** |
+| E4 | Results, second round; Discussion; Conclusion 4 | frontier sweep: "no malformed arguments in 313 tool calls across forty-five runs, refused none, and rejected the false premise in every run" | the sweep's record was lost (`results/README.md`, 2026-09-26 note); the rerun gives 341 calls (`P9`) | **unsupported, unmarked** (the thesis's own provenance section lists this sweep's records as lost, but these figures carry no †) |
+| E5 | Results, second round; Discussion | "Each sweep cost under four United States dollars" | first sweep $3.86 in lost record; rerun $3.5875 (`P9/measures.json`) | the first half **unsupported, unmarked** |
+| E6 | Results, Deployability | "the same locus scored 43.3 instead of 47.5" | 47.5 and 43.3 are the first implant set's values (`docs/NAUDOJIMAS.md` note of 2026-09-25: "to rinkinio įrašai prarasti"); no committed record | **unsupported, unmarked** |
+| E7 | Methods, gate | "the first construction's result of 82 per cent" | quoted in `SC/README.md` (50/61) from the lost construction | **unsupported, unmarked** (a first-construction figure without †) |
+| E8 | Results, Deployability | bundle "of 1.59 megabytes" | `docs/DIEGIMAS.md` and `results/README.md`: 1.6 MB; no record of 1.59 | **unsupported** (rounding of an unrecorded size) |
+| E9 | Results, The Instrument | at the missed implants manual entry returns "at best ten discordant pairs and a weak score of 22.5, otherwise a withheld score" | `AN/figures.json` `rescue`: IMP09 chr20 10 pairs, 22.5 weak; IMP11 chr20 **11** pairs, withheld | wording: the most pairs returned is 11 (at a withheld call); "at best ten" holds only for scored calls |
+| E10 | Table 2 | first-construction column | cells not marked †; the table note says the records were lost | the † convention is carried by the note, not the cells |
+| E11 | Discussion, methodological | the concealed gate firing was "a false positive, as it proved, and amended before anything was published" | no committed record (the push history shows no identifier; the amend itself is not recorded) | **unsupported** wording |
+| E13 | Results, audit and reproducibility | the suite "now stands at nineteen tests"; "all nineteen tests passed" from a clean clone | git history of `tests/test_bam_tools.py`: 9 numbered TEST blocks at the audit commit `4b7f8de`, 18 at `2044852` (2026-08-11); "nineteen" occurs only in the earlier chapter draft (`9dce3bc`), not in a record | **unsupported, unmarked** |
+| E12 | Results, GIAB | "deletion of 3,357 bases" | `stage1_igv_assistant/data/HG002_GRCh38_CMRG_SV.vcf.gz`, chr1:115686862: len(REF) − len(ALT) = 3,357 | **supported** — but `RESULTS_HCC1143.md`, `TUTORIAL.md` say 3,359; the documents, not the thesis, are off |
+
+No † figure is supported by a committed record: every † (memory model, first
+construction's 14 of 24 and 114 of 121 and r = 0.142, eight of eighteen prose
+calls, the withheld-as-absence run, the first ceiling comparison's 1 and 19 of 20,
+R² 0.9998) was checked and none has a record. Wording the records contradict: none
+beyond E9 and E11; the "all", "every", "none" statements checked below hold.
+
+### E.2 Methods
+
+| # | Claim | Value | Record : key | Status |
+|---|---|---|---|---|
+| E20 | background slice aligned with BWA 0.7.15 mem -Y, ALT-aware | — | `SC/run_record_2026-09-25_continued.json` (implant alignment note); `AN/noalt/align.json` | supported |
+| E21 | clinical BAM sizes | 36.3, 38.8 GiB; 39 and 42 GB | `PR` `task1_verification.SAMPLE_*.bytes` (38,959,428,903; 41,617,797,998) | supported (derived) |
+| E22 | bwa 0.7.17-r1188 in every command line, no version field | — | `PP` `SAMPLE_*.bwa_version_fields` | supported |
+| E23 | merged and duplicate-marked (bamcat, bamsormadup) | — | `SF` `SAMPLE_*.pg` | supported |
+| E24 | every aligner record -M, not -Y | — | `PR` `bwa_flags_in_all_command_lines` | supported |
+| E25 | 3,171 alternate contigs marked | 3,171 | `PR` `ah_contigs`, `ah_set_equals_hs38DH_alt` | supported |
+| E26 | pa tag on 2.66 and 2.26 % of primary reads, chr20+21 | 2.66, 2.26 | `PR` `pa_tagged_chr20_chr21` / `primary_reads_chr20_chr21` (648,506/24,364,354; 593,172/26,296,677) | supported (derived) |
+| E27 | reads 150 bases, ~400,000 examined per sample | 150; 412,826 / 446,318 | `PP` `SAMPLE_*.read_length` | supported |
+| E28 | nominal depth, definition | 30.7 / 32.9 | `PP` `nominal_depth` | supported |
+| E29 | duplicates of primary records | 12.96 / 12.97 % | `PP` `duplicate_fraction.primary_records` | supported |
+| E30 | depth after duplicates "nearer 27 and 29-fold" | 26.7, 28.6 | derived from E28 × (1 − E29) | supported |
+| E31 | median insert size | 314 / 312 | `PP` `median_insert_size` | supported |
+| E32 | supplementary records: totals, ~2.9 M decoy, 0.76 / 0.82 M alt, ~3,000 HLA, none primary | 3,694,802 / 3,726,497 | `SF` `SAMPLE_*.count.flag_0x800.by_class` | supported |
+| E33 | 3,366 contigs match; 1,000 positions, depth 10, MAPQ and BQ 20, seed | — | `PR` `task1_verification.*.contig_md5`; `PP` `concordance`, `floors`, `seed` | supported |
+| E34 | eleven tools, four layers, seven others; startup assertion | 11, 4, 7 | A1, A2; `ui.assert_tool_contract()` | supported |
+| E35 | 0–25 per layer, bands 70 and 40 | — | `stage1_igv_assistant/score_tiers.py` (derived from `bam_tools.py`); `P10/blind/packet.json` ceiling fields | supported |
+| E36 | DELLY v2.6.0, exclude template, one thread | — | `PR` `delly.*.command` (`OMP_NUM_THREADS=1`, `-x`) | supported |
+| E37 | six filters, seventh by comparison, 500 bp | — | `PR` `funnel_filters` | supported |
+| E38 | twelve implants chr20–chr21, 24 junctions, three contexts | 12, 24 | `SC/implants_ground_truth.json` | supported |
+| E39 | reinstall on 23 September 2026; generator never committed | — | `results/README.md` (reinstall note); git history has no generator before the rebuild | supported |
+| E40 | three first-construction coordinates reused | 3 | `AN/figures.json` `reused_coordinates` | supported |
+| E41 | ART HiSeq 2500, five profiles, 0.001905 vs 0.002104 | — | `SC/art_profiles.json`, `SC/background_measurements.json` | supported |
+| E42 | fragment length mean 442.6, sd 104.6 | 442.64, 104.58 | `SC/background_measurements.json` `fragment_length` | supported |
+| E43 | eight-value base qualities | 8 | `SC/background_measurements.json` `quality_bins.distinct` | supported |
+| E44 | one alignment call, BWA 0.7.15 mem -Y, whole-genome index with .alt | — | `SC/run_record_2026-09-25_continued.json` | supported |
+| E45 | 978 scanned candidate breakends; stricter rule (dinucleotide run 8) | 978 | `SC/selection.json`; `AN/adjudication/summary.json` `strict_classes` | supported |
+| E46 | gate: 70 %, 18 of 33 = 54.5 %, fifteen explained by score 30 / seed 19, 61.1 %, P = 0.27, −7.3 / +1.6 % | — | `SC/IMP01_gate_revised_2026-09-25.json`; `SC/README.md` | supported |
+| E47 | wrong-partner criterion fails across twelve | 41 reads | `AN/adjudication/summary.json` `spanning_reads_with_a_wrong_partner_sa` | supported |
+| E48 | 5 runs per local model and per sonnet; opus 15 | — | `P8` `models.*.runs` (30 = 6 × 5); `P9/registration.json` | supported |
+| E49 | blind rescoring: 23 earlier local runs; agreement all on C2 and C3, 22 of 23 on the others | — | `P10/blind/blind_scores.json` `agreement_with_unblinded_2026_09_25` | supported |
+| E50 | 8 GB accelerator; fallbacks disabled | — | `P8` `hardware`; `P9/registration.json` `config` | supported |
+| E51 | versions: Python 3.11 / 3.14, pysam 0.24.0, FastMCP 3.4.6, samtools 1.21 + htslib 1.24, ART 2.5.8, IGV 2.17.4, Ollama 0.32.9 | — | `requirements.txt`; `results/README.md` (3.14.4); `SC/art_profiles.json`; `scripts/install_igv.sh`; `P8` `hardware.ollama` | supported |
+
+### E.3 Results
+
+| # | Claim | Value | Record : key | Status |
+|---|---|---|---|---|
+| E60 | fixture chr1↔chr8: 15 / 5 / 8; 100/100 STRONG, 4/4 | — | `tests/test_bam_tools.py` fixture; `DEMO_END_TO_END.md` | supported |
+| E61 | HCC1143 normal (germline) at a tutorial translocation locus; 0.7–0.8 %; zero SA in 572,731 reads | — | `RESULTS_HCC1143.md` | supported |
+| E62 | GIAB deletion, VCF position chr1:115,686,862 | 3,357 bases | see E12 | supported |
+| E63 | calibration: ±500 → ±2,000 bp, 0.6 → 0.7; 0.609 / 0.542 | — | `GIAB_PUBLIC_DATA_VALIDATION.md` lines 70–97 | supported (see E1 for 0.66–0.71) |
+| E64 | 16 thresholds (13 scoring, 3 text), 2 empirical, 14 judgement; eleven in the scoring documentation | — | `bam_tools.py` threshold inventory (lines 28–40); the summary tool's description ("only ONE … The other 10") | supported |
+| E65 | 42 control loci; localisation 1 kb, 1,400 bases, 800–900 bases | — | `RPD` findings 4–5; `bam_tools.py` localisation note | supported |
+| E66 | first session: 100-base bin, 115,686,865, 13-read pileup; 15 + 15 + 0 + 30 = 60 vs 30 | — | `LLM_SESSION_1.md` | supported |
+| E67 | second session: nine tools; 410–520 to 175, ratio 0.547; true depth 100–320; one mate on chr12 | — | `LLM_SESSION_2_WITH_VISUAL.md` lines 82–92 | supported |
+| E68 | audit: five critical, twelve substantive, four housekeeping; seven of nine tools; two wrappers | 5 / 12 / 4; 7/9; 2 | `AUDIT_2026_08.md` SUMMARY; commit `4b7f8de` message (split_reads and the summary's label default) | supported |
+| E69 | nineteen tests after the audit; nineteen passed from a clean clone | 19 | see E13 | unsupported |
+| E70 | bin width moved depth 39 %; invariant within 1–2 % after the fix; pileups 13 / 2 / 1; dip 1,500 bases away; separation twofold → sixfold | — | `LLM_SESSION_3_BLIND.md` lines 156, 174 | supported |
+| E71 | patient validation: 261 alt, 2,512 unplaced and decoy, 525 HLA; ~31-fold; 70 calls, 16 probe groups; ≤ 0.096 s; annotation up to 3.6 s; 68 MB; 100-kb window; ~470,000 entries | — | `RPD` lines 40–60, 445–472 (3.584 s), 418–421 | supported |
+| E72 | ~2.4 million decoy supplementary records per sample with a primary on the main chromosomes | 2,358,228 / 2,362,639 | `SF` `SAMPLE_*.count.sa_first_class.decoy.primary` | supported |
+| E73 | 28 cells, 16 strong; up to 452 reads; 71 %; −29 / −60 % and −66 / −87 %; 10–12 % strand; 16 of 44, 102 entries; MHC moderate → weak, mostly from the MAPQ filter | — | `RPD` lines 120–141, 249–262, 555–557, 238, 569–586 | supported |
+| E74 | false-positive rate: 120 positions, 26 %, 0.739 / 0.753, 56–58 %, 3× less scatter, 0.523–0.868 crossing between 200 and 500 | — | `RPD` lines 172–187, 313 | supported |
+| E75 | support minimum: 33 → 71 / 60 %, 60 → 17 / 21 %, 7.5 → 0; 43 / 50 %; 17 / 26 % | — | `RPD` finding 4 and re-measurement | supported |
+| E76 | fourteen suites added, seventeen total; census 24 suites, 660 / 662 / 685, none failing | — | git history (17 test files at `96b5e25`, 2026-08-31); `TC` `*.summary` | supported |
+| E77 | twelve fully resolved, one with caveat, one part-resolved | 12 / 1 / 1 | `RPD` status lines | supported |
+| E78 | concordance 951 / 952 and 954 / 954 | — | `PP` `concordance` | supported |
+| E79 | first delly run: 46 min, 2 h 4 min, 1,184 / 1,187 MiB | — | `PR` `phase3_targets` | supported (as the Phase 3 record quoted there) |
+| E80 | 30,980 / 32,451; 9,172 / 9,655; 896 / 923; rerun reproduced every count; rerun memory 1,158 / 1,187; runs concurrent | — | `PR` `funnel`, `all_counts_match`, `delly.*.peak_rss_mib`, `delly` note | supported |
+| E81 | memory model: 0.9998, 13.19 GiB, 467 / 444 Mb, 1,109 / 461 MiB, 1,121 MiB, 5.6 / 5.9 % † | — | none (lost) | unsupported, marked † — correct |
+| E82 | bridge: 33 DEL+DUP groups; 13 = 12 inversion + 1 breakend; 840 → 894, 24 → 27; 8,716 / 9,144 → 9,172 / 9,655; 838 / 862 → 896 / 923; 15 / 16 → 17 / 19; rerun reproduces | — | `PB` `public`, `patient` (D9–D13) | supported |
+| E83 | 54 of 56; 1,738 and 1,795; ~70 % removed at the last step; 17 / 19 two calls, 17 / 30 one call | — | `PB` `two_direction_diff`, `final_survivors*`; `PR` funnel (57 → 17, 63 → 19) | supported |
+| E84 | 9,172 → 17, 99.8 % | — | `PR` funnel | supported |
+| E85 | first implant depth −7.3 / +1.6 %, −4.6 / +3.7 % without duplicates | — | `SC/README.md` line 70 | supported |
+| E86 | 16 of 24; 8 of 12 each with both; 8/8, 8/8, 0/8; strict rule 6 and 10, rates 100 / 100 / 0 | — | `AN/figures.json` `sensitivity` (A7–A10, B1–B3) | supported |
+| E87 | first construction 14 of 24 †, 6 of 8 | — | none (lost) | unsupported, marked † (see E10) |
+| E88 | IMP06 realigned without .alt: 37 → 0 pairs; the two control implants change in no read and no call | — | `AN/noalt/compare.json` `implants.*.reads.changed`, `detection_identical` | supported |
+| E89 | no filter removed a true positive in 12 grid cells | — | `AN/figures.json` `grid` | supported |
+| E90 | missed implants: 114 spanning reads, 106 MAPQ 0, 49 with the primary in a breakpoint window, 5 MAPQ ≥ 20; detected classes 276, all in a window, none MAPQ 0 | — | derived from `AN/adjudication/IMP*.json.gz` `reads` (mapq, breakpoint_window) | supported (derived) |
+| E91 | MAPQ floor: none at default or 1; at 0 one called, LowQual, not surviving; raw BND 13 → 85 / 93, 6.5–7.2×; survivors 27 → 28 | — | `AN/ladder/analysis.json` `summary` | supported |
+| E92 | localisation 6 of 16 at 0 bp, 10 within 1 bp | — | `AN/figures.json` `localisation_histogram_max_abs_bp` | supported |
+| E93 | 27 identical survivors in all 12; each detected implant adds two; 156 → 28 and 155 → 27; SR ≥ 2 = SR ≥ 1 | — | `AN/figures.json` `precision`, `grid` | supported |
+| E94 | Table 2, rebuild column | — | B1–B16 | supported |
+| E95 | enumeration reproduced every tool count at all 24 breakpoints | — | `AN/adjudication/summary.json` `enumeration_reproduces_every_tool_count` | supported |
+| E96 | 390 spanning, 149 without SA; seed 19 / score 30; shorter side 1–30; none alignable under 30 | — | `AN/adjudication/summary.json` `b_short_overhang` (`reads[*].shorter_side`, `flagged_alignable_despite_side_rule` empty) | supported |
+| E97 | soft-clip layer 77 of 149; misses 31 / 19 / 19 / 3; about a fifth of all spanning reads | 77 / 390 = 19.7 % | `b_short_overhang.not_caught_first_reason` | supported |
+| E98 | first construction 114 of 121 † | — | none (lost) | unsupported, marked † — correct |
+| E99 | tool 154 (39.5 %), caller 137 (35.1 %); closer in 10 of 12, 2 ties | — | `a_tool_vs_delly_vs_truth` | supported |
+| E100 | 41 wrong-partner reads; FP 11.1 / 20.4 / 87.7 %, r 0.668; 0 / 5.8 / 60.0 %, r 0.298; one breakpoint 40 of 57 | — | `a_tool_vs_delly_vs_truth.by_class`, `per_breakpoint` (IMP11 chr20:31,100,000: 40 of 57) | supported |
+| E101 | first construction r = 0.142 † | — | none (lost) | unsupported, marked † — correct |
+| E102 | MAPQ 20: removes 85 of 86 FPs, costs 30, 154 → 124, silences 8 breakpoints | — | `c_min_mapq_20` | supported |
+| E103 | background: −5 to +9 below 0.01; 1,700 vs 17 at 0.905; r = 0.689 | — | `AN/figures.json` `caller_vs_tool_background` | supported |
+| E104 | ceiling: 32.5–55.0, 30 moderate and 2 weak; 24–46 pairs; 48 of 1,094 mates elsewhere; 6–24 clips; 0.164; 57.5 at all 32 | — | `AN/figures.json` `ceiling`, `ceiling_summary`; the 1,094 / 48 derived from `AN/chain/IMP*.json.gz` (discordant_pairs call at each breakend, `mate_chromosomes`) | supported (derived) |
+| E105 | 0.25 at a 200-base window, 65 | — | `P10/proof_prepared_payload_2026-09-26.json` `loci[1]` (chr21:14,100,000) | supported |
+| E106 | depth at 7 breakends of 3 implants, 15 points; 5 at 55.0 | — | `AN/figures.json` `ceiling` (depth_score, evidence_score) | supported |
+| E107 | first round: 3 models × 3 cases × 3 runs; 3 of 9 at the turn cap; 6–10 calls; 5 of 6; 38 characters; 3 of 3; one further site and a soft-clip one | — | `BENCHMARK_LOCAL_MODELS.md` lines 74, 140–162, 294; `BENCHMARK_CLAUDE_BASELINE.md` line 15; commit `ae4a02c` message | supported |
+| E108 | eight of eighteen prose runs †; the withheld-as-absence run † | — | none | unsupported, marked † — correct |
+| E109 | 4B: 5 of 30 unanswered, 26.3 %; 9B: 2,048 vs 2,690, 11 of 30 answered | — | `P8` `models`, `vram_measurements` | supported |
+| E110 | rerun: 0 malformed in 341; no refusal, prose call or drift; 8 of 8; 34 numbers all traced | — | `P9/measures.json`, `reading_scores.json` | supported |
+| E111 | local malformed 13–26 % | 13.4 / 17.1 / 26.3 | `P8` `models.*.schema_invalid_pct` | supported |
+| E112 | reasoning off 16.4 → 35.8 %; low 9.3 % with one fewer answered of 18; trim 16.4 → 31.8 %; 5,114, 2,690, 866 tokens | — | `P8` `thinking.on_task_18_runs_each`, `schema_token_cost` | supported |
+| E113 | fifteen tool descriptions; 2,600 characters; 71 checks; one replaced for the check, two for server errors | — | `P10/proof_prepared_payload_2026-09-26.json`; `P10/*/meta_replacement_*.json` | supported |
+| E114 | first comparison 1 of 20 / 19 of 20 † | — | none | unsupported, marked † — correct |
+| E115 | Table 3, all cells; Fisher p = 0.042, 0.100, 0.224 | — | `P10/blind/blind_scores.json` `cells`, `fisher_exact_two_sided_15_run_cells` | supported |
+| E116 | 0 of 20 without, 12 of 20 with; frontier every run; local 7 of 10 called the summary; qwen2.5:7b 3 of 15, fields reached it in 11; one run implied strong reachable, one strong-then-moderate | — | `P10/blind/blind_scores.json` `cells`; `P10/scores.json` notes (qwen2.5:7b WITH runs 3 and 5) | supported |
+| E117 | sonnet strong in 5 of 5 with, moderate in 5 of 5 without, quoted sentence; opus strong in 2 of 5 in each condition | — | `P10/blind/blind_scores.json` `items` (C1b), `P10/blind/packet.json` | supported |
+| E118 | eleven and four tools at startup | — | A1 | supported |
+| E119 | three packages, a fourth optional; third installation attempt | — | `requirements.txt`, `requirements-api.txt`; `results/README.md` ("three iterations") | supported |
+| E120 | demo locus 40.0, moderate, three of four layers | — | `AN/figures.json` `rescue.IMP01.ends.chr20` (the demo locus); `docs/NAUDOJIMAS.md` | supported |
+| E121 | shortlists 17 and 19, reproduced | — | `PR` | supported |
+
+### E.4 Discussion, conclusions, summaries
+
+| # | Claim | Record | Status |
+|---|---|---|---|
+| E130 | 16 of 24, eight losses at discovery; PE and SR minima remove 95 % of the PASS background (513 → 27) | `AN/figures.json` `background_funnel` | supported |
+| E131 | 106 of 114 MAPQ 0, fewer than half at the locus; one of eight called, removed; sevenfold | E90, E91 | supported |
+| E132 | soft-clip recovers about half; r 0.668 / 0.298; construction check at one implant | E96–E100 | supported |
+| E133 | every detected breakend moderate or weak | E104 | supported |
+| E134 | 5 of 15 and 3 of 15 with the fields; frontier every run; 19 of 20 † | E115, E114 | supported / † correct |
+| E135 | "confirmed a false clinical premise in two of five", "313 tool calls", "under four US dollars each time" | E2, E4, E5 | **unsupported, unmarked** |
+| E136 | "failed to answer in five of thirty" | `P8` | supported |
+| E137 | seven apparatus defects; the post-reinstall instances | the defects' own records (`RPD`, `BENCHMARK_*`, `AN/noalt/align_first_check_defective.json`, `SF`); the gate firing: see E11 | supported except E11 |
+| E138 | limitations: 70 % recurrence; 14 of 16; 26 %; 11 vs 16; 5 frontier and 15 local runs per condition | E64, E74, E83, E115 | supported |
+| E139 | Conclusions 1–5 | E86, E90, E96, E97, E111, E115, E119, E121; Conclusion 4's "two runs of five" and "313": E2, E4 | supported except E2, E4 |
+| E140 | Summary and Lithuanian summary | as E121, E86, E90, E96, E115 | supported |
+
+### E.5 Abstract
+
+| # | Claim | Record | Status |
+|---|---|---|---|
+| E150 | eleven tools, four measuring; twelve implants; four models, two cloud and two local; 71 checks; blind scoring | A1–A3, E113, E49 | supported |
+| E151 | ~9,000 → 17 and 19; reproduced exactly | `PR` | supported |
+| E152 | 16 of 24; 8/8, 8/8, 0/8; all 8 lost at discovery; 106 of 114 MAPQ 0 | E86, E90 | supported |
+| E153 | 149 of 390 without SA; soft clip about half | E96, E97 | supported |
+| E154 | 57.5 at all 32 breakends; strong from 70 | E104, E35 | supported |
+| E155 | 0 of 20 → 12 of 20; both cloud models all 10; local 2 of 10; 5 of 15 (0 of 15, p = 0.042); 3 of 15 (p = 0.22); local models often did not call the tool | E115, E116 | supported |
+| E156 | one cloud model called the evidence strong in all 5 with the limit, 0 of 5 without | E117 | supported |
+| E157 | three local models malformed 13–26 % | E111 | supported |
+| E158 | "capable models used the exposed quantity always" | E115 (10 of 10 stated it) | supported |
+| E159 | "sensitivity limited by candidate discovery in ambiguously mapped regions, not by filter thresholds" | E89, E90 | supported |
+
+The abstract has no † and needs none: every figure in it has a record.

@@ -1,0 +1,4492 @@
+{
+ "what": "Decoy partners in the split-read layer, measured, not fixed (Phase 13 Task 2, 2026-09-27)",
+ "treatment_in_code": "in get_split_reads a primary read that passes the read filters and carries an SA tag counts as a split read if at least one of its SA entries survives the entry's own mapQ filter (sa_mapq >= min_mapq). There is no filter on the entry's contig: a decoy (name ending _decoy) is kept, added to partner_chromosomes under its own name, and the read counts toward split_reads and split_read_fraction. No distinction is made between inter- and intra-chromosomal entries. summarize_breakpoint_evidence scores the split layer from split_read_fraction and split_reads (tiers 0.1 / 0.3, min_support) and builds its partner sentence with _describe_partner_distribution over partner_chromosomes, so a decoy can be the named partner.",
+ "method": "mirror_split_reads repeats get_split_reads' read loop (bam_tools.py lines 1165-1245) and records, for each counted split read, the set of partner contigs it contributed. Control: its split_reads, total and partner_chromosomes must equal the tool's on every position, or the position is reported as a mismatch and not used. The counterfactual summary calls summarize_breakpoint_evidence unchanged, with get_split_reads replaced IN THIS PROCESS ONLY by a wrapper that removes the decoy partners from each read and drops reads left with none; bam_tools.py is not edited. At the patient positions only aggregate totals are kept.",
+ "definitions": {
+  "decoy_contig": "a contig whose name ends in _decoy",
+  "split_reads": "the tool's own count at the summary's geometry: window min(500, 200) = 200 bp, min_mapq 20, and also at min_mapq 0",
+  "with_decoy_partner": "counted split reads with at least one surviving SA entry on a decoy contig",
+  "decoy_only": "counted split reads whose surviving SA entries are all on decoy contigs; removing these is the counterfactual",
+  "change": "at a synthetic position, whether the evidence score, the evidence strength, the split-read component or the split-read observation sentence differs between the summary as it is and the counterfactual (window 500, min_mapq 20, all four layers)",
+  "patient_positions": "100 positions per BAM drawn uniformly over chr1-22 (seed 20260927); a position whose split-read call fails is counted, not retried. Kept: totals over the positions, never a position"
+ },
+ "code": "scripts/patient/decoy_partners.py",
+ "blinding": "patient figures are totals over 100 seeded positions per BAM; no position is kept",
+ "synthetic": {
+  "aggregate": {
+   "detected": {
+    "positions": 32,
+    "mapq20_split_reads": 250,
+    "mapq20_with_decoy_partner": 0,
+    "mapq20_decoy_only": 0,
+    "mapq0_split_reads": 350,
+    "mapq0_with_decoy_partner": 4,
+    "mapq0_decoy_only": 4,
+    "positions_with_any_change": 0,
+    "changes": {
+     "score": 0,
+     "strength": 0,
+     "split_component": 0,
+     "split_sentence": 0
+    }
+   },
+   "missed": {
+    "positions": 8,
+    "mapq20_split_reads": 0,
+    "mapq20_with_decoy_partner": 0,
+    "mapq20_decoy_only": 0,
+    "mapq0_split_reads": 65,
+    "mapq0_with_decoy_partner": 20,
+    "mapq0_decoy_only": 10,
+    "positions_with_any_change": 0,
+    "changes": {
+     "score": 0,
+     "strength": 0,
+     "split_component": 0,
+     "split_sentence": 0
+    }
+   },
+   "background": {
+    "positions": 54,
+    "mapq20_split_reads": 643,
+    "mapq20_with_decoy_partner": 266,
+    "mapq20_decoy_only": 266,
+    "mapq0_split_reads": 2994,
+    "mapq0_with_decoy_partner": 429,
+    "mapq0_decoy_only": 377,
+    "positions_with_any_change": 1,
+    "changes": {
+     "score": 1,
+     "strength": 1,
+     "split_component": 1,
+     "split_sentence": 1
+    }
+   }
+  },
+  "control_mismatches": [],
+  "positions": [
+   {
+    "group": "detected",
+    "label": "IMP01",
+    "position": "chr21:14100001",
+    "mapq20": {
+     "split_reads": 10,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 10,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      40.0,
+      40.0
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "10 split reads (7% of reads in window) with supplementary alignments mapping predominantly to chr20 (10/10)."
+      ],
+      [
+       "10 split reads (7% of reads in window) with supplementary alignments mapping predominantly to chr20 (10/10)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP01",
+    "position": "chr20:200000",
+    "mapq20": {
+     "split_reads": 6,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 8,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      40.0,
+      40.0
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "6 split reads (4% of reads in window) with supplementary alignments mapping predominantly to chr21 (6/6)."
+      ],
+      [
+       "6 split reads (4% of reads in window) with supplementary alignments mapping predominantly to chr21 (6/6)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP01",
+    "position": "chr21:14100000",
+    "mapq20": {
+     "split_reads": 10,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 10,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      40.0,
+      40.0
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "10 split reads (7% of reads in window) with supplementary alignments mapping predominantly to chr20 (10/10)."
+      ],
+      [
+       "10 split reads (7% of reads in window) with supplementary alignments mapping predominantly to chr20 (10/10)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP01",
+    "position": "chr20:200001",
+    "mapq20": {
+     "split_reads": 6,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 8,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      40.0,
+      40.0
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "6 split reads (4% of reads in window) with supplementary alignments mapping predominantly to chr21 (6/6)."
+      ],
+      [
+       "6 split reads (4% of reads in window) with supplementary alignments mapping predominantly to chr21 (6/6)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP02",
+    "position": "chr21:33900001",
+    "mapq20": {
+     "split_reads": 10,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 10,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      40.0,
+      40.0
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "10 split reads (9% of reads in window) with supplementary alignments mapping predominantly to chr20 (10/10)."
+      ],
+      [
+       "10 split reads (9% of reads in window) with supplementary alignments mapping predominantly to chr20 (10/10)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP02",
+    "position": "chr20:45500000",
+    "mapq20": {
+     "split_reads": 8,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 8,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      40.0,
+      40.0
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "8 split reads (7% of reads in window) with supplementary alignments mapping predominantly to chr21 (8/8)."
+      ],
+      [
+       "8 split reads (7% of reads in window) with supplementary alignments mapping predominantly to chr21 (8/8)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP02",
+    "position": "chr21:33900000",
+    "mapq20": {
+     "split_reads": 10,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 10,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      40.0,
+      40.0
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "10 split reads (9% of reads in window) with supplementary alignments mapping predominantly to chr20 (10/10)."
+      ],
+      [
+       "10 split reads (9% of reads in window) with supplementary alignments mapping predominantly to chr20 (10/10)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP02",
+    "position": "chr20:45500001",
+    "mapq20": {
+     "split_reads": 8,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 8,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      40.0,
+      40.0
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "8 split reads (7% of reads in window) with supplementary alignments mapping predominantly to chr21 (8/8)."
+      ],
+      [
+       "8 split reads (7% of reads in window) with supplementary alignments mapping predominantly to chr21 (8/8)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP03",
+    "position": "chr21:45700000",
+    "mapq20": {
+     "split_reads": 9,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 13,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      40.0,
+      40.0
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "9 split reads (6% of reads in window) with supplementary alignments mapping predominantly to chr20 (9/9)."
+      ],
+      [
+       "9 split reads (6% of reads in window) with supplementary alignments mapping predominantly to chr20 (9/9)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP03",
+    "position": "chr20:4899999",
+    "mapq20": {
+     "split_reads": 3,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 6,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      40.0,
+      40.0
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "3 split reads (2% of reads in window) with supplementary alignments mapping predominantly to chr21 (3/3)."
+      ],
+      [
+       "3 split reads (2% of reads in window) with supplementary alignments mapping predominantly to chr21 (3/3)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP03",
+    "position": "chr21:45699999",
+    "mapq20": {
+     "split_reads": 9,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 13,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      40.0,
+      40.0
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "9 split reads (6% of reads in window) with supplementary alignments mapping predominantly to chr20 (9/9)."
+      ],
+      [
+       "9 split reads (6% of reads in window) with supplementary alignments mapping predominantly to chr20 (9/9)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP03",
+    "position": "chr20:4900000",
+    "mapq20": {
+     "split_reads": 3,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 6,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      40.0,
+      40.0
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "3 split reads (2% of reads in window) with supplementary alignments mapping predominantly to chr21 (3/3)."
+      ],
+      [
+       "3 split reads (2% of reads in window) with supplementary alignments mapping predominantly to chr21 (3/3)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP04",
+    "position": "chr21:29200000",
+    "mapq20": {
+     "split_reads": 8,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 10,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      45.0,
+      45.0
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "8 split reads (6% of reads in window) with supplementary alignments mapping predominantly to chr20 (8/8)."
+      ],
+      [
+       "8 split reads (6% of reads in window) with supplementary alignments mapping predominantly to chr20 (8/8)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP04",
+    "position": "chr20:46899999",
+    "mapq20": {
+     "split_reads": 2,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 7,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      32.5,
+      32.5
+     ],
+     "strength": [
+      "weak",
+      "weak"
+     ],
+     "split_component": [
+      0.0,
+      0.0
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "2 split reads (2% of reads in window) with all 2 supplementary alignments on chr21 \u2014 too few reads to establish a clustering pattern."
+      ],
+      [
+       "2 split reads (2% of reads in window) with all 2 supplementary alignments on chr21 \u2014 too few reads to establish a clustering pattern."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP04",
+    "position": "chr21:29199999",
+    "mapq20": {
+     "split_reads": 8,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 10,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      45.0,
+      45.0
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "8 split reads (6% of reads in window) with supplementary alignments mapping predominantly to chr20 (8/8)."
+      ],
+      [
+       "8 split reads (6% of reads in window) with supplementary alignments mapping predominantly to chr20 (8/8)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP04",
+    "position": "chr20:46900000",
+    "mapq20": {
+     "split_reads": 2,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 7,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      32.5,
+      32.5
+     ],
+     "strength": [
+      "weak",
+      "weak"
+     ],
+     "split_component": [
+      0.0,
+      0.0
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "2 split reads (2% of reads in window) with all 2 supplementary alignments on chr21 \u2014 too few reads to establish a clustering pattern."
+      ],
+      [
+       "2 split reads (2% of reads in window) with all 2 supplementary alignments on chr21 \u2014 too few reads to establish a clustering pattern."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP05",
+    "position": "chr21:13300001",
+    "mapq20": {
+     "split_reads": 5,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 7,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      40.0,
+      40.0
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "5 split reads (4% of reads in window) with supplementary alignments mapping predominantly to chr20 (5/5)."
+      ],
+      [
+       "5 split reads (4% of reads in window) with supplementary alignments mapping predominantly to chr20 (5/5)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP05",
+    "position": "chr20:1900000",
+    "mapq20": {
+     "split_reads": 5,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 11,
+     "with_decoy_partner": 2,
+     "decoy_only": 2,
+     "control_matches_tool": true,
+     "decoy_partner_names": [
+      "chrUn_KN707648v1_decoy"
+     ]
+    },
+    "summary": {
+     "score": [
+      40.0,
+      40.0
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "5 split reads (4% of reads in window) with supplementary alignments mapping predominantly to chr21 (5/5)."
+      ],
+      [
+       "5 split reads (4% of reads in window) with supplementary alignments mapping predominantly to chr21 (5/5)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP05",
+    "position": "chr21:13300000",
+    "mapq20": {
+     "split_reads": 5,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 7,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      40.0,
+      40.0
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "5 split reads (4% of reads in window) with supplementary alignments mapping predominantly to chr20 (5/5)."
+      ],
+      [
+       "5 split reads (4% of reads in window) with supplementary alignments mapping predominantly to chr20 (5/5)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP05",
+    "position": "chr20:1900001",
+    "mapq20": {
+     "split_reads": 5,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 11,
+     "with_decoy_partner": 2,
+     "decoy_only": 2,
+     "control_matches_tool": true,
+     "decoy_partner_names": [
+      "chrUn_KN707648v1_decoy"
+     ]
+    },
+    "summary": {
+     "score": [
+      55.0,
+      55.0
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "5 split reads (4% of reads in window) with supplementary alignments mapping predominantly to chr21 (5/5)."
+      ],
+      [
+       "5 split reads (4% of reads in window) with supplementary alignments mapping predominantly to chr21 (5/5)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP06",
+    "position": "chr21:17200000",
+    "mapq20": {
+     "split_reads": 7,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 17,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      40.0,
+      40.0
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "7 split reads (5% of reads in window) with supplementary alignments mapping predominantly to chr20 (7/7)."
+      ],
+      [
+       "7 split reads (5% of reads in window) with supplementary alignments mapping predominantly to chr20 (7/7)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP06",
+    "position": "chr20:3899999",
+    "mapq20": {
+     "split_reads": 15,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 19,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      40.0,
+      40.0
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "15 split reads (9% of reads in window) with supplementary alignments mapping predominantly to chr21 (14/15)."
+      ],
+      [
+       "15 split reads (9% of reads in window) with supplementary alignments mapping predominantly to chr21 (14/15)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP06",
+    "position": "chr21:17199999",
+    "mapq20": {
+     "split_reads": 7,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 17,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      40.0,
+      40.0
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "7 split reads (5% of reads in window) with supplementary alignments mapping predominantly to chr20 (7/7)."
+      ],
+      [
+       "7 split reads (5% of reads in window) with supplementary alignments mapping predominantly to chr20 (7/7)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP06",
+    "position": "chr20:3900000",
+    "mapq20": {
+     "split_reads": 15,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 19,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      40.0,
+      40.0
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "15 split reads (9% of reads in window) with supplementary alignments mapping predominantly to chr21 (14/15)."
+      ],
+      [
+       "15 split reads (9% of reads in window) with supplementary alignments mapping predominantly to chr21 (14/15)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP07",
+    "position": "chr21:41200000",
+    "mapq20": {
+     "split_reads": 11,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 16,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      55.0,
+      55.0
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "11 split reads (9% of reads in window) with supplementary alignments mapping predominantly to chr20 (11/11)."
+      ],
+      [
+       "11 split reads (9% of reads in window) with supplementary alignments mapping predominantly to chr20 (11/11)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP07",
+    "position": "chr20:54999999",
+    "mapq20": {
+     "split_reads": 4,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 10,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      55.0,
+      55.0
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "4 split reads (4% of reads in window) with supplementary alignments mapping predominantly to chr21 (4/4)."
+      ],
+      [
+       "4 split reads (4% of reads in window) with supplementary alignments mapping predominantly to chr21 (4/4)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP07",
+    "position": "chr21:41199999",
+    "mapq20": {
+     "split_reads": 11,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 16,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      55.0,
+      55.0
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "11 split reads (9% of reads in window) with supplementary alignments mapping predominantly to chr20 (11/11)."
+      ],
+      [
+       "11 split reads (9% of reads in window) with supplementary alignments mapping predominantly to chr20 (11/11)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP07",
+    "position": "chr20:55000000",
+    "mapq20": {
+     "split_reads": 4,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 10,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      55.0,
+      55.0
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "4 split reads (4% of reads in window) with supplementary alignments mapping predominantly to chr21 (4/4)."
+      ],
+      [
+       "4 split reads (4% of reads in window) with supplementary alignments mapping predominantly to chr21 (4/4)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP08",
+    "position": "chr21:39300000",
+    "mapq20": {
+     "split_reads": 10,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 10,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      40.0,
+      40.0
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "10 split reads (7% of reads in window) with supplementary alignments mapping predominantly to chr20 (10/10)."
+      ],
+      [
+       "10 split reads (7% of reads in window) with supplementary alignments mapping predominantly to chr20 (10/10)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP08",
+    "position": "chr20:13499999",
+    "mapq20": {
+     "split_reads": 12,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 13,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      40.0,
+      40.0
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "12 split reads (10% of reads in window) with supplementary alignments mapping predominantly to chr21 (12/12)."
+      ],
+      [
+       "12 split reads (10% of reads in window) with supplementary alignments mapping predominantly to chr21 (12/12)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP08",
+    "position": "chr21:39299999",
+    "mapq20": {
+     "split_reads": 10,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 10,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      40.0,
+      40.0
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "10 split reads (7% of reads in window) with supplementary alignments mapping predominantly to chr20 (10/10)."
+      ],
+      [
+       "10 split reads (7% of reads in window) with supplementary alignments mapping predominantly to chr20 (10/10)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP08",
+    "position": "chr20:13500000",
+    "mapq20": {
+     "split_reads": 12,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 13,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      40.0,
+      40.0
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "12 split reads (10% of reads in window) with supplementary alignments mapping predominantly to chr21 (12/12)."
+      ],
+      [
+       "12 split reads (10% of reads in window) with supplementary alignments mapping predominantly to chr21 (12/12)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "missed",
+    "label": "IMP09",
+    "position": "chr20:33700000",
+    "mapq20": {
+     "split_reads": 0,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 9,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      22.5,
+      22.5
+     ],
+     "strength": [
+      "weak",
+      "weak"
+     ],
+     "split_component": [
+      0.0,
+      0.0
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [],
+      []
+     ]
+    }
+   },
+   {
+    "group": "missed",
+    "label": "IMP09",
+    "position": "chr21:5900000",
+    "mapq20": {
+     "split_reads": 0,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 2,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      null,
+      null
+     ],
+     "strength": [
+      "QUALITY-LIMITED",
+      "QUALITY-LIMITED"
+     ],
+     "split_component": [
+      0.0,
+      0.0
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [],
+      []
+     ]
+    }
+   },
+   {
+    "group": "missed",
+    "label": "IMP10",
+    "position": "chr20:25800000",
+    "mapq20": {
+     "split_reads": 0,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 2,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      null,
+      null
+     ],
+     "strength": [
+      "QUALITY-LIMITED",
+      "QUALITY-LIMITED"
+     ],
+     "split_component": [
+      0.0,
+      0.0
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [],
+      []
+     ]
+    }
+   },
+   {
+    "group": "missed",
+    "label": "IMP10",
+    "position": "chr21:7600000",
+    "mapq20": {
+     "split_reads": 0,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 1,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      null,
+      null
+     ],
+     "strength": [
+      "QUALITY-LIMITED",
+      "QUALITY-LIMITED"
+     ],
+     "split_component": [
+      0.0,
+      0.0
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [],
+      []
+     ]
+    }
+   },
+   {
+    "group": "missed",
+    "label": "IMP11",
+    "position": "chr20:31100000",
+    "mapq20": {
+     "split_reads": 0,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 41,
+     "with_decoy_partner": 20,
+     "decoy_only": 10,
+     "control_matches_tool": true,
+     "decoy_partner_names": [
+      "chrUn_JTFH01000018v1_decoy",
+      "chrUn_JTFH01000273v1_decoy",
+      "chrUn_KN707862v1_decoy",
+      "chrUn_KN707896v1_decoy",
+      "chrUn_KN707963v1_decoy"
+     ]
+    },
+    "summary": {
+     "score": [
+      null,
+      null
+     ],
+     "strength": [
+      "QUALITY-LIMITED",
+      "QUALITY-LIMITED"
+     ],
+     "split_component": [
+      0.0,
+      0.0
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [],
+      []
+     ]
+    }
+   },
+   {
+    "group": "missed",
+    "label": "IMP11",
+    "position": "chr21:20200000",
+    "mapq20": {
+     "split_reads": 0,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 5,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      null,
+      null
+     ],
+     "strength": [
+      "QUALITY-LIMITED",
+      "QUALITY-LIMITED"
+     ],
+     "split_component": [
+      0.0,
+      0.0
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [],
+      []
+     ]
+    }
+   },
+   {
+    "group": "missed",
+    "label": "IMP12",
+    "position": "chr20:47900000",
+    "mapq20": {
+     "split_reads": 0,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 3,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      null,
+      null
+     ],
+     "strength": [
+      "QUALITY-LIMITED",
+      "QUALITY-LIMITED"
+     ],
+     "split_component": [
+      0.0,
+      0.0
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [],
+      []
+     ]
+    }
+   },
+   {
+    "group": "missed",
+    "label": "IMP12",
+    "position": "chr21:44100000",
+    "mapq20": {
+     "split_reads": 0,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 2,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      null,
+      null
+     ],
+     "strength": [
+      "QUALITY-LIMITED",
+      "QUALITY-LIMITED"
+     ],
+     "split_component": [
+      0.0,
+      0.0
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [],
+      []
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:1410171",
+    "mapq20": {
+     "split_reads": 7,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 7,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      22.5,
+      22.5
+     ],
+     "strength": [
+      "weak",
+      "weak"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "7 split reads (6% of reads in window) with supplementary alignments mapping predominantly to chr20 (7/7)."
+      ],
+      [
+       "7 split reads (6% of reads in window) with supplementary alignments mapping predominantly to chr20 (7/7)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:1408499",
+    "mapq20": {
+     "split_reads": 2,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 2,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      47.5,
+      47.5
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      0.0,
+      0.0
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "2 split reads (3% of reads in window) with all 2 supplementary alignments on chr20 \u2014 too few reads to establish a clustering pattern."
+      ],
+      [
+       "2 split reads (3% of reads in window) with all 2 supplementary alignments on chr20 \u2014 too few reads to establish a clustering pattern."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:2379966",
+    "mapq20": {
+     "split_reads": 0,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 9,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      25.0,
+      25.0
+     ],
+     "strength": [
+      "weak",
+      "weak"
+     ],
+     "split_component": [
+      0.0,
+      0.0
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [],
+      []
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:2379050",
+    "mapq20": {
+     "split_reads": 10,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 11,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      32.5,
+      32.5
+     ],
+     "strength": [
+      "weak",
+      "weak"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "10 split reads (6% of reads in window) with supplementary alignments mapping predominantly to chr20 (10/10)."
+      ],
+      [
+       "10 split reads (6% of reads in window) with supplementary alignments mapping predominantly to chr20 (10/10)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:2379963",
+    "mapq20": {
+     "split_reads": 0,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 9,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      25.0,
+      25.0
+     ],
+     "strength": [
+      "weak",
+      "weak"
+     ],
+     "split_component": [
+      0.0,
+      0.0
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [],
+      []
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:2379257",
+    "mapq20": {
+     "split_reads": 10,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 12,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      32.5,
+      32.5
+     ],
+     "strength": [
+      "weak",
+      "weak"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "10 split reads (5% of reads in window) with supplementary alignments mapping predominantly to chr20 (10/10)."
+      ],
+      [
+       "10 split reads (5% of reads in window) with supplementary alignments mapping predominantly to chr20 (10/10)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:2825764",
+    "mapq20": {
+     "split_reads": 7,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 8,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      null,
+      null
+     ],
+     "strength": [
+      "QUALITY-LIMITED",
+      "QUALITY-LIMITED"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "7 split reads (10% of reads in window) with supplementary alignments mapping predominantly to chr20 (7/7)."
+      ],
+      [
+       "7 split reads (10% of reads in window) with supplementary alignments mapping predominantly to chr20 (7/7)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:2822501",
+    "mapq20": {
+     "split_reads": 11,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 11,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      72.5,
+      72.5
+     ],
+     "strength": [
+      "strong",
+      "strong"
+     ],
+     "split_component": [
+      15.0,
+      15.0
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "11 split reads (14% of reads in window) with supplementary alignments mapping predominantly to chr20 (11/11)."
+      ],
+      [
+       "11 split reads (14% of reads in window) with supplementary alignments mapping predominantly to chr20 (11/11)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:17123154",
+    "mapq20": {
+     "split_reads": 9,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 9,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      65.0,
+      65.0
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      15.0,
+      15.0
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "9 split reads (12% of reads in window) with supplementary alignments mapping predominantly to chr20 (9/9)."
+      ],
+      [
+       "9 split reads (12% of reads in window) with supplementary alignments mapping predominantly to chr20 (9/9)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:17122806",
+    "mapq20": {
+     "split_reads": 17,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 21,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      72.5,
+      72.5
+     ],
+     "strength": [
+      "strong",
+      "strong"
+     ],
+     "split_component": [
+      15.0,
+      15.0
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "17 split reads (25% of reads in window) with supplementary alignments mapping predominantly to chr20 (17/17)."
+      ],
+      [
+       "17 split reads (25% of reads in window) with supplementary alignments mapping predominantly to chr20 (17/17)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:18262323",
+    "mapq20": {
+     "split_reads": 1,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 10,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      25.0,
+      25.0
+     ],
+     "strength": [
+      "weak",
+      "weak"
+     ],
+     "split_component": [
+      0.0,
+      0.0
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "1 split read (supplementary alignment on chr20) \u2014 single read, not a clustering signal."
+      ],
+      [
+       "1 split read (supplementary alignment on chr20) \u2014 single read, not a clustering signal."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:18261069",
+    "mapq20": {
+     "split_reads": 1,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 5,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      15.0,
+      15.0
+     ],
+     "strength": [
+      "weak",
+      "weak"
+     ],
+     "split_component": [
+      0.0,
+      0.0
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "1 split read (supplementary alignment on chr20) \u2014 single read, not a clustering signal."
+      ],
+      [
+       "1 split read (supplementary alignment on chr20) \u2014 single read, not a clustering signal."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:18262525",
+    "mapq20": {
+     "split_reads": 1,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 10,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      25.0,
+      25.0
+     ],
+     "strength": [
+      "weak",
+      "weak"
+     ],
+     "split_component": [
+      0.0,
+      0.0
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "1 split read (supplementary alignment on chr20) \u2014 single read, not a clustering signal."
+      ],
+      [
+       "1 split read (supplementary alignment on chr20) \u2014 single read, not a clustering signal."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:18261081",
+    "mapq20": {
+     "split_reads": 1,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 5,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      15.0,
+      15.0
+     ],
+     "strength": [
+      "weak",
+      "weak"
+     ],
+     "split_component": [
+      0.0,
+      0.0
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "1 split read (supplementary alignment on chr20) \u2014 single read, not a clustering signal."
+      ],
+      [
+       "1 split read (supplementary alignment on chr20) \u2014 single read, not a clustering signal."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:32724966",
+    "mapq20": {
+     "split_reads": 0,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 9,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      null,
+      null
+     ],
+     "strength": [
+      "QUALITY-LIMITED",
+      "QUALITY-LIMITED"
+     ],
+     "split_component": [
+      0.0,
+      0.0
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [],
+      []
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:32723063",
+    "mapq20": {
+     "split_reads": 0,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 4,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      15.0,
+      15.0
+     ],
+     "strength": [
+      "weak",
+      "weak"
+     ],
+     "split_component": [
+      0.0,
+      0.0
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [],
+      []
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:32941581",
+    "mapq20": {
+     "split_reads": 3,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 9,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      47.5,
+      47.5
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "3 split reads (3% of reads in window) with supplementary alignments mapping predominantly to chr20 (3/3)."
+      ],
+      [
+       "3 split reads (3% of reads in window) with supplementary alignments mapping predominantly to chr20 (3/3)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:32937682",
+    "mapq20": {
+     "split_reads": 8,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 8,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      32.5,
+      32.5
+     ],
+     "strength": [
+      "weak",
+      "weak"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "8 split reads (9% of reads in window) with supplementary alignments mapping predominantly to chr20 (8/8)."
+      ],
+      [
+       "8 split reads (9% of reads in window) with supplementary alignments mapping predominantly to chr20 (8/8)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:34231420",
+    "mapq20": {
+     "split_reads": 12,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 12,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      40.0,
+      40.0
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      15.0,
+      15.0
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "12 split reads (16% of reads in window) with supplementary alignments mapping predominantly to chr20 (12/12)."
+      ],
+      [
+       "12 split reads (16% of reads in window) with supplementary alignments mapping predominantly to chr20 (12/12)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:34228122",
+    "mapq20": {
+     "split_reads": 13,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 1700,
+     "with_decoy_partner": 56,
+     "decoy_only": 7,
+     "control_matches_tool": true,
+     "decoy_partner_names": [
+      "chrUn_JTFH01000025v1_decoy",
+      "chrUn_JTFH01000063v1_decoy",
+      "chrUn_JTFH01000156v1_decoy",
+      "chrUn_JTFH01000308v1_decoy",
+      "chrUn_JTFH01000424v1_decoy"
+     ]
+    },
+    "summary": {
+     "score": [
+      null,
+      null
+     ],
+     "strength": [
+      "QUALITY-LIMITED",
+      "QUALITY-LIMITED"
+     ],
+     "split_component": [
+      15.0,
+      15.0
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "13 split reads (10% of reads in window) with supplementary alignments mapping predominantly to chr20 (13/13)."
+      ],
+      [
+       "13 split reads (10% of reads in window) with supplementary alignments mapping predominantly to chr20 (13/13)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:38427168",
+    "mapq20": {
+     "split_reads": 7,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 7,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      47.5,
+      47.5
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "7 split reads (6% of reads in window) with supplementary alignments mapping predominantly to chr20 (7/7)."
+      ],
+      [
+       "7 split reads (6% of reads in window) with supplementary alignments mapping predominantly to chr20 (7/7)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:38426467",
+    "mapq20": {
+     "split_reads": 9,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 9,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      47.5,
+      47.5
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "9 split reads (9% of reads in window) with supplementary alignments mapping predominantly to chr20 (9/9)."
+      ],
+      [
+       "9 split reads (9% of reads in window) with supplementary alignments mapping predominantly to chr20 (9/9)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:43397153",
+    "mapq20": {
+     "split_reads": 3,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 9,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      57.5,
+      57.5
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "3 split reads (4% of reads in window) with supplementary alignments mapping predominantly to chr20 (3/3)."
+      ],
+      [
+       "3 split reads (4% of reads in window) with supplementary alignments mapping predominantly to chr20 (3/3)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:43395954",
+    "mapq20": {
+     "split_reads": 18,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 21,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      65.0,
+      65.0
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      15.0,
+      15.0
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "18 split reads (17% of reads in window) with supplementary alignments mapping predominantly to chr20 (18/18)."
+      ],
+      [
+       "18 split reads (17% of reads in window) with supplementary alignments mapping predominantly to chr20 (18/18)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:43696990",
+    "mapq20": {
+     "split_reads": 3,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 3,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      40.0,
+      40.0
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "3 split reads (2% of reads in window) with supplementary alignments mapping predominantly to chr20 (3/3)."
+      ],
+      [
+       "3 split reads (2% of reads in window) with supplementary alignments mapping predominantly to chr20 (3/3)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:43696487",
+    "mapq20": {
+     "split_reads": 5,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 5,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      40.0,
+      40.0
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "5 split reads (2% of reads in window) with supplementary alignments mapping predominantly to chr20 (3/5)."
+      ],
+      [
+       "5 split reads (2% of reads in window) with supplementary alignments mapping predominantly to chr20 (3/5)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:54041464",
+    "mapq20": {
+     "split_reads": 4,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 4,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      32.5,
+      32.5
+     ],
+     "strength": [
+      "weak",
+      "weak"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "4 split reads (5% of reads in window) with supplementary alignments mapping predominantly to chr20 (4/4)."
+      ],
+      [
+       "4 split reads (5% of reads in window) with supplementary alignments mapping predominantly to chr20 (4/4)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:54030525",
+    "mapq20": {
+     "split_reads": 10,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 10,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      40.0,
+      40.0
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "10 split reads (9% of reads in window) with supplementary alignments mapping predominantly to chr20 (10/10)."
+      ],
+      [
+       "10 split reads (9% of reads in window) with supplementary alignments mapping predominantly to chr20 (10/10)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:54250804",
+    "mapq20": {
+     "split_reads": 10,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 10,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      55.0,
+      55.0
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      15.0,
+      15.0
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "10 split reads (10% of reads in window) with supplementary alignments mapping predominantly to chr20 (10/10)."
+      ],
+      [
+       "10 split reads (10% of reads in window) with supplementary alignments mapping predominantly to chr20 (10/10)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:54249698",
+    "mapq20": {
+     "split_reads": 6,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 172,
+     "with_decoy_partner": 1,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": [
+      "chrUn_JTFH01000424v1_decoy"
+     ]
+    },
+    "summary": {
+     "score": [
+      null,
+      null
+     ],
+     "strength": [
+      "QUALITY-LIMITED",
+      "QUALITY-LIMITED"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "6 split reads (6% of reads in window) with supplementary alignments mapping predominantly to chr20 (5/6)."
+      ],
+      [
+       "6 split reads (6% of reads in window) with supplementary alignments mapping predominantly to chr20 (5/6)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:55865561",
+    "mapq20": {
+     "split_reads": 7,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 62,
+     "with_decoy_partner": 2,
+     "decoy_only": 1,
+     "control_matches_tool": true,
+     "decoy_partner_names": [
+      "chrUn_JTFH01000424v1_decoy"
+     ]
+    },
+    "summary": {
+     "score": [
+      null,
+      null
+     ],
+     "strength": [
+      "QUALITY-LIMITED",
+      "QUALITY-LIMITED"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "7 split reads (7% of reads in window) with supplementary alignments mapping predominantly to chr20 (7/7)."
+      ],
+      [
+       "7 split reads (7% of reads in window) with supplementary alignments mapping predominantly to chr20 (7/7)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:55859554",
+    "mapq20": {
+     "split_reads": 5,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 5,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      32.5,
+      32.5
+     ],
+     "strength": [
+      "weak",
+      "weak"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "5 split reads (5% of reads in window) with supplementary alignments mapping predominantly to chr20 (5/5)."
+      ],
+      [
+       "5 split reads (5% of reads in window) with supplementary alignments mapping predominantly to chr20 (5/5)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:62673788",
+    "mapq20": {
+     "split_reads": 4,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 4,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      47.5,
+      47.5
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "4 split reads (4% of reads in window) with supplementary alignments mapping predominantly to chr20 (4/4)."
+      ],
+      [
+       "4 split reads (4% of reads in window) with supplementary alignments mapping predominantly to chr20 (4/4)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:62672898",
+    "mapq20": {
+     "split_reads": 6,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 6,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      47.5,
+      47.5
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "6 split reads (6% of reads in window) with supplementary alignments mapping predominantly to chr20 (6/6)."
+      ],
+      [
+       "6 split reads (6% of reads in window) with supplementary alignments mapping predominantly to chr20 (6/6)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:63094244",
+    "mapq20": {
+     "split_reads": 9,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 9,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      65.0,
+      65.0
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      15.0,
+      15.0
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "9 split reads (13% of reads in window) with supplementary alignments mapping predominantly to chr20 (9/9)."
+      ],
+      [
+       "9 split reads (13% of reads in window) with supplementary alignments mapping predominantly to chr20 (9/9)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:63093345",
+    "mapq20": {
+     "split_reads": 3,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 3,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      57.5,
+      57.5
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "3 split reads (4% of reads in window) with supplementary alignments mapping predominantly to chr20 (3/3)."
+      ],
+      [
+       "3 split reads (4% of reads in window) with supplementary alignments mapping predominantly to chr20 (3/3)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:10476287",
+    "mapq20": {
+     "split_reads": 0,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 16,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      22.5,
+      22.5
+     ],
+     "strength": [
+      "weak",
+      "weak"
+     ],
+     "split_component": [
+      0.0,
+      0.0
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [],
+      []
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:10475719",
+    "mapq20": {
+     "split_reads": 0,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 29,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      47.5,
+      47.5
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      0.0,
+      0.0
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [],
+      []
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:10770078",
+    "mapq20": {
+     "split_reads": 269,
+     "with_decoy_partner": 266,
+     "decoy_only": 266,
+     "control_matches_tool": true,
+     "decoy_partner_names": [
+      "chrUn_KN707891v1_decoy"
+     ]
+    },
+    "mapq0": {
+     "split_reads": 380,
+     "with_decoy_partner": 368,
+     "decoy_only": 368,
+     "control_matches_tool": true,
+     "decoy_partner_names": [
+      "chrUn_KN707891v1_decoy"
+     ]
+    },
+    "summary": {
+     "score": [
+      72.5,
+      55.0
+     ],
+     "strength": [
+      "strong",
+      "moderate"
+     ],
+     "split_component": [
+      25.0,
+      7.5
+     ],
+     "changed": {
+      "score": true,
+      "strength": true,
+      "split_component": true,
+      "split_sentence": true
+     },
+     "split_sentence": [
+      [
+       "269 split reads (67% of reads in window) with supplementary alignments mapping predominantly to chrUn_KN707891v1_decoy (266/269)."
+      ],
+      [
+       "3 split reads (1% of reads in window) with supplementary alignments mapping predominantly to chr21 (3/3)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:10769164",
+    "mapq20": {
+     "split_reads": 0,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 20,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      32.5,
+      32.5
+     ],
+     "strength": [
+      "weak",
+      "weak"
+     ],
+     "split_component": [
+      0.0,
+      0.0
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [],
+      []
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:21412386",
+    "mapq20": {
+     "split_reads": 3,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 3,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      22.5,
+      22.5
+     ],
+     "strength": [
+      "weak",
+      "weak"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "3 split reads (2% of reads in window) with supplementary alignments mapping predominantly to chr21 (3/3)."
+      ],
+      [
+       "3 split reads (2% of reads in window) with supplementary alignments mapping predominantly to chr21 (3/3)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:21411143",
+    "mapq20": {
+     "split_reads": 6,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 8,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      45.0,
+      45.0
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "6 split reads (8% of reads in window) with supplementary alignments mapping predominantly to chr21 (6/6)."
+      ],
+      [
+       "6 split reads (8% of reads in window) with supplementary alignments mapping predominantly to chr21 (6/6)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:23003088",
+    "mapq20": {
+     "split_reads": 8,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 8,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      65.0,
+      65.0
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      15.0,
+      15.0
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "8 split reads (14% of reads in window) with supplementary alignments mapping predominantly to chr21 (8/8)."
+      ],
+      [
+       "8 split reads (14% of reads in window) with supplementary alignments mapping predominantly to chr21 (8/8)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:23002473",
+    "mapq20": {
+     "split_reads": 11,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 11,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      65.0,
+      65.0
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      15.0,
+      15.0
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "11 split reads (20% of reads in window) with supplementary alignments mapping predominantly to chr21 (11/11)."
+      ],
+      [
+       "11 split reads (20% of reads in window) with supplementary alignments mapping predominantly to chr21 (11/11)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:26002391",
+    "mapq20": {
+     "split_reads": 18,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 18,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      40.0,
+      40.0
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      15.0,
+      15.0
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "18 split reads (13% of reads in window) with supplementary alignments mapping predominantly to chr21 (18/18)."
+      ],
+      [
+       "18 split reads (13% of reads in window) with supplementary alignments mapping predominantly to chr21 (18/18)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:26001836",
+    "mapq20": {
+     "split_reads": 24,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 24,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      62.5,
+      62.5
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      15.0,
+      15.0
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "24 split reads (18% of reads in window) with supplementary alignments mapping predominantly to chr21 (24/24)."
+      ],
+      [
+       "24 split reads (18% of reads in window) with supplementary alignments mapping predominantly to chr21 (24/24)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:26002386",
+    "mapq20": {
+     "split_reads": 18,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 18,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      40.0,
+      40.0
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      15.0,
+      15.0
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "18 split reads (13% of reads in window) with supplementary alignments mapping predominantly to chr21 (18/18)."
+      ],
+      [
+       "18 split reads (13% of reads in window) with supplementary alignments mapping predominantly to chr21 (18/18)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:26001844",
+    "mapq20": {
+     "split_reads": 24,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 24,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      62.5,
+      62.5
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      15.0,
+      15.0
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "24 split reads (18% of reads in window) with supplementary alignments mapping predominantly to chr21 (24/24)."
+      ],
+      [
+       "24 split reads (18% of reads in window) with supplementary alignments mapping predominantly to chr21 (24/24)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:41933377",
+    "mapq20": {
+     "split_reads": 7,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 7,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      32.5,
+      32.5
+     ],
+     "strength": [
+      "weak",
+      "weak"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "7 split reads (6% of reads in window) with supplementary alignments mapping predominantly to chr21 (7/7)."
+      ],
+      [
+       "7 split reads (6% of reads in window) with supplementary alignments mapping predominantly to chr21 (7/7)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:41930007",
+    "mapq20": {
+     "split_reads": 3,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 3,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      32.5,
+      32.5
+     ],
+     "strength": [
+      "weak",
+      "weak"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "3 split reads (3% of reads in window) with supplementary alignments mapping predominantly to chr21 (3/3)."
+      ],
+      [
+       "3 split reads (3% of reads in window) with supplementary alignments mapping predominantly to chr21 (3/3)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:43262809",
+    "mapq20": {
+     "split_reads": 9,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 77,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      null,
+      null
+     ],
+     "strength": [
+      "QUALITY-LIMITED",
+      "QUALITY-LIMITED"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "9 split reads (2% of reads in window) with supplementary alignments scattered across 5 chromosomes \u2014 no dominant partner."
+      ],
+      [
+       "9 split reads (2% of reads in window) with supplementary alignments scattered across 5 chromosomes \u2014 no dominant partner."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:43262522",
+    "mapq20": {
+     "split_reads": 10,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 120,
+     "with_decoy_partner": 2,
+     "decoy_only": 1,
+     "control_matches_tool": true,
+     "decoy_partner_names": [
+      "chrUn_JTFH01001474v1_decoy"
+     ]
+    },
+    "summary": {
+     "score": [
+      null,
+      null
+     ],
+     "strength": [
+      "QUALITY-LIMITED",
+      "QUALITY-LIMITED"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "10 split reads (2% of reads in window) with supplementary alignments scattered across 6 chromosomes \u2014 no dominant partner."
+      ],
+      [
+       "10 split reads (2% of reads in window) with supplementary alignments scattered across 6 chromosomes \u2014 no dominant partner."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:45969811",
+    "mapq20": {
+     "split_reads": 7,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 8,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      65.0,
+      65.0
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "7 split reads (7% of reads in window) with supplementary alignments mapping predominantly to chr21 (7/7)."
+      ],
+      [
+       "7 split reads (7% of reads in window) with supplementary alignments mapping predominantly to chr21 (7/7)."
+      ]
+     ]
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:45968107",
+    "mapq20": {
+     "split_reads": 4,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "mapq0": {
+     "split_reads": 10,
+     "with_decoy_partner": 0,
+     "decoy_only": 0,
+     "control_matches_tool": true,
+     "decoy_partner_names": []
+    },
+    "summary": {
+     "score": [
+      47.5,
+      47.5
+     ],
+     "strength": [
+      "moderate",
+      "moderate"
+     ],
+     "split_component": [
+      7.5,
+      7.5
+     ],
+     "changed": {
+      "score": false,
+      "strength": false,
+      "split_component": false,
+      "split_sentence": false
+     },
+     "split_sentence": [
+      [
+       "4 split reads (4% of reads in window) with supplementary alignments mapping predominantly to chr21 (4/4)."
+      ],
+      [
+       "4 split reads (4% of reads in window) with supplementary alignments mapping predominantly to chr21 (4/4)."
+      ]
+     ]
+    }
+   }
+  ]
+ },
+ "SAMPLE_A": {
+  "label": "SAMPLE_A",
+  "seed": "20260927:SAMPLE_A",
+  "positions": 100,
+  "mapq20_control_mismatches": 0,
+  "mapq20_split_reads": 20,
+  "mapq20_with_decoy_partner": 2,
+  "mapq20_decoy_only": 2,
+  "mapq20_positions_with_split_reads": 6,
+  "mapq20_positions_with_decoy_partner": 1,
+  "mapq0_control_mismatches": 0,
+  "mapq0_split_reads": 36,
+  "mapq0_with_decoy_partner": 2,
+  "mapq0_decoy_only": 2,
+  "mapq0_positions_with_split_reads": 13,
+  "mapq0_positions_with_decoy_partner": 1,
+  "mapq20_fraction_with_decoy_partner": 0.1,
+  "mapq0_fraction_with_decoy_partner": 0.0556
+ },
+ "SAMPLE_B": {
+  "label": "SAMPLE_B",
+  "seed": "20260927:SAMPLE_B",
+  "positions": 100,
+  "mapq20_control_mismatches": 0,
+  "mapq20_split_reads": 7,
+  "mapq20_with_decoy_partner": 0,
+  "mapq20_decoy_only": 0,
+  "mapq20_positions_with_split_reads": 7,
+  "mapq20_positions_with_decoy_partner": 0,
+  "mapq0_control_mismatches": 0,
+  "mapq0_split_reads": 18,
+  "mapq0_with_decoy_partner": 0,
+  "mapq0_decoy_only": 0,
+  "mapq0_positions_with_split_reads": 13,
+  "mapq0_positions_with_decoy_partner": 0,
+  "mapq20_fraction_with_decoy_partner": 0.0,
+  "mapq0_fraction_with_decoy_partner": 0.0
+ }
+}
