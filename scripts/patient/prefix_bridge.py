@@ -50,6 +50,13 @@ FIGURES AND THEIR DEFINITIONS (written into the record beside each figure)
                       500 bp) by the pre-fix compare, from the one call
                       compare(SAMPLE_A, SAMPLE_B) the funnel makes: SAMPLE_A's matched
                       set is the A side of the matched pairs, SAMPLE_B's the B side
+  final_survivors_two_calls  the same survivors when each sample's matched set is
+                      taken from the call in which it is set_a (the scanning side):
+                      compare(SAMPLE_A, SAMPLE_B) for SAMPLE_A, compare(SAMPLE_B,
+                      SAMPLE_A) for SAMPLE_B. Added 2026-09-26 after the first patient
+                      run, to test whether "the final candidate counts were unchanged"
+                      depends on how the funnel called the comparison; the figures of
+                      the first run are unchanged by it
   two_direction_diff  for each set X, X's matched count with X as set_a (the scanning
                       side) minus X's matched count with X as set_b, over the whole
                       sets. Primary definition: the pre-fix compare on the sets loaded
@@ -276,9 +283,12 @@ def patient_funnel(dedup, compare):
         cmp_ = v.compare_candidate_sets(sets["SAMPLE_A"], sets["SAMPLE_B"], 500)
         matched = {"SAMPLE_A": {p["candidate_id_a"] for p in cmp_["matched_pairs"]},
                    "SAMPLE_B": {p["candidate_id_b"] for p in cmp_["matched_pairs"]}}
+        ba = v.compare_candidate_sets(sets["SAMPLE_B"], sets["SAMPLE_A"], 500)
+        scanning = {"SAMPLE_A": matched["SAMPLE_A"], "SAMPLE_B": {p["candidate_id_a"] for p in ba["matched_pairs"]}}
         for label in LABELS:
             surv = out[label].pop("_surv")
             out[label]["final_survivors"] = len(surv - matched[label])
+            out[label]["final_survivors_two_calls"] = len(surv - scanning[label])
         out["whole_set_comparison_A_to_B"] = {k: cmp_[k] for k in (
             "total_in_a", "total_in_b", "matched_in_a", "matched_in_b", "unmatched_in_a", "unmatched_in_b")}
         out["two_direction_diff"] = two_directions(sets["SAMPLE_A"], sets["SAMPLE_B"])
