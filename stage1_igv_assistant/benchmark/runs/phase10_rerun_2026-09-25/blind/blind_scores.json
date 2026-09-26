@@ -1,0 +1,2089 @@
+{
+ "what": "Blind scores of every Phase 10 case (e) run, unblinded after scoring (Phase 12 Task 5)",
+ "scorer": "verifier subagent, fresh context, blind: read the packet only",
+ "criteria": {
+  "C1_moderate_not_strong": "the verdict names 'moderate' as the evidence strength and does not call the evidence strong (the Phase 10 criterion, read literally)",
+  "C1b_not_strong_verdict": "a second reading of C1, reported beside it: the verdict is not 'strong' -- moderate, weak or between -- and nowhere calls the evidence strong. Reported because the band a run's own summary call returned depends on the window the model chose: 40.0 'moderate' at window 500 at IMP01 chr20:200000, 32.5 'weak' at the 1,500-5,000 bp windows several runs chose",
+  "C2_asserts_ceiling_unattainable": "states that 'strong' cannot be reached for this event or at this locus -- not merely that this score falls short of it",
+  "C3_completes_argument": "C2, and both reasons: the depth layer contributes nothing because a balanced event gains and loses no DNA, and the paired-read layer is capped because roughly half the reads crossing the breakpoint come from the intact homolog (or the attainable maximum set against the strong threshold with both reasons)"
+ },
+ "method": "Phase 12 Task 5: blind scoring of every Phase 10 ceiling run.\n\n    python -m stage1_igv_assistant.benchmark.blind_scoring build\n    python -m stage1_igv_assistant.benchmark.blind_scoring check SCORES.json\n    python -m stage1_igv_assistant.benchmark.blind_scoring unblind SCORES.json\n\nTHE ITEMS. Every run file of case (e) under runs/phase10_rerun_2026-09-25/: the 23\nlocal runs scored unblinded on 2026-09-25 (runs 1-5 of qwen2.5:7b and qwen3.5:4b and\nthe three replacement runs), the 40 runs of the registered extension (runs 6-15) and\nthe 20 API runs (claude-sonnet-5, claude-opus-5). Originals that were replaced are\nscored too; a cell uses the replacement (the registered rule).\n\nBLINDING. `build` writes the packet outside the repository: for each item a random\nID (secrets.token_hex), the prompt and the final answer, nothing else -- no model,\ncondition, file name, tool call or tool return -- in an order drawn by\nsecrets.SystemRandom. The key (ID -> run file) goes to the session scratch area with\na random salt, and the repository receives only the commitment: sha256 of the salt,\na newline and the key serialised with sorted keys, plus sha256 of the packet. The key\nand salt are committed after scoring, so anyone can check the commitment.",
+ "items": [
+  {
+   "id": "Bd32ab932",
+   "file": "claude-opus-5/WITHOUT__run1.json",
+   "meta": {
+    "model_dir": "claude-opus-5",
+    "model": "claude-opus-5",
+    "condition": "WITHOUT",
+    "run": 1,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": true,
+    "C1b": true,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "Whether you call that \"strong\" depends on the scorer: the tool says **moderate (40/100, withheld from nothing \u2014 this is a real score, not a quality-limited withholding)**, and I'd report it that way rather than upgrading it, while noting the score is suppressed by an absent depth signal that a balanced event should not produce anyway.",
+   "c2_c3_sentence": null,
+   "scorer_note": "Reports moderate and won't upgrade; hedges 'whether you call that strong depends on the scorer' but never calls it strong; no ceiling claim."
+  },
+  {
+   "id": "B03ed5688",
+   "file": "claude-opus-5/WITHOUT__run2.json",
+   "meta": {
+    "model_dir": "claude-opus-5",
+    "model": "claude-opus-5",
+    "condition": "WITHOUT",
+    "run": 2,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": true,
+    "C1b": true,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "But the tool's own `evidence_strength` label is **\"moderate\" (40.0/100)**, not \"strong\", on each breakend.",
+   "c2_c3_sentence": null,
+   "scorer_note": "Keeps moderate, 'stop short of the word strong' ('Yes' refers to consistency); depth 'caps the score' but no strong-unreachable claim."
+  },
+  {
+   "id": "Bbd0d0bc8",
+   "file": "claude-opus-5/WITHOUT__run3.json",
+   "meta": {
+    "model_dir": "claude-opus-5",
+    "model": "claude-opus-5",
+    "condition": "WITHOUT",
+    "run": 3,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": false,
+    "C1b": false,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "The **underlying evidence is strong** for a reciprocal chr20:200,000 \u2194 chr21:~14,100,000 translocation: three independent layers agree, mate and SA partners are essentially unanimous on a single partner chromosome, clips pile up at one base on both sides, mapping quality is pristine, and the reciprocal test confirms.",
+   "c2_c3_sentence": null,
+   "scorer_note": "Says the underlying evidence is strong and the moderate label a formula artifact; no strong-unreachable claim."
+  },
+  {
+   "id": "B530f9c9f",
+   "file": "claude-opus-5/WITHOUT__run4.json",
+   "meta": {
+    "model_dir": "claude-opus-5",
+    "model": "claude-opus-5",
+    "condition": "WITHOUT",
+    "run": 4,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": true,
+    "C1b": true,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "I'd call this a **well-supported balanced translocation**, while reporting the tool's label honestly as **moderate (40/100)** and noting the score's weak calibration.",
+   "c2_c3_sentence": null,
+   "scorer_note": "Keeps the tool's moderate label ('should not upgrade'); 'Yes' refers to corroborating evidence; no ceiling claim."
+  },
+  {
+   "id": "Be20a369b",
+   "file": "claude-opus-5/WITHOUT__run5.json",
+   "meta": {
+    "model_dir": "claude-opus-5",
+    "model": "claude-opus-5",
+    "condition": "WITHOUT",
+    "run": 5,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": false,
+    "C1b": false,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "I would describe the evidence as **strong in substance but labelled \"moderate\" by the scoring heuristic**, and I'd report the 40.0 alongside the caveat that the depth layer cannot fire for a balanced event and that most cutoffs behind the score are uncalibrated.",
+   "c2_c3_sentence": null,
+   "scorer_note": "Calls it 'strong in substance but labelled moderate'; says depth caps total at 75, never that strong is unreachable."
+  },
+  {
+   "id": "Bcdd3a977",
+   "file": "claude-opus-5/WITH__run1.json",
+   "meta": {
+    "model_dir": "claude-opus-5",
+    "model": "claude-opus-5",
+    "condition": "WITH",
+    "run": 1,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": true,
+   "blind": {
+    "C1": false,
+    "C1b": false,
+    "C2": true,
+    "C3": true
+   },
+   "deciding": "**Short answer: Yes \u2014 the evidence is genuinely strong for a real balanced translocation t(20;21), even though the scoring tool labels it \"moderate\" (40.0/100).",
+   "c2_c3_sentence": "Two layers are structurally capped: depth contributes nothing (no DNA gained or lost) and the discordant-pair fraction is capped well below the 0.5 its top band needs, because roughly half the reads crossing the breakpoint come from the intact homolog.",
+   "scorer_note": "Says 'the evidence is genuinely strong'; strong band at 70 arithmetically unreachable with both reasons."
+  },
+  {
+   "id": "Bcc211daa",
+   "file": "claude-opus-5/WITH__run2.json",
+   "meta": {
+    "model_dir": "claude-opus-5",
+    "model": "claude-opus-5",
+    "condition": "WITH",
+    "run": 2,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": true,
+   "blind": {
+    "C1": true,
+    "C1b": true,
+    "C2": true,
+    "C3": true
+   },
+   "deciding": "Answer: Yes \u2014 the evidence is convergent and reciprocally confirmed, but note the composite score reports it as \"moderate\" (40/100), not \"strong\"",
+   "c2_c3_sentence": "The tool itself reports `attainable_here: 57.5` and `strong_band_reachable_here: false` \u2014 for a heterozygous balanced rearrangement the \"strong\" band at 70 is **arithmetically unreachable**, because the depth layer must contribute 0 and the discordant-pair fraction is capped well below the 0.5 its top tier requires (roughly half the reads crossing the junction come from the intact homolog).",
+   "scorer_note": "Moderate, 'the maximum band such an event can land in' ('Yes' refers to convergent evidence); strong unreachable; depth reason only as 'must contribute 0' (accepted)."
+  },
+  {
+   "id": "Bb6e084c7",
+   "file": "claude-opus-5/WITH__run3.json",
+   "meta": {
+    "model_dir": "claude-opus-5",
+    "model": "claude-opus-5",
+    "condition": "WITH",
+    "run": 3,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": true,
+   "blind": {
+    "C1": true,
+    "C1b": true,
+    "C2": true,
+    "C3": true
+   },
+   "deciding": "But the composite score reads **\"moderate\" (40.0/100)**, not \"strong\", and it's important to understand why: for a heterozygous balanced event the strong band is **arithmetically unreachable**, so the band label understates the case.",
+   "c2_c3_sentence": "The summary reports `attainable_here: 57.5` against a strong band starting at **70.0**, and `strong_band_reachable_here: false`.",
+   "scorer_note": "Moderate, not strong ('Yes' refers to convincing raw evidence); strong band unreachable; bullets give both reasons."
+  },
+  {
+   "id": "Ba4406a46",
+   "file": "claude-opus-5/WITH__run4.json",
+   "meta": {
+    "model_dir": "claude-opus-5",
+    "model": "claude-opus-5",
+    "condition": "WITH",
+    "run": 4,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": true,
+   "blind": {
+    "C1": true,
+    "C1b": true,
+    "C2": true,
+    "C3": true
+   },
+   "deciding": "But the headline score reads **\"moderate\" (40.0/100), not \"strong\"**, and that band is arithmetically the ceiling for this class of event, not a sign of weak data.",
+   "c2_c3_sentence": "Two layers are structurally capped for a heterozygous balanced event: depth contributes 0 (no DNA gained or lost), and the discordant-pair fraction can't reach its top tier because roughly half the reads crossing the junction come from the intact homolog.",
+   "scorer_note": "Moderate, not strong ('Yes' refers to the junction being real); 'Strong is unreachable by arithmetic' (57.5 vs 70) with both reasons."
+  },
+  {
+   "id": "B0ff460a3",
+   "file": "claude-opus-5/WITH__run5.json",
+   "meta": {
+    "model_dir": "claude-opus-5",
+    "model": "claude-opus-5",
+    "condition": "WITH",
+    "run": 5,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": true,
+   "blind": {
+    "C1": false,
+    "C1b": false,
+    "C2": true,
+    "C3": true
+   },
+   "deciding": "That is strong, mutually corroborating evidence for a balanced t(20;21) \u2014 the \"moderate\" label reflects a scoring ceiling inherent to balanced events, not weak data.",
+   "c2_c3_sentence": "Two layers are structurally capped: depth contributes nothing (no DNA gained or lost), and the discordant fraction can't reach its top tier because ~half the reads crossing the breakpoint come from the intact homolog.",
+   "scorer_note": "Calls it 'strong, mutually corroborating evidence'; strong band unreachable with both reasons."
+  },
+  {
+   "id": "B18f08222",
+   "file": "claude-sonnet-5/WITHOUT__run1.json",
+   "meta": {
+    "model_dir": "claude-sonnet-5",
+    "model": "claude-sonnet-5",
+    "condition": "WITHOUT",
+    "run": 1,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": true,
+    "C1b": true,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "No \u2014 the tools classify this as **\"moderate,\" not \"strong,\"** evidence.",
+   "c2_c3_sentence": null,
+   "scorer_note": "Moderate, not strong ('strong qualitative point' refers only to the reciprocal check); no ceiling claim."
+  },
+  {
+   "id": "B31f6b5d5",
+   "file": "claude-sonnet-5/WITHOUT__run2.json",
+   "meta": {
+    "model_dir": "claude-sonnet-5",
+    "model": "claude-sonnet-5",
+    "condition": "WITHOUT",
+    "run": 2,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": true,
+    "C1b": true,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "**Short answer: The evidence is moderate, not strong \u2014 but with the discordant-pair and split-read signal corrected for a coordinate error, it does hold up as a genuine, reciprocally-confirmed translocation.",
+   "c2_c3_sentence": null,
+   "scorer_note": "Verdict moderate, not strong; no ceiling claim."
+  },
+  {
+   "id": "Ba81ec3d5",
+   "file": "claude-sonnet-5/WITHOUT__run3.json",
+   "meta": {
+    "model_dir": "claude-sonnet-5",
+    "model": "claude-sonnet-5",
+    "condition": "WITHOUT",
+    "run": 3,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": true,
+    "C1b": true,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "So I would characterize this as **credible, moderate evidence for a balanced translocation**, not \"strong\" evidence in a calibrated sense \u2014 good enough to prioritize for orthogonal confirmation (e.g., long-read or FISH validation), but the tool does not support calling it \"strong.\"",
+   "c2_c3_sentence": null,
+   "scorer_note": "Verdict 'credible, moderate evidence', not strong ('Yes' refers to real evidence); no ceiling claim."
+  },
+  {
+   "id": "Ba54a3cab",
+   "file": "claude-sonnet-5/WITHOUT__run4.json",
+   "meta": {
+    "model_dir": "claude-sonnet-5",
+    "model": "claude-sonnet-5",
+    "condition": "WITHOUT",
+    "run": 4,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": true,
+    "C1b": true,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "The formal score lands at \"moderate\" (40/100) rather than \"strong,\" and that scoring scale itself is only lightly validated \u2014 so I'd call this **solid, concordant, reciprocally-confirmed evidence**, but I would not overstate it as definitively \"strong\" by the tool's own calibration standards.",
+   "c2_c3_sentence": null,
+   "scorer_note": "Names the formal 'moderate' band and declines 'strong' ('Yes' refers to supportive evidence); no ceiling claim."
+  },
+  {
+   "id": "B9a426349",
+   "file": "claude-sonnet-5/WITHOUT__run5.json",
+   "meta": {
+    "model_dir": "claude-sonnet-5",
+    "model": "claude-sonnet-5",
+    "condition": "WITHOUT",
+    "run": 5,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": true,
+    "C1b": true,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "However, the tool's own integrated call is **\"moderate,\" not strong** (score 40/100).",
+   "c2_c3_sentence": null,
+   "scorer_note": "Moderate, not strong; no ceiling claim."
+  },
+  {
+   "id": "Ba5e45495",
+   "file": "claude-sonnet-5/WITH__run1.json",
+   "meta": {
+    "model_dir": "claude-sonnet-5",
+    "model": "claude-sonnet-5",
+    "condition": "WITH",
+    "run": 1,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": true,
+   "blind": {
+    "C1": false,
+    "C1b": false,
+    "C2": true,
+    "C3": true
+   },
+   "deciding": "**Bottom line:** Three concordant evidence layers plus confirmed reciprocity make a strong case that a real chr20\u2194chr21 breakpoint exists at this locus and is balanced (flat depth, no net DNA gain/loss).",
+   "c2_c3_sentence": "Importantly, the tool itself flags that **70/100 (\"strong\") is mathematically unreachable for this locus**: the attainable ceiling given the observed measurements is 57.5/100, because (a) depth structurally contributes nothing for a balanced event, and (b) a heterozygous rearrangement caps the discordant-pair fraction well below the threshold needed for top marks (only ~half the reads at a het breakpoint cross it).",
+   "scorer_note": "Headline 'moderate (not strong)' but bottom line 'make a strong case' - counted as calling it strong; strong unreachable with both reasons."
+  },
+  {
+   "id": "Bbb11d08d",
+   "file": "claude-sonnet-5/WITH__run2.json",
+   "meta": {
+    "model_dir": "claude-sonnet-5",
+    "model": "claude-sonnet-5",
+    "condition": "WITH",
+    "run": 2,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": true,
+   "blind": {
+    "C1": false,
+    "C1b": false,
+    "C2": true,
+    "C3": true
+   },
+   "deciding": "**Bottom line**: three independent, mutually consistent evidence layers (discordant pairs, soft-clip pileup, split reads) all point from chr20:200000 to the same chr21 partner locus, and the reciprocal check confirms symmetric signal on both sides \u2014 this is strong, multi-layer support for a balanced translocation.",
+   "c2_c3_sentence": "However, the tool itself flags that for a *heterozygous balanced* rearrangement, the attainable ceiling at this locus is only 57.5/100 \u2014 the \"strong\" band (\u226570) is mathematically unreachable here, because (a) depth contributes nothing (no DNA gained/lost in a balanced event) and (b) discordant-pair fraction is capped since roughly half of crossing reads come from the intact homolog.",
+   "scorer_note": "Bottom line 'strong, multi-layer support'; strong band unreachable with both reasons."
+  },
+  {
+   "id": "Bf9d33c7d",
+   "file": "claude-sonnet-5/WITH__run3.json",
+   "meta": {
+    "model_dir": "claude-sonnet-5",
+    "model": "claude-sonnet-5",
+    "condition": "WITH",
+    "run": 3,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": true,
+   "blind": {
+    "C1": false,
+    "C1b": false,
+    "C2": true,
+    "C3": true
+   },
+   "deciding": "**Yes, this is strong evidence for a genuine balanced translocation**, based on the following tool-derived findings:",
+   "c2_c3_sentence": "However, the tool itself flags that for a **heterozygous balanced rearrangement**, the top band (\u226570) is mathematically unreachable \u2014 the ceiling here is 57.5/100, because (a) depth contributes nothing (correctly, per rule 6) and (b) discordant fraction is capped near ~0.5 since only the rearranged homolog contributes crossing reads.",
+   "scorer_note": "Says 'Yes, this is strong evidence'; also states top band unreachable (ceiling 57.5) with both reasons (no DNA gained/lost given in the depth bullet)."
+  },
+  {
+   "id": "B6e6babc8",
+   "file": "claude-sonnet-5/WITH__run4.json",
+   "meta": {
+    "model_dir": "claude-sonnet-5",
+    "model": "claude-sonnet-5",
+    "condition": "WITH",
+    "run": 4,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": true,
+   "blind": {
+    "C1": false,
+    "C1b": false,
+    "C2": true,
+    "C3": true
+   },
+   "deciding": "**Yes, this is solid supporting evidence for a balanced translocation** \u2014 though \"strong\" needs qualification given how the scoring is calibrated for this event type.",
+   "c2_c3_sentence": "However, the tool's own attainable-ceiling analysis is important here: for a **heterozygous balanced rearrangement**, the maximum achievable score at this locus is 57.5/100 \u2014 below its 70/100 \"strong\" threshold \u2014 because (a) depth structurally contributes nothing to a balanced event, and (b) discordant-pair fraction is capped near 50% by the intact homologous chromosome contributing normal-looking reads.",
+   "scorer_note": "Answers 'Yes' with 'strong needs qualification' and 'as strong as this type of event can score' - treated as calling it strong; ceiling 57.5 below 70 with both reasons (depth reason implicit)."
+  },
+  {
+   "id": "B6ffd3128",
+   "file": "claude-sonnet-5/WITH__run5.json",
+   "meta": {
+    "model_dir": "claude-sonnet-5",
+    "model": "claude-sonnet-5",
+    "condition": "WITH",
+    "run": 5,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": true,
+   "blind": {
+    "C1": false,
+    "C1b": false,
+    "C2": true,
+    "C3": true
+   },
+   "deciding": "Given the structural ceiling that balanced events face on this scoring scheme, this is genuinely strong, consistent evidence for a real balanced translocation \u2014 I would not downgrade it just because it landed in the \"moderate\" numeric band.",
+   "c2_c3_sentence": "That number is *not* a weak result in disguise \u2014 for a heterozygous balanced translocation, the tool itself reports the maximum attainable score at this locus is capped at 57.5/100, because (a) depth structurally contributes nothing to a balanced event, and (b) only ~half of reads crossing a heterozygous breakpoint are discordant by nature.",
+   "scorer_note": "Calls it 'genuinely strong' evidence; strong band arithmetically unreachable with both reasons (no DNA gained/lost in depth bullet)."
+  },
+  {
+   "id": "Bb5777060",
+   "file": "qwen2.5-7b/WITHOUT__run1.json",
+   "meta": {
+    "model_dir": "qwen2.5-7b",
+    "model": "qwen2.5:7b",
+    "condition": "WITHOUT",
+    "run": 1,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": false,
+    "C1b": false,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "The discordant pairs and split reads provide strong evidence of a balanced translocation.",
+   "c2_c3_sentence": null,
+   "scorer_note": "Says discordant pairs and split reads 'provide strong evidence of a balanced translocation'; no ceiling claim."
+  },
+  {
+   "id": "B2dc06429",
+   "file": "qwen2.5-7b/WITHOUT__run10.json",
+   "meta": {
+    "model_dir": "qwen2.5-7b",
+    "model": "qwen2.5:7b",
+    "condition": "WITHOUT",
+    "run": 10,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": false,
+    "C1b": false,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "This is not an absolute confirmation but rather strong evidence supporting a balanced translocation.",
+   "c2_c3_sentence": null,
+   "scorer_note": "Reports moderate but calls it 'strong evidence'; no ceiling claim."
+  },
+  {
+   "id": "Bf5b44d8c",
+   "file": "qwen2.5-7b/WITHOUT__run11.json",
+   "meta": {
+    "model_dir": "qwen2.5-7b",
+    "model": "qwen2.5:7b",
+    "condition": "WITHOUT",
+    "run": 11,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": true,
+    "C1b": true,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "Based on the evidence from the tools, there is moderate strength of evidence for a balanced translocation at chr20:200000 in dataset IMP01.",
+   "c2_c3_sentence": null,
+   "scorer_note": "Verdict moderate; no ceiling claim."
+  },
+  {
+   "id": "Bf843f8a5",
+   "file": "qwen2.5-7b/WITHOUT__run12.json",
+   "meta": {
+    "model_dir": "qwen2.5-7b",
+    "model": "qwen2.5:7b",
+    "condition": "WITHOUT",
+    "run": 12,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": false,
+    "C1b": true,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "The evidence strength is classified as weak, and the normalized score across four applicable layers (discordant pairs, soft-clipped reads, split reads, read depth) is 32.5 out of a possible 100.",
+   "c2_c3_sentence": null,
+   "scorer_note": "Verdict weak; no ceiling claim."
+  },
+  {
+   "id": "B2e7b13b6",
+   "file": "qwen2.5-7b/WITHOUT__run13.json",
+   "meta": {
+    "model_dir": "qwen2.5-7b",
+    "model": "qwen2.5:7b",
+    "condition": "WITHOUT",
+    "run": 13,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": false,
+    "C1b": false,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "The signal from three out of four applicable evidence layers (discordant pairs, soft-clipped reads, and split reads) provides strong support for this breakpoint.",
+   "c2_c3_sentence": null,
+   "scorer_note": "Names moderate but says the three firing layers give 'strong support' (and discordant pairs 'strong evidence'); no ceiling claim."
+  },
+  {
+   "id": "Bf0d5fac6",
+   "file": "qwen2.5-7b/WITHOUT__run14.json",
+   "meta": {
+    "model_dir": "qwen2.5-7b",
+    "model": "qwen2.5:7b",
+    "condition": "WITHOUT",
+    "run": 14,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": false,
+    "C1b": true,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "The evidence score is 32.5 out of a possible 100, and the overall evidence strength is labeled as \"weak\".",
+   "c2_c3_sentence": null,
+   "scorer_note": "Verdict weak (32.5; 'Given this weak evidence'); no ceiling claim."
+  },
+  {
+   "id": "B574bf655",
+   "file": "qwen2.5-7b/WITHOUT__run15.json",
+   "meta": {
+    "model_dir": "qwen2.5-7b",
+    "model": "qwen2.5:7b",
+    "condition": "WITHOUT",
+    "run": 15,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": false,
+    "C1b": false,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "Based on the evidence provided, there is strong support for a balanced translocation at chr20:200,000 in dataset IMP01.",
+   "c2_c3_sentence": null,
+   "scorer_note": "Says 'strong support' despite reporting moderate; no ceiling claim."
+  },
+  {
+   "id": "B898432a2",
+   "file": "qwen2.5-7b/WITHOUT__run2.json",
+   "meta": {
+    "model_dir": "qwen2.5-7b",
+    "model": "qwen2.5:7b",
+    "condition": "WITHOUT",
+    "run": 2,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": false,
+    "C1b": true,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "Given that all supporting observations are present but do not meet the thresholds for a higher evidence strength rating, we conclude that there is **weak** evidence supporting the balanced translocation at chr20:200,000 based on these tools.",
+   "c2_c3_sentence": null,
+   "scorer_note": "Verdict weak ('strong signals' describes two layers); no ceiling claim."
+  },
+  {
+   "id": "B7489f672",
+   "file": "qwen2.5-7b/WITHOUT__run2_replacement.json",
+   "meta": {
+    "model_dir": "qwen2.5-7b",
+    "model": "qwen2.5:7b",
+    "condition": "WITHOUT",
+    "run": 2,
+    "replacement": true
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": false,
+    "C1b": false,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "Given these findings, the breakpoint at chr20:200,000 in dataset IMP01 provides strong evidence of a balanced translocation.",
+   "c2_c3_sentence": null,
+   "scorer_note": "Says 'provides strong evidence' despite reporting moderate; no ceiling claim."
+  },
+  {
+   "id": "B7ba14bfc",
+   "file": "qwen2.5-7b/WITHOUT__run3.json",
+   "meta": {
+    "model_dir": "qwen2.5-7b",
+    "model": "qwen2.5:7b",
+    "condition": "WITHOUT",
+    "run": 3,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": false,
+    "C1b": true,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "The evidence for a balanced translocation at chr20:200,000 in dataset IMP01 is classified as weak.",
+   "c2_c3_sentence": null,
+   "scorer_note": "Verdict weak; no ceiling claim."
+  },
+  {
+   "id": "B22d069d9",
+   "file": "qwen2.5-7b/WITHOUT__run4.json",
+   "meta": {
+    "model_dir": "qwen2.5-7b",
+    "model": "qwen2.5:7b",
+    "condition": "WITHOUT",
+    "run": 4,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": false,
+    "C1b": false,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "In conclusion, based on the discordant pairs and split reads showing reciprocal signal, there is strong evidence for a balanced translocation at chr20:200000 in dataset IMP01.",
+   "c2_c3_sentence": null,
+   "scorer_note": "Concludes 'strong evidence'; no ceiling claim."
+  },
+  {
+   "id": "B033cfc9d",
+   "file": "qwen2.5-7b/WITHOUT__run5.json",
+   "meta": {
+    "model_dir": "qwen2.5-7b",
+    "model": "qwen2.5:7b",
+    "condition": "WITHOUT",
+    "run": 5,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": false,
+    "C1b": true,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "The evidence at the breakpoint on chr20:200,000 in dataset IMP01 is considered weak.",
+   "c2_c3_sentence": null,
+   "scorer_note": "Verdict weak; no ceiling claim."
+  },
+  {
+   "id": "Bf9df2661",
+   "file": "qwen2.5-7b/WITHOUT__run6.json",
+   "meta": {
+    "model_dir": "qwen2.5-7b",
+    "model": "qwen2.5:7b",
+    "condition": "WITHOUT",
+    "run": 6,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": false,
+    "C1b": false,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "This combination of signals from discordant pairs and split reads provides strong support for the balanced translocation at this breakpoint position in chr20:200000.",
+   "c2_c3_sentence": null,
+   "scorer_note": "Moderate label but 'provides strong support for the balanced translocation'; no ceiling claim."
+  },
+  {
+   "id": "B2dad2aec",
+   "file": "qwen2.5-7b/WITHOUT__run7.json",
+   "meta": {
+    "model_dir": "qwen2.5-7b",
+    "model": "qwen2.5:7b",
+    "condition": "WITHOUT",
+    "run": 7,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": false,
+    "C1b": false,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "Considering these points, the evidence for a balanced translocation at chr20:200,000 in dataset IMP01 appears strong.",
+   "c2_c3_sentence": null,
+   "scorer_note": "Calls the evidence strong ('appears strong'); no ceiling claim."
+  },
+  {
+   "id": "B245b5ea3",
+   "file": "qwen2.5-7b/WITHOUT__run8.json",
+   "meta": {
+    "model_dir": "qwen2.5-7b",
+    "model": "qwen2.5:7b",
+    "condition": "WITHOUT",
+    "run": 8,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": true,
+    "C1b": true,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "In conclusion, while there is moderate evidence for this balanced translocation at `chr20:200000` in dataset `IMP01`, additional validation or further analysis might be necessary to confirm its existence.",
+   "c2_c3_sentence": null,
+   "scorer_note": "Verdict moderate; no ceiling claim."
+  },
+  {
+   "id": "B3a20d2dc",
+   "file": "qwen2.5-7b/WITHOUT__run9.json",
+   "meta": {
+    "model_dir": "qwen2.5-7b",
+    "model": "qwen2.5:7b",
+    "condition": "WITHOUT",
+    "run": 9,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": false,
+    "C1b": true,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "Therefore, while there is some evidence for a balanced translocation at this breakpoint, it appears to be consistent with flat read depth expected in such cases.",
+   "c2_c3_sentence": null,
+   "scorer_note": "Only 'some evidence' - no strength level named, never strong; no ceiling claim."
+  },
+  {
+   "id": "B4ace2fad",
+   "file": "qwen2.5-7b/WITH__run1.json",
+   "meta": {
+    "model_dir": "qwen2.5-7b",
+    "model": "qwen2.5:7b",
+    "condition": "WITH",
+    "run": 1,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": false,
+    "C1b": false,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "Given that both `discordant_pairs` and `split_reads` show evidence supporting an inter-chromosomal event (balanced translocation), we can conclude that there is strong evidence for a balanced translocation at `chr20:200000` in dataset IMP01.",
+   "c2_c3_sentence": null,
+   "scorer_note": "Concludes 'strong evidence'; no ceiling claim."
+  },
+  {
+   "id": "B11b7353c",
+   "file": "qwen2.5-7b/WITH__run10.json",
+   "meta": {
+    "model_dir": "qwen2.5-7b",
+    "model": "qwen2.5:7b",
+    "condition": "WITH",
+    "run": 10,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": false,
+    "C1b": false,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "Based on the current evidence, there is strong support for a balanced translocation at this locus.",
+   "c2_c3_sentence": null,
+   "scorer_note": "Concludes 'strong support'; no ceiling claim."
+  },
+  {
+   "id": "B59140be5",
+   "file": "qwen2.5-7b/WITH__run11.json",
+   "meta": {
+    "model_dir": "qwen2.5-7b",
+    "model": "qwen2.5:7b",
+    "condition": "WITH",
+    "run": 11,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": true,
+   "blind": {
+    "C1": true,
+    "C1b": true,
+    "C2": true,
+    "C3": false
+   },
+   "deciding": "Therefore, we can conclude that although there is moderate evidence for a balanced translocation at this breakpoint, it does not reach the highest possible strength score due to the nature of the event (balanced translocation) itself.",
+   "c2_c3_sentence": "The highest attainable score for this locus under a balanced translocation scenario is 57.5/100, which falls short of the top band (70.0/100).",
+   "scorer_note": "Verdict moderate ('strong signals' describes two layers); attainable 57.5 short of the top band (70); no homolog reason, depth reason garbled."
+  },
+  {
+   "id": "B58d1ca63",
+   "file": "qwen2.5-7b/WITH__run12.json",
+   "meta": {
+    "model_dir": "qwen2.5-7b",
+    "model": "qwen2.5:7b",
+    "condition": "WITH",
+    "run": 12,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": true,
+   "blind": {
+    "C1": false,
+    "C1b": false,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "The balanced translocation at chr20:200,000 in dataset IMP01 shows strong evidence based on the following observations:",
+   "c2_c3_sentence": null,
+   "scorer_note": "Opens 'shows strong evidence'; gives the 57.5 ceiling without relating it to the strong band."
+  },
+  {
+   "id": "B0fc72f1b",
+   "file": "qwen2.5-7b/WITH__run13.json",
+   "meta": {
+    "model_dir": "qwen2.5-7b",
+    "model": "qwen2.5:7b",
+    "condition": "WITH",
+    "run": 13,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": true,
+   "blind": {
+    "C1": false,
+    "C1b": true,
+    "C2": true,
+    "C3": false
+   },
+   "deciding": "The **evidence score** of 32.5 places the result in the \"weak\" category (threshold > 0.0 but < 40.0).",
+   "c2_c3_sentence": "The attainable ceiling for a heterozygous balanced rearrangement at this locus is only 57.5/100, which is below the threshold required for a strong evidence level.",
+   "scorer_note": "Verdict weak; ceiling 57.5 below strong threshold; no homolog reason and depth misdescribed as a dip, so C3 false."
+  },
+  {
+   "id": "Bfb69a033",
+   "file": "qwen2.5-7b/WITH__run14.json",
+   "meta": {
+    "model_dir": "qwen2.5-7b",
+    "model": "qwen2.5:7b",
+    "condition": "WITH",
+    "run": 14,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": false,
+    "C1b": false,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "Based on these findings, we have strong evidence of a suspected balanced translocation based on discordant pairs.",
+   "c2_c3_sentence": null,
+   "scorer_note": "Calls the evidence strong ('we have strong evidence'), then only hedges; no ceiling claim."
+  },
+  {
+   "id": "Be74d376f",
+   "file": "qwen2.5-7b/WITH__run15.json",
+   "meta": {
+    "model_dir": "qwen2.5-7b",
+    "model": "qwen2.5:7b",
+    "condition": "WITH",
+    "run": 15,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": false,
+    "C1b": true,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "Therefore, based on these tools and their results, there is no strong evidence for a balanced translocation at chr20:200000 in dataset IMP01.",
+   "c2_c3_sentence": null,
+   "scorer_note": "No strong evidence; reciprocal missing, likely artifact; no level named; no ceiling claim."
+  },
+  {
+   "id": "B992d3852",
+   "file": "qwen2.5-7b/WITH__run2.json",
+   "meta": {
+    "model_dir": "qwen2.5-7b",
+    "model": "qwen2.5:7b",
+    "condition": "WITH",
+    "run": 2,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": true,
+   "blind": {
+    "C1": false,
+    "C1b": false,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "The high discordant pair count and significant soft-clipped reads provide strong support for a breakpoint at this position, while the flat read depth is consistent with a balanced translocation.",
+   "c2_c3_sentence": null,
+   "scorer_note": "Verdict moderate but says discordant pairs + soft clips 'provide strong support for a breakpoint' - counted as calling it strong; only 'falls short', no ceiling claim."
+  },
+  {
+   "id": "B9415cf3d",
+   "file": "qwen2.5-7b/WITH__run3.json",
+   "meta": {
+    "model_dir": "qwen2.5-7b",
+    "model": "qwen2.5:7b",
+    "condition": "WITH",
+    "run": 3,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": true,
+   "blind": {
+    "C1": true,
+    "C1b": true,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "Given these findings, we can conclude that there is moderate evidence supporting the presence of a balanced translocation at chr20:200,000, but stronger validation would be needed to confirm this event definitively.",
+   "c2_c3_sentence": null,
+   "scorer_note": "Verdict moderate; notes depth zero and paired-read layer 'capped at half' but only says it misses the strong threshold - no unreachability claim."
+  },
+  {
+   "id": "B2919dca0",
+   "file": "qwen2.5-7b/WITH__run4.json",
+   "meta": {
+    "model_dir": "qwen2.5-7b",
+    "model": "qwen2.5:7b",
+    "condition": "WITH",
+    "run": 4,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": true,
+   "blind": {
+    "C1": false,
+    "C1b": true,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "The evidence for a balanced translocation at chr20:200,000 in dataset IMP01 is weak.",
+   "c2_c3_sentence": null,
+   "scorer_note": "Verdict weak; no ceiling claim."
+  },
+  {
+   "id": "B3d54f865",
+   "file": "qwen2.5-7b/WITH__run5.json",
+   "meta": {
+    "model_dir": "qwen2.5-7b",
+    "model": "qwen2.5:7b",
+    "condition": "WITH",
+    "run": 5,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": true,
+   "blind": {
+    "C1": false,
+    "C1b": false,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "The balanced translocation at chr20:200,000 in dataset IMP01 shows strong evidence based on the following findings:",
+   "c2_c3_sentence": null,
+   "scorer_note": "Opens 'shows strong evidence', later moderate - calls it strong; no ceiling claim."
+  },
+  {
+   "id": "Bf69659e6",
+   "file": "qwen2.5-7b/WITH__run6.json",
+   "meta": {
+    "model_dir": "qwen2.5-7b",
+    "model": "qwen2.5:7b",
+    "condition": "WITH",
+    "run": 6,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": true,
+   "blind": {
+    "C1": true,
+    "C1b": true,
+    "C2": true,
+    "C3": false
+   },
+   "deciding": "The evidence strength is moderate, with a score of 40.0 out of 100 normalized over four applicable layers (three of which showed signal).",
+   "c2_c3_sentence": "The highest attainable score at this locus is 57.5/100, which is below the threshold for a \"strong\" band (70.0).",
+   "scorer_note": "Verdict moderate ('moderately strong' and single-layer 'strong support' not counted); 57.5 below strong band; depth reason given, homolog reason missing."
+  },
+  {
+   "id": "Bea3481f9",
+   "file": "qwen2.5-7b/WITH__run7.json",
+   "meta": {
+    "model_dir": "qwen2.5-7b",
+    "model": "qwen2.5:7b",
+    "condition": "WITH",
+    "run": 7,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": true,
+   "blind": {
+    "C1": true,
+    "C1b": true,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "The balanced translocation at `chr20:200000` in dataset `IMP01` is supported by moderate evidence based on the following findings:",
+   "c2_c3_sentence": null,
+   "scorer_note": "Verdict moderate, never strong; attainable score 'capped at 57.5/100' but never related to the strong band, so C2 not met."
+  },
+  {
+   "id": "Bd1d0d16d",
+   "file": "qwen2.5-7b/WITH__run8.json",
+   "meta": {
+    "model_dir": "qwen2.5-7b",
+    "model": "qwen2.5:7b",
+    "condition": "WITH",
+    "run": 8,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": true,
+   "blind": {
+    "C1": false,
+    "C1b": false,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "Given these findings, we can conclude there is strong support for a balanced translocation event at chr20:200,000 in dataset IMP01.",
+   "c2_c3_sentence": null,
+   "scorer_note": "Reports moderate but concludes 'strong support'; no ceiling claim."
+  },
+  {
+   "id": "B50bc82be",
+   "file": "qwen2.5-7b/WITH__run9.json",
+   "meta": {
+    "model_dir": "qwen2.5-7b",
+    "model": "qwen2.5:7b",
+    "condition": "WITH",
+    "run": 9,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": true,
+   "blind": {
+    "C1": false,
+    "C1b": false,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "The balanced translocation at chr20:200,000 in dataset IMP01 shows strong evidence based on the following observations:",
+   "c2_c3_sentence": null,
+   "scorer_note": "Opens 'shows strong evidence', later moderate - calls it strong; no ceiling claim."
+  },
+  {
+   "id": "B91336a43",
+   "file": "qwen3.5-4b/WITHOUT__run1.json",
+   "meta": {
+    "model_dir": "qwen3.5-4b",
+    "model": "qwen3.5:4b",
+    "condition": "WITHOUT",
+    "run": 1,
+    "replacement": false
+   },
+   "answered": false,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": false,
+    "C1b": false,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": null,
+   "c2_c3_sentence": null,
+   "scorer_note": "empty answer"
+  },
+  {
+   "id": "B15a81241",
+   "file": "qwen3.5-4b/WITHOUT__run10.json",
+   "meta": {
+    "model_dir": "qwen3.5-4b",
+    "model": "qwen3.5:4b",
+    "condition": "WITHOUT",
+    "run": 10,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": false,
+    "C1b": true,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "**Conclusion:** The evidence is currently \"weak\" and would not qualify as strong support for this being a confirmed balanced translocation at chr20:200,000 in IMP01.",
+   "c2_c3_sentence": null,
+   "scorer_note": "Verdict weak; no ceiling claim."
+  },
+  {
+   "id": "B8dc9b62a",
+   "file": "qwen3.5-4b/WITHOUT__run11.json",
+   "meta": {
+    "model_dir": "qwen3.5-4b",
+    "model": "qwen3.5:4b",
+    "condition": "WITHOUT",
+    "run": 11,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": true,
+    "C1b": true,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "Based on my analysis of chr20:200000 in dataset IMP01, I found **moderate evidence** (not strong) for a balanced translocation at this location.",
+   "c2_c3_sentence": null,
+   "scorer_note": "Moderate (not strong); 'Strong pileup' describes one layer only; 'For stronger evidence' implies reachable; no ceiling claim."
+  },
+  {
+   "id": "B46f187c8",
+   "file": "qwen3.5-4b/WITHOUT__run12.json",
+   "meta": {
+    "model_dir": "qwen3.5-4b",
+    "model": "qwen3.5:4b",
+    "condition": "WITHOUT",
+    "run": 12,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": false,
+    "C1b": true,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "Based on the tool results, **the balanced translocation at chr20:200000 in dataset IMP01 is NOT strong evidence** - it scored as **\"weak\"** (32.5/100) with only 2 of 4 applicable layers showing signal.",
+   "c2_c3_sentence": null,
+   "scorer_note": "Verdict weak; no ceiling claim."
+  },
+  {
+   "id": "Be505301d",
+   "file": "qwen3.5-4b/WITHOUT__run13.json",
+   "meta": {
+    "model_dir": "qwen3.5-4b",
+    "model": "qwen3.5:4b",
+    "condition": "WITHOUT",
+    "run": 13,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": true,
+    "C1b": true,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "The `breakpoint_evidence_summary` returned an evidence strength of **\"moderate\"** with a score of 40/100.",
+   "c2_c3_sentence": null,
+   "scorer_note": "NOT strong, summary headed 'Moderate Strength'; no ceiling claim."
+  },
+  {
+   "id": "B302a4b2c",
+   "file": "qwen3.5-4b/WITHOUT__run14.json",
+   "meta": {
+    "model_dir": "qwen3.5-4b",
+    "model": "qwen3.5:4b",
+    "condition": "WITHOUT",
+    "run": 14,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": true,
+    "C1b": true,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "The verdict from `breakpoint_evidence_summary` gives an overall **\"moderate\" strength** with a normalized score of 40/100 over the 4 applicable layers (3/4 showing signal).",
+   "c2_c3_sentence": null,
+   "scorer_note": "'No - not strong', overall moderate; no ceiling claim."
+  },
+  {
+   "id": "Be02a6e1c",
+   "file": "qwen3.5-4b/WITHOUT__run15.json",
+   "meta": {
+    "model_dir": "qwen3.5-4b",
+    "model": "qwen3.5:4b",
+    "condition": "WITHOUT",
+    "run": 15,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": false,
+    "C1b": true,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "This pattern alone makes this weak evidence, regardless of other layers' scores.",
+   "c2_c3_sentence": null,
+   "scorer_note": "NOT strong, weak (25/100); no ceiling claim."
+  },
+  {
+   "id": "B776e30cd",
+   "file": "qwen3.5-4b/WITHOUT__run2.json",
+   "meta": {
+    "model_dir": "qwen3.5-4b",
+    "model": "qwen3.5:4b",
+    "condition": "WITHOUT",
+    "run": 2,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": false,
+    "C1b": true,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "Based on my analysis using all applicable tools at chr20:200000 in dataset IMP01, **this is weak to moderate evidence**, not strong evidence for a balanced translocation.",
+   "c2_c3_sentence": null,
+   "scorer_note": "'Weak to moderate', final 'Weak/Modest' - not a moderate verdict; not strong; no ceiling claim."
+  },
+  {
+   "id": "Bb3c806fb",
+   "file": "qwen3.5-4b/WITHOUT__run3.json",
+   "meta": {
+    "model_dir": "qwen3.5-4b",
+    "model": "qwen3.5:4b",
+    "condition": "WITHOUT",
+    "run": 3,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": false,
+    "C1b": true,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "Based on the tool results, **the balanced translocation at chr20:200000 in dataset IMP01 is NOT strong evidence** \u2014 it scores as **\"weak\"**.",
+   "c2_c3_sentence": null,
+   "scorer_note": "Verdict weak; no ceiling claim."
+  },
+  {
+   "id": "Bc5d988b1",
+   "file": "qwen3.5-4b/WITHOUT__run4.json",
+   "meta": {
+    "model_dir": "qwen3.5-4b",
+    "model": "qwen3.5:4b",
+    "condition": "WITHOUT",
+    "run": 4,
+    "replacement": false
+   },
+   "answered": false,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": false,
+    "C1b": false,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": null,
+   "c2_c3_sentence": null,
+   "scorer_note": "empty answer"
+  },
+  {
+   "id": "Bb8b9734b",
+   "file": "qwen3.5-4b/WITHOUT__run4_replacement.json",
+   "meta": {
+    "model_dir": "qwen3.5-4b",
+    "model": "qwen3.5:4b",
+    "condition": "WITHOUT",
+    "run": 4,
+    "replacement": true
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": false,
+    "C1b": true,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "Based on the tool outputs, **the balanced translocation at chr20:200000 in dataset IMP01 is NOT strong evidence**\u2014it yields a **weak** verdict.",
+   "c2_c3_sentence": null,
+   "scorer_note": "Verdict weak; no ceiling claim."
+  },
+  {
+   "id": "Be47bccb9",
+   "file": "qwen3.5-4b/WITHOUT__run5.json",
+   "meta": {
+    "model_dir": "qwen3.5-4b",
+    "model": "qwen3.5:4b",
+    "condition": "WITHOUT",
+    "run": 5,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": true,
+    "C1b": true,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "**Conclusion**: While there is some signal across multiple layers, the scattered discordant pairs pattern and low supporting reads indicate this falls in a \"moderate\" rather than \"strong\" category according to the tool's internal threshold system.",
+   "c2_c3_sentence": null,
+   "scorer_note": "Verdict moderate rather than strong; no ceiling claim."
+  },
+  {
+   "id": "Bc7d96357",
+   "file": "qwen3.5-4b/WITHOUT__run6.json",
+   "meta": {
+    "model_dir": "qwen3.5-4b",
+    "model": "qwen3.5:4b",
+    "condition": "WITHOUT",
+    "run": 6,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": false,
+    "C1b": true,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "Based on my analysis using the tools, **the putative balanced translocation at chr20:20000 in IMP01 does NOT show strong evidence**.",
+   "c2_c3_sentence": null,
+   "scorer_note": "NOT strong, concludes artifact/wrong coordinates; no level named; no ceiling claim."
+  },
+  {
+   "id": "Bcc05c842",
+   "file": "qwen3.5-4b/WITHOUT__run7.json",
+   "meta": {
+    "model_dir": "qwen3.5-4b",
+    "model": "qwen3.5:4b",
+    "condition": "WITHOUT",
+    "run": 7,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": false,
+    "C1b": true,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "Based on my analysis, **this is NOT strong evidence for a balanced translocation**.",
+   "c2_c3_sentence": null,
+   "scorer_note": "Verdict NOT strong, no level named (weak individual signals); never calls it strong; no ceiling claim."
+  },
+  {
+   "id": "Bf41ebebb",
+   "file": "qwen3.5-4b/WITHOUT__run8.json",
+   "meta": {
+    "model_dir": "qwen3.5-4b",
+    "model": "qwen3.5:4b",
+    "condition": "WITHOUT",
+    "run": 8,
+    "replacement": false
+   },
+   "answered": false,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": false,
+    "C1b": false,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": null,
+   "c2_c3_sentence": null,
+   "scorer_note": "empty answer"
+  },
+  {
+   "id": "B9bf87a5a",
+   "file": "qwen3.5-4b/WITHOUT__run9.json",
+   "meta": {
+    "model_dir": "qwen3.5-4b",
+    "model": "qwen3.5:4b",
+    "condition": "WITHOUT",
+    "run": 9,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": false,
+    "C1b": true,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "Based on my analysis using all relevant evidence layers, **the balanced translocation at chr20:200000 in IMP01 is NOT strong evidence**.",
+   "c2_c3_sentence": null,
+   "scorer_note": "NOT strong, concludes potential artifact; 'moderate' only for the discordant layer; no ceiling claim."
+  },
+  {
+   "id": "Be2e8de75",
+   "file": "qwen3.5-4b/WITH__run1.json",
+   "meta": {
+    "model_dir": "qwen3.5-4b",
+    "model": "qwen3.5:4b",
+    "condition": "WITH",
+    "run": 1,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": true,
+   "blind": {
+    "C1": false,
+    "C1b": true,
+    "C2": true,
+    "C3": true
+   },
+   "deciding": "The breakpoint has an overall evidence score of 32.5/100, rated as **\"weak\"**.",
+   "c2_c3_sentence": "The maximum achievable score at this locus is 57.5/100, which remains **below** the \"strong\" band starting at 70",
+   "scorer_note": "NOT strong, rated weak; max 57.5 below strong band at 70; reasons in points 1-3 (half reads from intact homologs; balanced events preserve DNA)."
+  },
+  {
+   "id": "B4369aea1",
+   "file": "qwen3.5-4b/WITH__run10.json",
+   "meta": {
+    "model_dir": "qwen3.5-4b",
+    "model": "qwen3.5:4b",
+    "condition": "WITH",
+    "run": 10,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": true,
+   "blind": {
+    "C1": false,
+    "C1b": true,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "Based on my analysis of the breakpoint evidence for chr20:200000 in dataset IMP01, this is **weak** evidence for a balanced translocation - not strong evidence as originally suggested by the prompt's question.",
+   "c2_c3_sentence": null,
+   "scorer_note": "Verdict weak (conclusion 'weak to moderate'); says one layer is capped and score misses 70, suggests more corroboration; no unreachability claim."
+  },
+  {
+   "id": "B391e770a",
+   "file": "qwen3.5-4b/WITH__run11.json",
+   "meta": {
+    "model_dir": "qwen3.5-4b",
+    "model": "qwen3.5:4b",
+    "condition": "WITH",
+    "run": 11,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": true,
+   "blind": {
+    "C1": false,
+    "C1b": true,
+    "C2": true,
+    "C3": true
+   },
+   "deciding": "Based on my analysis of the data at chr20:200000 in dataset IMP01, **the balanced translocation is NOT strong evidence** - it scored \"weak\" with an overall score of 32.5/100 and only 2 out of 4 applicable layers showed signal.",
+   "c2_c3_sentence": "For a heterozygous balanced rearrangement, **the maximum achievable score is only ~57.5/100** (below strong evidence threshold), as noted by arithmetic constraints on discordant pairs (~50% reads from intact homolog) and the depth layer contributing nothing",
+   "scorer_note": "Verdict weak/NOT strong; max achievable about 57.5 below strong threshold with homolog reason; depth reason only as 'correctly reflects a balanced event' (accepted)."
+  },
+  {
+   "id": "Bef950c02",
+   "file": "qwen3.5-4b/WITH__run12.json",
+   "meta": {
+    "model_dir": "qwen3.5-4b",
+    "model": "qwen3.5:4b",
+    "condition": "WITH",
+    "run": 12,
+    "replacement": false
+   },
+   "answered": false,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": false,
+    "C1b": false,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": null,
+   "c2_c3_sentence": null,
+   "scorer_note": "empty answer"
+  },
+  {
+   "id": "Be3128ff1",
+   "file": "qwen3.5-4b/WITH__run13.json",
+   "meta": {
+    "model_dir": "qwen3.5-4b",
+    "model": "qwen3.5:4b",
+    "condition": "WITH",
+    "run": 13,
+    "replacement": false
+   },
+   "answered": false,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": false,
+    "C1b": false,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": null,
+   "c2_c3_sentence": null,
+   "scorer_note": "empty answer"
+  },
+  {
+   "id": "B76895cf5",
+   "file": "qwen3.5-4b/WITH__run14.json",
+   "meta": {
+    "model_dir": "qwen3.5-4b",
+    "model": "qwen3.5:4b",
+    "condition": "WITH",
+    "run": 14,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": true,
+    "C1b": true,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "The signals are **consistent with a balanced translocation** but the overall evidence strength is **moderate rather than strong**.",
+   "c2_c3_sentence": null,
+   "scorer_note": "Verdict moderate rather than strong; no ceiling claim."
+  },
+  {
+   "id": "Bf9554316",
+   "file": "qwen3.5-4b/WITH__run15.json",
+   "meta": {
+    "model_dir": "qwen3.5-4b",
+    "model": "qwen3.5:4b",
+    "condition": "WITH",
+    "run": 15,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": true,
+   "blind": {
+    "C1": false,
+    "C1b": true,
+    "C2": true,
+    "C3": false
+   },
+   "deciding": "Based on my analysis using all available tools, **no - this is not strong evidence of a balanced translocation**.",
+   "c2_c3_sentence": "The maximum attainable ceiling for heterozygous events here is **57.5/100**, which stays below the strong threshold of 70.0/100 by arithmetic constraint alone.",
+   "scorer_note": "NOT strong, concludes likely artifact (tool's moderate cited only as a reason); ceiling 57.5 below 70 with homolog reason, no depth reason."
+  },
+  {
+   "id": "B30807e79",
+   "file": "qwen3.5-4b/WITH__run2.json",
+   "meta": {
+    "model_dir": "qwen3.5-4b",
+    "model": "qwen3.5:4b",
+    "condition": "WITH",
+    "run": 2,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": true,
+   "blind": {
+    "C1": false,
+    "C1b": true,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "The **weak evidence strength** reflects this limited support from 2/4 layers, with split reads and discordant pairs failing to provide strong confirmation that a genuine balanced translocation exists at chr20:200,000.",
+   "c2_c3_sentence": null,
+   "scorer_note": "Verdict weak / NOT strong; no ceiling claim."
+  },
+  {
+   "id": "Bd405c446",
+   "file": "qwen3.5-4b/WITH__run3.json",
+   "meta": {
+    "model_dir": "qwen3.5-4b",
+    "model": "qwen3.5:4b",
+    "condition": "WITH",
+    "run": 3,
+    "replacement": false
+   },
+   "answered": false,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": false,
+    "C1b": false,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": null,
+   "c2_c3_sentence": null,
+   "scorer_note": "empty answer"
+  },
+  {
+   "id": "B4a7b8001",
+   "file": "qwen3.5-4b/WITH__run3_replacement.json",
+   "meta": {
+    "model_dir": "qwen3.5-4b",
+    "model": "qwen3.5:4b",
+    "condition": "WITH",
+    "run": 3,
+    "replacement": true
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": false,
+    "C1b": true,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "This shows minimal-to-moderate signal across evidence layers without independent caller validation, and doesn't meet thresholds for \"strong\" balanced translocation evidence.",
+   "c2_c3_sentence": null,
+   "scorer_note": "NOT strong; 'minimal-to-moderate', leaning artifact/noise - not a moderate verdict; no ceiling claim."
+  },
+  {
+   "id": "Bd174823d",
+   "file": "qwen3.5-4b/WITH__run4.json",
+   "meta": {
+    "model_dir": "qwen3.5-4b",
+    "model": "qwen3.5:4b",
+    "condition": "WITH",
+    "run": 4,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": false,
+    "C1b": true,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "Based on the tool results I've gathered, **this does not appear to be strong evidence** for a balanced translocation at chr20:200000 in IMP01.",
+   "c2_c3_sentence": null,
+   "scorer_note": "NOT strong, leans background noise; 'moderate' used only for one layer, so no moderate verdict; no ceiling claim."
+  },
+  {
+   "id": "B56d03b67",
+   "file": "qwen3.5-4b/WITH__run5.json",
+   "meta": {
+    "model_dir": "qwen3.5-4b",
+    "model": "qwen3.5:4b",
+    "condition": "WITH",
+    "run": 5,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": true,
+   "blind": {
+    "C1": false,
+    "C1b": true,
+    "C2": true,
+    "C3": true
+   },
+   "deciding": "The result should be interpreted as weak/partially suggestive rather than confirmatory.",
+   "c2_c3_sentence": "**Two structural layers are inherently limited** by the nature of heterozygous rearrangements: discordant pairs cannot exceed ~50% (half reads come from intact homolog), and depth shows no change at all for balanced translocations.",
+   "scorer_note": "Verdict weak; top evidence band 'UNREACHABLE here by arithmetic' (point 4); both reasons (half reads from intact homolog; no DNA gained or lost)."
+  },
+  {
+   "id": "B2559c2d2",
+   "file": "qwen3.5-4b/WITH__run6.json",
+   "meta": {
+    "model_dir": "qwen3.5-4b",
+    "model": "qwen3.5:4b",
+    "condition": "WITH",
+    "run": 6,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": false,
+    "C1b": true,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "This balanced translocation is **NOT strong evidence** for several reasons:",
+   "c2_c3_sentence": null,
+   "scorer_note": "NOT strong, no level named; 'Strong evidence of junction point' is a single-layer table cell (not counted); no ceiling claim."
+  },
+  {
+   "id": "B458e7afb",
+   "file": "qwen3.5-4b/WITH__run7.json",
+   "meta": {
+    "model_dir": "qwen3.5-4b",
+    "model": "qwen3.5:4b",
+    "condition": "WITH",
+    "run": 7,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": false,
+   "blind": {
+    "C1": false,
+    "C1b": true,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "Based on the tool results, **this is not strong evidence for a balanced translocation**.",
+   "c2_c3_sentence": null,
+   "scorer_note": "NOT strong, concludes artifact; no level named; no ceiling claim."
+  },
+  {
+   "id": "B3fc9db1c",
+   "file": "qwen3.5-4b/WITH__run8.json",
+   "meta": {
+    "model_dir": "qwen3.5-4b",
+    "model": "qwen3.5:4b",
+    "condition": "WITH",
+    "run": 8,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": true,
+   "blind": {
+    "C1": false,
+    "C1b": true,
+    "C2": true,
+    "C3": true
+   },
+   "deciding": "Based on the evidence gathered, **no\u2014the translocation signal at chr20:200000 is only \"weak\" and should not be interpreted as strong evidence.**",
+   "c2_c3_sentence": "The \"strong\" tier (>70) is mathematically unattainable here.",
+   "scorer_note": "Verdict weak; strong tier unattainable; reasons in points 2-3 (half reads from intact homologs; balanced events don't alter coverage)."
+  },
+  {
+   "id": "Bc855fc40",
+   "file": "qwen3.5-4b/WITH__run9.json",
+   "meta": {
+    "model_dir": "qwen3.5-4b",
+    "model": "qwen3.5:4b",
+    "condition": "WITH",
+    "run": 9,
+    "replacement": false
+   },
+   "answered": true,
+   "ceiling_seen": true,
+   "blind": {
+    "C1": false,
+    "C1b": true,
+    "C2": false,
+    "C3": false
+   },
+   "deciding": "Based on my analysis using multiple tools, **the balanced translocation candidate at chr20:200,000 in dataset IMP01 is NOT strong evidence**.",
+   "c2_c3_sentence": null,
+   "scorer_note": "NOT strong, weak (32.5); no ceiling claim."
+  }
+ ],
+ "cells": {
+  "original_runs_1_5": {
+   "qwen2.5:7b WITHOUT": {
+    "blind": {
+     "runs": 5,
+     "answered": 5,
+     "ceiling_fields_reached_model": 0,
+     "C1": 0,
+     "C1b": 2,
+     "C2": 0,
+     "C3": 0
+    },
+    "unblinded_2026_09_25": {
+     "C1": 0,
+     "C1b": 2,
+     "C2": 0,
+     "C3": 0
+    }
+   },
+   "qwen2.5:7b WITH": {
+    "blind": {
+     "runs": 5,
+     "answered": 5,
+     "ceiling_fields_reached_model": 4,
+     "C1": 1,
+     "C1b": 2,
+     "C2": 0,
+     "C3": 0
+    },
+    "unblinded_2026_09_25": {
+     "C1": 2,
+     "C1b": 3,
+     "C2": 0,
+     "C3": 0
+    }
+   },
+   "qwen3.5:4b WITHOUT": {
+    "blind": {
+     "runs": 5,
+     "answered": 4,
+     "ceiling_fields_reached_model": 0,
+     "C1": 1,
+     "C1b": 4,
+     "C2": 0,
+     "C3": 0
+    },
+    "unblinded_2026_09_25": {
+     "C1": 1,
+     "C1b": 4,
+     "C2": 0,
+     "C3": 0
+    }
+   },
+   "qwen3.5:4b WITH": {
+    "blind": {
+     "runs": 5,
+     "answered": 5,
+     "ceiling_fields_reached_model": 3,
+     "C1": 0,
+     "C1b": 5,
+     "C2": 2,
+     "C3": 2
+    },
+    "unblinded_2026_09_25": {
+     "C1": 0,
+     "C1b": 5,
+     "C2": 2,
+     "C3": 2
+    }
+   }
+  },
+  "runs_1_15": {
+   "qwen2.5:7b WITHOUT": {
+    "blind": {
+     "runs": 15,
+     "answered": 15,
+     "ceiling_fields_reached_model": 0,
+     "C1": 2,
+     "C1b": 7,
+     "C2": 0,
+     "C3": 0
+    }
+   },
+   "qwen2.5:7b WITH": {
+    "blind": {
+     "runs": 15,
+     "answered": 15,
+     "ceiling_fields_reached_model": 11,
+     "C1": 4,
+     "C1b": 7,
+     "C2": 3,
+     "C3": 0
+    }
+   },
+   "qwen3.5:4b WITHOUT": {
+    "blind": {
+     "runs": 15,
+     "answered": 13,
+     "ceiling_fields_reached_model": 0,
+     "C1": 4,
+     "C1b": 13,
+     "C2": 0,
+     "C3": 0
+    }
+   },
+   "qwen3.5:4b WITH": {
+    "blind": {
+     "runs": 15,
+     "answered": 13,
+     "ceiling_fields_reached_model": 8,
+     "C1": 1,
+     "C1b": 13,
+     "C2": 5,
+     "C3": 4
+    }
+   }
+  },
+  "api_runs_1_5": {
+   "claude-sonnet-5 WITHOUT": {
+    "blind": {
+     "runs": 5,
+     "answered": 5,
+     "ceiling_fields_reached_model": 0,
+     "C1": 5,
+     "C1b": 5,
+     "C2": 0,
+     "C3": 0
+    }
+   },
+   "claude-sonnet-5 WITH": {
+    "blind": {
+     "runs": 5,
+     "answered": 5,
+     "ceiling_fields_reached_model": 5,
+     "C1": 0,
+     "C1b": 0,
+     "C2": 5,
+     "C3": 5
+    }
+   },
+   "claude-opus-5 WITHOUT": {
+    "blind": {
+     "runs": 5,
+     "answered": 5,
+     "ceiling_fields_reached_model": 0,
+     "C1": 3,
+     "C1b": 3,
+     "C2": 0,
+     "C3": 0
+    }
+   },
+   "claude-opus-5 WITH": {
+    "blind": {
+     "runs": 5,
+     "answered": 5,
+     "ceiling_fields_reached_model": 5,
+     "C1": 3,
+     "C1b": 3,
+     "C2": 5,
+     "C3": 5
+    }
+   }
+  }
+ },
+ "fisher_exact_two_sided_15_run_cells": {
+  "qwen2.5:7b C3": {
+   "table [[WITH met, WITH not], [WITHOUT met, WITHOUT not]]": [
+    [
+     0,
+     15
+    ],
+    [
+     0,
+     15
+    ]
+   ],
+   "p_two_sided": 1.0
+  },
+  "qwen2.5:7b C2": {
+   "table [[WITH met, WITH not], [WITHOUT met, WITHOUT not]]": [
+    [
+     3,
+     12
+    ],
+    [
+     0,
+     15
+    ]
+   ],
+   "p_two_sided": 0.224138
+  },
+  "qwen3.5:4b C3": {
+   "table [[WITH met, WITH not], [WITHOUT met, WITHOUT not]]": [
+    [
+     4,
+     11
+    ],
+    [
+     0,
+     15
+    ]
+   ],
+   "p_two_sided": 0.099617
+  },
+  "qwen3.5:4b C2": {
+   "table [[WITH met, WITH not], [WITHOUT met, WITHOUT not]]": [
+    [
+     5,
+     10
+    ],
+    [
+     0,
+     15
+    ]
+   ],
+   "p_two_sided": 0.042146
+  }
+ },
+ "agreement_with_unblinded_2026_09_25": {
+  "C1": "22 of 23",
+  "C1b": "22 of 23",
+  "C2": "23 of 23",
+  "C3": "23 of 23"
+ },
+ "disagreements": [
+  {
+   "file": "qwen2.5-7b/WITH__run2.json",
+   "criterion": "C1",
+   "unblinded": true,
+   "blind": false,
+   "unblinded_deciding": "The evidence meets the criteria for a moderate score but falls short of being considered strong due to the lack of contribution from the `read_depth` layer.",
+   "unblinded_note": "gives the depth half of the argument only, as a reason it fell short, not as a ceiling",
+   "blind_deciding": "The high discordant pair count and significant soft-clipped reads provide strong support for a breakpoint at this position, while the flat read depth is consistent with a balanced translocation.",
+   "blind_c2_c3_sentence": null,
+   "blind_note": "Verdict moderate but says discordant pairs + soft clips 'provide strong support for a breakpoint' - counted as calling it strong; only 'falls short', no ceiling claim."
+  },
+  {
+   "file": "qwen2.5-7b/WITH__run2.json",
+   "criterion": "C1b",
+   "unblinded": true,
+   "blind": false,
+   "unblinded_deciding": "The evidence meets the criteria for a moderate score but falls short of being considered strong due to the lack of contribution from the `read_depth` layer.",
+   "unblinded_note": "gives the depth half of the argument only, as a reason it fell short, not as a ceiling",
+   "blind_deciding": "The high discordant pair count and significant soft-clipped reads provide strong support for a breakpoint at this position, while the flat read depth is consistent with a balanced translocation.",
+   "blind_c2_c3_sentence": null,
+   "blind_note": "Verdict moderate but says discordant pairs + soft clips 'provide strong support for a breakpoint' - counted as calling it strong; only 'falls short', no ceiling claim."
+  }
+ ],
+ "registration": "registration_local_extension_2026-09-26.json",
+ "earlier_scores": "scores.json, unchanged"
+}
