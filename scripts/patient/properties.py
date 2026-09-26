@@ -2,6 +2,7 @@
 """Phase 12 Task 6(a): properties of SAMPLE_A and SAMPLE_B -- aggregate counts only.
 
     properties.py LABEL [--threads N]      LABEL = SAMPLE_A | SAMPLE_B
+    properties.py pgversion LABEL          where a bwa version appears in the @PG records
     properties.py record                   both samples' results -> the committed record
 
 Reads ~/patient_data/deid/LABEL.bam (a link, never named in output). Each sample's
@@ -16,6 +17,12 @@ drawn from the reference (seeded) and are not stored.
 FIGURES AND THEIR DEFINITIONS (written into the record beside each figure)
   bwa_version         the VN value of each @PG record whose PN is bwa -- nothing else
                       from the line
+  bwa_version_fields  (added 2026-09-26, after bwa_version came back empty) the field
+                      names present on each bwa @PG record, counted, and the
+                      version-shaped tokens (digits.digits.digits, optionally -rN)
+                      found in each field, counted by field name; shown only after the
+                      identifier gate's scanner and the redaction terms find nothing in
+                      them. No other text of any @PG field is kept
   read_length         the modal query length (sequence length, soft clips included)
                       of primary records (not secondary, not supplementary) met in the
                       random-position sample below; the share at the mode is given
@@ -41,6 +48,7 @@ FIGURES AND THEIR DEFINITIONS (written into the record beside each figure)
 import json
 import os
 import random
+import re
 import statistics
 import subprocess
 import sys
@@ -171,6 +179,44 @@ def sample(label, threads):
     return 0
 
 
+VERSION_TOKEN = re.compile(r"(?<![\w.])\d+\.\d+\.\d+(?:-r\d+)?(?![\w.])")
+
+
+def pgversion(label):
+    sys.path.insert(0, os.path.dirname(HERE))
+    from identifier_gate import Gate  # scripts/identifier_gate.py
+    from redact import compile_terms, load_terms  # scripts/redact.py
+    from common import TERMS
+    bam_path = os.path.join(DEID_DIR, f"{label}.bam")
+    if not os.path.exists(bam_path):
+        die(f"{label}: the de-identified link is missing")
+    with pysam.AlignmentFile(bam_path) as bam:
+        pg = [e for e in bam.header.to_dict().get("PG", []) if str(e.get("PN", "")).lower() == "bwa"]
+    fields, tokens = Counter(), Counter()
+    for e in pg:
+        for k, v in e.items():
+            fields[k] += 1
+            for t in set(VERSION_TOKEN.findall(str(v))):
+                tokens[f"{k}: {t}"] += 1
+    ident_file = os.path.expanduser("~/patient_data/.identifier_list")
+    if not (os.path.exists(ident_file) and os.path.exists(TERMS)):
+        die("no identifier list or term list: nothing is shown")
+    gate = Gate([l.strip() for l in open(ident_file) if l.strip() and not l.startswith("#")], None,
+                os.path.expanduser("~"), REPO)
+    text = "\n".join(tokens)
+    gate.scan("pg", "version tokens", text, paths=True)
+    pat, _ = compile_terms(load_terms(TERMS))
+    if gate.fired or pat.search(text):
+        die(f"{label}: the gate fired on the version tokens; not shown and not recorded")
+    rec = {"label": label, "bwa_pg_records": len(pg), "fields_on_bwa_pg_records": dict(fields),
+           "version_tokens_by_field": dict(tokens), "gate": "identifier gate scanner: nothing fired"}
+    os.makedirs(RUN_DIR, exist_ok=True)
+    with open(os.path.join(RUN_DIR, f"properties_pg_{label}.json"), "w") as f:
+        json.dump(rec, f, indent=1)
+    print(json.dumps(rec, indent=1))
+    return 0
+
+
 def record():
     out = {"what": "Properties of the two patient BAMs, Phase 12 Task 6(a), 2026-09-26: aggregate counts only",
            "blinding": "no coordinate, gene, read or per-position base; the concordance keeps totals only",
@@ -184,6 +230,10 @@ def record():
         if not os.path.exists(p):
             die(f"{label}: no result yet")
         out[label] = json.load(open(p))
+        q = os.path.join(RUN_DIR, f"properties_pg_{label}.json")
+        if not os.path.exists(q):
+            die(f"{label}: pgversion has not been run")
+        out[label]["bwa_version_fields"] = json.load(open(q))
     dest = os.path.join(REPO, "stage1_igv_assistant", "results", "patient_properties_2026-09-26.json")
     if os.path.exists(dest):
         die("the record exists; a committed record is never overwritten")
@@ -196,6 +246,8 @@ def record():
 if __name__ == "__main__":
     if len(sys.argv) >= 2 and sys.argv[1] == "record":
         sys.exit(record())
+    if len(sys.argv) == 3 and sys.argv[1] == "pgversion" and sys.argv[2] in ("SAMPLE_A", "SAMPLE_B"):
+        sys.exit(pgversion(sys.argv[2]))
     if len(sys.argv) < 2 or sys.argv[1] not in ("SAMPLE_A", "SAMPLE_B"):
         die("usage: properties.py SAMPLE_A|SAMPLE_B [--threads N] | record")
     threads = int(sys.argv[3]) if len(sys.argv) > 3 and sys.argv[2] == "--threads" else 3
