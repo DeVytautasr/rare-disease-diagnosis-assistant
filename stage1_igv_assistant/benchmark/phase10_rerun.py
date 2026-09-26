@@ -692,10 +692,18 @@ def step_keycheck():
     tool schemas and the prompt exactly as a run sends them. Records the outcome and
     the token count, never the key (not its text, length or hash)."""
     tools, where, reg, schema_hash = setup()
+    keyfile, envfile = os.path.join(REPO, ".api", "claude_api_key"), os.path.join(REPO, ".env")
+    source = "environment (ANTHROPIC_API_KEY)" if os.environ.get("ANTHROPIC_API_KEY", "").strip() else ".api/claude_api_key"
+    file_key = open(keyfile).read().strip() if os.path.exists(keyfile) else ""
     rec = {"what": "Anthropic API key check before the API arm: one count_tokens call on case (e)'s first request",
            "date": TODAY, "model": API[0], "schema_sha256": schema_hash,
            "system_prompt_sha256": sha(chatmod.SYSTEM_PROMPT), "prompt_sha256": sha(CASE_E),
-           "key_file_mode": oct(os.stat(os.path.join(REPO, ".api", "claude_api_key")).st_mode & 0o777)}
+           "key_source": source,
+           "key_file_mode": oct(os.stat(keyfile).st_mode & 0o777),
+           "key_file_modified": datetime.datetime.fromtimestamp(os.stat(keyfile).st_mtime).isoformat(timespec="seconds"),
+           "env_file_modified": (datetime.datetime.fromtimestamp(os.stat(envfile).st_mtime).isoformat(timespec="seconds")
+                                 if os.path.exists(envfile) else None),
+           "key_used_equals_key_file": ui.API_KEY == file_key}
     try:
         import anthropic
         c = anthropic.Anthropic(api_key=ui.API_KEY, max_retries=0, timeout=60)
@@ -706,7 +714,8 @@ def step_keycheck():
     except Exception as e:
         rec.update({"status": "failed", "error_class": type(e).__name__,
                     "http_status": getattr(e, "status_code", None)})
-    write(os.path.join(OUT, f"key_check_{TODAY}.json"), rec)
+    name = f"key_check_{TODAY}.json" if source == ".api/claude_api_key" else f"key_check_{TODAY}_environment.json"
+    write(os.path.join(OUT, name), rec)
     print({k: rec[k] for k in rec if k in ("status", "input_tokens", "error_class", "http_status")})
     return 0 if rec["status"] == "ok" else 1
 

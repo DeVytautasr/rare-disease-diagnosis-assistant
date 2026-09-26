@@ -1,0 +1,12 @@
+{
+ "what": "Anthropic API key check before the API arm: one count_tokens call on case (e)'s first request",
+ "date": "2026-09-26",
+ "model": "claude-sonnet-5",
+ "schema_sha256": "6ce8866a5d4317cb8664c4083e22b89d87e4d65e3961b92f5a56b8408e51cef0",
+ "system_prompt_sha256": "f79ca873b1fcfd9c1444d5ef787e4e5ae4b1255e13c2322ba792b1da18b2f77b",
+ "prompt_sha256": "91823cb0da002531c233f81fd26cbbe0a5e6dc9edcdfa4b423c5ff0a5b68dcca",
+ "key_file_mode": "0o600",
+ "status": "failed",
+ "error_class": "AuthenticationError",
+ "http_status": 401
+}
