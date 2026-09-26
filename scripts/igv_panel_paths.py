@@ -50,7 +50,7 @@ def main():
             kind = ("input BAM echoed" if os.path.basename(BAM) in v and ".png" not in v
                     else "image file" if ".png" in v or SESSION in v else "other")
             hits.append({"field": key, "kind": kind, "value": v.replace(os.path.expanduser("~"), "~")})
-    rec = {"what": __doc__.split("\n\n")[0].strip(), "definitions": __doc__.split("\n\n", 1)[1].strip().replace("\n", " "),
+    rec = {"what": __doc__.splitlines()[0].strip(), "definitions": " ".join(__doc__.split()),
            "path_bearing_fields": hits,
            "image_paths_returned": sum(h["kind"] == "image file" for h in hits),
            "code": "scripts/igv_panel_paths.py"}
