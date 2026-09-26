@@ -151,7 +151,8 @@ def without_decoys(bam_path, chromosome, position, window_bp=200, min_mapq=20):
     kept = [p for p in kept if p]
     r = dict(r)
     r["split_reads"] = len(kept)
-    r["split_read_fraction"] = round(len(kept) / total, 3) if total else None
+    n = r.get("total_reads_in_window") or 0  # the tool's own denominator
+    r["split_read_fraction"] = round(len(kept) / n, 3) if n else r.get("split_read_fraction")
     r["partner_chromosomes"] = dict(sorted(Counter(c for p in kept for c in p).items(), key=lambda x: -x[1]))
     return r
 
