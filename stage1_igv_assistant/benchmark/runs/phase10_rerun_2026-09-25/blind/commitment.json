@@ -1,0 +1,15 @@
+{
+ "what": "Commitment to the blind-scoring key, written before any item was scored (Phase 12 Task 5)",
+ "items": 83,
+ "by_model": {
+  "qwen2.5-7b": 31,
+  "qwen3.5-4b": 32,
+  "claude-sonnet-5": 10,
+  "claude-opus-5": 10
+ },
+ "commitment_sha256": "12e0a288909e02acdb3528b46f5245fd3afcce27f8e5eb5d4df3e16dac1ac607",
+ "commitment_method": "sha256(salt + b'\\n' + json.dumps(key, sort_keys=True).encode()); key maps item ID to run file; salt and key are committed after scoring",
+ "packet_json_sha256": "3b3b6d9bc54c6e77898973eb5b2a6f1a0c6fbb0997f2fcb71fd82527db562d43",
+ "packet": "prompt and final answer per item, random IDs, order from secrets.SystemRandom; committed after scoring beside the key",
+ "code": "stage1_igv_assistant/benchmark/blind_scoring.py"
+}
