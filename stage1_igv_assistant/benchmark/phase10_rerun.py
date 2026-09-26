@@ -294,7 +294,16 @@ PROOF_LOCI = [
      "window_bp": 1500, "min_mapq": 20,
      "applicable_layers": ["discordant_pairs", "soft_clipped_reads", "split_reads", "read_depth"]},
 ]
-PROOF_FILE = "proof_prepared_payload.json"
+PROOF_FILE = "proof_prepared_payload.json"          # the first, 2026-09-25 (committed)
+TODAY = datetime.date.today().isoformat()
+
+
+def newest_proof():
+    """The most recent proof: proof_prepared_payload.json, then the dated ones
+    (proof_prepared_payload_<YYYY-MM-DD>.json), which sort after it."""
+    import glob as _glob
+    found = sorted(_glob.glob(os.path.join(OUT, "proof_prepared_payload*.json")))
+    return found[-1] if found else os.path.join(OUT, PROOF_FILE)
 
 
 def step_prove():
@@ -403,15 +412,18 @@ def step_prove():
            "kept_in_both_conditions": ["position_provenance", "min_mapq_applied (top level and the three sub-dicts)",
                                        "split_reads' min_mapq description paragraph"],
            "verdict": "PROVEN" if ok else "NOT PROVEN"}
-    write(os.path.join(OUT, PROOF_FILE), rec)
+    out = os.path.join(OUT, PROOF_FILE if not os.path.exists(os.path.join(OUT, PROOF_FILE))
+                       else f"proof_prepared_payload_{TODAY}.json")
+    write(out, rec)
+    print(f"proof written to {os.path.relpath(out, REPO)}")
     print(f"ablation proof: {rec['verdict']} ({sum(c['holds'] for c in checks)}/{len(checks)} checks)")
     return 0 if ok else 1
 
 
 def proof_is_current():
-    p = os.path.join(OUT, PROOF_FILE)
+    p = newest_proof()
     if not os.path.exists(p):
-        return False, f"no {PROOF_FILE} -- run `prove` first"
+        return False, f"no {os.path.basename(p)} -- run `prove` first"
     rec = json.load(open(p))
     if rec.get("verdict") != "PROVEN":
         return False, "the proof did not pass"
@@ -478,7 +490,15 @@ def slug(model):
     return model.replace(":", "-").replace("/", "-")
 
 
-def run_model(model, runs, keys, tools, where, reg, schema_hash, budget, spent, replace=None):
+BILLING_WORDS = ("credit balance", "billing", "insufficient", "payment", "quota")
+
+
+def is_billing_error(detail):
+    d = (detail or "").lower()
+    return any(w in d for w in BILLING_WORDS)
+
+
+def run_model(model, runs, keys, tools, where, reg, schema_hash, budget, spent, replace=None, start_run=1):
     """replace = (condition, run number, reason): one run in that condition, written
     beside the run it replaces as <COND>__run<k>_replacement.json; the replaced run
     stays on record."""
@@ -523,15 +543,28 @@ def run_model(model, runs, keys, tools, where, reg, schema_hash, budget, spent, 
         counters = {"WITHOUT": 0, "WITH": 0, cond_r: k_r - 1}
         meta.update({"replaces": f"{cond_r}__run{k_r}.json", "reason": reason, "order": order})
         write(os.path.join(OUT, slug(model), f"meta_replacement_{cond_r}_run{k_r}.json"), meta)
+    elif start_run > 1:
+        # an extension: runs start_run .. start_run+runs-1 in each condition, in their own
+        # seeded order, beside the runs already on record
+        order, suffix = ["WITHOUT"] * runs + ["WITH"] * runs, ""
+        seed = f"{ORDER_SEED}:{model}:start{start_run}"
+        random.Random(seed).shuffle(order)
+        counters = {"WITHOUT": start_run - 1, "WITH": start_run - 1}
+        meta.update({"order": order, "order_seed": seed, "runs": f"{start_run}-{start_run + runs - 1}"})
+        write(os.path.join(OUT, slug(model), f"meta_runs{start_run}-{start_run + runs - 1}.json"), meta)
     else:
         order, suffix = ["WITHOUT"] * runs + ["WITH"] * runs, ""
         random.Random(f"{ORDER_SEED}:{model}").shuffle(order)
         meta["order"] = order
+        meta["order_seed"] = f"{ORDER_SEED}:{model}"
         write(os.path.join(OUT, slug(model), "meta.json"), meta)
         counters = {"WITHOUT": 0, "WITH": 0}
+    max_run_cost = 0.0
     for pos, cond in enumerate(order):
-        if is_api and spent >= budget:
-            print(f"{model}: budget cap ${budget} reached (${spent:.4f}); stopping")
+        # A HARD cap: a run starts only if the most expensive run so far would still fit.
+        if is_api and spent + max_run_cost > budget:
+            print(f"{model}: budget cap ${budget}: spent ${spent:.4f}, the costliest run so far "
+                  f"${max_run_cost:.4f} would not fit; stopping")
             return 5, spent
         counters[cond] += 1
         vcf_tools.reset_registry()
@@ -544,6 +577,7 @@ def run_model(model, runs, keys, tools, where, reg, schema_hash, budget, spent, 
                                        effort=CONFIG["api"]["effort"], thinking=True, client=client)
             res["api_cost_usd_live_prices"] = live_cost(model, res.get("api_usage"))
             spent += res["api_cost_usd_live_prices"] or 0
+            max_run_cost = max(max_run_cost, res["api_cost_usd_live_prices"] or 0)
         else:
             res = chatmod.run_turn(model, CASE_E, tools, set(where), make_exec(cond, keys, ablation_log),
                                    num_ctx=CONFIG["num_ctx"], max_iters=CONFIG["max_iters"], think=CONFIG["think"])
@@ -575,23 +609,30 @@ def run_model(model, runs, keys, tools, where, reg, schema_hash, budget, spent, 
         print(f"{model} {cond} run {counters[cond]}: answered={not res['ended_without_answer']} "
               f"tool_calls={res['n_tool_calls']} summaries={len(summaries)} ceiling_keys_seen="
               f"{len(rec['ceiling_keys_seen_by_model'])} wall={res['wall_s']}s"
-              + (f" cost=${res['api_cost_usd_live_prices']}" if is_api else ""), flush=True)
+              + (f" cost=${res['api_cost_usd_live_prices']}" if is_api else "")
+              + (f" API_ERROR={res.get('api_error')}" if is_api and res.get("api_error") else ""), flush=True)
+        if is_api and is_billing_error(res.get("api_error")):
+            print(f"{model}: BILLING ERROR -- stopping, not retrying")
+            return 6, spent
     return 0, spent
 
 
-def step_run(models, runs, budget, replace=None):
+def step_run(models, runs, budget, replace=None, start_run=1):
     ok, why = proof_is_current()
     if not ok:
         raise SystemExit(f"refusing to run: {why}")
     keys = ceiling_keys_from_commit()
     tools, where, reg, schema_hash = setup()
-    proof = json.load(open(os.path.join(OUT, PROOF_FILE)))
+    proof = json.load(open(newest_proof()))
     if proof["schema_sha256"] != schema_hash:
         raise SystemExit("the tool schemas differ from the ones the proof ran against")
     rc, spent = 0, 0.0
     for m in models:
-        r, spent = run_model(m, runs, keys, tools, where, reg, schema_hash, budget, spent, replace=replace)
+        r, spent = run_model(m, runs, keys, tools, where, reg, schema_hash, budget, spent, replace=replace,
+                             start_run=start_run)
         rc = rc or r
+        if r == 6:
+            break
     return rc
 
 
@@ -646,6 +687,65 @@ def step_tally():
     return 0
 
 
+def step_keycheck():
+    """ONE count_tokens call on case (e)'s first request -- the system prompt, the
+    tool schemas and the prompt exactly as a run sends them. Records the outcome and
+    the token count, never the key (not its text, length or hash)."""
+    tools, where, reg, schema_hash = setup()
+    rec = {"what": "Anthropic API key check before the API arm: one count_tokens call on case (e)'s first request",
+           "date": TODAY, "model": API[0], "schema_sha256": schema_hash,
+           "system_prompt_sha256": sha(chatmod.SYSTEM_PROMPT), "prompt_sha256": sha(CASE_E),
+           "key_file_mode": oct(os.stat(os.path.join(REPO, ".api", "claude_api_key")).st_mode & 0o777)}
+    try:
+        import anthropic
+        c = anthropic.Anthropic(api_key=ui.API_KEY, max_retries=0, timeout=60)
+        n = c.messages.count_tokens(model=API[0], system=chatmod.SYSTEM_PROMPT,
+                                    tools=chatmod.to_anthropic_tools(tools),
+                                    messages=[{"role": "user", "content": CASE_E}]).input_tokens
+        rec.update({"status": "ok", "input_tokens": n})
+    except Exception as e:
+        rec.update({"status": "failed", "error_class": type(e).__name__,
+                    "http_status": getattr(e, "status_code", None)})
+    write(os.path.join(OUT, f"key_check_{TODAY}.json"), rec)
+    print({k: rec[k] for k in rec if k in ("status", "input_tokens", "error_class", "http_status")})
+    return 0 if rec["status"] == "ok" else 1
+
+
+def step_spend():
+    """The API arm's spend: every API run's usage and cost, summed, beside the
+    projection and the cap."""
+    rows = []
+    for model in API:
+        d = os.path.join(OUT, slug(model))
+        if not os.path.isdir(d):
+            continue
+        for f in sorted(os.listdir(d)):
+            if "__run" not in f or not f.endswith(".json"):
+                continue
+            r = json.load(open(os.path.join(d, f)))["result"]
+            rows.append({"model": model, "file": f"{slug(model)}/{f}", "usage": r.get("api_usage"),
+                         "cost_usd": r.get("api_cost_usd_live_prices"), "chat_api_cost_usd": r.get("api_cost_usd"),
+                         "api_error": r.get("api_error"), "refusals": len(r.get("refusals") or [])})
+    proj = json.load(open(os.path.join(OUT, "projection.json")))
+    per_model = {}
+    for m in API:
+        rr = [r for r in rows if r["model"] == m]
+        per_model[m] = {"runs": len(rr), "cost_usd": round(sum(r["cost_usd"] or 0 for r in rr), 4),
+                        "input_tokens": sum((r["usage"] or {}).get("input_tokens", 0) for r in rr),
+                        "cache_write_tokens": sum((r["usage"] or {}).get("cache_creation_input_tokens", 0) for r in rr),
+                        "cache_read_tokens": sum((r["usage"] or {}).get("cache_read_input_tokens", 0) for r in rr),
+                        "output_tokens": sum((r["usage"] or {}).get("output_tokens", 0) for r in rr)}
+    total = round(sum(v["cost_usd"] for v in per_model.values()), 4)
+    rec = {"what": "Phase 10 rerun, API arm: spend from each run's usage fields at the list prices in PRICES_LIVE",
+           "definition": "cost = input x in + cache_creation x cache_write_5m + cache_read x cache_read + output x out, "
+                         "per million tokens, per run, summed",
+           "prices": PRICES_LIVE, "per_model": per_model, "total_usd": total,
+           "projected_usd": proj["projected_total_usd_20_runs"], "cap_usd": proj["budget_cap_usd"], "runs": rows}
+    write(os.path.join(OUT, f"spend_{TODAY}.json"), rec)
+    print(json.dumps({k: rec[k] for k in ("per_model", "total_usd", "projected_usd", "cap_usd")}, indent=1))
+    return 0
+
+
 def step_extract():
     for model in LOCAL + API:
         d = os.path.join(OUT, slug(model))
@@ -664,12 +764,14 @@ def step_extract():
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("step", choices=["prove", "project", "run", "extract", "tally"])
+    ap.add_argument("step", choices=["prove", "project", "run", "extract", "tally", "keycheck", "spend"])
     ap.add_argument("models", nargs="*")
     ap.add_argument("--runs", type=int, default=5)
     ap.add_argument("--budget-usd", type=float, default=None)
     ap.add_argument("--replace", help="COND:K -- one run replacing <COND>__run<K>.json (with --reason)")
     ap.add_argument("--reason")
+    ap.add_argument("--start-run", type=int, default=1,
+                    help="an extension: number the new runs from this, in their own seeded order")
     a = ap.parse_args()
     if a.step == "prove":
         sys.exit(step_prove())
@@ -679,6 +781,10 @@ if __name__ == "__main__":
         sys.exit(step_extract())
     if a.step == "tally":
         sys.exit(step_tally())
+    if a.step == "keycheck":
+        sys.exit(step_keycheck())
+    if a.step == "spend":
+        sys.exit(step_spend())
     bad = [m for m in a.models if m not in LOCAL + API]
     if bad or not a.models:
         raise SystemExit(f"models must be from {LOCAL + API}")
@@ -692,4 +798,4 @@ if __name__ == "__main__":
         if cond_r not in ("WITHOUT", "WITH") or not a.reason or len(a.models) != 1:
             raise SystemExit("--replace COND:K needs one model and a --reason")
         replace = (cond_r, int(k_r), a.reason)
-    sys.exit(step_run(a.models, a.runs, budget, replace=replace))
+    sys.exit(step_run(a.models, a.runs, budget, replace=replace, start_run=a.start_run))
