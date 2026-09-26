@@ -1,0 +1,320 @@
+{
+ "model": "qwen3.5:4b",
+ "backend": "ollama",
+ "schema_sha256": "6ce8866a5d4317cb8664c4083e22b89d87e4d65e3961b92f5a56b8408e51cef0",
+ "ceiling_keys": [
+  "attainable_ceiling_derivable",
+  "attainable_ceiling_reason",
+  "score_bands",
+  "strong_band",
+  "max_all_layers",
+  "max_with_flat_depth",
+  "attainable_here",
+  "strong_band_reachable_here",
+  "attainable_basis",
+  "attainable_note"
+ ],
+ "prompt": "Is the balanced translocation at chr20:200000 in dataset IMP01 strong evidence? Use the tools to find out, and explain your answer.",
+ "prompt_provenance": "RECONSTRUCTION (2026-09-25): case (e)'s committed prompt text does not exist; rebuilt from the recorded description 'whether the balanced translocation at IMP01 chr20:200,000 is strong evidence'",
+ "system_prompt_sha256": "f79ca873b1fcfd9c1444d5ef787e4e5ae4b1255e13c2322ba792b1da18b2f77b",
+ "git_head": "547b5ccc43d6b2da1a74b4059322a8cff8cb21d6",
+ "condition": "WITH",
+ "run": 12,
+ "position_in_order": 13,
+ "started": "2026-09-26T14:37:36",
+ "ended": "2026-09-26T14:37:53",
+ "summary_calls_seen_by_model": 0,
+ "ceiling_keys_seen_by_model": [],
+ "ablation_log": [],
+ "ablation_held_on_every_call": true,
+ "verification_against_model_visible": {
+  "numbers_in_prose": 0,
+  "unsupported": [],
+  "no_tool_calls": false,
+  "details": []
+ },
+ "result": {
+  "model": "qwen3.5:4b",
+  "num_ctx": 32768,
+  "think": "low",
+  "think_requested": "low",
+  "think_supported": true,
+  "max_iters": 40,
+  "ended_without_answer": true,
+  "context_truncated": [],
+  "final_prompt_tokens": 6051,
+  "final_headroom": 26717,
+  "events": [
+   {
+    "type": "model",
+    "iteration": 0,
+    "content": "",
+    "thinking": "The user is asking me to evaluate whether there's a balanced translocation at position chr20:200000 in dataset IMP01. They want to know if this represents \"strong evidence\" for a balanced translocation.\n\nTo properly assess this, I need to follow the workflow outlined by these tools:\n\n1. First, I should do a basic quality check on the genomic locus using bam_stats_at_locus\n2. Then determine which evidence layers are applicable using applicable_layers\n3. Check discordant pairs at that position\n4. Check soft-clipped reads \n5. Check split reads\n6. Get read depth profile (though for balanced translocations, flat depth is expected)\n7. Use breakpoint_evidence_summary to integrate all the evidence\n8. Potentially check genes near this locus\n\nLet me start with step 1 - doing a basic quality check on chr20:200000 in IMP01. I need to provide chromosome and coordinates for bam_stats_at_locus, which requires start and end positions. Since they're asking about position 200000 specifically, I'll use a reasonable window around it - perhaps 500bp before and after, or just make the region small (e.g., chr20:199876-200124 for 250bp total).\n\nActually, looking at the parameters more carefully, bam_stats",
+    "n_tool_calls": 1,
+    "done_reason": "stop",
+    "prompt_tokens": 5361,
+    "headroom": 27407
+   },
+   {
+    "type": "tool",
+    "name": "bam_stats_at_locus",
+    "params": {
+     "chromosome": "20",
+     "start": 199750,
+     "end": 200250,
+     "bam_path": "<IMP01>"
+    },
+    "call_id": 1,
+    "result": {
+     "chromosome": "20",
+     "start": 199750,
+     "end": 200250,
+     "contig_length": 64444167,
+     "clamped_to_contig": false,
+     "total_reads": 158,
+     "mean_depth": 36.47,
+     "mean_mapq": 60.0,
+     "low_mapq_fraction": 0.0,
+     "forward_reads": 93,
+     "reverse_reads": 65,
+     "position_provenance": {
+      "source": "caller_supplied",
+      "candidate_id": null,
+      "set_id": null,
+      "set_label": null,
+      "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+     }
+    },
+    "is_error": false
+   },
+   {
+    "type": "model",
+    "iteration": 1,
+    "content": "",
+    "thinking": "The BAM stats show basic quality information: total reads=158, mean depth ~36.47, low-MAPQ fraction = 0 (which means it's NOT repetitive), good strand balance (~60% forward /~40% reverse). Now I need to check the evidence layers for translocation support at this position.\n\nLet me call applicable_layers first to see which evidence layers are available for this dataset, then proceed with discordant pairs and other checks.",
+    "n_tool_calls": 1,
+    "done_reason": "stop",
+    "prompt_tokens": 5651,
+    "headroom": 27117
+   },
+   {
+    "type": "tool",
+    "name": "applicable_layers",
+    "params": {
+     "sample_reads": 500,
+     "bam_path": "<IMP01>"
+    },
+    "call_id": 2,
+    "result": {
+     "bam_path": "<IMP01>",
+     "reads_sampled": 500,
+     "applicable_layers": [
+      "discordant_pairs",
+      "soft_clipped_reads",
+      "split_reads",
+      "read_depth"
+     ],
+     "evidence": {
+      "soft_clipped_reads": "always applicable \u2014 any aligned BAM can show soft-clipping.",
+      "read_depth": "always applicable \u2014 any aligned BAM can show a coverage drop.",
+      "discordant_pairs": "applicable \u2014 at least one paired read observed in 500 sampled reads.",
+      "split_reads": "applicable \u2014 at least one SA (supplementary alignment) tag observed in 500 sampled reads."
+     }
+    },
+    "is_error": false
+   },
+   {
+    "type": "model",
+    "iteration": 2,
+    "content": "",
+    "thinking": "I have confirmation that all four evidence layers are applicable to this dataset. Now I need to examine each layer for the balanced translocation candidate at chr20:200,000. Let me check discordant pairs first, as they're typically the primary signal for balanced translocations in short-read data.",
+    "n_tool_calls": 1,
+    "done_reason": "stop",
+    "prompt_tokens": 5867,
+    "headroom": 26901
+   },
+   {
+    "type": "tool",
+    "name": "discordant_pairs",
+    "params": {
+     "chromosome": "20",
+     "min_mapq": 20,
+     "position": 200000,
+     "": "window_bp>\n3000",
+     "bam_path": "<IMP01>"
+    },
+    "call_id": 3,
+    "result": {
+     "error": "1 validation error for call[discordant_pairs]\n\n  Unexpected keyword argument [type=unexpected_keyword_argument, input_value='window_bp>\\n3000', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/unexpected_keyword_argument",
+     "error_type": "dispatch"
+    },
+    "is_error": true
+   },
+   {
+    "type": "model",
+    "iteration": 3,
+    "content": "",
+    "thinking": "I made an error with the JSON formatting for window_bp. Let me fix that.",
+    "n_tool_calls": 1,
+    "done_reason": "stop",
+    "prompt_tokens": 6051,
+    "headroom": 26717
+   },
+   {
+    "type": "tool",
+    "name": "discordant_pairs",
+    "params": {
+     "chromosome": "20",
+     "min_mapq": 20,
+     "position": 200000,
+     "": "window_bp>\n3000",
+     "bam_path": "<IMP01>"
+    },
+    "call_id": 4,
+    "result": {
+     "error": "1 validation error for call[discordant_pairs]\n\n  Unexpected keyword argument [type=unexpected_keyword_argument, input_value='window_bp>\\n3000', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/unexpected_keyword_argument",
+     "error_type": "dispatch"
+    },
+    "is_error": true
+   },
+   {
+    "type": "error",
+    "detail": "ollama request failed: HTTP Error 500: Internal Server Error"
+   }
+  ],
+  "final_text": "",
+  "call_ids": [
+   1,
+   2,
+   3,
+   4
+  ],
+  "n_tool_calls": 4,
+  "text_tool_call_failures": [],
+  "malformed_tool_calls": [
+   {
+    "name": "discordant_pairs",
+    "raw": "{\"chromosome\": \"20\", \"min_mapq\": 20, \"position\": 200000, \"\": \"window_bp>\\n3000\", \"dataset\": \"IMP01\"}",
+    "reason": "arguments failed the tool's schema: 1 validation error for call[discordant_pairs]"
+   },
+   {
+    "name": "discordant_pairs",
+    "raw": "{\"chromosome\": \"20\", \"min_mapq\": 20, \"position\": 200000, \"\": \"window_bp>\\n3000\", \"dataset\": \"IMP01\"}",
+    "reason": "arguments failed the tool's schema: 1 validation error for call[discordant_pairs]"
+   }
+  ],
+  "verification": {
+   "numbers_in_prose": 0,
+   "unsupported": [],
+   "no_tool_calls": false,
+   "details": []
+  },
+  "wall_s": 17.9,
+  "gen_tokens": 1061,
+  "prompt_tokens": 22930,
+  "gen_tokens_per_s": 82.2,
+  "iterations": 4
+ },
+ "recorder_calls_unablated": [
+  {
+   "id": 1,
+   "server": "evidence",
+   "tool": "bam_stats_at_locus",
+   "params": {
+    "chromosome": "20",
+    "start": 199750,
+    "end": 200250,
+    "bam_path": "~/public_data/sim/bams/IMP01.bam"
+   },
+   "is_error": false,
+   "ms": 8.9,
+   "result": {
+    "chromosome": "20",
+    "start": 199750,
+    "end": 200250,
+    "contig_length": 64444167,
+    "clamped_to_contig": false,
+    "total_reads": 158,
+    "mean_depth": 36.47,
+    "mean_mapq": 60.0,
+    "low_mapq_fraction": 0.0,
+    "forward_reads": 93,
+    "reverse_reads": 65,
+    "position_provenance": {
+     "source": "caller_supplied",
+     "candidate_id": null,
+     "set_id": null,
+     "set_label": null,
+     "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+    }
+   },
+   "traceback": null
+  },
+  {
+   "id": 2,
+   "server": "evidence",
+   "tool": "applicable_layers",
+   "params": {
+    "sample_reads": 500,
+    "bam_path": "~/public_data/sim/bams/IMP01.bam"
+   },
+   "is_error": false,
+   "ms": 5.8,
+   "result": {
+    "bam_path": "~/public_data/sim/bams/IMP01.bam",
+    "reads_sampled": 500,
+    "applicable_layers": [
+     "discordant_pairs",
+     "soft_clipped_reads",
+     "split_reads",
+     "read_depth"
+    ],
+    "evidence": {
+     "soft_clipped_reads": "always applicable \u2014 any aligned BAM can show soft-clipping.",
+     "read_depth": "always applicable \u2014 any aligned BAM can show a coverage drop.",
+     "discordant_pairs": "applicable \u2014 at least one paired read observed in 500 sampled reads.",
+     "split_reads": "applicable \u2014 at least one SA (supplementary alignment) tag observed in 500 sampled reads."
+    }
+   },
+   "traceback": null
+  },
+  {
+   "id": 3,
+   "server": "evidence",
+   "tool": "discordant_pairs",
+   "params": {
+    "chromosome": "20",
+    "min_mapq": 20,
+    "position": 200000,
+    "": "window_bp>\n3000",
+    "bam_path": "~/public_data/sim/bams/IMP01.bam"
+   },
+   "is_error": true,
+   "ms": 3.4,
+   "result": {
+    "error": "1 validation error for call[discordant_pairs]\n\n  Unexpected keyword argument [type=unexpected_keyword_argument, input_value='window_bp>\\n3000', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/unexpected_keyword_argument",
+    "error_type": "dispatch"
+   },
+   "traceback": "Traceback (most recent call last):\n  File \"~/rare-disease-diagnosis-assistant/.venv/lib/python3.14/site-packages/fastmcp/tools/function_tool.py\", line 418, in run\n    result = await self._execute(type_adapter, exec_is_async, arguments)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"~/rare-disease-diagnosis-assistant/.venv/lib/python3.14/site-packages/fastmcp/tools/function_tool.py\", line 457, in _execute\n    result = await call_sync_fn_in_threadpool(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n        type_adapter.validate_python, arguments\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"~/rare-disease-diagnosis-assistant/.venv/lib/python3.14/site-packages/fastmcp/utilities/async_utils.py\", line 34, in call_sync_fn_in_threadpool\n    return await run_sync_in_threadpool(functools.partial(fn, *args, **kwargs))\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"~/rare-disease-diagnosis-assistant/.venv/lib/python3.14/site-packages/anyio/to_thread.py\", line 65, in run_sync\n    return await get_async_backend().run_sync_in_worker_thread(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n        func, args, abandon_on_cancel=abandon_on_cancel, limiter=limiter\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"~/rare-disease-diagnosis-assistant/.venv/lib/python3.14/site-packages/anyio/_backends/_asyncio.py\", line 2706, in run_sync_in_worker_thread\n    return await future\n           ^^^^^^^^^^^^\n  File \"~/rare-disease-diagnosis-assistant/.venv/lib/python3.14/site-packages/anyio/_backends/_asyncio.py\", line 1100, in run\n    result = context.run(func, *args)\n  File \"~/rare-disease-diagnosis-assistant/.venv/lib/python3.14/site-packages/pydantic/type_adapter.py\", line 441, in validate_python\n    return self.validator.validate_python(\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        object,\n        ^^^^^^^\n    ...<6 lines>...\n        by_name=by_name,\n        ^^^^^^^^^^^^^^^^\n    )\n    ^\npydantic_core._pydantic_core.ValidationError: 1 validation error for call[discordant_pairs]\n\n  Unexpected keyword argument [type=unexpected_keyword_argument, input_value='window_bp>\\n3000', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/unexpected_keyword_argument\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"~/rare-disease-diagnosis-assistant/stage1_igv_assistant/ui.py\", line 90, in call\n    res = asyncio.run(mcp.call_tool(tool, params))\n  File \"/usr/lib/python3.14/asyncio/runners.py\", line 204, in run\n    return runner.run(main)\n           ~~~~~~~~~~^^^^^^\n  File \"/usr/lib/python3.14/asyncio/runners.py\", line 127, in run\n    return self._loop.run_until_complete(task)\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/usr/lib/python3.14/asyncio/base_events.py\", line 719, in run_until_complete\n    return future.result()\n           ~~~~~~~~~~~~~^^\n  File \"~/rare-disease-diagnosis-assistant/.venv/lib/python3.14/site-packages/fastmcp/server/server.py\", line 1261, in call_tool\n    return await self._run_middleware(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<8 lines>...\n    )\n    ^\n  File \"~/rare-disease-diagnosis-assistant/.venv/lib/python3.14/site-packages/fastmcp/server/server.py\", line 525, in _run_middleware\n    return await chain(context)\n           ^^^^^^^^^^^^^^^^^^^^\n  File \"~/rare-disease-diagnosis-assistant/.venv/lib/python3.14/site-packages/fastmcp/server/server.py\", line 522, in wrapped\n    return await mw(context, call_next)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"~/rare-disease-diagnosis-assistant/.venv/lib/python3.14/site-packages/fastmcp/server/middleware/middleware.py\", line 101, in __call__\n    return await handler_chain(context)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"~/rare-disease-diagnosis-assistant/.venv/lib/python3.14/site-packages/fastmcp/server/middleware/middleware.py\", line 83, in wrapper\n    return await handler(context, call_next=call_next)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"~/rare-disease-diagnosis-assistant/.venv/lib/python3.14/site-packages/fastmcp/server/middleware/middleware.py\", line 145, in on_message\n    return await call_next(context)\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"~/rare-disease-diagnosis-assistant/.venv/lib/python3.14/site-packages/fastmcp/server/middleware/middleware.py\", line 83, in wrapper\n    return await handler(context, call_next=call_next)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"~/rare-disease-diagnosis-assistant/.venv/lib/python3.14/site-packages/fastmcp/server/middleware/middleware.py\", line 152, in on_request\n    return await call_next(context)\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"~/rare-disease-diagnosis-assistant/.venv/lib/python3.14/site-packages/fastmcp/server/middleware/middleware.py\", line 83, in wrapper\n    return await handler(context, call_next=call_next)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"~/rare-disease-diagnosis-assistant/.venv/lib/python3.14/site-packages/fastmcp/server/middleware/middleware.py\", line 173, in on_call_tool\n    return await call_next(context)\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"~/rare-disease-diagnosis-assistant/.venv/lib/python3.14/site-packages/fastmcp/server/server.py\", line 1312, in call_tool\n    return await tool._run(arguments or {}, task_meta=task_meta)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"~/rare-disease-diagnosis-assistant/.venv/lib/python3.14/site-packages/fastmcp/tools/base.py\", line 421, in _run\n    return await self.run(arguments)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"~/rare-disease-diagnosis-assistant/.venv/lib/python3.14/site-packages/fastmcp/tools/function_tool.py\", line 425, in run\n    raise ValidationError(str(e), log_level=logging.WARNING) from e\nfastmcp.exceptions.ValidationError: 1 validation error for call[discordant_pairs]\n\n  Unexpected keyword argument [type=unexpected_keyword_argument, input_value='window_bp>\\n3000', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/unexpected_keyword_argument\n"
+  },
+  {
+   "id": 4,
+   "server": "evidence",
+   "tool": "discordant_pairs",
+   "params": {
+    "chromosome": "20",
+    "min_mapq": 20,
+    "position": 200000,
+    "": "window_bp>\n3000",
+    "bam_path": "~/public_data/sim/bams/IMP01.bam"
+   },
+   "is_error": true,
+   "ms": 3.3,
+   "result": {
+    "error": "1 validation error for call[discordant_pairs]\n\n  Unexpected keyword argument [type=unexpected_keyword_argument, input_value='window_bp>\\n3000', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/unexpected_keyword_argument",
+    "error_type": "dispatch"
+   },
+   "traceback": "Traceback (most recent call last):\n  File \"~/rare-disease-diagnosis-assistant/.venv/lib/python3.14/site-packages/fastmcp/tools/function_tool.py\", line 418, in run\n    result = await self._execute(type_adapter, exec_is_async, arguments)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"~/rare-disease-diagnosis-assistant/.venv/lib/python3.14/site-packages/fastmcp/tools/function_tool.py\", line 457, in _execute\n    result = await call_sync_fn_in_threadpool(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n        type_adapter.validate_python, arguments\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"~/rare-disease-diagnosis-assistant/.venv/lib/python3.14/site-packages/fastmcp/utilities/async_utils.py\", line 34, in call_sync_fn_in_threadpool\n    return await run_sync_in_threadpool(functools.partial(fn, *args, **kwargs))\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"~/rare-disease-diagnosis-assistant/.venv/lib/python3.14/site-packages/anyio/to_thread.py\", line 65, in run_sync\n    return await get_async_backend().run_sync_in_worker_thread(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n        func, args, abandon_on_cancel=abandon_on_cancel, limiter=limiter\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"~/rare-disease-diagnosis-assistant/.venv/lib/python3.14/site-packages/anyio/_backends/_asyncio.py\", line 2706, in run_sync_in_worker_thread\n    return await future\n           ^^^^^^^^^^^^\n  File \"~/rare-disease-diagnosis-assistant/.venv/lib/python3.14/site-packages/anyio/_backends/_asyncio.py\", line 1100, in run\n    result = context.run(func, *args)\n  File \"~/rare-disease-diagnosis-assistant/.venv/lib/python3.14/site-packages/pydantic/type_adapter.py\", line 441, in validate_python\n    return self.validator.validate_python(\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        object,\n        ^^^^^^^\n    ...<6 lines>...\n        by_name=by_name,\n        ^^^^^^^^^^^^^^^^\n    )\n    ^\npydantic_core._pydantic_core.ValidationError: 1 validation error for call[discordant_pairs]\n\n  Unexpected keyword argument [type=unexpected_keyword_argument, input_value='window_bp>\\n3000', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/unexpected_keyword_argument\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"~/rare-disease-diagnosis-assistant/stage1_igv_assistant/ui.py\", line 90, in call\n    res = asyncio.run(mcp.call_tool(tool, params))\n  File \"/usr/lib/python3.14/asyncio/runners.py\", line 204, in run\n    return runner.run(main)\n           ~~~~~~~~~~^^^^^^\n  File \"/usr/lib/python3.14/asyncio/runners.py\", line 127, in run\n    return self._loop.run_until_complete(task)\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/usr/lib/python3.14/asyncio/base_events.py\", line 719, in run_until_complete\n    return future.result()\n           ~~~~~~~~~~~~~^^\n  File \"~/rare-disease-diagnosis-assistant/.venv/lib/python3.14/site-packages/fastmcp/server/server.py\", line 1261, in call_tool\n    return await self._run_middleware(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<8 lines>...\n    )\n    ^\n  File \"~/rare-disease-diagnosis-assistant/.venv/lib/python3.14/site-packages/fastmcp/server/server.py\", line 525, in _run_middleware\n    return await chain(context)\n           ^^^^^^^^^^^^^^^^^^^^\n  File \"~/rare-disease-diagnosis-assistant/.venv/lib/python3.14/site-packages/fastmcp/server/server.py\", line 522, in wrapped\n    return await mw(context, call_next)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"~/rare-disease-diagnosis-assistant/.venv/lib/python3.14/site-packages/fastmcp/server/middleware/middleware.py\", line 101, in __call__\n    return await handler_chain(context)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"~/rare-disease-diagnosis-assistant/.venv/lib/python3.14/site-packages/fastmcp/server/middleware/middleware.py\", line 83, in wrapper\n    return await handler(context, call_next=call_next)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"~/rare-disease-diagnosis-assistant/.venv/lib/python3.14/site-packages/fastmcp/server/middleware/middleware.py\", line 145, in on_message\n    return await call_next(context)\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"~/rare-disease-diagnosis-assistant/.venv/lib/python3.14/site-packages/fastmcp/server/middleware/middleware.py\", line 83, in wrapper\n    return await handler(context, call_next=call_next)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"~/rare-disease-diagnosis-assistant/.venv/lib/python3.14/site-packages/fastmcp/server/middleware/middleware.py\", line 152, in on_request\n    return await call_next(context)\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"~/rare-disease-diagnosis-assistant/.venv/lib/python3.14/site-packages/fastmcp/server/middleware/middleware.py\", line 83, in wrapper\n    return await handler(context, call_next=call_next)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"~/rare-disease-diagnosis-assistant/.venv/lib/python3.14/site-packages/fastmcp/server/middleware/middleware.py\", line 173, in on_call_tool\n    return await call_next(context)\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"~/rare-disease-diagnosis-assistant/.venv/lib/python3.14/site-packages/fastmcp/server/server.py\", line 1312, in call_tool\n    return await tool._run(arguments or {}, task_meta=task_meta)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"~/rare-disease-diagnosis-assistant/.venv/lib/python3.14/site-packages/fastmcp/tools/base.py\", line 421, in _run\n    return await self.run(arguments)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"~/rare-disease-diagnosis-assistant/.venv/lib/python3.14/site-packages/fastmcp/tools/function_tool.py\", line 425, in run\n    raise ValidationError(str(e), log_level=logging.WARNING) from e\nfastmcp.exceptions.ValidationError: 1 validation error for call[discordant_pairs]\n\n  Unexpected keyword argument [type=unexpected_keyword_argument, input_value='window_bp>\\n3000', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/unexpected_keyword_argument\n"
+  }
+ ]
+}

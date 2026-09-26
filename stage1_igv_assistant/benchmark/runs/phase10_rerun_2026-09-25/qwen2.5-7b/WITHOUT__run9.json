@@ -1,0 +1,896 @@
+{
+ "model": "qwen2.5:7b",
+ "backend": "ollama",
+ "schema_sha256": "6ce8866a5d4317cb8664c4083e22b89d87e4d65e3961b92f5a56b8408e51cef0",
+ "ceiling_keys": [
+  "attainable_ceiling_derivable",
+  "attainable_ceiling_reason",
+  "score_bands",
+  "strong_band",
+  "max_all_layers",
+  "max_with_flat_depth",
+  "attainable_here",
+  "strong_band_reachable_here",
+  "attainable_basis",
+  "attainable_note"
+ ],
+ "prompt": "Is the balanced translocation at chr20:200000 in dataset IMP01 strong evidence? Use the tools to find out, and explain your answer.",
+ "prompt_provenance": "RECONSTRUCTION (2026-09-25): case (e)'s committed prompt text does not exist; rebuilt from the recorded description 'whether the balanced translocation at IMP01 chr20:200,000 is strong evidence'",
+ "system_prompt_sha256": "f79ca873b1fcfd9c1444d5ef787e4e5ae4b1255e13c2322ba792b1da18b2f77b",
+ "git_head": "ae63828063c8cc990b6636be5b903d61c12c704c",
+ "condition": "WITHOUT",
+ "run": 9,
+ "position_in_order": 7,
+ "started": "2026-09-26T14:25:58",
+ "ended": "2026-09-26T14:26:19",
+ "summary_calls_seen_by_model": 0,
+ "ceiling_keys_seen_by_model": [],
+ "ablation_log": [],
+ "ablation_held_on_every_call": true,
+ "verification_against_model_visible": {
+  "numbers_in_prose": 24,
+  "unsupported": [
+   "0.7"
+  ],
+  "no_tool_calls": false,
+  "details": [
+   {
+    "text": "200000",
+    "value": 200000.0,
+    "supported": true
+   },
+   {
+    "text": "50",
+    "value": 50.0,
+    "supported": true
+   },
+   {
+    "text": "200000",
+    "value": 200000.0,
+    "supported": true
+   },
+   {
+    "text": "6.3",
+    "value": 6.3,
+    "supported": true
+   },
+   {
+    "text": "50",
+    "value": 50.0,
+    "supported": true
+   },
+   {
+    "text": "791",
+    "value": 791.0,
+    "supported": true
+   },
+   {
+    "text": "0.063",
+    "value": 0.063,
+    "supported": true
+   },
+   {
+    "text": "53",
+    "value": 53.0,
+    "supported": true
+   },
+   {
+    "text": "6.6",
+    "value": 6.6,
+    "supported": true
+   },
+   {
+    "text": "53",
+    "value": 53.0,
+    "supported": true
+   },
+   {
+    "text": "801",
+    "value": 801.0,
+    "supported": true
+   },
+   {
+    "text": "0.066",
+    "value": 0.066,
+    "supported": true
+   },
+   {
+    "text": "200000",
+    "value": 200000.0,
+    "supported": true
+   },
+   {
+    "text": "7",
+    "value": 7.0,
+    "supported": true
+   },
+   {
+    "text": "0.9",
+    "value": 0.9,
+    "supported": true
+   },
+   {
+    "text": "7",
+    "value": 7.0,
+    "supported": true
+   },
+   {
+    "text": "791",
+    "value": 791.0,
+    "supported": true
+   },
+   {
+    "text": "0.009",
+    "value": 0.009,
+    "supported": true
+   },
+   {
+    "text": "199500",
+    "value": 199500.0,
+    "supported": true
+   },
+   {
+    "text": "200500",
+    "value": 200500.0,
+    "supported": true
+   },
+   {
+    "text": "36.69",
+    "value": 36.69,
+    "supported": true
+   },
+   {
+    "text": "0.814",
+    "value": 0.814,
+    "supported": true
+   },
+   {
+    "text": "0.7",
+    "value": 0.7,
+    "supported": false
+   },
+   {
+    "text": "200000",
+    "value": 200000.0,
+    "supported": true
+   }
+  ]
+ },
+ "result": {
+  "model": "qwen2.5:7b",
+  "num_ctx": 32768,
+  "think": false,
+  "think_requested": "low",
+  "think_supported": false,
+  "max_iters": 40,
+  "ended_without_answer": false,
+  "context_truncated": [],
+  "final_prompt_tokens": 6104,
+  "final_headroom": 26664,
+  "events": [
+   {
+    "type": "model",
+    "iteration": 0,
+    "content": "Before we can determine if there is strong evidence for a balanced translocation at chr20:200000 in dataset IMP01, we need to check which evidence layers are applicable using `applicable_layers`.\n\nLet's start by calling this function.\n",
+    "thinking": "",
+    "n_tool_calls": 1,
+    "done_reason": "stop",
+    "prompt_tokens": 4401,
+    "headroom": 28367
+   },
+   {
+    "type": "tool",
+    "name": "applicable_layers",
+    "params": {
+     "bam_path": "<IMP01>"
+    },
+    "call_id": 1,
+    "result": {
+     "bam_path": "<IMP01>",
+     "reads_sampled": 1000,
+     "applicable_layers": [
+      "discordant_pairs",
+      "soft_clipped_reads",
+      "split_reads",
+      "read_depth"
+     ],
+     "evidence": {
+      "soft_clipped_reads": "always applicable \u2014 any aligned BAM can show soft-clipping.",
+      "read_depth": "always applicable \u2014 any aligned BAM can show a coverage drop.",
+      "discordant_pairs": "applicable \u2014 at least one paired read observed in 1000 sampled reads.",
+      "split_reads": "applicable \u2014 at least one SA (supplementary alignment) tag observed in 1000 sampled reads."
+     }
+    },
+    "is_error": false
+   },
+   {
+    "type": "model",
+    "iteration": 1,
+    "content": "",
+    "thinking": "",
+    "n_tool_calls": 1,
+    "done_reason": "stop",
+    "prompt_tokens": 4630,
+    "headroom": 28138
+   },
+   {
+    "type": "tool",
+    "name": "discordant_pairs",
+    "params": {
+     "chromosome": "chr20",
+     "position": 200000,
+     "min_mapq": 20,
+     "window_bp": 1500,
+     "bam_path": "<IMP01>"
+    },
+    "call_id": 2,
+    "result": {
+     "chromosome": "chr20",
+     "position": 200000,
+     "window_bp": 1500,
+     "total_reads_in_window": 791,
+     "discordant_pairs": 50,
+     "discordant_fraction": 0.063,
+     "mate_chromosomes": {
+      "chr21": 44,
+      "chr2": 1,
+      "chr12": 1,
+      "chr1": 1,
+      "chr7": 1,
+      "chrY": 1,
+      "chr16": 1
+     },
+     "same_primary_alt_mates": 0,
+     "reads_below_min_mapq": 0,
+     "quality_limited": false,
+     "assessable": true,
+     "reason": null,
+     "min_mapq_applied": 20,
+     "position_provenance": {
+      "source": "caller_supplied",
+      "candidate_id": null,
+      "set_id": null,
+      "set_label": null,
+      "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+     }
+    },
+    "is_error": false
+   },
+   {
+    "type": "model",
+    "iteration": 2,
+    "content": "",
+    "thinking": "",
+    "n_tool_calls": 1,
+    "done_reason": "stop",
+    "prompt_tokens": 4954,
+    "headroom": 27814
+   },
+   {
+    "type": "tool",
+    "name": "soft_clipped_reads",
+    "params": {
+     "chromosome": "chr20",
+     "min_clip_bases": 3,
+     "position": 200000,
+     "window_bp": 1500,
+     "min_mapq": 20,
+     "bam_path": "<IMP01>"
+    },
+    "call_id": 3,
+    "result": {
+     "chromosome": "chr20",
+     "position": 200000,
+     "window_bp": 1500,
+     "total_reads_in_window": 801,
+     "soft_clipped_reads": 53,
+     "soft_clipped_fraction": 0.066,
+     "consensus_clip_position": 200000,
+     "max_clips_at_position": 23,
+     "left_clip_reads": 32,
+     "right_clip_reads": 21,
+     "left_consensus_position": 200000,
+     "left_max_clips_at_position": 13,
+     "right_consensus_position": 200000,
+     "right_max_clips_at_position": 10,
+     "dominant_clip_side": "left",
+     "reads_below_min_mapq": 5,
+     "quality_limited": false,
+     "assessable": true,
+     "reason": null,
+     "min_mapq_applied": 20,
+     "position_provenance": {
+      "source": "caller_supplied",
+      "candidate_id": null,
+      "set_id": null,
+      "set_label": null,
+      "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+     }
+    },
+    "is_error": false
+   },
+   {
+    "type": "model",
+    "iteration": 3,
+    "content": "",
+    "thinking": "",
+    "n_tool_calls": 1,
+    "done_reason": "stop",
+    "prompt_tokens": 5322,
+    "headroom": 27446
+   },
+   {
+    "type": "tool",
+    "name": "split_reads",
+    "params": {
+     "window_bp": 1500,
+     "chromosome": "chr20",
+     "min_mapq": 20,
+     "position": 200000,
+     "bam_path": "<IMP01>"
+    },
+    "call_id": 4,
+    "result": {
+     "chromosome": "chr20",
+     "position": 200000,
+     "window_bp": 1500,
+     "total_reads_in_window": 791,
+     "split_reads": 7,
+     "split_read_fraction": 0.009,
+     "partner_chromosomes": {
+      "chr21": 6,
+      "chr20": 1
+     },
+     "sa_entries_total": 9,
+     "sa_entries_below_min_mapq": 2,
+     "partner_strand_concordant": 6,
+     "partner_strand_flipped": 1,
+     "example_partner_loci": [
+      "chr21:14100001",
+      "chr21:14099937",
+      "chr21:14099962",
+      "chr20:202118"
+     ],
+     "reads_below_min_mapq": 0,
+     "quality_limited": false,
+     "assessable": true,
+     "reason": null,
+     "min_mapq_applied": 20,
+     "position_provenance": {
+      "source": "caller_supplied",
+      "candidate_id": null,
+      "set_id": null,
+      "set_label": null,
+      "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+     }
+    },
+    "is_error": false
+   },
+   {
+    "type": "model",
+    "iteration": 4,
+    "content": "",
+    "thinking": "",
+    "n_tool_calls": 1,
+    "done_reason": "stop",
+    "prompt_tokens": 5696,
+    "headroom": 27072
+   },
+   {
+    "type": "tool",
+    "name": "read_depth_profile",
+    "params": {
+     "end": 200500,
+     "dip_tolerance_bp": 1000,
+     "focus_position": 200000,
+     "chromosome": "chr20",
+     "start": 199500,
+     "bam_path": "<IMP01>"
+    },
+    "call_id": 5,
+    "result": {
+     "chromosome": "chr20",
+     "start": 199500,
+     "end": 200500,
+     "window_size": 100,
+     "windows": [
+      {
+       "window_start": 199500,
+       "window_end": 199600,
+       "depth": 35.54
+      },
+      {
+       "window_start": 199600,
+       "window_end": 199700,
+       "depth": 34.81
+      },
+      {
+       "window_start": 199700,
+       "window_end": 199800,
+       "depth": 29.85
+      },
+      {
+       "window_start": 199800,
+       "window_end": 199900,
+       "depth": 35.48
+      },
+      {
+       "window_start": 199900,
+       "window_end": 200000,
+       "depth": 38.72
+      },
+      {
+       "window_start": 200000,
+       "window_end": 200100,
+       "depth": 33.11
+      },
+      {
+       "window_start": 200100,
+       "window_end": 200200,
+       "depth": 40.59
+      },
+      {
+       "window_start": 200200,
+       "window_end": 200300,
+       "depth": 41.07
+      },
+      {
+       "window_start": 200300,
+       "window_end": 200400,
+       "depth": 41.36
+      },
+      {
+       "window_start": 200400,
+       "window_end": 200500,
+       "depth": 36.41
+      }
+     ],
+     "summary": {
+      "min_depth": 29.85,
+      "max_depth": 41.36,
+      "mean_depth": 36.69,
+      "depth_ratio_min_to_mean": 0.814,
+      "likely_deletion": false,
+      "dip_position": 199700,
+      "dip_distance_from_focus": 300,
+      "dip_is_at_focus": true,
+      "assessable": true,
+      "reason": null,
+      "contig_length": 64444167,
+      "clamped_to_contig": false,
+      "min_mapq_applied": null,
+      "mapq_note": "depth counts ALL reads regardless of MAPQ; the discordant, soft-clip and split layers filter at min_mapq. In a low-MAPQ region this layer is the only one still counting, so compare with care."
+     },
+     "position_provenance": {
+      "source": "caller_supplied",
+      "candidate_id": null,
+      "set_id": null,
+      "set_label": null,
+      "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+     }
+    },
+    "is_error": false
+   },
+   {
+    "type": "model",
+    "iteration": 5,
+    "content": "Now that we have evaluated all relevant evidence layers for the balanced translocation at chr20:200000 in dataset IMP01, let's summarize the findings:\n\n1. **Discordant Pairs**: \n   - 50 discordant pairs found within a window of \u00b11500bp around position 200000.\n   - Discordant fraction is 6.3% (discordant_pairs / total_reads_in_window = 50 / 791 \u2248 0.063).\n   - The discordant pairs are primarily found on chromosome chr21, with a few on other chromosomes.\n\n2. **Soft Clipped Reads**:\n   - 53 soft-clipped reads observed within the same \u00b11500bp window.\n   - Soft clipped fraction is 6.6% (soft_clipped_reads / total_reads_in_window = 53 / 801 \u2248 0.066).\n   - A pileup at position 200000 with a dominant clip side on the left.\n\n3. **Split Reads**:\n   - 7 split reads found within the \u00b11500bp window.\n   - Split read fraction is 0.9% (split_reads / total_reads_in_window = 7 / 791 \u2248 0.009).\n   - Partner chromosomes for these split reads are primarily chr21, with one on chr20.\n\n4. **Read Depth Profile**:\n   - The read depth within the window from 199500 to 200500 is relatively flat.\n   - Mean depth: 36.69\n   - Minimum depth ratio (min_depth / mean_depth): 0.814, which is above the threshold for a deletion (0.7 or lower).\n   - No significant depth drop was observed, suggesting no deletion.\n\nGiven these results, we can conclude that there is **evidence** for a balanced translocation at chr20:200000 in dataset IMP01:\n\n- The discordant pairs and split reads are key signals supporting the presence of inter-chromosomal rearrangements.\n- However, the read depth profile does not show any significant drop or increase that would indicate a deletion or duplication.\n\nTherefore, while there is some evidence for a balanced translocation at this breakpoint, it appears to be consistent with flat read depth expected in such cases. This suggests the observed signals are more likely due to structural variation rather than an artefact. Nonetheless, further confirmation from additional datasets and/or experimental validation would be advisable.",
+    "thinking": "",
+    "n_tool_calls": 0,
+    "done_reason": "stop",
+    "prompt_tokens": 6104,
+    "headroom": 26664
+   }
+  ],
+  "final_text": "Now that we have evaluated all relevant evidence layers for the balanced translocation at chr20:200000 in dataset IMP01, let's summarize the findings:\n\n1. **Discordant Pairs**: \n   - 50 discordant pairs found within a window of \u00b11500bp around position 200000.\n   - Discordant fraction is 6.3% (discordant_pairs / total_reads_in_window = 50 / 791 \u2248 0.063).\n   - The discordant pairs are primarily found on chromosome chr21, with a few on other chromosomes.\n\n2. **Soft Clipped Reads**:\n   - 53 soft-clipped reads observed within the same \u00b11500bp window.\n   - Soft clipped fraction is 6.6% (soft_clipped_reads / total_reads_in_window = 53 / 801 \u2248 0.066).\n   - A pileup at position 200000 with a dominant clip side on the left.\n\n3. **Split Reads**:\n   - 7 split reads found within the \u00b11500bp window.\n   - Split read fraction is 0.9% (split_reads / total_reads_in_window = 7 / 791 \u2248 0.009).\n   - Partner chromosomes for these split reads are primarily chr21, with one on chr20.\n\n4. **Read Depth Profile**:\n   - The read depth within the window from 199500 to 200500 is relatively flat.\n   - Mean depth: 36.69\n   - Minimum depth ratio (min_depth / mean_depth): 0.814, which is above the threshold for a deletion (0.7 or lower).\n   - No significant depth drop was observed, suggesting no deletion.\n\nGiven these results, we can conclude that there is **evidence** for a balanced translocation at chr20:200000 in dataset IMP01:\n\n- The discordant pairs and split reads are key signals supporting the presence of inter-chromosomal rearrangements.\n- However, the read depth profile does not show any significant drop or increase that would indicate a deletion or duplication.\n\nTherefore, while there is some evidence for a balanced translocation at this breakpoint, it appears to be consistent with flat read depth expected in such cases. This suggests the observed signals are more likely due to structural variation rather than an artefact. Nonetheless, further confirmation from additional datasets and/or experimental validation would be advisable.",
+  "call_ids": [
+   1,
+   2,
+   3,
+   4,
+   5
+  ],
+  "n_tool_calls": 5,
+  "text_tool_call_failures": [],
+  "malformed_tool_calls": [],
+  "verification": {
+   "numbers_in_prose": 24,
+   "unsupported": [
+    "0.7"
+   ],
+   "no_tool_calls": false,
+   "details": [
+    {
+     "text": "200000",
+     "value": 200000.0,
+     "supported": true
+    },
+    {
+     "text": "50",
+     "value": 50.0,
+     "supported": true
+    },
+    {
+     "text": "200000",
+     "value": 200000.0,
+     "supported": true
+    },
+    {
+     "text": "6.3",
+     "value": 6.3,
+     "supported": true
+    },
+    {
+     "text": "50",
+     "value": 50.0,
+     "supported": true
+    },
+    {
+     "text": "791",
+     "value": 791.0,
+     "supported": true
+    },
+    {
+     "text": "0.063",
+     "value": 0.063,
+     "supported": true
+    },
+    {
+     "text": "53",
+     "value": 53.0,
+     "supported": true
+    },
+    {
+     "text": "6.6",
+     "value": 6.6,
+     "supported": true
+    },
+    {
+     "text": "53",
+     "value": 53.0,
+     "supported": true
+    },
+    {
+     "text": "801",
+     "value": 801.0,
+     "supported": true
+    },
+    {
+     "text": "0.066",
+     "value": 0.066,
+     "supported": true
+    },
+    {
+     "text": "200000",
+     "value": 200000.0,
+     "supported": true
+    },
+    {
+     "text": "7",
+     "value": 7.0,
+     "supported": true
+    },
+    {
+     "text": "0.9",
+     "value": 0.9,
+     "supported": true
+    },
+    {
+     "text": "7",
+     "value": 7.0,
+     "supported": true
+    },
+    {
+     "text": "791",
+     "value": 791.0,
+     "supported": true
+    },
+    {
+     "text": "0.009",
+     "value": 0.009,
+     "supported": true
+    },
+    {
+     "text": "199500",
+     "value": 199500.0,
+     "supported": true
+    },
+    {
+     "text": "200500",
+     "value": 200500.0,
+     "supported": true
+    },
+    {
+     "text": "36.69",
+     "value": 36.69,
+     "supported": true
+    },
+    {
+     "text": "0.814",
+     "value": 0.814,
+     "supported": true
+    },
+    {
+     "text": "0.7",
+     "value": 0.7,
+     "supported": false
+    },
+    {
+     "text": "200000",
+     "value": 200000.0,
+     "supported": true
+    }
+   ]
+  },
+  "wall_s": 21.1,
+  "gen_tokens": 879,
+  "prompt_tokens": 31107,
+  "gen_tokens_per_s": 45.4,
+  "iterations": 6
+ },
+ "recorder_calls_unablated": [
+  {
+   "id": 1,
+   "server": "evidence",
+   "tool": "applicable_layers",
+   "params": {
+    "bam_path": "~/public_data/sim/bams/IMP01.bam"
+   },
+   "is_error": false,
+   "ms": 7.1,
+   "result": {
+    "bam_path": "~/public_data/sim/bams/IMP01.bam",
+    "reads_sampled": 1000,
+    "applicable_layers": [
+     "discordant_pairs",
+     "soft_clipped_reads",
+     "split_reads",
+     "read_depth"
+    ],
+    "evidence": {
+     "soft_clipped_reads": "always applicable \u2014 any aligned BAM can show soft-clipping.",
+     "read_depth": "always applicable \u2014 any aligned BAM can show a coverage drop.",
+     "discordant_pairs": "applicable \u2014 at least one paired read observed in 1000 sampled reads.",
+     "split_reads": "applicable \u2014 at least one SA (supplementary alignment) tag observed in 1000 sampled reads."
+    }
+   },
+   "traceback": null
+  },
+  {
+   "id": 2,
+   "server": "evidence",
+   "tool": "discordant_pairs",
+   "params": {
+    "chromosome": "chr20",
+    "position": 200000,
+    "min_mapq": 20,
+    "window_bp": 1500,
+    "bam_path": "~/public_data/sim/bams/IMP01.bam"
+   },
+   "is_error": false,
+   "ms": 7.5,
+   "result": {
+    "chromosome": "chr20",
+    "position": 200000,
+    "window_bp": 1500,
+    "total_reads_in_window": 791,
+    "discordant_pairs": 50,
+    "discordant_fraction": 0.063,
+    "mate_chromosomes": {
+     "chr21": 44,
+     "chr2": 1,
+     "chr12": 1,
+     "chr1": 1,
+     "chr7": 1,
+     "chrY": 1,
+     "chr16": 1
+    },
+    "same_primary_alt_mates": 0,
+    "reads_below_min_mapq": 0,
+    "quality_limited": false,
+    "assessable": true,
+    "reason": null,
+    "min_mapq_applied": 20,
+    "position_provenance": {
+     "source": "caller_supplied",
+     "candidate_id": null,
+     "set_id": null,
+     "set_label": null,
+     "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+    }
+   },
+   "traceback": null
+  },
+  {
+   "id": 3,
+   "server": "evidence",
+   "tool": "soft_clipped_reads",
+   "params": {
+    "chromosome": "chr20",
+    "min_clip_bases": 3,
+    "position": 200000,
+    "window_bp": 1500,
+    "min_mapq": 20,
+    "bam_path": "~/public_data/sim/bams/IMP01.bam"
+   },
+   "is_error": false,
+   "ms": 6.7,
+   "result": {
+    "chromosome": "chr20",
+    "position": 200000,
+    "window_bp": 1500,
+    "total_reads_in_window": 801,
+    "soft_clipped_reads": 53,
+    "soft_clipped_fraction": 0.066,
+    "consensus_clip_position": 200000,
+    "max_clips_at_position": 23,
+    "left_clip_reads": 32,
+    "right_clip_reads": 21,
+    "left_consensus_position": 200000,
+    "left_max_clips_at_position": 13,
+    "right_consensus_position": 200000,
+    "right_max_clips_at_position": 10,
+    "dominant_clip_side": "left",
+    "reads_below_min_mapq": 5,
+    "quality_limited": false,
+    "assessable": true,
+    "reason": null,
+    "min_mapq_applied": 20,
+    "position_provenance": {
+     "source": "caller_supplied",
+     "candidate_id": null,
+     "set_id": null,
+     "set_label": null,
+     "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+    }
+   },
+   "traceback": null
+  },
+  {
+   "id": 4,
+   "server": "evidence",
+   "tool": "split_reads",
+   "params": {
+    "window_bp": 1500,
+    "chromosome": "chr20",
+    "min_mapq": 20,
+    "position": 200000,
+    "bam_path": "~/public_data/sim/bams/IMP01.bam"
+   },
+   "is_error": false,
+   "ms": 6.7,
+   "result": {
+    "chromosome": "chr20",
+    "position": 200000,
+    "window_bp": 1500,
+    "total_reads_in_window": 791,
+    "split_reads": 7,
+    "split_read_fraction": 0.009,
+    "partner_chromosomes": {
+     "chr21": 6,
+     "chr20": 1
+    },
+    "sa_entries_total": 9,
+    "sa_entries_below_min_mapq": 2,
+    "partner_strand_concordant": 6,
+    "partner_strand_flipped": 1,
+    "example_partner_loci": [
+     "chr21:14100001",
+     "chr21:14099937",
+     "chr21:14099962",
+     "chr20:202118"
+    ],
+    "reads_below_min_mapq": 0,
+    "quality_limited": false,
+    "assessable": true,
+    "reason": null,
+    "min_mapq_applied": 20,
+    "position_provenance": {
+     "source": "caller_supplied",
+     "candidate_id": null,
+     "set_id": null,
+     "set_label": null,
+     "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+    }
+   },
+   "traceback": null
+  },
+  {
+   "id": 5,
+   "server": "evidence",
+   "tool": "read_depth_profile",
+   "params": {
+    "end": 200500,
+    "dip_tolerance_bp": 1000,
+    "focus_position": 200000,
+    "chromosome": "chr20",
+    "start": 199500,
+    "bam_path": "~/public_data/sim/bams/IMP01.bam"
+   },
+   "is_error": false,
+   "ms": 9.7,
+   "result": {
+    "chromosome": "chr20",
+    "start": 199500,
+    "end": 200500,
+    "window_size": 100,
+    "windows": [
+     {
+      "window_start": 199500,
+      "window_end": 199600,
+      "depth": 35.54
+     },
+     {
+      "window_start": 199600,
+      "window_end": 199700,
+      "depth": 34.81
+     },
+     {
+      "window_start": 199700,
+      "window_end": 199800,
+      "depth": 29.85
+     },
+     {
+      "window_start": 199800,
+      "window_end": 199900,
+      "depth": 35.48
+     },
+     {
+      "window_start": 199900,
+      "window_end": 200000,
+      "depth": 38.72
+     },
+     {
+      "window_start": 200000,
+      "window_end": 200100,
+      "depth": 33.11
+     },
+     {
+      "window_start": 200100,
+      "window_end": 200200,
+      "depth": 40.59
+     },
+     {
+      "window_start": 200200,
+      "window_end": 200300,
+      "depth": 41.07
+     },
+     {
+      "window_start": 200300,
+      "window_end": 200400,
+      "depth": 41.36
+     },
+     {
+      "window_start": 200400,
+      "window_end": 200500,
+      "depth": 36.41
+     }
+    ],
+    "summary": {
+     "min_depth": 29.85,
+     "max_depth": 41.36,
+     "mean_depth": 36.69,
+     "depth_ratio_min_to_mean": 0.814,
+     "likely_deletion": false,
+     "dip_position": 199700,
+     "dip_distance_from_focus": 300,
+     "dip_is_at_focus": true,
+     "assessable": true,
+     "reason": null,
+     "contig_length": 64444167,
+     "clamped_to_contig": false,
+     "min_mapq_applied": null,
+     "mapq_note": "depth counts ALL reads regardless of MAPQ; the discordant, soft-clip and split layers filter at min_mapq. In a low-MAPQ region this layer is the only one still counting, so compare with care."
+    },
+    "position_provenance": {
+     "source": "caller_supplied",
+     "candidate_id": null,
+     "set_id": null,
+     "set_label": null,
+     "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+    }
+   },
+   "traceback": null
+  }
+ ]
+}

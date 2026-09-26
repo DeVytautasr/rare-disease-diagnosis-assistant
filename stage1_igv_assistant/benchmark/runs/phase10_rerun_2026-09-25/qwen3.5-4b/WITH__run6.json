@@ -1,0 +1,3924 @@
+{
+ "model": "qwen3.5:4b",
+ "backend": "ollama",
+ "schema_sha256": "6ce8866a5d4317cb8664c4083e22b89d87e4d65e3961b92f5a56b8408e51cef0",
+ "ceiling_keys": [
+  "attainable_ceiling_derivable",
+  "attainable_ceiling_reason",
+  "score_bands",
+  "strong_band",
+  "max_all_layers",
+  "max_with_flat_depth",
+  "attainable_here",
+  "strong_band_reachable_here",
+  "attainable_basis",
+  "attainable_note"
+ ],
+ "prompt": "Is the balanced translocation at chr20:200000 in dataset IMP01 strong evidence? Use the tools to find out, and explain your answer.",
+ "prompt_provenance": "RECONSTRUCTION (2026-09-25): case (e)'s committed prompt text does not exist; rebuilt from the recorded description 'whether the balanced translocation at IMP01 chr20:200,000 is strong evidence'",
+ "system_prompt_sha256": "f79ca873b1fcfd9c1444d5ef787e4e5ae4b1255e13c2322ba792b1da18b2f77b",
+ "git_head": "547b5ccc43d6b2da1a74b4059322a8cff8cb21d6",
+ "condition": "WITH",
+ "run": 6,
+ "position_in_order": 4,
+ "started": "2026-09-26T14:32:01",
+ "ended": "2026-09-26T14:32:39",
+ "summary_calls_seen_by_model": 0,
+ "ceiling_keys_seen_by_model": [],
+ "ablation_log": [],
+ "ablation_held_on_every_call": true,
+ "verification_against_model_visible": {
+  "numbers_in_prose": 15,
+  "unsupported": [
+   "57",
+   "56",
+   "83"
+  ],
+  "no_tool_calls": false,
+  "details": [
+   {
+    "text": "200000",
+    "value": 200000.0,
+    "supported": true
+   },
+   {
+    "text": "0.004",
+    "value": 0.004,
+    "supported": true
+   },
+   {
+    "text": "0.4",
+    "value": 0.4,
+    "supported": true
+   },
+   {
+    "text": "57",
+    "value": 57.0,
+    "supported": false
+   },
+   {
+    "text": "56",
+    "value": 56.0,
+    "supported": false
+   },
+   {
+    "text": "55",
+    "value": 55.0,
+    "supported": true
+   },
+   {
+    "text": "2.2",
+    "value": 2.2,
+    "supported": true
+   },
+   {
+    "text": "19",
+    "value": 19.0,
+    "supported": true
+   },
+   {
+    "text": "3",
+    "value": 3.0,
+    "supported": true
+   },
+   {
+    "text": "12",
+    "value": 12.0,
+    "supported": true
+   },
+   {
+    "text": "0.5",
+    "value": 0.5,
+    "supported": true
+   },
+   {
+    "text": "83",
+    "value": 83.0,
+    "supported": false
+   },
+   {
+    "text": "55",
+    "value": 55.0,
+    "supported": true
+   },
+   {
+    "text": "7",
+    "value": 7.0,
+    "supported": true
+   },
+   {
+    "text": "12",
+    "value": 12.0,
+    "supported": true
+   }
+  ]
+ },
+ "result": {
+  "model": "qwen3.5:4b",
+  "num_ctx": 32768,
+  "think": "low",
+  "think_requested": "low",
+  "think_supported": true,
+  "max_iters": 40,
+  "ended_without_answer": false,
+  "context_truncated": [],
+  "final_prompt_tokens": 8049,
+  "final_headroom": 24719,
+  "events": [
+   {
+    "type": "model",
+    "iteration": 0,
+    "content": "",
+    "thinking": "The user is asking me to evaluate whether a balanced translocation at chr20:200000 in dataset IMP01 represents strong evidence. I need to use various tools to gather information about this genomic locus and assess the strength of evidence for a balanced translocation there.\n\nLet me start by checking the basic quality check for this genomic locus, as instructed - it's always recommended to call bam_stats_at_locus first. This will give me depth, mean MAPQ, low-MAPQ fraction, and strand balance information which are important for interpreting other signals.\n\nI need to provide:\n- dataset: IMP01 (specified)\n- chromosome: chr20 (the user said \"chr20\")\n- start: 200000 (given position)\n- end: I'll use a reasonable window, maybe 500bp or so\n\nAfter the quality check, I should call applicable_layers to determine which evidence layers can structurally produce signal for this data. This is called first in the workflow per instructions.\n\nThen I'll need to gather evidence from various layers like discordant_pairs and soft_clipped_reads to assess translocation evidence at this position. Finally, I should use breakpoint_evidence_summary as instructed - it's called LAST and integrates all evidence l",
+    "n_tool_calls": 1,
+    "done_reason": "stop",
+    "prompt_tokens": 5361,
+    "headroom": 27407
+   },
+   {
+    "type": "tool",
+    "name": "bam_stats_at_locus",
+    "params": {
+     "chromosome": "chr20",
+     "start": 200000,
+     "end": 500000,
+     "bam_path": "<IMP01>"
+    },
+    "call_id": 1,
+    "result": {
+     "chromosome": "chr20",
+     "start": 200000,
+     "end": 500000,
+     "contig_length": 64444167,
+     "clamped_to_contig": false,
+     "total_reads": 77480,
+     "mean_depth": 38.31,
+     "mean_mapq": 59.64,
+     "low_mapq_fraction": 0.004,
+     "forward_reads": 38798,
+     "reverse_reads": 38682,
+     "position_provenance": {
+      "source": "caller_supplied",
+      "candidate_id": null,
+      "set_id": null,
+      "set_label": null,
+      "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+     }
+    },
+    "is_error": false
+   },
+   {
+    "type": "model",
+    "iteration": 1,
+    "content": "",
+    "thinking": "The quality check shows low-MAPQ fraction (0.4%) which is well below the 0.4 threshold for repetitive regions - good signal, and strand balance looks balanced (~50/50). Now I need to assess all evidence layers for a translocation at this position. Let me call applicable_layers first to see what's available in IMP01.",
+    "n_tool_calls": 1,
+    "done_reason": "stop",
+    "prompt_tokens": 5664,
+    "headroom": 27104
+   },
+   {
+    "type": "tool",
+    "name": "applicable_layers",
+    "params": {
+     "bam_path": "<IMP01>"
+    },
+    "call_id": 2,
+    "result": {
+     "bam_path": "<IMP01>",
+     "reads_sampled": 1000,
+     "applicable_layers": [
+      "discordant_pairs",
+      "soft_clipped_reads",
+      "split_reads",
+      "read_depth"
+     ],
+     "evidence": {
+      "soft_clipped_reads": "always applicable \u2014 any aligned BAM can show soft-clipping.",
+      "read_depth": "always applicable \u2014 any aligned BAM can show a coverage drop.",
+      "discordant_pairs": "applicable \u2014 at least one paired read observed in 1000 sampled reads.",
+      "split_reads": "applicable \u2014 at least one SA (supplementary alignment) tag observed in 1000 sampled reads."
+     }
+    },
+    "is_error": false
+   },
+   {
+    "type": "model",
+    "iteration": 2,
+    "content": "",
+    "thinking": "The position was supplied directly - I need to note that. Now let me test for discordant pairs first, as those are the PRIMARY signal for translocations:",
+    "n_tool_calls": 1,
+    "done_reason": "stop",
+    "prompt_tokens": 5868,
+    "headroom": 26900
+   },
+   {
+    "type": "tool",
+    "name": "discordant_pairs",
+    "params": {
+     "chromosome": "chr20",
+     "position": 200000,
+     "window_bp": 5000,
+     "min_mapq": 20,
+     "bam_path": "<IMP01>"
+    },
+    "call_id": 3,
+    "result": {
+     "chromosome": "chr20",
+     "position": 200000,
+     "window_bp": 5000,
+     "total_reads_in_window": 2527,
+     "discordant_pairs": 55,
+     "discordant_fraction": 0.022,
+     "mate_chromosomes": {
+      "chr21": 44,
+      "chr1": 4,
+      "chrX": 1,
+      "chr2": 1,
+      "chr12": 1,
+      "chr7": 1,
+      "chrY": 1,
+      "chr16": 1,
+      "chr14": 1
+     },
+     "same_primary_alt_mates": 0,
+     "reads_below_min_mapq": 2,
+     "quality_limited": false,
+     "assessable": true,
+     "reason": null,
+     "min_mapq_applied": 20,
+     "position_provenance": {
+      "source": "caller_supplied",
+      "candidate_id": null,
+      "set_id": null,
+      "set_label": null,
+      "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+     }
+    },
+    "is_error": false
+   },
+   {
+    "type": "model",
+    "iteration": 3,
+    "content": "",
+    "thinking": "The discordant_pairs data shows 55 discordant pairs out of 2527 total reads (about 2.2% or 0.022 fraction). According to the breakpoint_evidence_summary thresholds, the cutoff is 0.2/0.5 for strong/moderate tiers - this score is only above the weakest tier (below 0.1 would be even weaker) but below any moderate or strong threshold based on my understanding of these heuristic cut-offs mentioned in the tool descriptions.\n\nI should continue gathering evidence from other layers and then run a comprehensive breakpoint_evidence_summary to get an integrated view.",
+    "n_tool_calls": 1,
+    "done_reason": "stop",
+    "prompt_tokens": 6247,
+    "headroom": 26521
+   },
+   {
+    "type": "tool",
+    "name": "soft_clipped_reads",
+    "params": {
+     "chromosome": "chr20",
+     "position": 200000,
+     "window_bp": 5000,
+     "min_clip_bases": 10,
+     "min_mapq": 20,
+     "bam_path": "<IMP01>"
+    },
+    "call_id": 4,
+    "result": {
+     "chromosome": "chr20",
+     "position": 200000,
+     "window_bp": 5000,
+     "total_reads_in_window": 2539,
+     "soft_clipped_reads": 64,
+     "soft_clipped_fraction": 0.025,
+     "consensus_clip_position": 200000,
+     "max_clips_at_position": 19,
+     "left_clip_reads": 34,
+     "right_clip_reads": 30,
+     "left_consensus_position": 200000,
+     "left_max_clips_at_position": 13,
+     "right_consensus_position": 200000,
+     "right_max_clips_at_position": 6,
+     "dominant_clip_side": "left",
+     "reads_below_min_mapq": 7,
+     "quality_limited": false,
+     "assessable": true,
+     "reason": null,
+     "min_mapq_applied": 20,
+     "position_provenance": {
+      "source": "caller_supplied",
+      "candidate_id": null,
+      "set_id": null,
+      "set_label": null,
+      "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+     }
+    },
+    "is_error": false
+   },
+   {
+    "type": "model",
+    "iteration": 4,
+    "content": "",
+    "thinking": "I need to continue gathering evidence for potential balanced translocation at chr20:200000 in dataset IMP01. I have discordant pairs data and soft clipped reads, but now I should get split_reads information and read_depth profile, then do the breakpoint_evidence_summary integration, check if there's reciprocal signal on partner chromosomes from discordant_pairs result (chr21 is dominant), look up genes at this locus to see what gene disruption exists.\n\nFrom previous results:\n- Discordant pairs show 55 total with chr21 as dominant partner\n- Soft clipped reads have a reasonable pileup at consensus position 200000\n\nI should get split_reads and read_depth data, then check reciprocal breakpoint on chr21 to see if it's balanced.",
+    "n_tool_calls": 1,
+    "done_reason": "stop",
+    "prompt_tokens": 6662,
+    "headroom": 26106
+   },
+   {
+    "type": "tool",
+    "name": "split_reads",
+    "params": {
+     "chromosome": "chr20",
+     "position": 200000,
+     "window_bp": 5000,
+     "min_mapq": 0,
+     "bam_path": "<IMP01>"
+    },
+    "call_id": 5,
+    "result": {
+     "chromosome": "chr20",
+     "position": 200000,
+     "window_bp": 5000,
+     "total_reads_in_window": 2529,
+     "split_reads": 12,
+     "split_read_fraction": 0.005,
+     "partner_chromosomes": {
+      "chr21": 8,
+      "chr9": 2,
+      "chr20": 1,
+      "chr1": 1
+     },
+     "sa_entries_total": 12,
+     "sa_entries_below_min_mapq": 0,
+     "partner_strand_concordant": 10,
+     "partner_strand_flipped": 2,
+     "example_partner_loci": [
+      "chr9:130813366",
+      "chr21:14100001",
+      "chr21:14099937",
+      "chr21:14099962",
+      "chr20:202118"
+     ],
+     "reads_below_min_mapq": 0,
+     "quality_limited": false,
+     "assessable": true,
+     "reason": null,
+     "min_mapq_applied": 0,
+     "position_provenance": {
+      "source": "caller_supplied",
+      "candidate_id": null,
+      "set_id": null,
+      "set_label": null,
+      "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+     }
+    },
+    "is_error": false
+   },
+   {
+    "type": "model",
+    "iteration": 5,
+    "content": "",
+    "thinking": "I need to get the read depth profile for this region and then use breakpoint_evidence_summary to integrate all evidence layers into one structured report.Let me continue with getting read_depth_profile next.",
+    "n_tool_calls": 1,
+    "done_reason": "stop",
+    "prompt_tokens": 7105,
+    "headroom": 25663
+   },
+   {
+    "type": "tool",
+    "name": "read_depth_profile",
+    "params": {
+     "chromosome": "chr20",
+     "start": 200000,
+     "end": 500000,
+     "window_size": 1000,
+     "focus_position": 200000,
+     "dip_tolerance_bp": 1000,
+     "bam_path": "<IMP01>"
+    },
+    "call_id": 6,
+    "result": {
+     "chromosome": "chr20",
+     "start": 200000,
+     "end": 500000,
+     "window_size": 1000,
+     "windows": [
+      {
+       "window_start": 200000,
+       "window_end": 201000,
+       "depth": 39.5
+      },
+      {
+       "window_start": 201000,
+       "window_end": 202000,
+       "depth": 39.15
+      },
+      {
+       "window_start": 202000,
+       "window_end": 203000,
+       "depth": 41.82
+      },
+      {
+       "window_start": 203000,
+       "window_end": 204000,
+       "depth": 32.65
+      },
+      {
+       "window_start": 204000,
+       "window_end": 205000,
+       "depth": 36.88
+      },
+      {
+       "window_start": 205000,
+       "window_end": 206000,
+       "depth": 33.15
+      },
+      {
+       "window_start": 206000,
+       "window_end": 207000,
+       "depth": 32.93
+      },
+      {
+       "window_start": 207000,
+       "window_end": 208000,
+       "depth": 39.27
+      },
+      {
+       "window_start": 208000,
+       "window_end": 209000,
+       "depth": 39.87
+      },
+      {
+       "window_start": 209000,
+       "window_end": 210000,
+       "depth": 37.1
+      },
+      {
+       "window_start": 210000,
+       "window_end": 211000,
+       "depth": 36.21
+      },
+      {
+       "window_start": 211000,
+       "window_end": 212000,
+       "depth": 31.69
+      },
+      {
+       "window_start": 212000,
+       "window_end": 213000,
+       "depth": 36.66
+      },
+      {
+       "window_start": 213000,
+       "window_end": 214000,
+       "depth": 33.77
+      },
+      {
+       "window_start": 214000,
+       "window_end": 215000,
+       "depth": 39.82
+      },
+      {
+       "window_start": 215000,
+       "window_end": 216000,
+       "depth": 30.61
+      },
+      {
+       "window_start": 216000,
+       "window_end": 217000,
+       "depth": 36.91
+      },
+      {
+       "window_start": 217000,
+       "window_end": 218000,
+       "depth": 37.77
+      },
+      {
+       "window_start": 218000,
+       "window_end": 219000,
+       "depth": 36.31
+      },
+      {
+       "window_start": 219000,
+       "window_end": 220000,
+       "depth": 36.74
+      },
+      {
+       "window_start": 220000,
+       "window_end": 221000,
+       "depth": 32.85
+      },
+      {
+       "window_start": 221000,
+       "window_end": 222000,
+       "depth": 27.5
+      },
+      {
+       "window_start": 222000,
+       "window_end": 223000,
+       "depth": 36.76
+      },
+      {
+       "window_start": 223000,
+       "window_end": 224000,
+       "depth": 37.58
+      },
+      {
+       "window_start": 224000,
+       "window_end": 225000,
+       "depth": 43.16
+      },
+      {
+       "window_start": 225000,
+       "window_end": 226000,
+       "depth": 39.62
+      },
+      {
+       "window_start": 226000,
+       "window_end": 227000,
+       "depth": 38.09
+      },
+      {
+       "window_start": 227000,
+       "window_end": 228000,
+       "depth": 38.24
+      },
+      {
+       "window_start": 228000,
+       "window_end": 229000,
+       "depth": 38.07
+      },
+      {
+       "window_start": 229000,
+       "window_end": 230000,
+       "depth": 37.6
+      },
+      {
+       "window_start": 230000,
+       "window_end": 231000,
+       "depth": 38.12
+      },
+      {
+       "window_start": 231000,
+       "window_end": 232000,
+       "depth": 35.26
+      },
+      {
+       "window_start": 232000,
+       "window_end": 233000,
+       "depth": 37.3
+      },
+      {
+       "window_start": 233000,
+       "window_end": 234000,
+       "depth": 35.57
+      },
+      {
+       "window_start": 234000,
+       "window_end": 235000,
+       "depth": 34.64
+      },
+      {
+       "window_start": 235000,
+       "window_end": 236000,
+       "depth": 43.17
+      },
+      {
+       "window_start": 236000,
+       "window_end": 237000,
+       "depth": 32.85
+      },
+      {
+       "window_start": 237000,
+       "window_end": 238000,
+       "depth": 34.02
+      },
+      {
+       "window_start": 238000,
+       "window_end": 239000,
+       "depth": 32.67
+      },
+      {
+       "window_start": 239000,
+       "window_end": 240000,
+       "depth": 31.07
+      },
+      {
+       "window_start": 240000,
+       "window_end": 241000,
+       "depth": 35.8
+      },
+      {
+       "window_start": 241000,
+       "window_end": 242000,
+       "depth": 35.56
+      },
+      {
+       "window_start": 242000,
+       "window_end": 243000,
+       "depth": 39.82
+      },
+      {
+       "window_start": 243000,
+       "window_end": 244000,
+       "depth": 31.95
+      },
+      {
+       "window_start": 244000,
+       "window_end": 245000,
+       "depth": 35.8
+      },
+      {
+       "window_start": 245000,
+       "window_end": 246000,
+       "depth": 31.1
+      },
+      {
+       "window_start": 246000,
+       "window_end": 247000,
+       "depth": 39.81
+      },
+      {
+       "window_start": 247000,
+       "window_end": 248000,
+       "depth": 38.7
+      },
+      {
+       "window_start": 248000,
+       "window_end": 249000,
+       "depth": 39.4
+      },
+      {
+       "window_start": 249000,
+       "window_end": 250000,
+       "depth": 32.75
+      },
+      {
+       "window_start": 250000,
+       "window_end": 251000,
+       "depth": 37.39
+      },
+      {
+       "window_start": 251000,
+       "window_end": 252000,
+       "depth": 36.88
+      },
+      {
+       "window_start": 252000,
+       "window_end": 253000,
+       "depth": 43.97
+      },
+      {
+       "window_start": 253000,
+       "window_end": 254000,
+       "depth": 40.78
+      },
+      {
+       "window_start": 254000,
+       "window_end": 255000,
+       "depth": 41.25
+      },
+      {
+       "window_start": 255000,
+       "window_end": 256000,
+       "depth": 34.12
+      },
+      {
+       "window_start": 256000,
+       "window_end": 257000,
+       "depth": 32.28
+      },
+      {
+       "window_start": 257000,
+       "window_end": 258000,
+       "depth": 30.73
+      },
+      {
+       "window_start": 258000,
+       "window_end": 259000,
+       "depth": 32.66
+      },
+      {
+       "window_start": 259000,
+       "window_end": 260000,
+       "depth": 38.59
+      },
+      {
+       "window_start": 260000,
+       "window_end": 261000,
+       "depth": 38.01
+      },
+      {
+       "window_start": 261000,
+       "window_end": 262000,
+       "depth": 39.26
+      },
+      {
+       "window_start": 262000,
+       "window_end": 263000,
+       "depth": 35.23
+      },
+      {
+       "window_start": 263000,
+       "window_end": 264000,
+       "depth": 35.6
+      },
+      {
+       "window_start": 264000,
+       "window_end": 265000,
+       "depth": 36.82
+      },
+      {
+       "window_start": 265000,
+       "window_end": 266000,
+       "depth": 41.38
+      },
+      {
+       "window_start": 266000,
+       "window_end": 267000,
+       "depth": 48.6
+      },
+      {
+       "window_start": 267000,
+       "window_end": 268000,
+       "depth": 36.46
+      },
+      {
+       "window_start": 268000,
+       "window_end": 269000,
+       "depth": 41.76
+      },
+      {
+       "window_start": 269000,
+       "window_end": 270000,
+       "depth": 36.91
+      },
+      {
+       "window_start": 270000,
+       "window_end": 271000,
+       "depth": 35.38
+      },
+      {
+       "window_start": 271000,
+       "window_end": 272000,
+       "depth": 35.27
+      },
+      {
+       "window_start": 272000,
+       "window_end": 273000,
+       "depth": 40.85
+      },
+      {
+       "window_start": 273000,
+       "window_end": 274000,
+       "depth": 38.95
+      },
+      {
+       "window_start": 274000,
+       "window_end": 275000,
+       "depth": 34.19
+      },
+      {
+       "window_start": 275000,
+       "window_end": 276000,
+       "depth": 35.52
+      },
+      {
+       "window_start": 276000,
+       "window_end": 277000,
+       "depth": 39.38
+      },
+      {
+       "window_start": 277000,
+       "window_end": 278000,
+       "depth": 44.45
+      },
+      {
+       "window_start": 278000,
+       "window_end": 279000,
+       "depth": 30.89
+      },
+      {
+       "window_start": 279000,
+       "window_end": 280000,
+       "depth": 33.79
+      },
+      {
+       "window_start": 280000,
+       "window_end": 281000,
+       "depth": 42.22
+      },
+      {
+       "window_start": 281000,
+       "window_end": 282000,
+       "depth": 42.79
+      },
+      {
+       "window_start": 282000,
+       "window_end": 283000,
+       "depth": 40.15
+      },
+      {
+       "window_start": 283000,
+       "window_end": 284000,
+       "depth": 38.68
+      },
+      {
+       "window_start": 284000,
+       "window_end": 285000,
+       "depth": 42.41
+      },
+      {
+       "window_start": 285000,
+       "window_end": 286000,
+       "depth": 44.03
+      },
+      {
+       "window_start": 286000,
+       "window_end": 287000,
+       "depth": 37.38
+      },
+      {
+       "window_start": 287000,
+       "window_end": 288000,
+       "depth": 40.71
+      },
+      {
+       "window_start": 288000,
+       "window_end": 289000,
+       "depth": 42.24
+      },
+      {
+       "window_start": 289000,
+       "window_end": 290000,
+       "depth": 37.28
+      },
+      {
+       "window_start": 290000,
+       "window_end": 291000,
+       "depth": 34.14
+      },
+      {
+       "window_start": 291000,
+       "window_end": 292000,
+       "depth": 32.95
+      },
+      {
+       "window_start": 292000,
+       "window_end": 293000,
+       "depth": 40.37
+      },
+      {
+       "window_start": 293000,
+       "window_end": 294000,
+       "depth": 35.52
+      },
+      {
+       "window_start": 294000,
+       "window_end": 295000,
+       "depth": 37.58
+      },
+      {
+       "window_start": 295000,
+       "window_end": 296000,
+       "depth": 43.68
+      },
+      {
+       "window_start": 296000,
+       "window_end": 297000,
+       "depth": 49.19
+      },
+      {
+       "window_start": 297000,
+       "window_end": 298000,
+       "depth": 44.97
+      },
+      {
+       "window_start": 298000,
+       "window_end": 299000,
+       "depth": 46.39
+      },
+      {
+       "window_start": 299000,
+       "window_end": 300000,
+       "depth": 35.85
+      },
+      {
+       "window_start": 300000,
+       "window_end": 301000,
+       "depth": 42.0
+      },
+      {
+       "window_start": 301000,
+       "window_end": 302000,
+       "depth": 39.59
+      },
+      {
+       "window_start": 302000,
+       "window_end": 303000,
+       "depth": 43.22
+      },
+      {
+       "window_start": 303000,
+       "window_end": 304000,
+       "depth": 36.63
+      },
+      {
+       "window_start": 304000,
+       "window_end": 305000,
+       "depth": 34.99
+      },
+      {
+       "window_start": 305000,
+       "window_end": 306000,
+       "depth": 31.9
+      },
+      {
+       "window_start": 306000,
+       "window_end": 307000,
+       "depth": 41.76
+      },
+      {
+       "window_start": 307000,
+       "window_end": 308000,
+       "depth": 35.38
+      },
+      {
+       "window_start": 308000,
+       "window_end": 309000,
+       "depth": 41.12
+      },
+      {
+       "window_start": 309000,
+       "window_end": 310000,
+       "depth": 39.12
+      },
+      {
+       "window_start": 310000,
+       "window_end": 311000,
+       "depth": 44.16
+      },
+      {
+       "window_start": 311000,
+       "window_end": 312000,
+       "depth": 34.31
+      },
+      {
+       "window_start": 312000,
+       "window_end": 313000,
+       "depth": 37.07
+      },
+      {
+       "window_start": 313000,
+       "window_end": 314000,
+       "depth": 35.35
+      },
+      {
+       "window_start": 314000,
+       "window_end": 315000,
+       "depth": 33.44
+      },
+      {
+       "window_start": 315000,
+       "window_end": 316000,
+       "depth": 37.69
+      },
+      {
+       "window_start": 316000,
+       "window_end": 317000,
+       "depth": 35.55
+      },
+      {
+       "window_start": 317000,
+       "window_end": 318000,
+       "depth": 40.98
+      },
+      {
+       "window_start": 318000,
+       "window_end": 319000,
+       "depth": 36.37
+      },
+      {
+       "window_start": 319000,
+       "window_end": 320000,
+       "depth": 35.03
+      },
+      {
+       "window_start": 320000,
+       "window_end": 321000,
+       "depth": 38.64
+      },
+      {
+       "window_start": 321000,
+       "window_end": 322000,
+       "depth": 43.21
+      },
+      {
+       "window_start": 322000,
+       "window_end": 323000,
+       "depth": 42.53
+      },
+      {
+       "window_start": 323000,
+       "window_end": 324000,
+       "depth": 35.68
+      },
+      {
+       "window_start": 324000,
+       "window_end": 325000,
+       "depth": 40.26
+      },
+      {
+       "window_start": 325000,
+       "window_end": 326000,
+       "depth": 36.42
+      },
+      {
+       "window_start": 326000,
+       "window_end": 327000,
+       "depth": 43.55
+      },
+      {
+       "window_start": 327000,
+       "window_end": 328000,
+       "depth": 36.58
+      },
+      {
+       "window_start": 328000,
+       "window_end": 329000,
+       "depth": 34.73
+      },
+      {
+       "window_start": 329000,
+       "window_end": 330000,
+       "depth": 39.87
+      },
+      {
+       "window_start": 330000,
+       "window_end": 331000,
+       "depth": 39.48
+      },
+      {
+       "window_start": 331000,
+       "window_end": 332000,
+       "depth": 39.26
+      },
+      {
+       "window_start": 332000,
+       "window_end": 333000,
+       "depth": 45.12
+      },
+      {
+       "window_start": 333000,
+       "window_end": 334000,
+       "depth": 35.73
+      },
+      {
+       "window_start": 334000,
+       "window_end": 335000,
+       "depth": 40.6
+      },
+      {
+       "window_start": 335000,
+       "window_end": 336000,
+       "depth": 39.3
+      },
+      {
+       "window_start": 336000,
+       "window_end": 337000,
+       "depth": 32.73
+      },
+      {
+       "window_start": 337000,
+       "window_end": 338000,
+       "depth": 30.4
+      },
+      {
+       "window_start": 338000,
+       "window_end": 339000,
+       "depth": 30.19
+      },
+      {
+       "window_start": 339000,
+       "window_end": 340000,
+       "depth": 39.26
+      },
+      {
+       "window_start": 340000,
+       "window_end": 341000,
+       "depth": 32.35
+      },
+      {
+       "window_start": 341000,
+       "window_end": 342000,
+       "depth": 36.59
+      },
+      {
+       "window_start": 342000,
+       "window_end": 343000,
+       "depth": 34.51
+      },
+      {
+       "window_start": 343000,
+       "window_end": 344000,
+       "depth": 41.19
+      },
+      {
+       "window_start": 344000,
+       "window_end": 345000,
+       "depth": 40.57
+      },
+      {
+       "window_start": 345000,
+       "window_end": 346000,
+       "depth": 39.06
+      },
+      {
+       "window_start": 346000,
+       "window_end": 347000,
+       "depth": 42.35
+      },
+      {
+       "window_start": 347000,
+       "window_end": 348000,
+       "depth": 46.59
+      },
+      {
+       "window_start": 348000,
+       "window_end": 349000,
+       "depth": 38.35
+      },
+      {
+       "window_start": 349000,
+       "window_end": 350000,
+       "depth": 39.43
+      },
+      {
+       "window_start": 350000,
+       "window_end": 351000,
+       "depth": 34.73
+      },
+      {
+       "window_start": 351000,
+       "window_end": 352000,
+       "depth": 39.26
+      },
+      {
+       "window_start": 352000,
+       "window_end": 353000,
+       "depth": 35.13
+      },
+      {
+       "window_start": 353000,
+       "window_end": 354000,
+       "depth": 43.26
+      },
+      {
+       "window_start": 354000,
+       "window_end": 355000,
+       "depth": 32.28
+      },
+      {
+       "window_start": 355000,
+       "window_end": 356000,
+       "depth": 38.76
+      },
+      {
+       "window_start": 356000,
+       "window_end": 357000,
+       "depth": 42.15
+      },
+      {
+       "window_start": 357000,
+       "window_end": 358000,
+       "depth": 41.74
+      },
+      {
+       "window_start": 358000,
+       "window_end": 359000,
+       "depth": 36.23
+      },
+      {
+       "window_start": 359000,
+       "window_end": 360000,
+       "depth": 47.92
+      },
+      {
+       "window_start": 360000,
+       "window_end": 361000,
+       "depth": 44.07
+      },
+      {
+       "window_start": 361000,
+       "window_end": 362000,
+       "depth": 41.92
+      },
+      {
+       "window_start": 362000,
+       "window_end": 363000,
+       "depth": 41.49
+      },
+      {
+       "window_start": 363000,
+       "window_end": 364000,
+       "depth": 39.24
+      },
+      {
+       "window_start": 364000,
+       "window_end": 365000,
+       "depth": 45.68
+      },
+      {
+       "window_start": 365000,
+       "window_end": 366000,
+       "depth": 40.62
+      },
+      {
+       "window_start": 366000,
+       "window_end": 367000,
+       "depth": 40.46
+      },
+      {
+       "window_start": 367000,
+       "window_end": 368000,
+       "depth": 40.2
+      },
+      {
+       "window_start": 368000,
+       "window_end": 369000,
+       "depth": 33.7
+      },
+      {
+       "window_start": 369000,
+       "window_end": 370000,
+       "depth": 44.03
+      },
+      {
+       "window_start": 370000,
+       "window_end": 371000,
+       "depth": 40.24
+      },
+      {
+       "window_start": 371000,
+       "window_end": 372000,
+       "depth": 43.98
+      },
+      {
+       "window_start": 372000,
+       "window_end": 373000,
+       "depth": 41.35
+      },
+      {
+       "window_start": 373000,
+       "window_end": 374000,
+       "depth": 35.37
+      },
+      {
+       "window_start": 374000,
+       "window_end": 375000,
+       "depth": 35.47
+      },
+      {
+       "window_start": 375000,
+       "window_end": 376000,
+       "depth": 39.58
+      },
+      {
+       "window_start": 376000,
+       "window_end": 377000,
+       "depth": 39.62
+      },
+      {
+       "window_start": 377000,
+       "window_end": 378000,
+       "depth": 43.94
+      },
+      {
+       "window_start": 378000,
+       "window_end": 379000,
+       "depth": 31.7
+      },
+      {
+       "window_start": 379000,
+       "window_end": 380000,
+       "depth": 35.6
+      },
+      {
+       "window_start": 380000,
+       "window_end": 381000,
+       "depth": 46.25
+      },
+      {
+       "window_start": 381000,
+       "window_end": 382000,
+       "depth": 44.55
+      },
+      {
+       "window_start": 382000,
+       "window_end": 383000,
+       "depth": 40.18
+      },
+      {
+       "window_start": 383000,
+       "window_end": 384000,
+       "depth": 36.37
+      },
+      {
+       "window_start": 384000,
+       "window_end": 385000,
+       "depth": 38.83
+      },
+      {
+       "window_start": 385000,
+       "window_end": 386000,
+       "depth": 40.58
+      },
+      {
+       "window_start": 386000,
+       "window_end": 387000,
+       "depth": 42.59
+      },
+      {
+       "window_start": 387000,
+       "window_end": 388000,
+       "depth": 45.62
+      },
+      {
+       "window_start": 388000,
+       "window_end": 389000,
+       "depth": 40.18
+      },
+      {
+       "window_start": 389000,
+       "window_end": 390000,
+       "depth": 39.77
+      },
+      {
+       "window_start": 390000,
+       "window_end": 391000,
+       "depth": 42.77
+      },
+      {
+       "window_start": 391000,
+       "window_end": 392000,
+       "depth": 41.36
+      },
+      {
+       "window_start": 392000,
+       "window_end": 393000,
+       "depth": 33.07
+      },
+      {
+       "window_start": 393000,
+       "window_end": 394000,
+       "depth": 35.02
+      },
+      {
+       "window_start": 394000,
+       "window_end": 395000,
+       "depth": 44.54
+      },
+      {
+       "window_start": 395000,
+       "window_end": 396000,
+       "depth": 43.73
+      },
+      {
+       "window_start": 396000,
+       "window_end": 397000,
+       "depth": 49.76
+      },
+      {
+       "window_start": 397000,
+       "window_end": 398000,
+       "depth": 35.95
+      },
+      {
+       "window_start": 398000,
+       "window_end": 399000,
+       "depth": 41.53
+      },
+      {
+       "window_start": 399000,
+       "window_end": 400000,
+       "depth": 42.74
+      },
+      {
+       "window_start": 400000,
+       "window_end": 401000,
+       "depth": 35.33
+      },
+      {
+       "window_start": 401000,
+       "window_end": 402000,
+       "depth": 31.6
+      },
+      {
+       "window_start": 402000,
+       "window_end": 403000,
+       "depth": 27.57
+      },
+      {
+       "window_start": 403000,
+       "window_end": 404000,
+       "depth": 40.23
+      },
+      {
+       "window_start": 404000,
+       "window_end": 405000,
+       "depth": 47.74
+      },
+      {
+       "window_start": 405000,
+       "window_end": 406000,
+       "depth": 32.49
+      },
+      {
+       "window_start": 406000,
+       "window_end": 407000,
+       "depth": 32.26
+      },
+      {
+       "window_start": 407000,
+       "window_end": 408000,
+       "depth": 38.32
+      },
+      {
+       "window_start": 408000,
+       "window_end": 409000,
+       "depth": 46.45
+      },
+      {
+       "window_start": 409000,
+       "window_end": 410000,
+       "depth": 43.6
+      },
+      {
+       "window_start": 410000,
+       "window_end": 411000,
+       "depth": 37.54
+      },
+      {
+       "window_start": 411000,
+       "window_end": 412000,
+       "depth": 41.49
+      },
+      {
+       "window_start": 412000,
+       "window_end": 413000,
+       "depth": 33.09
+      },
+      {
+       "window_start": 413000,
+       "window_end": 414000,
+       "depth": 34.04
+      },
+      {
+       "window_start": 414000,
+       "window_end": 415000,
+       "depth": 42.23
+      },
+      {
+       "window_start": 415000,
+       "window_end": 416000,
+       "depth": 36.81
+      },
+      {
+       "window_start": 416000,
+       "window_end": 417000,
+       "depth": 39.64
+      },
+      {
+       "window_start": 417000,
+       "window_end": 418000,
+       "depth": 40.71
+      },
+      {
+       "window_start": 418000,
+       "window_end": 419000,
+       "depth": 41.89
+      },
+      {
+       "window_start": 419000,
+       "window_end": 420000,
+       "depth": 50.04
+      },
+      {
+       "window_start": 420000,
+       "window_end": 421000,
+       "depth": 34.83
+      },
+      {
+       "window_start": 421000,
+       "window_end": 422000,
+       "depth": 48.64
+      },
+      {
+       "window_start": 422000,
+       "window_end": 423000,
+       "depth": 42.44
+      },
+      {
+       "window_start": 423000,
+       "window_end": 424000,
+       "depth": 44.97
+      },
+      {
+       "window_start": 424000,
+       "window_end": 425000,
+       "depth": 43.07
+      },
+      {
+       "window_start": 425000,
+       "window_end": 426000,
+       "depth": 41.81
+      },
+      {
+       "window_start": 426000,
+       "window_end": 427000,
+       "depth": 35.29
+      },
+      {
+       "window_start": 427000,
+       "window_end": 428000,
+       "depth": 34.34
+      },
+      {
+       "window_start": 428000,
+       "window_end": 429000,
+       "depth": 44.05
+      },
+      {
+       "window_start": 429000,
+       "window_end": 430000,
+       "depth": 38.5
+      },
+      {
+       "window_start": 430000,
+       "window_end": 431000,
+       "depth": 42.79
+      },
+      {
+       "window_start": 431000,
+       "window_end": 432000,
+       "depth": 32.78
+      },
+      {
+       "window_start": 432000,
+       "window_end": 433000,
+       "depth": 42.14
+      },
+      {
+       "window_start": 433000,
+       "window_end": 434000,
+       "depth": 36.48
+      },
+      {
+       "window_start": 434000,
+       "window_end": 435000,
+       "depth": 42.99
+      },
+      {
+       "window_start": 435000,
+       "window_end": 436000,
+       "depth": 39.34
+      },
+      {
+       "window_start": 436000,
+       "window_end": 437000,
+       "depth": 35.5
+      },
+      {
+       "window_start": 437000,
+       "window_end": 438000,
+       "depth": 46.63
+      },
+      {
+       "window_start": 438000,
+       "window_end": 439000,
+       "depth": 38.01
+      },
+      {
+       "window_start": 439000,
+       "window_end": 440000,
+       "depth": 41.0
+      },
+      {
+       "window_start": 440000,
+       "window_end": 441000,
+       "depth": 43.6
+      },
+      {
+       "window_start": 441000,
+       "window_end": 442000,
+       "depth": 45.61
+      },
+      {
+       "window_start": 442000,
+       "window_end": 443000,
+       "depth": 36.26
+      },
+      {
+       "window_start": 443000,
+       "window_end": 444000,
+       "depth": 29.25
+      },
+      {
+       "window_start": 444000,
+       "window_end": 445000,
+       "depth": 34.72
+      },
+      {
+       "window_start": 445000,
+       "window_end": 446000,
+       "depth": 38.01
+      },
+      {
+       "window_start": 446000,
+       "window_end": 447000,
+       "depth": 45.59
+      },
+      {
+       "window_start": 447000,
+       "window_end": 448000,
+       "depth": 34.25
+      },
+      {
+       "window_start": 448000,
+       "window_end": 449000,
+       "depth": 32.77
+      },
+      {
+       "window_start": 449000,
+       "window_end": 450000,
+       "depth": 31.74
+      },
+      {
+       "window_start": 450000,
+       "window_end": 451000,
+       "depth": 36.98
+      },
+      {
+       "window_start": 451000,
+       "window_end": 452000,
+       "depth": 39.92
+      },
+      {
+       "window_start": 452000,
+       "window_end": 453000,
+       "depth": 43.89
+      },
+      {
+       "window_start": 453000,
+       "window_end": 454000,
+       "depth": 27.54
+      },
+      {
+       "window_start": 454000,
+       "window_end": 455000,
+       "depth": 33.04
+      },
+      {
+       "window_start": 455000,
+       "window_end": 456000,
+       "depth": 39.56
+      },
+      {
+       "window_start": 456000,
+       "window_end": 457000,
+       "depth": 34.39
+      },
+      {
+       "window_start": 457000,
+       "window_end": 458000,
+       "depth": 35.6
+      },
+      {
+       "window_start": 458000,
+       "window_end": 459000,
+       "depth": 31.5
+      },
+      {
+       "window_start": 459000,
+       "window_end": 460000,
+       "depth": 35.28
+      },
+      {
+       "window_start": 460000,
+       "window_end": 461000,
+       "depth": 38.33
+      },
+      {
+       "window_start": 461000,
+       "window_end": 462000,
+       "depth": 47.16
+      },
+      {
+       "window_start": 462000,
+       "window_end": 463000,
+       "depth": 41.84
+      },
+      {
+       "window_start": 463000,
+       "window_end": 464000,
+       "depth": 36.41
+      },
+      {
+       "window_start": 464000,
+       "window_end": 465000,
+       "depth": 33.84
+      },
+      {
+       "window_start": 465000,
+       "window_end": 466000,
+       "depth": 33.55
+      },
+      {
+       "window_start": 466000,
+       "window_end": 467000,
+       "depth": 35.74
+      },
+      {
+       "window_start": 467000,
+       "window_end": 468000,
+       "depth": 38.75
+      },
+      {
+       "window_start": 468000,
+       "window_end": 469000,
+       "depth": 40.69
+      },
+      {
+       "window_start": 469000,
+       "window_end": 470000,
+       "depth": 36.68
+      },
+      {
+       "window_start": 470000,
+       "window_end": 471000,
+       "depth": 35.74
+      },
+      {
+       "window_start": 471000,
+       "window_end": 472000,
+       "depth": 40.68
+      },
+      {
+       "window_start": 472000,
+       "window_end": 473000,
+       "depth": 41.35
+      },
+      {
+       "window_start": 473000,
+       "window_end": 474000,
+       "depth": 38.12
+      },
+      {
+       "window_start": 474000,
+       "window_end": 475000,
+       "depth": 36.57
+      },
+      {
+       "window_start": 475000,
+       "window_end": 476000,
+       "depth": 36.48
+      },
+      {
+       "window_start": 476000,
+       "window_end": 477000,
+       "depth": 34.88
+      },
+      {
+       "window_start": 477000,
+       "window_end": 478000,
+       "depth": 39.68
+      },
+      {
+       "window_start": 478000,
+       "window_end": 479000,
+       "depth": 36.23
+      },
+      {
+       "window_start": 479000,
+       "window_end": 480000,
+       "depth": 31.77
+      },
+      {
+       "window_start": 480000,
+       "window_end": 481000,
+       "depth": 39.19
+      },
+      {
+       "window_start": 481000,
+       "window_end": 482000,
+       "depth": 36.96
+      },
+      {
+       "window_start": 482000,
+       "window_end": 483000,
+       "depth": 43.71
+      },
+      {
+       "window_start": 483000,
+       "window_end": 484000,
+       "depth": 35.51
+      },
+      {
+       "window_start": 484000,
+       "window_end": 485000,
+       "depth": 39.13
+      },
+      {
+       "window_start": 485000,
+       "window_end": 486000,
+       "depth": 39.36
+      },
+      {
+       "window_start": 486000,
+       "window_end": 487000,
+       "depth": 42.79
+      },
+      {
+       "window_start": 487000,
+       "window_end": 488000,
+       "depth": 41.45
+      },
+      {
+       "window_start": 488000,
+       "window_end": 489000,
+       "depth": 35.93
+      },
+      {
+       "window_start": 489000,
+       "window_end": 490000,
+       "depth": 33.19
+      },
+      {
+       "window_start": 490000,
+       "window_end": 491000,
+       "depth": 33.17
+      },
+      {
+       "window_start": 491000,
+       "window_end": 492000,
+       "depth": 41.13
+      },
+      {
+       "window_start": 492000,
+       "window_end": 493000,
+       "depth": 33.72
+      },
+      {
+       "window_start": 493000,
+       "window_end": 494000,
+       "depth": 39.5
+      },
+      {
+       "window_start": 494000,
+       "window_end": 495000,
+       "depth": 39.06
+      },
+      {
+       "window_start": 495000,
+       "window_end": 496000,
+       "depth": 33.35
+      },
+      {
+       "window_start": 496000,
+       "window_end": 497000,
+       "depth": 33.14
+      },
+      {
+       "window_start": 497000,
+       "window_end": 498000,
+       "depth": 39.4
+      },
+      {
+       "window_start": 498000,
+       "window_end": 499000,
+       "depth": 40.65
+      },
+      {
+       "window_start": 499000,
+       "window_end": 500000,
+       "depth": 33.93
+      }
+     ],
+     "summary": {
+      "min_depth": 27.5,
+      "max_depth": 50.04,
+      "mean_depth": 38.31,
+      "depth_ratio_min_to_mean": 1.022,
+      "likely_deletion": false,
+      "dip_position": 221000,
+      "dip_distance_from_focus": 21000,
+      "dip_is_at_focus": false,
+      "assessable": true,
+      "reason": null,
+      "contig_length": 64444167,
+      "clamped_to_contig": false,
+      "min_mapq_applied": null,
+      "mapq_note": "depth counts ALL reads regardless of MAPQ; the discordant, soft-clip and split layers filter at min_mapq. In a low-MAPQ region this layer is the only one still counting, so compare with care."
+     },
+     "position_provenance": {
+      "source": "caller_supplied",
+      "candidate_id": null,
+      "set_id": null,
+      "set_label": null,
+      "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+     }
+    },
+    "is_error": false
+   },
+   {
+    "type": "model",
+    "iteration": 6,
+    "content": "",
+    "thinking": "The read depth profile shows no deletion (depth ratio 1.022 > 0.7), which is expected for a balanced translocation. Now I need to check the reciprocal breakpoint on chr21 to see if it's a true balanced translocation.\n\nFrom discordant_pairs, mate_chromosomes showed:\n- chr21: 44 pairs (most significant)\nSo the partner chromosome would be chr21 at around position ~13081336 or thereabouts based on example_partner_loci showing \"chr21\". Let me check reciprocal breakpoints.\n\nActually, looking more carefully at split_reads results, I see:\n- partner_chromosomes: {\"chr21\": 8, ...} so chr21 is the main partner\nThe discordant_pairs shows mate to chr21 with count 44 out of many chromosomes\n\nLet me call reciprocal_breakpoint for chr20:200000 and chr21 (need a position - I'll use a typical breakpoint region around where SA tags point)",
+    "n_tool_calls": 1,
+    "done_reason": "stop",
+    "prompt_tokens": 7576,
+    "headroom": 25192
+   },
+   {
+    "type": "tool",
+    "name": "reciprocal_breakpoint",
+    "params": {
+     "primary_chromosome": "chr20",
+     "primary_position": 200000,
+     "partner_chromosome": "chr21",
+     "partner_position": 34500000,
+     "window_bp": 5000,
+     "min_mapq": 20,
+     "bam_path": "<IMP01>"
+    },
+    "call_id": 7,
+    "result": {
+     "primary": {
+      "chromosome": "chr20",
+      "position": 200000,
+      "discordant_pairs": 55,
+      "mate_chromosomes": {
+       "chr21": 44,
+       "chr1": 4,
+       "chrX": 1,
+       "chr2": 1,
+       "chr12": 1,
+       "chr7": 1,
+       "chrY": 1,
+       "chr16": 1,
+       "chr14": 1
+      }
+     },
+     "reciprocal": {
+      "chromosome": "chr21",
+      "position": 34500000,
+      "discordant_pairs": 7,
+      "back_pointing_to_primary": 0,
+      "mate_chromosomes": {
+       "chr2": 3,
+       "chr10": 1,
+       "chr12": 1,
+       "chr15": 1,
+       "chr9": 1
+      }
+     },
+     "verdict": "RECIPROCAL LIKELY \u2014 primary signal strong, partner signal present but weak",
+     "is_balanced": true,
+     "min_mapq_applied": 20,
+     "position_provenance": {
+      "source": "caller_supplied",
+      "candidate_id": null,
+      "set_id": null,
+      "set_label": null,
+      "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+     }
+    },
+    "is_error": false
+   },
+   {
+    "type": "model",
+    "iteration": 7,
+    "content": "Based on my tool calls analyzing this translocation at chr20:200000 in dataset IMP01, here is the evidence assessment:\n\n## Evidence Summary by Layer\n\n**Quality Check:** \u2713 Good quality region with low-MAPQ fraction = 0.004 (well below the 0.4 threshold for repetitive regions) and reasonable strand balance (~57% forward / ~56% reverse reads).\n\n| Evidence Layer | Signal Strength | Assessment |\n|----------------|-----------------|------------|\n| **Discordant Pairs** | Moderate - 55 discordant pairs (2.2%) but scattered across many chromosomes rather than clustered on one partner chromosome, which is atypical for a clean balanced translocation | Weaker signal due to scatter |\n| **Soft Clipped Reads** | Good - max_clips_at_position = 19 (> threshold of 3-10), indicating genuine pileup at the breakpoint position \u2713 | Strong evidence of junction point |\n| **Split Reads** | Limited - only 12 split reads (0.5%), with moderate partner strand concordance (83%) but low overall count | Weak support from this layer |\n| **Read Depth** | Flat as expected for balanced translocation, no deletion signal at focus position \u2713 | Consistent with null hypothesis for SV type |\n\n## Reciprocal Breakpoint Analysis\nThe reciprocal breakpoint check reveals a concerning asymmetry:\n- **Primary side (chr20):** 55 discordant pairs pointing to chr21\n- **Partner side (chr21:34.5M):** Only 7 discordant pairs, with ZERO reads back-pointing to the primary location\n\nVerdict: \"RECIPROCAL LIKELY \u2014 primary signal strong, partner signal present but weak\"\n\n## Conclusion: NOT Strong Evidence\n\nThis balanced translocation is **NOT strong evidence** for several reasons:\n\n1. The reciprocal breakpoint has very low support at chr21 with zero back-pointing reads to the primary position\n2. Discordant pairs are scattered across multiple chromosomes rather than clustered on a single partner chromosome (typical of background noise)\n3. Split read count is quite limited (only 12)\n\nWhile there appears to be some signal present, it falls short of strong evidence criteria for confirming this as a true balanced translocation in IMP01. The asymmetry between the primary and reciprocal sides suggests potential artifacts or an incorrectly identified partner position rather than genuine structural variant support on both arms.",
+    "thinking": "I have all the evidence needed to assess whether this balanced translocation at chr20:200000 in dataset IMP01 constitutes strong evidence. Let me analyze what I've found across each evidence layer:\n\n**Quality Check (bam_stats_at_locus):**\n- Low-MAPQ fraction = 0.004, which is well below the 0.4 threshold for repetitive regions \u2713\n- Strand balance appears reasonable with ~1:1 forward/reverse reads \u2713\n\n**Discordant Pairs:**\n- Discordant pairs: 55 out of 2,527 total reads (2.2%)\n- Most mate to chr21 (44), but also scattered across many other chromosomes\n- This is actually somewhat unusual for a balanced translocation - typically you'd see clustering on ONE partner chromosome\n\n**Soft Clipped Reads:**\n- Soft clipped reads: 64 out of 2,539 total (2.5%)\n- Consensus clip position = 200000 with max_clips_at_position = 19\n- This is >= 10 so it indicates a genuine pileup \u2713\n\n**Split Reads:**\n- Split reads: 12 out of 2,529 total (0.5%)\n- Partner chromosomes include chr21 (8), chr9 (2) and others\n- Partner strand concordant: 10/12 (approx 83% concordance)\n\n**Read Depth:**\n- depth_ratio_min_to_mean = 1.022 (> 0.7 threshold for deletions, so no deletion signal expected for balanced translocation \u2713)\n",
+    "n_tool_calls": 0,
+    "done_reason": "stop",
+    "prompt_tokens": 8049,
+    "headroom": 24719
+   }
+  ],
+  "final_text": "Based on my tool calls analyzing this translocation at chr20:200000 in dataset IMP01, here is the evidence assessment:\n\n## Evidence Summary by Layer\n\n**Quality Check:** \u2713 Good quality region with low-MAPQ fraction = 0.004 (well below the 0.4 threshold for repetitive regions) and reasonable strand balance (~57% forward / ~56% reverse reads).\n\n| Evidence Layer | Signal Strength | Assessment |\n|----------------|-----------------|------------|\n| **Discordant Pairs** | Moderate - 55 discordant pairs (2.2%) but scattered across many chromosomes rather than clustered on one partner chromosome, which is atypical for a clean balanced translocation | Weaker signal due to scatter |\n| **Soft Clipped Reads** | Good - max_clips_at_position = 19 (> threshold of 3-10), indicating genuine pileup at the breakpoint position \u2713 | Strong evidence of junction point |\n| **Split Reads** | Limited - only 12 split reads (0.5%), with moderate partner strand concordance (83%) but low overall count | Weak support from this layer |\n| **Read Depth** | Flat as expected for balanced translocation, no deletion signal at focus position \u2713 | Consistent with null hypothesis for SV type |\n\n## Reciprocal Breakpoint Analysis\nThe reciprocal breakpoint check reveals a concerning asymmetry:\n- **Primary side (chr20):** 55 discordant pairs pointing to chr21\n- **Partner side (chr21:34.5M):** Only 7 discordant pairs, with ZERO reads back-pointing to the primary location\n\nVerdict: \"RECIPROCAL LIKELY \u2014 primary signal strong, partner signal present but weak\"\n\n## Conclusion: NOT Strong Evidence\n\nThis balanced translocation is **NOT strong evidence** for several reasons:\n\n1. The reciprocal breakpoint has very low support at chr21 with zero back-pointing reads to the primary position\n2. Discordant pairs are scattered across multiple chromosomes rather than clustered on a single partner chromosome (typical of background noise)\n3. Split read count is quite limited (only 12)\n\nWhile there appears to be some signal present, it falls short of strong evidence criteria for confirming this as a true balanced translocation in IMP01. The asymmetry between the primary and reciprocal sides suggests potential artifacts or an incorrectly identified partner position rather than genuine structural variant support on both arms.",
+  "call_ids": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7
+  ],
+  "n_tool_calls": 7,
+  "text_tool_call_failures": [],
+  "malformed_tool_calls": [],
+  "verification": {
+   "numbers_in_prose": 15,
+   "unsupported": [
+    "57",
+    "56",
+    "83"
+   ],
+   "no_tool_calls": false,
+   "details": [
+    {
+     "text": "200000",
+     "value": 200000.0,
+     "supported": true
+    },
+    {
+     "text": "0.004",
+     "value": 0.004,
+     "supported": true
+    },
+    {
+     "text": "0.4",
+     "value": 0.4,
+     "supported": true
+    },
+    {
+     "text": "57",
+     "value": 57.0,
+     "supported": false
+    },
+    {
+     "text": "56",
+     "value": 56.0,
+     "supported": false
+    },
+    {
+     "text": "55",
+     "value": 55.0,
+     "supported": true
+    },
+    {
+     "text": "2.2",
+     "value": 2.2,
+     "supported": true
+    },
+    {
+     "text": "19",
+     "value": 19.0,
+     "supported": true
+    },
+    {
+     "text": "3",
+     "value": 3.0,
+     "supported": true
+    },
+    {
+     "text": "12",
+     "value": 12.0,
+     "supported": true
+    },
+    {
+     "text": "0.5",
+     "value": 0.5,
+     "supported": true
+    },
+    {
+     "text": "83",
+     "value": 83.0,
+     "supported": false
+    },
+    {
+     "text": "55",
+     "value": 55.0,
+     "supported": true
+    },
+    {
+     "text": "7",
+     "value": 7.0,
+     "supported": true
+    },
+    {
+     "text": "12",
+     "value": 12.0,
+     "supported": true
+    }
+   ]
+  },
+  "wall_s": 37.2,
+  "gen_tokens": 2643,
+  "prompt_tokens": 52532,
+  "gen_tokens_per_s": 83.3,
+  "iterations": 8
+ },
+ "recorder_calls_unablated": [
+  {
+   "id": 1,
+   "server": "evidence",
+   "tool": "bam_stats_at_locus",
+   "params": {
+    "chromosome": "chr20",
+    "start": 200000,
+    "end": 500000,
+    "bam_path": "~/public_data/sim/bams/IMP01.bam"
+   },
+   "is_error": false,
+   "ms": 881.3,
+   "result": {
+    "chromosome": "chr20",
+    "start": 200000,
+    "end": 500000,
+    "contig_length": 64444167,
+    "clamped_to_contig": false,
+    "total_reads": 77480,
+    "mean_depth": 38.31,
+    "mean_mapq": 59.64,
+    "low_mapq_fraction": 0.004,
+    "forward_reads": 38798,
+    "reverse_reads": 38682,
+    "position_provenance": {
+     "source": "caller_supplied",
+     "candidate_id": null,
+     "set_id": null,
+     "set_label": null,
+     "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+    }
+   },
+   "traceback": null
+  },
+  {
+   "id": 2,
+   "server": "evidence",
+   "tool": "applicable_layers",
+   "params": {
+    "bam_path": "~/public_data/sim/bams/IMP01.bam"
+   },
+   "is_error": false,
+   "ms": 7.5,
+   "result": {
+    "bam_path": "~/public_data/sim/bams/IMP01.bam",
+    "reads_sampled": 1000,
+    "applicable_layers": [
+     "discordant_pairs",
+     "soft_clipped_reads",
+     "split_reads",
+     "read_depth"
+    ],
+    "evidence": {
+     "soft_clipped_reads": "always applicable \u2014 any aligned BAM can show soft-clipping.",
+     "read_depth": "always applicable \u2014 any aligned BAM can show a coverage drop.",
+     "discordant_pairs": "applicable \u2014 at least one paired read observed in 1000 sampled reads.",
+     "split_reads": "applicable \u2014 at least one SA (supplementary alignment) tag observed in 1000 sampled reads."
+    }
+   },
+   "traceback": null
+  },
+  {
+   "id": 3,
+   "server": "evidence",
+   "tool": "discordant_pairs",
+   "params": {
+    "chromosome": "chr20",
+    "position": 200000,
+    "window_bp": 5000,
+    "min_mapq": 20,
+    "bam_path": "~/public_data/sim/bams/IMP01.bam"
+   },
+   "is_error": false,
+   "ms": 11.1,
+   "result": {
+    "chromosome": "chr20",
+    "position": 200000,
+    "window_bp": 5000,
+    "total_reads_in_window": 2527,
+    "discordant_pairs": 55,
+    "discordant_fraction": 0.022,
+    "mate_chromosomes": {
+     "chr21": 44,
+     "chr1": 4,
+     "chrX": 1,
+     "chr2": 1,
+     "chr12": 1,
+     "chr7": 1,
+     "chrY": 1,
+     "chr16": 1,
+     "chr14": 1
+    },
+    "same_primary_alt_mates": 0,
+    "reads_below_min_mapq": 2,
+    "quality_limited": false,
+    "assessable": true,
+    "reason": null,
+    "min_mapq_applied": 20,
+    "position_provenance": {
+     "source": "caller_supplied",
+     "candidate_id": null,
+     "set_id": null,
+     "set_label": null,
+     "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+    }
+   },
+   "traceback": null
+  },
+  {
+   "id": 4,
+   "server": "evidence",
+   "tool": "soft_clipped_reads",
+   "params": {
+    "chromosome": "chr20",
+    "position": 200000,
+    "window_bp": 5000,
+    "min_clip_bases": 10,
+    "min_mapq": 20,
+    "bam_path": "~/public_data/sim/bams/IMP01.bam"
+   },
+   "is_error": false,
+   "ms": 8.3,
+   "result": {
+    "chromosome": "chr20",
+    "position": 200000,
+    "window_bp": 5000,
+    "total_reads_in_window": 2539,
+    "soft_clipped_reads": 64,
+    "soft_clipped_fraction": 0.025,
+    "consensus_clip_position": 200000,
+    "max_clips_at_position": 19,
+    "left_clip_reads": 34,
+    "right_clip_reads": 30,
+    "left_consensus_position": 200000,
+    "left_max_clips_at_position": 13,
+    "right_consensus_position": 200000,
+    "right_max_clips_at_position": 6,
+    "dominant_clip_side": "left",
+    "reads_below_min_mapq": 7,
+    "quality_limited": false,
+    "assessable": true,
+    "reason": null,
+    "min_mapq_applied": 20,
+    "position_provenance": {
+     "source": "caller_supplied",
+     "candidate_id": null,
+     "set_id": null,
+     "set_label": null,
+     "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+    }
+   },
+   "traceback": null
+  },
+  {
+   "id": 5,
+   "server": "evidence",
+   "tool": "split_reads",
+   "params": {
+    "chromosome": "chr20",
+    "position": 200000,
+    "window_bp": 5000,
+    "min_mapq": 0,
+    "bam_path": "~/public_data/sim/bams/IMP01.bam"
+   },
+   "is_error": false,
+   "ms": 10.1,
+   "result": {
+    "chromosome": "chr20",
+    "position": 200000,
+    "window_bp": 5000,
+    "total_reads_in_window": 2529,
+    "split_reads": 12,
+    "split_read_fraction": 0.005,
+    "partner_chromosomes": {
+     "chr21": 8,
+     "chr9": 2,
+     "chr20": 1,
+     "chr1": 1
+    },
+    "sa_entries_total": 12,
+    "sa_entries_below_min_mapq": 0,
+    "partner_strand_concordant": 10,
+    "partner_strand_flipped": 2,
+    "example_partner_loci": [
+     "chr9:130813366",
+     "chr21:14100001",
+     "chr21:14099937",
+     "chr21:14099962",
+     "chr20:202118"
+    ],
+    "reads_below_min_mapq": 0,
+    "quality_limited": false,
+    "assessable": true,
+    "reason": null,
+    "min_mapq_applied": 0,
+    "position_provenance": {
+     "source": "caller_supplied",
+     "candidate_id": null,
+     "set_id": null,
+     "set_label": null,
+     "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+    }
+   },
+   "traceback": null
+  },
+  {
+   "id": 6,
+   "server": "evidence",
+   "tool": "read_depth_profile",
+   "params": {
+    "chromosome": "chr20",
+    "start": 200000,
+    "end": 500000,
+    "window_size": 1000,
+    "focus_position": 200000,
+    "dip_tolerance_bp": 1000,
+    "bam_path": "~/public_data/sim/bams/IMP01.bam"
+   },
+   "is_error": false,
+   "ms": 714.6,
+   "result": {
+    "chromosome": "chr20",
+    "start": 200000,
+    "end": 500000,
+    "window_size": 1000,
+    "windows": [
+     {
+      "window_start": 200000,
+      "window_end": 201000,
+      "depth": 39.5
+     },
+     {
+      "window_start": 201000,
+      "window_end": 202000,
+      "depth": 39.15
+     },
+     {
+      "window_start": 202000,
+      "window_end": 203000,
+      "depth": 41.82
+     },
+     {
+      "window_start": 203000,
+      "window_end": 204000,
+      "depth": 32.65
+     },
+     {
+      "window_start": 204000,
+      "window_end": 205000,
+      "depth": 36.88
+     },
+     {
+      "window_start": 205000,
+      "window_end": 206000,
+      "depth": 33.15
+     },
+     {
+      "window_start": 206000,
+      "window_end": 207000,
+      "depth": 32.93
+     },
+     {
+      "window_start": 207000,
+      "window_end": 208000,
+      "depth": 39.27
+     },
+     {
+      "window_start": 208000,
+      "window_end": 209000,
+      "depth": 39.87
+     },
+     {
+      "window_start": 209000,
+      "window_end": 210000,
+      "depth": 37.1
+     },
+     {
+      "window_start": 210000,
+      "window_end": 211000,
+      "depth": 36.21
+     },
+     {
+      "window_start": 211000,
+      "window_end": 212000,
+      "depth": 31.69
+     },
+     {
+      "window_start": 212000,
+      "window_end": 213000,
+      "depth": 36.66
+     },
+     {
+      "window_start": 213000,
+      "window_end": 214000,
+      "depth": 33.77
+     },
+     {
+      "window_start": 214000,
+      "window_end": 215000,
+      "depth": 39.82
+     },
+     {
+      "window_start": 215000,
+      "window_end": 216000,
+      "depth": 30.61
+     },
+     {
+      "window_start": 216000,
+      "window_end": 217000,
+      "depth": 36.91
+     },
+     {
+      "window_start": 217000,
+      "window_end": 218000,
+      "depth": 37.77
+     },
+     {
+      "window_start": 218000,
+      "window_end": 219000,
+      "depth": 36.31
+     },
+     {
+      "window_start": 219000,
+      "window_end": 220000,
+      "depth": 36.74
+     },
+     {
+      "window_start": 220000,
+      "window_end": 221000,
+      "depth": 32.85
+     },
+     {
+      "window_start": 221000,
+      "window_end": 222000,
+      "depth": 27.5
+     },
+     {
+      "window_start": 222000,
+      "window_end": 223000,
+      "depth": 36.76
+     },
+     {
+      "window_start": 223000,
+      "window_end": 224000,
+      "depth": 37.58
+     },
+     {
+      "window_start": 224000,
+      "window_end": 225000,
+      "depth": 43.16
+     },
+     {
+      "window_start": 225000,
+      "window_end": 226000,
+      "depth": 39.62
+     },
+     {
+      "window_start": 226000,
+      "window_end": 227000,
+      "depth": 38.09
+     },
+     {
+      "window_start": 227000,
+      "window_end": 228000,
+      "depth": 38.24
+     },
+     {
+      "window_start": 228000,
+      "window_end": 229000,
+      "depth": 38.07
+     },
+     {
+      "window_start": 229000,
+      "window_end": 230000,
+      "depth": 37.6
+     },
+     {
+      "window_start": 230000,
+      "window_end": 231000,
+      "depth": 38.12
+     },
+     {
+      "window_start": 231000,
+      "window_end": 232000,
+      "depth": 35.26
+     },
+     {
+      "window_start": 232000,
+      "window_end": 233000,
+      "depth": 37.3
+     },
+     {
+      "window_start": 233000,
+      "window_end": 234000,
+      "depth": 35.57
+     },
+     {
+      "window_start": 234000,
+      "window_end": 235000,
+      "depth": 34.64
+     },
+     {
+      "window_start": 235000,
+      "window_end": 236000,
+      "depth": 43.17
+     },
+     {
+      "window_start": 236000,
+      "window_end": 237000,
+      "depth": 32.85
+     },
+     {
+      "window_start": 237000,
+      "window_end": 238000,
+      "depth": 34.02
+     },
+     {
+      "window_start": 238000,
+      "window_end": 239000,
+      "depth": 32.67
+     },
+     {
+      "window_start": 239000,
+      "window_end": 240000,
+      "depth": 31.07
+     },
+     {
+      "window_start": 240000,
+      "window_end": 241000,
+      "depth": 35.8
+     },
+     {
+      "window_start": 241000,
+      "window_end": 242000,
+      "depth": 35.56
+     },
+     {
+      "window_start": 242000,
+      "window_end": 243000,
+      "depth": 39.82
+     },
+     {
+      "window_start": 243000,
+      "window_end": 244000,
+      "depth": 31.95
+     },
+     {
+      "window_start": 244000,
+      "window_end": 245000,
+      "depth": 35.8
+     },
+     {
+      "window_start": 245000,
+      "window_end": 246000,
+      "depth": 31.1
+     },
+     {
+      "window_start": 246000,
+      "window_end": 247000,
+      "depth": 39.81
+     },
+     {
+      "window_start": 247000,
+      "window_end": 248000,
+      "depth": 38.7
+     },
+     {
+      "window_start": 248000,
+      "window_end": 249000,
+      "depth": 39.4
+     },
+     {
+      "window_start": 249000,
+      "window_end": 250000,
+      "depth": 32.75
+     },
+     {
+      "window_start": 250000,
+      "window_end": 251000,
+      "depth": 37.39
+     },
+     {
+      "window_start": 251000,
+      "window_end": 252000,
+      "depth": 36.88
+     },
+     {
+      "window_start": 252000,
+      "window_end": 253000,
+      "depth": 43.97
+     },
+     {
+      "window_start": 253000,
+      "window_end": 254000,
+      "depth": 40.78
+     },
+     {
+      "window_start": 254000,
+      "window_end": 255000,
+      "depth": 41.25
+     },
+     {
+      "window_start": 255000,
+      "window_end": 256000,
+      "depth": 34.12
+     },
+     {
+      "window_start": 256000,
+      "window_end": 257000,
+      "depth": 32.28
+     },
+     {
+      "window_start": 257000,
+      "window_end": 258000,
+      "depth": 30.73
+     },
+     {
+      "window_start": 258000,
+      "window_end": 259000,
+      "depth": 32.66
+     },
+     {
+      "window_start": 259000,
+      "window_end": 260000,
+      "depth": 38.59
+     },
+     {
+      "window_start": 260000,
+      "window_end": 261000,
+      "depth": 38.01
+     },
+     {
+      "window_start": 261000,
+      "window_end": 262000,
+      "depth": 39.26
+     },
+     {
+      "window_start": 262000,
+      "window_end": 263000,
+      "depth": 35.23
+     },
+     {
+      "window_start": 263000,
+      "window_end": 264000,
+      "depth": 35.6
+     },
+     {
+      "window_start": 264000,
+      "window_end": 265000,
+      "depth": 36.82
+     },
+     {
+      "window_start": 265000,
+      "window_end": 266000,
+      "depth": 41.38
+     },
+     {
+      "window_start": 266000,
+      "window_end": 267000,
+      "depth": 48.6
+     },
+     {
+      "window_start": 267000,
+      "window_end": 268000,
+      "depth": 36.46
+     },
+     {
+      "window_start": 268000,
+      "window_end": 269000,
+      "depth": 41.76
+     },
+     {
+      "window_start": 269000,
+      "window_end": 270000,
+      "depth": 36.91
+     },
+     {
+      "window_start": 270000,
+      "window_end": 271000,
+      "depth": 35.38
+     },
+     {
+      "window_start": 271000,
+      "window_end": 272000,
+      "depth": 35.27
+     },
+     {
+      "window_start": 272000,
+      "window_end": 273000,
+      "depth": 40.85
+     },
+     {
+      "window_start": 273000,
+      "window_end": 274000,
+      "depth": 38.95
+     },
+     {
+      "window_start": 274000,
+      "window_end": 275000,
+      "depth": 34.19
+     },
+     {
+      "window_start": 275000,
+      "window_end": 276000,
+      "depth": 35.52
+     },
+     {
+      "window_start": 276000,
+      "window_end": 277000,
+      "depth": 39.38
+     },
+     {
+      "window_start": 277000,
+      "window_end": 278000,
+      "depth": 44.45
+     },
+     {
+      "window_start": 278000,
+      "window_end": 279000,
+      "depth": 30.89
+     },
+     {
+      "window_start": 279000,
+      "window_end": 280000,
+      "depth": 33.79
+     },
+     {
+      "window_start": 280000,
+      "window_end": 281000,
+      "depth": 42.22
+     },
+     {
+      "window_start": 281000,
+      "window_end": 282000,
+      "depth": 42.79
+     },
+     {
+      "window_start": 282000,
+      "window_end": 283000,
+      "depth": 40.15
+     },
+     {
+      "window_start": 283000,
+      "window_end": 284000,
+      "depth": 38.68
+     },
+     {
+      "window_start": 284000,
+      "window_end": 285000,
+      "depth": 42.41
+     },
+     {
+      "window_start": 285000,
+      "window_end": 286000,
+      "depth": 44.03
+     },
+     {
+      "window_start": 286000,
+      "window_end": 287000,
+      "depth": 37.38
+     },
+     {
+      "window_start": 287000,
+      "window_end": 288000,
+      "depth": 40.71
+     },
+     {
+      "window_start": 288000,
+      "window_end": 289000,
+      "depth": 42.24
+     },
+     {
+      "window_start": 289000,
+      "window_end": 290000,
+      "depth": 37.28
+     },
+     {
+      "window_start": 290000,
+      "window_end": 291000,
+      "depth": 34.14
+     },
+     {
+      "window_start": 291000,
+      "window_end": 292000,
+      "depth": 32.95
+     },
+     {
+      "window_start": 292000,
+      "window_end": 293000,
+      "depth": 40.37
+     },
+     {
+      "window_start": 293000,
+      "window_end": 294000,
+      "depth": 35.52
+     },
+     {
+      "window_start": 294000,
+      "window_end": 295000,
+      "depth": 37.58
+     },
+     {
+      "window_start": 295000,
+      "window_end": 296000,
+      "depth": 43.68
+     },
+     {
+      "window_start": 296000,
+      "window_end": 297000,
+      "depth": 49.19
+     },
+     {
+      "window_start": 297000,
+      "window_end": 298000,
+      "depth": 44.97
+     },
+     {
+      "window_start": 298000,
+      "window_end": 299000,
+      "depth": 46.39
+     },
+     {
+      "window_start": 299000,
+      "window_end": 300000,
+      "depth": 35.85
+     },
+     {
+      "window_start": 300000,
+      "window_end": 301000,
+      "depth": 42.0
+     },
+     {
+      "window_start": 301000,
+      "window_end": 302000,
+      "depth": 39.59
+     },
+     {
+      "window_start": 302000,
+      "window_end": 303000,
+      "depth": 43.22
+     },
+     {
+      "window_start": 303000,
+      "window_end": 304000,
+      "depth": 36.63
+     },
+     {
+      "window_start": 304000,
+      "window_end": 305000,
+      "depth": 34.99
+     },
+     {
+      "window_start": 305000,
+      "window_end": 306000,
+      "depth": 31.9
+     },
+     {
+      "window_start": 306000,
+      "window_end": 307000,
+      "depth": 41.76
+     },
+     {
+      "window_start": 307000,
+      "window_end": 308000,
+      "depth": 35.38
+     },
+     {
+      "window_start": 308000,
+      "window_end": 309000,
+      "depth": 41.12
+     },
+     {
+      "window_start": 309000,
+      "window_end": 310000,
+      "depth": 39.12
+     },
+     {
+      "window_start": 310000,
+      "window_end": 311000,
+      "depth": 44.16
+     },
+     {
+      "window_start": 311000,
+      "window_end": 312000,
+      "depth": 34.31
+     },
+     {
+      "window_start": 312000,
+      "window_end": 313000,
+      "depth": 37.07
+     },
+     {
+      "window_start": 313000,
+      "window_end": 314000,
+      "depth": 35.35
+     },
+     {
+      "window_start": 314000,
+      "window_end": 315000,
+      "depth": 33.44
+     },
+     {
+      "window_start": 315000,
+      "window_end": 316000,
+      "depth": 37.69
+     },
+     {
+      "window_start": 316000,
+      "window_end": 317000,
+      "depth": 35.55
+     },
+     {
+      "window_start": 317000,
+      "window_end": 318000,
+      "depth": 40.98
+     },
+     {
+      "window_start": 318000,
+      "window_end": 319000,
+      "depth": 36.37
+     },
+     {
+      "window_start": 319000,
+      "window_end": 320000,
+      "depth": 35.03
+     },
+     {
+      "window_start": 320000,
+      "window_end": 321000,
+      "depth": 38.64
+     },
+     {
+      "window_start": 321000,
+      "window_end": 322000,
+      "depth": 43.21
+     },
+     {
+      "window_start": 322000,
+      "window_end": 323000,
+      "depth": 42.53
+     },
+     {
+      "window_start": 323000,
+      "window_end": 324000,
+      "depth": 35.68
+     },
+     {
+      "window_start": 324000,
+      "window_end": 325000,
+      "depth": 40.26
+     },
+     {
+      "window_start": 325000,
+      "window_end": 326000,
+      "depth": 36.42
+     },
+     {
+      "window_start": 326000,
+      "window_end": 327000,
+      "depth": 43.55
+     },
+     {
+      "window_start": 327000,
+      "window_end": 328000,
+      "depth": 36.58
+     },
+     {
+      "window_start": 328000,
+      "window_end": 329000,
+      "depth": 34.73
+     },
+     {
+      "window_start": 329000,
+      "window_end": 330000,
+      "depth": 39.87
+     },
+     {
+      "window_start": 330000,
+      "window_end": 331000,
+      "depth": 39.48
+     },
+     {
+      "window_start": 331000,
+      "window_end": 332000,
+      "depth": 39.26
+     },
+     {
+      "window_start": 332000,
+      "window_end": 333000,
+      "depth": 45.12
+     },
+     {
+      "window_start": 333000,
+      "window_end": 334000,
+      "depth": 35.73
+     },
+     {
+      "window_start": 334000,
+      "window_end": 335000,
+      "depth": 40.6
+     },
+     {
+      "window_start": 335000,
+      "window_end": 336000,
+      "depth": 39.3
+     },
+     {
+      "window_start": 336000,
+      "window_end": 337000,
+      "depth": 32.73
+     },
+     {
+      "window_start": 337000,
+      "window_end": 338000,
+      "depth": 30.4
+     },
+     {
+      "window_start": 338000,
+      "window_end": 339000,
+      "depth": 30.19
+     },
+     {
+      "window_start": 339000,
+      "window_end": 340000,
+      "depth": 39.26
+     },
+     {
+      "window_start": 340000,
+      "window_end": 341000,
+      "depth": 32.35
+     },
+     {
+      "window_start": 341000,
+      "window_end": 342000,
+      "depth": 36.59
+     },
+     {
+      "window_start": 342000,
+      "window_end": 343000,
+      "depth": 34.51
+     },
+     {
+      "window_start": 343000,
+      "window_end": 344000,
+      "depth": 41.19
+     },
+     {
+      "window_start": 344000,
+      "window_end": 345000,
+      "depth": 40.57
+     },
+     {
+      "window_start": 345000,
+      "window_end": 346000,
+      "depth": 39.06
+     },
+     {
+      "window_start": 346000,
+      "window_end": 347000,
+      "depth": 42.35
+     },
+     {
+      "window_start": 347000,
+      "window_end": 348000,
+      "depth": 46.59
+     },
+     {
+      "window_start": 348000,
+      "window_end": 349000,
+      "depth": 38.35
+     },
+     {
+      "window_start": 349000,
+      "window_end": 350000,
+      "depth": 39.43
+     },
+     {
+      "window_start": 350000,
+      "window_end": 351000,
+      "depth": 34.73
+     },
+     {
+      "window_start": 351000,
+      "window_end": 352000,
+      "depth": 39.26
+     },
+     {
+      "window_start": 352000,
+      "window_end": 353000,
+      "depth": 35.13
+     },
+     {
+      "window_start": 353000,
+      "window_end": 354000,
+      "depth": 43.26
+     },
+     {
+      "window_start": 354000,
+      "window_end": 355000,
+      "depth": 32.28
+     },
+     {
+      "window_start": 355000,
+      "window_end": 356000,
+      "depth": 38.76
+     },
+     {
+      "window_start": 356000,
+      "window_end": 357000,
+      "depth": 42.15
+     },
+     {
+      "window_start": 357000,
+      "window_end": 358000,
+      "depth": 41.74
+     },
+     {
+      "window_start": 358000,
+      "window_end": 359000,
+      "depth": 36.23
+     },
+     {
+      "window_start": 359000,
+      "window_end": 360000,
+      "depth": 47.92
+     },
+     {
+      "window_start": 360000,
+      "window_end": 361000,
+      "depth": 44.07
+     },
+     {
+      "window_start": 361000,
+      "window_end": 362000,
+      "depth": 41.92
+     },
+     {
+      "window_start": 362000,
+      "window_end": 363000,
+      "depth": 41.49
+     },
+     {
+      "window_start": 363000,
+      "window_end": 364000,
+      "depth": 39.24
+     },
+     {
+      "window_start": 364000,
+      "window_end": 365000,
+      "depth": 45.68
+     },
+     {
+      "window_start": 365000,
+      "window_end": 366000,
+      "depth": 40.62
+     },
+     {
+      "window_start": 366000,
+      "window_end": 367000,
+      "depth": 40.46
+     },
+     {
+      "window_start": 367000,
+      "window_end": 368000,
+      "depth": 40.2
+     },
+     {
+      "window_start": 368000,
+      "window_end": 369000,
+      "depth": 33.7
+     },
+     {
+      "window_start": 369000,
+      "window_end": 370000,
+      "depth": 44.03
+     },
+     {
+      "window_start": 370000,
+      "window_end": 371000,
+      "depth": 40.24
+     },
+     {
+      "window_start": 371000,
+      "window_end": 372000,
+      "depth": 43.98
+     },
+     {
+      "window_start": 372000,
+      "window_end": 373000,
+      "depth": 41.35
+     },
+     {
+      "window_start": 373000,
+      "window_end": 374000,
+      "depth": 35.37
+     },
+     {
+      "window_start": 374000,
+      "window_end": 375000,
+      "depth": 35.47
+     },
+     {
+      "window_start": 375000,
+      "window_end": 376000,
+      "depth": 39.58
+     },
+     {
+      "window_start": 376000,
+      "window_end": 377000,
+      "depth": 39.62
+     },
+     {
+      "window_start": 377000,
+      "window_end": 378000,
+      "depth": 43.94
+     },
+     {
+      "window_start": 378000,
+      "window_end": 379000,
+      "depth": 31.7
+     },
+     {
+      "window_start": 379000,
+      "window_end": 380000,
+      "depth": 35.6
+     },
+     {
+      "window_start": 380000,
+      "window_end": 381000,
+      "depth": 46.25
+     },
+     {
+      "window_start": 381000,
+      "window_end": 382000,
+      "depth": 44.55
+     },
+     {
+      "window_start": 382000,
+      "window_end": 383000,
+      "depth": 40.18
+     },
+     {
+      "window_start": 383000,
+      "window_end": 384000,
+      "depth": 36.37
+     },
+     {
+      "window_start": 384000,
+      "window_end": 385000,
+      "depth": 38.83
+     },
+     {
+      "window_start": 385000,
+      "window_end": 386000,
+      "depth": 40.58
+     },
+     {
+      "window_start": 386000,
+      "window_end": 387000,
+      "depth": 42.59
+     },
+     {
+      "window_start": 387000,
+      "window_end": 388000,
+      "depth": 45.62
+     },
+     {
+      "window_start": 388000,
+      "window_end": 389000,
+      "depth": 40.18
+     },
+     {
+      "window_start": 389000,
+      "window_end": 390000,
+      "depth": 39.77
+     },
+     {
+      "window_start": 390000,
+      "window_end": 391000,
+      "depth": 42.77
+     },
+     {
+      "window_start": 391000,
+      "window_end": 392000,
+      "depth": 41.36
+     },
+     {
+      "window_start": 392000,
+      "window_end": 393000,
+      "depth": 33.07
+     },
+     {
+      "window_start": 393000,
+      "window_end": 394000,
+      "depth": 35.02
+     },
+     {
+      "window_start": 394000,
+      "window_end": 395000,
+      "depth": 44.54
+     },
+     {
+      "window_start": 395000,
+      "window_end": 396000,
+      "depth": 43.73
+     },
+     {
+      "window_start": 396000,
+      "window_end": 397000,
+      "depth": 49.76
+     },
+     {
+      "window_start": 397000,
+      "window_end": 398000,
+      "depth": 35.95
+     },
+     {
+      "window_start": 398000,
+      "window_end": 399000,
+      "depth": 41.53
+     },
+     {
+      "window_start": 399000,
+      "window_end": 400000,
+      "depth": 42.74
+     },
+     {
+      "window_start": 400000,
+      "window_end": 401000,
+      "depth": 35.33
+     },
+     {
+      "window_start": 401000,
+      "window_end": 402000,
+      "depth": 31.6
+     },
+     {
+      "window_start": 402000,
+      "window_end": 403000,
+      "depth": 27.57
+     },
+     {
+      "window_start": 403000,
+      "window_end": 404000,
+      "depth": 40.23
+     },
+     {
+      "window_start": 404000,
+      "window_end": 405000,
+      "depth": 47.74
+     },
+     {
+      "window_start": 405000,
+      "window_end": 406000,
+      "depth": 32.49
+     },
+     {
+      "window_start": 406000,
+      "window_end": 407000,
+      "depth": 32.26
+     },
+     {
+      "window_start": 407000,
+      "window_end": 408000,
+      "depth": 38.32
+     },
+     {
+      "window_start": 408000,
+      "window_end": 409000,
+      "depth": 46.45
+     },
+     {
+      "window_start": 409000,
+      "window_end": 410000,
+      "depth": 43.6
+     },
+     {
+      "window_start": 410000,
+      "window_end": 411000,
+      "depth": 37.54
+     },
+     {
+      "window_start": 411000,
+      "window_end": 412000,
+      "depth": 41.49
+     },
+     {
+      "window_start": 412000,
+      "window_end": 413000,
+      "depth": 33.09
+     },
+     {
+      "window_start": 413000,
+      "window_end": 414000,
+      "depth": 34.04
+     },
+     {
+      "window_start": 414000,
+      "window_end": 415000,
+      "depth": 42.23
+     },
+     {
+      "window_start": 415000,
+      "window_end": 416000,
+      "depth": 36.81
+     },
+     {
+      "window_start": 416000,
+      "window_end": 417000,
+      "depth": 39.64
+     },
+     {
+      "window_start": 417000,
+      "window_end": 418000,
+      "depth": 40.71
+     },
+     {
+      "window_start": 418000,
+      "window_end": 419000,
+      "depth": 41.89
+     },
+     {
+      "window_start": 419000,
+      "window_end": 420000,
+      "depth": 50.04
+     },
+     {
+      "window_start": 420000,
+      "window_end": 421000,
+      "depth": 34.83
+     },
+     {
+      "window_start": 421000,
+      "window_end": 422000,
+      "depth": 48.64
+     },
+     {
+      "window_start": 422000,
+      "window_end": 423000,
+      "depth": 42.44
+     },
+     {
+      "window_start": 423000,
+      "window_end": 424000,
+      "depth": 44.97
+     },
+     {
+      "window_start": 424000,
+      "window_end": 425000,
+      "depth": 43.07
+     },
+     {
+      "window_start": 425000,
+      "window_end": 426000,
+      "depth": 41.81
+     },
+     {
+      "window_start": 426000,
+      "window_end": 427000,
+      "depth": 35.29
+     },
+     {
+      "window_start": 427000,
+      "window_end": 428000,
+      "depth": 34.34
+     },
+     {
+      "window_start": 428000,
+      "window_end": 429000,
+      "depth": 44.05
+     },
+     {
+      "window_start": 429000,
+      "window_end": 430000,
+      "depth": 38.5
+     },
+     {
+      "window_start": 430000,
+      "window_end": 431000,
+      "depth": 42.79
+     },
+     {
+      "window_start": 431000,
+      "window_end": 432000,
+      "depth": 32.78
+     },
+     {
+      "window_start": 432000,
+      "window_end": 433000,
+      "depth": 42.14
+     },
+     {
+      "window_start": 433000,
+      "window_end": 434000,
+      "depth": 36.48
+     },
+     {
+      "window_start": 434000,
+      "window_end": 435000,
+      "depth": 42.99
+     },
+     {
+      "window_start": 435000,
+      "window_end": 436000,
+      "depth": 39.34
+     },
+     {
+      "window_start": 436000,
+      "window_end": 437000,
+      "depth": 35.5
+     },
+     {
+      "window_start": 437000,
+      "window_end": 438000,
+      "depth": 46.63
+     },
+     {
+      "window_start": 438000,
+      "window_end": 439000,
+      "depth": 38.01
+     },
+     {
+      "window_start": 439000,
+      "window_end": 440000,
+      "depth": 41.0
+     },
+     {
+      "window_start": 440000,
+      "window_end": 441000,
+      "depth": 43.6
+     },
+     {
+      "window_start": 441000,
+      "window_end": 442000,
+      "depth": 45.61
+     },
+     {
+      "window_start": 442000,
+      "window_end": 443000,
+      "depth": 36.26
+     },
+     {
+      "window_start": 443000,
+      "window_end": 444000,
+      "depth": 29.25
+     },
+     {
+      "window_start": 444000,
+      "window_end": 445000,
+      "depth": 34.72
+     },
+     {
+      "window_start": 445000,
+      "window_end": 446000,
+      "depth": 38.01
+     },
+     {
+      "window_start": 446000,
+      "window_end": 447000,
+      "depth": 45.59
+     },
+     {
+      "window_start": 447000,
+      "window_end": 448000,
+      "depth": 34.25
+     },
+     {
+      "window_start": 448000,
+      "window_end": 449000,
+      "depth": 32.77
+     },
+     {
+      "window_start": 449000,
+      "window_end": 450000,
+      "depth": 31.74
+     },
+     {
+      "window_start": 450000,
+      "window_end": 451000,
+      "depth": 36.98
+     },
+     {
+      "window_start": 451000,
+      "window_end": 452000,
+      "depth": 39.92
+     },
+     {
+      "window_start": 452000,
+      "window_end": 453000,
+      "depth": 43.89
+     },
+     {
+      "window_start": 453000,
+      "window_end": 454000,
+      "depth": 27.54
+     },
+     {
+      "window_start": 454000,
+      "window_end": 455000,
+      "depth": 33.04
+     },
+     {
+      "window_start": 455000,
+      "window_end": 456000,
+      "depth": 39.56
+     },
+     {
+      "window_start": 456000,
+      "window_end": 457000,
+      "depth": 34.39
+     },
+     {
+      "window_start": 457000,
+      "window_end": 458000,
+      "depth": 35.6
+     },
+     {
+      "window_start": 458000,
+      "window_end": 459000,
+      "depth": 31.5
+     },
+     {
+      "window_start": 459000,
+      "window_end": 460000,
+      "depth": 35.28
+     },
+     {
+      "window_start": 460000,
+      "window_end": 461000,
+      "depth": 38.33
+     },
+     {
+      "window_start": 461000,
+      "window_end": 462000,
+      "depth": 47.16
+     },
+     {
+      "window_start": 462000,
+      "window_end": 463000,
+      "depth": 41.84
+     },
+     {
+      "window_start": 463000,
+      "window_end": 464000,
+      "depth": 36.41
+     },
+     {
+      "window_start": 464000,
+      "window_end": 465000,
+      "depth": 33.84
+     },
+     {
+      "window_start": 465000,
+      "window_end": 466000,
+      "depth": 33.55
+     },
+     {
+      "window_start": 466000,
+      "window_end": 467000,
+      "depth": 35.74
+     },
+     {
+      "window_start": 467000,
+      "window_end": 468000,
+      "depth": 38.75
+     },
+     {
+      "window_start": 468000,
+      "window_end": 469000,
+      "depth": 40.69
+     },
+     {
+      "window_start": 469000,
+      "window_end": 470000,
+      "depth": 36.68
+     },
+     {
+      "window_start": 470000,
+      "window_end": 471000,
+      "depth": 35.74
+     },
+     {
+      "window_start": 471000,
+      "window_end": 472000,
+      "depth": 40.68
+     },
+     {
+      "window_start": 472000,
+      "window_end": 473000,
+      "depth": 41.35
+     },
+     {
+      "window_start": 473000,
+      "window_end": 474000,
+      "depth": 38.12
+     },
+     {
+      "window_start": 474000,
+      "window_end": 475000,
+      "depth": 36.57
+     },
+     {
+      "window_start": 475000,
+      "window_end": 476000,
+      "depth": 36.48
+     },
+     {
+      "window_start": 476000,
+      "window_end": 477000,
+      "depth": 34.88
+     },
+     {
+      "window_start": 477000,
+      "window_end": 478000,
+      "depth": 39.68
+     },
+     {
+      "window_start": 478000,
+      "window_end": 479000,
+      "depth": 36.23
+     },
+     {
+      "window_start": 479000,
+      "window_end": 480000,
+      "depth": 31.77
+     },
+     {
+      "window_start": 480000,
+      "window_end": 481000,
+      "depth": 39.19
+     },
+     {
+      "window_start": 481000,
+      "window_end": 482000,
+      "depth": 36.96
+     },
+     {
+      "window_start": 482000,
+      "window_end": 483000,
+      "depth": 43.71
+     },
+     {
+      "window_start": 483000,
+      "window_end": 484000,
+      "depth": 35.51
+     },
+     {
+      "window_start": 484000,
+      "window_end": 485000,
+      "depth": 39.13
+     },
+     {
+      "window_start": 485000,
+      "window_end": 486000,
+      "depth": 39.36
+     },
+     {
+      "window_start": 486000,
+      "window_end": 487000,
+      "depth": 42.79
+     },
+     {
+      "window_start": 487000,
+      "window_end": 488000,
+      "depth": 41.45
+     },
+     {
+      "window_start": 488000,
+      "window_end": 489000,
+      "depth": 35.93
+     },
+     {
+      "window_start": 489000,
+      "window_end": 490000,
+      "depth": 33.19
+     },
+     {
+      "window_start": 490000,
+      "window_end": 491000,
+      "depth": 33.17
+     },
+     {
+      "window_start": 491000,
+      "window_end": 492000,
+      "depth": 41.13
+     },
+     {
+      "window_start": 492000,
+      "window_end": 493000,
+      "depth": 33.72
+     },
+     {
+      "window_start": 493000,
+      "window_end": 494000,
+      "depth": 39.5
+     },
+     {
+      "window_start": 494000,
+      "window_end": 495000,
+      "depth": 39.06
+     },
+     {
+      "window_start": 495000,
+      "window_end": 496000,
+      "depth": 33.35
+     },
+     {
+      "window_start": 496000,
+      "window_end": 497000,
+      "depth": 33.14
+     },
+     {
+      "window_start": 497000,
+      "window_end": 498000,
+      "depth": 39.4
+     },
+     {
+      "window_start": 498000,
+      "window_end": 499000,
+      "depth": 40.65
+     },
+     {
+      "window_start": 499000,
+      "window_end": 500000,
+      "depth": 33.93
+     }
+    ],
+    "summary": {
+     "min_depth": 27.5,
+     "max_depth": 50.04,
+     "mean_depth": 38.31,
+     "depth_ratio_min_to_mean": 1.022,
+     "likely_deletion": false,
+     "dip_position": 221000,
+     "dip_distance_from_focus": 21000,
+     "dip_is_at_focus": false,
+     "assessable": true,
+     "reason": null,
+     "contig_length": 64444167,
+     "clamped_to_contig": false,
+     "min_mapq_applied": null,
+     "mapq_note": "depth counts ALL reads regardless of MAPQ; the discordant, soft-clip and split layers filter at min_mapq. In a low-MAPQ region this layer is the only one still counting, so compare with care."
+    },
+    "position_provenance": {
+     "source": "caller_supplied",
+     "candidate_id": null,
+     "set_id": null,
+     "set_label": null,
+     "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+    }
+   },
+   "traceback": null
+  },
+  {
+   "id": 7,
+   "server": "evidence",
+   "tool": "reciprocal_breakpoint",
+   "params": {
+    "primary_chromosome": "chr20",
+    "primary_position": 200000,
+    "partner_chromosome": "chr21",
+    "partner_position": 34500000,
+    "window_bp": 5000,
+    "min_mapq": 20,
+    "bam_path": "~/public_data/sim/bams/IMP01.bam"
+   },
+   "is_error": false,
+   "ms": 29.9,
+   "result": {
+    "primary": {
+     "chromosome": "chr20",
+     "position": 200000,
+     "discordant_pairs": 55,
+     "mate_chromosomes": {
+      "chr21": 44,
+      "chr1": 4,
+      "chrX": 1,
+      "chr2": 1,
+      "chr12": 1,
+      "chr7": 1,
+      "chrY": 1,
+      "chr16": 1,
+      "chr14": 1
+     }
+    },
+    "reciprocal": {
+     "chromosome": "chr21",
+     "position": 34500000,
+     "discordant_pairs": 7,
+     "back_pointing_to_primary": 0,
+     "mate_chromosomes": {
+      "chr2": 3,
+      "chr10": 1,
+      "chr12": 1,
+      "chr15": 1,
+      "chr9": 1
+     }
+    },
+    "verdict": "RECIPROCAL LIKELY \u2014 primary signal strong, partner signal present but weak",
+    "is_balanced": true,
+    "min_mapq_applied": 20,
+    "position_provenance": {
+     "source": "caller_supplied",
+     "candidate_id": null,
+     "set_id": null,
+     "set_label": null,
+     "note": "This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirmation of a caller-derived junction."
+    }
+   },
+   "traceback": null
+  }
+ ]
+}
