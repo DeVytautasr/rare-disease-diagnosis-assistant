@@ -1,0 +1,321 @@
+{
+ "what": "Phase 10 rerun, API arm: spend from each run's usage fields at the list prices in PRICES_LIVE",
+ "definition": "cost = input x in + cache_creation x cache_write_5m + cache_read x cache_read + output x out, per million tokens, per run, summed",
+ "prices": {
+  "claude-sonnet-5": {
+   "in": 2.0,
+   "cache_write_5m": 2.5,
+   "cache_read": 0.2,
+   "out": 10.0
+  },
+  "claude-opus-5": {
+   "in": 5.0,
+   "cache_write_5m": 6.25,
+   "cache_read": 0.5,
+   "out": 25.0
+  }
+ },
+ "per_model": {
+  "claude-sonnet-5": {
+   "runs": 10,
+   "cost_usd": 0.5525,
+   "input_tokens": 1288,
+   "cache_write_tokens": 66948,
+   "cache_read_tokens": 486547,
+   "output_tokens": 28522
+  },
+  "claude-opus-5": {
+   "runs": 10,
+   "cost_usd": 1.4965,
+   "input_tokens": 1298,
+   "cache_write_tokens": 64414,
+   "cache_read_tokens": 543894,
+   "output_tokens": 32617
+  }
+ },
+ "total_usd": 2.049,
+ "projected_usd": 5.77,
+ "cap_usd": 17.31,
+ "runs": [
+  {
+   "model": "claude-sonnet-5",
+   "file": "claude-sonnet-5/WITHOUT__run1.json",
+   "usage": {
+    "input_tokens": 127,
+    "output_tokens": 2821,
+    "cache_creation_input_tokens": 4893,
+    "cache_read_input_tokens": 36701
+   },
+   "cost_usd": 0.048037,
+   "chat_api_cost_usd": 0.048037,
+   "api_error": null,
+   "refusals": 0
+  },
+  {
+   "model": "claude-sonnet-5",
+   "file": "claude-sonnet-5/WITHOUT__run2.json",
+   "usage": {
+    "input_tokens": 135,
+    "output_tokens": 4396,
+    "cache_creation_input_tokens": 8559,
+    "cache_read_input_tokens": 90416
+   },
+   "cost_usd": 0.083711,
+   "chat_api_cost_usd": 0.083711,
+   "api_error": null,
+   "refusals": 0
+  },
+  {
+   "model": "claude-sonnet-5",
+   "file": "claude-sonnet-5/WITHOUT__run3.json",
+   "usage": {
+    "input_tokens": 127,
+    "output_tokens": 2364,
+    "cache_creation_input_tokens": 5128,
+    "cache_read_input_tokens": 36717
+   },
+   "cost_usd": 0.044057,
+   "chat_api_cost_usd": 0.044057,
+   "api_error": null,
+   "refusals": 0
+  },
+  {
+   "model": "claude-sonnet-5",
+   "file": "claude-sonnet-5/WITHOUT__run4.json",
+   "usage": {
+    "input_tokens": 127,
+    "output_tokens": 2259,
+    "cache_creation_input_tokens": 4833,
+    "cache_read_input_tokens": 38036
+   },
+   "cost_usd": 0.042534,
+   "chat_api_cost_usd": 0.042534,
+   "api_error": null,
+   "refusals": 0
+  },
+  {
+   "model": "claude-sonnet-5",
+   "file": "claude-sonnet-5/WITHOUT__run5.json",
+   "usage": {
+    "input_tokens": 127,
+    "output_tokens": 2489,
+    "cache_creation_input_tokens": 4060,
+    "cache_read_input_tokens": 37564
+   },
+   "cost_usd": 0.042807,
+   "chat_api_cost_usd": 0.042807,
+   "api_error": null,
+   "refusals": 0
+  },
+  {
+   "model": "claude-sonnet-5",
+   "file": "claude-sonnet-5/WITH__run1.json",
+   "usage": {
+    "input_tokens": 127,
+    "output_tokens": 2732,
+    "cache_creation_input_tokens": 14412,
+    "cache_read_input_tokens": 30355
+   },
+   "cost_usd": 0.069675,
+   "chat_api_cost_usd": 0.069675,
+   "api_error": null,
+   "refusals": 0
+  },
+  {
+   "model": "claude-sonnet-5",
+   "file": "claude-sonnet-5/WITH__run2.json",
+   "usage": {
+    "input_tokens": 127,
+    "output_tokens": 2580,
+    "cache_creation_input_tokens": 6189,
+    "cache_read_input_tokens": 36731
+   },
+   "cost_usd": 0.048873,
+   "chat_api_cost_usd": 0.048873,
+   "api_error": null,
+   "refusals": 0
+  },
+  {
+   "model": "claude-sonnet-5",
+   "file": "claude-sonnet-5/WITH__run3.json",
+   "usage": {
+    "input_tokens": 133,
+    "output_tokens": 4116,
+    "cache_creation_input_tokens": 8812,
+    "cache_read_input_tokens": 81064
+   },
+   "cost_usd": 0.079669,
+   "chat_api_cost_usd": 0.079669,
+   "api_error": null,
+   "refusals": 0
+  },
+  {
+   "model": "claude-sonnet-5",
+   "file": "claude-sonnet-5/WITH__run4.json",
+   "usage": {
+    "input_tokens": 127,
+    "output_tokens": 2280,
+    "cache_creation_input_tokens": 4978,
+    "cache_read_input_tokens": 37496
+   },
+   "cost_usd": 0.042998,
+   "chat_api_cost_usd": 0.042998,
+   "api_error": null,
+   "refusals": 0
+  },
+  {
+   "model": "claude-sonnet-5",
+   "file": "claude-sonnet-5/WITH__run5.json",
+   "usage": {
+    "input_tokens": 131,
+    "output_tokens": 2485,
+    "cache_creation_input_tokens": 5084,
+    "cache_read_input_tokens": 61467
+   },
+   "cost_usd": 0.050115,
+   "chat_api_cost_usd": 0.050115,
+   "api_error": null,
+   "refusals": 0
+  },
+  {
+   "model": "claude-opus-5",
+   "file": "claude-opus-5/WITHOUT__run1.json",
+   "usage": {
+    "input_tokens": 131,
+    "output_tokens": 3574,
+    "cache_creation_input_tokens": 6414,
+    "cache_read_input_tokens": 64019
+   },
+   "cost_usd": 0.162102,
+   "chat_api_cost_usd": 0.162102,
+   "api_error": null,
+   "refusals": 0
+  },
+  {
+   "model": "claude-opus-5",
+   "file": "claude-opus-5/WITHOUT__run2.json",
+   "usage": {
+    "input_tokens": 129,
+    "output_tokens": 3394,
+    "cache_creation_input_tokens": 6492,
+    "cache_read_input_tokens": 48492
+   },
+   "cost_usd": 0.150316,
+   "chat_api_cost_usd": 0.150316,
+   "api_error": null,
+   "refusals": 0
+  },
+  {
+   "model": "claude-opus-5",
+   "file": "claude-opus-5/WITHOUT__run3.json",
+   "usage": {
+    "input_tokens": 131,
+    "output_tokens": 3627,
+    "cache_creation_input_tokens": 6429,
+    "cache_read_input_tokens": 64095
+   },
+   "cost_usd": 0.163559,
+   "chat_api_cost_usd": 0.163559,
+   "api_error": null,
+   "refusals": 0
+  },
+  {
+   "model": "claude-opus-5",
+   "file": "claude-opus-5/WITHOUT__run4.json",
+   "usage": {
+    "input_tokens": 129,
+    "output_tokens": 3356,
+    "cache_creation_input_tokens": 6505,
+    "cache_read_input_tokens": 48532
+   },
+   "cost_usd": 0.149467,
+   "chat_api_cost_usd": 0.149467,
+   "api_error": null,
+   "refusals": 0
+  },
+  {
+   "model": "claude-opus-5",
+   "file": "claude-opus-5/WITHOUT__run5.json",
+   "usage": {
+    "input_tokens": 131,
+    "output_tokens": 4260,
+    "cache_creation_input_tokens": 7373,
+    "cache_read_input_tokens": 63177
+   },
+   "cost_usd": 0.184825,
+   "chat_api_cost_usd": 0.184825,
+   "api_error": null,
+   "refusals": 0
+  },
+  {
+   "model": "claude-opus-5",
+   "file": "claude-opus-5/WITH__run1.json",
+   "usage": {
+    "input_tokens": 131,
+    "output_tokens": 2937,
+    "cache_creation_input_tokens": 7059,
+    "cache_read_input_tokens": 61822
+   },
+   "cost_usd": 0.14911,
+   "chat_api_cost_usd": 0.14911,
+   "api_error": null,
+   "refusals": 0
+  },
+  {
+   "model": "claude-opus-5",
+   "file": "claude-opus-5/WITH__run2.json",
+   "usage": {
+    "input_tokens": 129,
+    "output_tokens": 3041,
+    "cache_creation_input_tokens": 7585,
+    "cache_read_input_tokens": 48481
+   },
+   "cost_usd": 0.148317,
+   "chat_api_cost_usd": 0.148317,
+   "api_error": null,
+   "refusals": 0
+  },
+  {
+   "model": "claude-opus-5",
+   "file": "claude-opus-5/WITH__run3.json",
+   "usage": {
+    "input_tokens": 129,
+    "output_tokens": 2714,
+    "cache_creation_input_tokens": 5354,
+    "cache_read_input_tokens": 47534
+   },
+   "cost_usd": 0.125724,
+   "chat_api_cost_usd": 0.125724,
+   "api_error": null,
+   "refusals": 0
+  },
+  {
+   "model": "claude-opus-5",
+   "file": "claude-opus-5/WITH__run4.json",
+   "usage": {
+    "input_tokens": 129,
+    "output_tokens": 2917,
+    "cache_creation_input_tokens": 6729,
+    "cache_read_input_tokens": 49369
+   },
+   "cost_usd": 0.140311,
+   "chat_api_cost_usd": 0.140311,
+   "api_error": null,
+   "refusals": 0
+  },
+  {
+   "model": "claude-opus-5",
+   "file": "claude-opus-5/WITH__run5.json",
+   "usage": {
+    "input_tokens": 129,
+    "output_tokens": 2797,
+    "cache_creation_input_tokens": 4474,
+    "cache_read_input_tokens": 48373
+   },
+   "cost_usd": 0.122719,
+   "chat_api_cost_usd": 0.122719,
+   "api_error": null,
+   "refusals": 0
+  }
+ ]
+}
