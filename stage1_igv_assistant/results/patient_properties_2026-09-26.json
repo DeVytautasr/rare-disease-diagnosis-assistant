@@ -1,0 +1,175 @@
+{
+ "what": "Properties of the two patient BAMs, Phase 12 Task 6(a), 2026-09-26: aggregate counts only",
+ "blinding": "no coordinate, gene, read or per-position base; the concordance keeps totals only",
+ "definitions": {
+  "bwa_version": "the VN value of each @PG record whose PN is bwa -- nothing else from the line",
+  "bwa_version_fields": "(added 2026-09-26, after bwa_version came back empty) the field names present on each bwa @PG record, counted, and the version-shaped tokens (digits.digits.digits, optionally -rN) found in each field, counted by field name; shown only after the identifier gate's scanner and the redaction terms find nothing in them. No other text of any @PG field is kept",
+  "read_length": "the modal query length (sequence length, soft clips included) of primary records (not secondary, not supplementary) met in the random-position sample below; the share at the mode is given",
+  "nominal_depth": "index-mapped records on chr1-22, X, Y (the BAM index's mapped count: every mapped record, secondary and supplementary included -- the Phase 0 definition of \"primary mapped\") x the modal read length / the summed length of chr1-22, X, Y",
+  "duplicate_fraction": "from one samtools flagstat pass (QC-passed columns): (i) records flagged 0x400 / all records, and (ii) primary records flagged 0x400 / primary records",
+  "median_insert_size": "median |TLEN| of records that are primary, properly paired (0x2), first in pair (0x40), not duplicate, MAPQ >= 20, with the mate on the same contig and TLEN != 0: the first 50 such records starting at or after each random position",
+  "concordance": "at 1,000 positions drawn uniformly over chr1-22, X, Y (seed below; a position whose reference base is not A/C/G/T is redrawn): the majority base among bases with base quality >= 20 in reads with MAPQ >= 20 (unmapped, secondary, supplementary, QC-fail and duplicate records excluded), where at least 10 such bases cover the position, compared with the reference base. Kept: positions drawn, positions meeting the depth floor, agreeing, disagreeing"
+ },
+ "thesis_values_compared": {
+  "bwa_version": "0.7.17-r1188",
+  "nominal_depth": "30.7 / 32.9-fold",
+  "duplicate_fraction": "12.96 / 12.97%",
+  "median_insert_size": "317 / 311 bp",
+  "concordance": "99.90%"
+ },
+ "code": "scripts/patient/properties.py",
+ "SAMPLE_A": {
+  "label": "SAMPLE_A",
+  "bwa_version": {
+   "values": [
+    null
+   ],
+   "bwa_pg_records": 16
+  },
+  "read_length": {
+   "mode": 150,
+   "share_at_mode": 1.0,
+   "records_examined": 412826,
+   "min": 150,
+   "max": 150
+  },
+  "nominal_depth": {
+   "value": 30.68,
+   "index_mapped_chr1_22_X_Y": 631618015,
+   "read_length_used": 150,
+   "chr1_22_X_Y_length": 3088269832
+  },
+  "duplicate_fraction": {
+   "all_records": {
+    "numerator": 82646822,
+    "denominator": 649000649,
+    "value": 0.127345
+   },
+   "primary_records": {
+    "numerator": 82646822,
+    "denominator": 637560850,
+    "value": 0.12963
+   }
+  },
+  "flagstat": {
+   "total": 649000649,
+   "primary": 637560850,
+   "secondary": 7744997,
+   "supplementary": 3694802,
+   "duplicates": 82646822,
+   "primary duplicates": 82646822,
+   "mapped": 648221027,
+   "primary mapped": 636781228
+  },
+  "median_insert_size": {
+   "value": 314,
+   "records": 48887,
+   "per_position": 50
+  },
+  "concordance": {
+   "positions_drawn": 1000,
+   "positions_meeting_floors": 952,
+   "agree": 951,
+   "disagree": 1,
+   "value": 0.99895
+  },
+  "floors": {
+   "min_mapq": 20,
+   "min_base_quality": 20,
+   "min_depth": 10,
+   "excluded_flags": "0xf04"
+  },
+  "seed": 20260926,
+  "positions": 1000,
+  "bwa_version_fields": {
+   "label": "SAMPLE_A",
+   "bwa_pg_records": 16,
+   "fields_on_bwa_pg_records": {
+    "ID": 16,
+    "PN": 16,
+    "CL": 16
+   },
+   "version_tokens_by_field": {
+    "CL: 0.7.17-r1188": 16
+   },
+   "gate": "identifier gate scanner: nothing fired"
+  }
+ },
+ "SAMPLE_B": {
+  "label": "SAMPLE_B",
+  "bwa_version": {
+   "values": [
+    null
+   ],
+   "bwa_pg_records": 18
+  },
+  "read_length": {
+   "mode": 150,
+   "share_at_mode": 1.0,
+   "records_examined": 446318,
+   "min": 150,
+   "max": 150
+  },
+  "nominal_depth": {
+   "value": 32.91,
+   "index_mapped_chr1_22_X_Y": 677604873,
+   "read_length_used": 150,
+   "chr1_22_X_Y_length": 3088269832
+  },
+  "duplicate_fraction": {
+   "all_records": {
+    "numerator": 88977845,
+    "denominator": 697066053,
+    "value": 0.127646
+   },
+   "primary_records": {
+    "numerator": 88977845,
+    "denominator": 686148126,
+    "value": 0.129677
+   }
+  },
+  "flagstat": {
+   "total": 697066053,
+   "primary": 686148126,
+   "secondary": 7191430,
+   "supplementary": 3726497,
+   "duplicates": 88977845,
+   "primary duplicates": 88977845,
+   "mapped": 694852708,
+   "primary mapped": 683934781
+  },
+  "median_insert_size": {
+   "value": 312,
+   "records": 49045,
+   "per_position": 50
+  },
+  "concordance": {
+   "positions_drawn": 1000,
+   "positions_meeting_floors": 954,
+   "agree": 954,
+   "disagree": 0,
+   "value": 1.0
+  },
+  "floors": {
+   "min_mapq": 20,
+   "min_base_quality": 20,
+   "min_depth": 10,
+   "excluded_flags": "0xf04"
+  },
+  "seed": 20260926,
+  "positions": 1000,
+  "bwa_version_fields": {
+   "label": "SAMPLE_B",
+   "bwa_pg_records": 18,
+   "fields_on_bwa_pg_records": {
+    "ID": 18,
+    "PN": 18,
+    "CL": 18
+   },
+   "version_tokens_by_field": {
+    "CL: 0.7.17-r1188": 18
+   },
+   "gate": "identifier gate scanner: nothing fired"
+  }
+ }
+}

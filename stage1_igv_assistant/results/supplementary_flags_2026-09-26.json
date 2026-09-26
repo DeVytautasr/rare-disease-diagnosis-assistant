@@ -1,0 +1,280 @@
+{
+ "what": "The supplementary-flag contradiction, Phase 12 Task 6(b), 2026-09-26: aggregate counts only",
+ "contradiction": {
+  "flagstat_2026_09_25": {
+   "SAMPLE_A": 3694802,
+   "SAMPLE_B": 3726497
+  },
+  "validation_doc_2026_08_29": "REAL_PATIENT_DATA_VALIDATION.md: bwa mem -M produces zero 0x800 reads -- confirmed at chromosome scale over ~9-10 M reads per chromosome per BAM",
+  "old_scan_code": "never committed: e8e3c83 added the document only; oldscan runs reconstructions"
+ },
+ "blinding": "counts by contig class, flag bit and tag presence only",
+ "definitions": {
+  "flag_0x800": "records whose FLAG has bit 0x800 set, whatever else is set, from `samtools view -f 0x800` over the whole BAM, counted by the contig class of their RNAME",
+  "with_SA": "of those, records carrying an SA tag",
+  "also_0x100": "of those, records that also have bit 0x100 (secondary) set",
+  "hard_clipped": "of those, records whose CIGAR contains an H operation",
+  "sa_first_class": "of those carrying SA, counts by the contig class of the first SA entry's contig name",
+  "flagstat_suppl": "samtools flagstat's \"supplementary\" (QC-passed + QC-failed): records with 0x800 and WITHOUT 0x100 -- flagstat counts a record carrying both bits as secondary -- so it should equal flag_0x800 minus also_0x100",
+  "contig_classes": "primary = chr1-22, chrX, chrY; chrM; decoy = name ends _decoy; alt = name ends _alt; HLA = name starts HLA-; EBV = chrEBV; unlocalised/unplaced = name ends _random, or starts chrUn_ and is not a decoy; other = anything else",
+  "oldscan": "on one chromosome, one pysam pass over fetch(CHROM), i.e. every record whose RNAME is CHROM: records_on_chrom -- every record returned (to set beside the document's \"~9-10 M reads per chromosome\"); direct_0x800 -- records with 0x800 set, no other filter; direct_0x800_samtools -- `samtools view -c -f 0x800 BAM CHROM`, an independent count of the same thing; recon_tool_filter -- skip unmapped, secondary and supplementary records (the read filter of the split-read tool, bam_tools.py line 1467), then count 0x800: zero by construction; recon_secondary_skip -- skip unmapped and secondary records (the filter at bam_tools.py line 1004), then count 0x800; secondary -- records with 0x100; sa_any -- records with an SA tag; sa_on_primary -- records with an SA tag that pass the tool filter; sa_on_secondary, sa_on_supplementary -- records with an SA tag and 0x100, and with 0x800 and not 0x100; the document's identity \"SA_any - SA_on_primary equals the secondary count\" is tested as sa_any - sa_on_primary == secondary",
+  "pg_programs": "the PN value of each @PG header record, in header order (a record without PN is listed as \"(no PN)\"), shown only after the identifier gate's scanner and the redaction terms find nothing in them"
+ },
+ "code": "scripts/patient/supplementary_flags.py",
+ "SAMPLE_A": {
+  "count": {
+   "label": "SAMPLE_A",
+   "flag_0x800": {
+    "total": 3694802,
+    "by_class": {
+     "primary": 0,
+     "chrM": 0,
+     "unlocalised/unplaced": 0,
+     "decoy": 2926691,
+     "alt": 764917,
+     "HLA": 3194,
+     "EBV": 0,
+     "other": 0
+    }
+   },
+   "with_SA": {
+    "total": 3694802,
+    "by_class": {
+     "primary": 0,
+     "chrM": 0,
+     "unlocalised/unplaced": 0,
+     "decoy": 2926691,
+     "alt": 764917,
+     "HLA": 3194,
+     "EBV": 0,
+     "other": 0
+    }
+   },
+   "also_0x100": {
+    "total": 0,
+    "by_class": {
+     "primary": 0,
+     "chrM": 0,
+     "unlocalised/unplaced": 0,
+     "decoy": 0,
+     "alt": 0,
+     "HLA": 0,
+     "EBV": 0,
+     "other": 0
+    }
+   },
+   "hard_clipped": {
+    "total": 0,
+    "by_class": {
+     "primary": 0,
+     "chrM": 0,
+     "unlocalised/unplaced": 0,
+     "decoy": 0,
+     "alt": 0,
+     "HLA": 0,
+     "EBV": 0,
+     "other": 0
+    }
+   },
+   "sa_first_class": {
+    "decoy": {
+     "primary": 2358228,
+     "unlocalised/unplaced": 568463
+    },
+    "alt": {
+     "primary": 761213,
+     "unlocalised/unplaced": 3704
+    },
+    "HLA": {
+     "primary": 3194
+    }
+   },
+   "flagstat_suppl": 3694802,
+   "flag_0x800_minus_also_0x100_equals_flagstat_suppl": true
+  },
+  "oldscan_chr21": {
+   "label": "SAMPLE_A",
+   "chrom": "chr21",
+   "records_on_chrom": 9940188,
+   "direct_0x800": 0,
+   "recon_tool_filter": 0,
+   "recon_secondary_skip": 0,
+   "secondary": 111429,
+   "sa_any": 485161,
+   "sa_on_primary": 373732,
+   "sa_on_secondary": 111429,
+   "sa_on_supplementary": 0,
+   "direct_0x800_samtools": 0,
+   "identity_sa_any_minus_sa_on_primary_equals_secondary": true
+  },
+  "pg": {
+   "label": "SAMPLE_A",
+   "pg_records": 34,
+   "pg_programs_in_header_order": [
+    "bwa",
+    "(no PN)",
+    "bwa",
+    "(no PN)",
+    "bwa",
+    "(no PN)",
+    "bwa",
+    "(no PN)",
+    "bwa",
+    "(no PN)",
+    "bwa",
+    "(no PN)",
+    "bwa",
+    "(no PN)",
+    "bwa",
+    "(no PN)",
+    "bwa",
+    "(no PN)",
+    "bwa",
+    "(no PN)",
+    "bwa",
+    "(no PN)",
+    "bwa",
+    "(no PN)",
+    "bwa",
+    "(no PN)",
+    "bwa",
+    "(no PN)",
+    "bwa",
+    "(no PN)",
+    "bwa",
+    "(no PN)",
+    "bamcat",
+    "bamsormadup"
+   ],
+   "pn_counts": {
+    "bwa": 16,
+    "(no PN)": 16,
+    "bamcat": 1,
+    "bamsormadup": 1
+   },
+   "gate": "identifier gate scanner: nothing fired",
+   "redaction_terms_matched": 0
+  }
+ },
+ "SAMPLE_B": {
+  "count": {
+   "label": "SAMPLE_B",
+   "flag_0x800": {
+    "total": 3726497,
+    "by_class": {
+     "primary": 0,
+     "chrM": 0,
+     "unlocalised/unplaced": 0,
+     "decoy": 2906488,
+     "alt": 817059,
+     "HLA": 2950,
+     "EBV": 0,
+     "other": 0
+    }
+   },
+   "with_SA": {
+    "total": 3726497,
+    "by_class": {
+     "primary": 0,
+     "chrM": 0,
+     "unlocalised/unplaced": 0,
+     "decoy": 2906488,
+     "alt": 817059,
+     "HLA": 2950,
+     "EBV": 0,
+     "other": 0
+    }
+   },
+   "also_0x100": {
+    "total": 0,
+    "by_class": {
+     "primary": 0,
+     "chrM": 0,
+     "unlocalised/unplaced": 0,
+     "decoy": 0,
+     "alt": 0,
+     "HLA": 0,
+     "EBV": 0,
+     "other": 0
+    }
+   },
+   "hard_clipped": {
+    "total": 0,
+    "by_class": {
+     "primary": 0,
+     "chrM": 0,
+     "unlocalised/unplaced": 0,
+     "decoy": 0,
+     "alt": 0,
+     "HLA": 0,
+     "EBV": 0,
+     "other": 0
+    }
+   },
+   "sa_first_class": {
+    "decoy": {
+     "primary": 2362639,
+     "unlocalised/unplaced": 543849
+    },
+    "alt": {
+     "primary": 812771,
+     "unlocalised/unplaced": 4288
+    },
+    "HLA": {
+     "primary": 2949,
+     "unlocalised/unplaced": 1
+    }
+   },
+   "flagstat_suppl": 3726497,
+   "flag_0x800_minus_also_0x100_equals_flagstat_suppl": true
+  },
+  "oldscan_chr21": {
+   "label": "SAMPLE_B",
+   "chrom": "chr21",
+   "records_on_chrom": 10594678,
+   "direct_0x800": 0,
+   "recon_tool_filter": 0,
+   "recon_secondary_skip": 0,
+   "secondary": 104804,
+   "sa_any": 461385,
+   "sa_on_primary": 356581,
+   "sa_on_secondary": 104804,
+   "sa_on_supplementary": 0,
+   "direct_0x800_samtools": 0,
+   "identity_sa_any_minus_sa_on_primary_equals_secondary": true
+  },
+  "pg": {
+   "label": "SAMPLE_B",
+   "pg_records": 20,
+   "pg_programs_in_header_order": [
+    "bwa",
+    "bwa",
+    "bwa",
+    "bwa",
+    "bwa",
+    "bwa",
+    "bwa",
+    "bwa",
+    "bwa",
+    "bwa",
+    "bwa",
+    "bwa",
+    "bwa",
+    "bwa",
+    "bwa",
+    "bwa",
+    "bwa",
+    "bwa",
+    "bamcat",
+    "bamsormadup"
+   ],
+   "pn_counts": {
+    "bwa": 18,
+    "bamcat": 1,
+    "bamsormadup": 1
+   },
+   "gate": "identifier gate scanner: nothing fired",
+   "redaction_terms_matched": 0
+  }
+ }
+}
