@@ -17,7 +17,7 @@ import tempfile as _tempfile
 import hashlib as _hashlib
 import json as _json
 import re as _re
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 from typing import Optional
 
 
@@ -358,6 +358,12 @@ class SplitReadResult:
                                # the layer is still assessed, and scores zero
     assessable: bool           # False ONLY when the window held no reads at all
     reason: Optional[str]      # explains why, when assessable is False
+    decoy_partners: dict = field(default_factory=dict)
+                               # {decoy contig: reads whose SA tag names it, after
+                               # the mapQ filter}. NOT partners: excluded from
+                               # partner_chromosomes and from the strand counts.
+    decoy_only_reads: int = 0  # SA-tagged reads whose every surviving entry named
+                               # a decoy, and which are therefore NOT split reads
 
 @dataclass
 class ReadDepthProfile:
@@ -1166,6 +1172,8 @@ def get_split_reads(
     strand_flipped = 0
     refs = set(bam.references)
     example_loci = []
+    decoy_partners = {}
+    decoy_only_reads = 0
 
     below_mapq = 0
     for read in read_iter:
@@ -1190,6 +1198,7 @@ def get_split_reads(
         # it (619 entries against 603 reads in one real window).
         # REAL_PATIENT_DATA_VALIDATION.md finding 9.
         partners_this_read = set()
+        decoys_this_read = set()
         primary_strand = "-" if read.is_reverse else "+"
         for entry in sa_entries:
             fields = entry.split(",")
@@ -1214,6 +1223,18 @@ def get_split_reads(
                     sa_entries_below_min_mapq += 1
                     continue
 
+            # A decoy contig (hs38DH's chrUn_*_decoy) holds sequence missing from
+            # the assembly; an entry there says the segment also aligns to
+            # unplaced sequence, not that the read joins a second locus. It was
+            # counted as a partner: at the public NA12878 background breakend
+            # chr21:10,770,078, 266 of 269 split reads had only a decoy partner
+            # and the summary read 72.5 "strong" instead of 55.0 "moderate"
+            # (results/decoy_partners_2026-09-27.json). Now set aside and
+            # reported in decoy_partners, so the ambiguity stays visible.
+            if _canonical_chrom(rname, refs).endswith("_decoy"):
+                decoys_this_read.add(_canonical_chrom(rname, refs))
+                continue
+
             # Strand (field 2) was likewise parsed past. Orientation is what
             # distinguishes an inversion-type junction from a direct one, and
             # 12.3%/10.1% of real SA entries flip strand relative to the
@@ -1231,9 +1252,14 @@ def get_split_reads(
             # separate dict keys/counts.
             partners_this_read.add(_canonical_chrom(rname, refs))
 
+        for d in decoys_this_read:
+            decoy_partners[d] = decoy_partners.get(d, 0) + 1
+
         # A read whose every supplementary alignment was filtered out has no
         # credible partner left, so it is not split evidence.
         if not partners_this_read:
+            if decoys_this_read:
+                decoy_only_reads += 1
             continue
         split += 1
         for norm_rname in partners_this_read:
@@ -1273,6 +1299,8 @@ def get_split_reads(
         quality_limited=quality_limited,
         assessable=assessable,
         reason=reason,
+        decoy_partners=dict(sorted(decoy_partners.items(), key=lambda x: x[1], reverse=True)),
+        decoy_only_reads=decoy_only_reads,
     )
     return asdict(result)
 

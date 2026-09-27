@@ -172,6 +172,9 @@ def split_reads(bam_path: str, chromosome: str, position: int,
     and modern BWA-MEM alignments. If the whole BAM has zero SA tags
     (2018-era pipelines), this tool cannot contribute regardless of locus.
     Partner positions in SA tags reveal the other side of the breakpoint.
+    An SA entry on a decoy contig (chrUn_*_decoy) is NOT a partner: it is
+    reported in decoy_partners, and a read whose only partners are decoys is
+    not a split read (counted in decoy_only_reads).
     min_mapq DEFAULTS TO 0 ON THIS TOOL (no MAPQ filtering), while the
     underlying library function defaults to 20 and breakpoint_evidence_summary
     passes 20. The two disagree deliberately, pending calibration: at min_mapq=0
