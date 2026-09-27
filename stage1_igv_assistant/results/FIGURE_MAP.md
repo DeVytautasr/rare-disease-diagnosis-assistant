@@ -357,3 +357,26 @@ Definitions beside every figure in `DF/remeasure.json` and `DF/suites.json`.
 | F9 | regression suite on the pre-fix code | — | exit 1: every positive-control check fails | `DF/test_on_prefix_code_7bb4379.log.txt` | new |
 | F10 | all suites after the fix | 24 suites | 25 suites, all passed; 734 assertions held, 0 failed, none NOT RUN (IGV available) | `DF/suites.json` `summary` | new |
 | F11 | Phase 13 figure: background strong because of decoy partners | 72.5 | superseded by F1 | `decoy_partners_2026-09-27.json` | historical (the pre-fix measurement) |
+
+## G. Phase 15 — 2026-09-27
+
+`SC2` is `results/same_chrom_partners_2026-09-27.json`; `GC` is `results/guard_check_2026-09-27.json`.
+
+| # | Figure | Value | Record : key | Status |
+|---|---|---|---|---|
+| G1 | guard base | a6c887f (was 9ae73bc); clean before, scratch edit to bam_tools.py flagged (exit 1), clean after revert | `GC` | new |
+| G2 | same-chromosome-only split reads, 32 detected / 8 missed implant breakends (MAPQ 20; MAPQ 0) | 0 of 250 / 0 of 0 (0 of 346 / 0 of 55) | `SC2` `public.aggregate` | new |
+| G3 | same, 54 background breakends | 365 of 377 (512 of 2,617 at MAPQ 0) | `SC2` `public.aggregate.background` | new |
+| G4 | background breakends whose summary would change without same-chromosome partners (counterfactual) | 36 scores, 9 bands, 40 split components, 47 sentences; every one an intra-chromosomal call (DEL 34 of 40, DUP 9 of 10, INV 4 of 4), where a same-chromosome partner is the event's own split evidence | `SC2` `public.background_by_svtype`, `positions[*].svtype` | new; not a defect |
+| G5 | patients, 100 positions each: same-chromosome-only split reads at MAPQ 20 | 13 of 18 (SAMPLE_A), 0 of 7 (SAMPLE_B); counterfactual changes 1 score and 1 split component, no band | `SC2` `SAMPLE_*` | new; totals only |
+
+**The thesis, 2026-09-27.** The file in `docs/thesis/` was not replaced: it is
+byte-identical to the version mapped in section E (74,617 bytes, modified
+2026-09-27 01:00, sha256 2fdf7c27aa284139…), as is the Desktop copy; no newer
+version was found. It has no Results subsection on decoy partners. Every flag of
+E.1 still applies to it (E1–E11, E13). Two sentences are now overtaken by records
+made after it: Results, "how the split-read layer weighs a decoy partner has not
+yet been examined", and Limitations, "how the split-read layer weighs partners on
+decoy contigs … has not been examined" — measured in
+`decoy_partners_2026-09-27.json` and fixed in `a6c887f`
+(`decoy_fix_2026-09-27/remeasure.json`).

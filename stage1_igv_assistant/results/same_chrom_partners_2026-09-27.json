@@ -1,0 +1,3880 @@
+{
+ "what": "Same-chromosome SA partners in the split-read layer, measured, not fixed (Phase 15 Task 2)",
+ "treatment_in_code": "(bam_tools.py after the decoy fix a6c887f, unchanged here): get_split_reads keeps every SA entry that passes its own mapQ filter and is not on a decoy contig, whatever its contig: an entry on the queried chromosome itself (or on one of that chromosome's own alt/random contigs) is a partner like any other. The read counts toward split_reads and split_read_fraction and the contig is a key of partner_chromosomes. summarize_breakpoint_evidence scores the split layer from that fraction and names partners through _describe_partner_distribution. By contrast, count_discordant_pairs sets aside mates on the queried chromosome's own alt contigs (same_primary_alt_mates, bam_tools.py line 885) and counts only inter-chromosomal mates.",
+ "method": "As Phase 13's decoy_partners.py, on the fixed code: a mirror of get_split_reads' loop (with the decoy exclusion) records each counted read's partner set, and must reproduce the tool's split_reads and partner_chromosomes exactly at every position (the control). The counterfactual calls summarize_breakpoint_evidence unchanged with get_split_reads replaced IN THIS PROCESS ONLY by a wrapper that drops same-chromosome partners and the reads left without one. No code is changed.",
+ "definitions": {
+  "same_chromosome": "an SA partner whose primary contig (bam_tools._primary_contig of its canonical name) equals the queried chromosome's",
+  "same_chrom_only": "counted split reads whose every partner is same-chromosome",
+  "with_same_chrom": "counted split reads with at least one same-chromosome partner",
+  "split_reads": "the tool's count at the summary's geometry (window 200, min_mapq 20), and at min_mapq 0 (the MCP tool's default)",
+  "changed": "whether the evidence score, band, split component or split-read sentence differs between the summary as it is and the counterfactual (window 500, min_mapq 20, all four layers)",
+  "patient": "the 100 positions per BAM of Phase 13 (seed '20260927:<label>'); totals only, no position kept"
+ },
+ "code": "scripts/patient/same_chrom_partners.py",
+ "public": {
+  "aggregate": {
+   "detected": {
+    "positions": 32,
+    "mapq20_split_reads": 250,
+    "mapq20_same_chrom_only": 0,
+    "mapq20_with_same_chrom": 0,
+    "mapq0_split_reads": 346,
+    "mapq0_same_chrom_only": 0,
+    "mapq0_with_same_chrom": 0,
+    "changed": {
+     "score": 0,
+     "band": 0,
+     "split_component": 0,
+     "split_sentence": 0
+    }
+   },
+   "missed": {
+    "positions": 8,
+    "mapq20_split_reads": 0,
+    "mapq20_same_chrom_only": 0,
+    "mapq20_with_same_chrom": 0,
+    "mapq0_split_reads": 55,
+    "mapq0_same_chrom_only": 0,
+    "mapq0_with_same_chrom": 0,
+    "changed": {
+     "score": 0,
+     "band": 0,
+     "split_component": 0,
+     "split_sentence": 0
+    }
+   },
+   "background": {
+    "positions": 54,
+    "mapq20_split_reads": 377,
+    "mapq20_same_chrom_only": 365,
+    "mapq20_with_same_chrom": 365,
+    "mapq0_split_reads": 2617,
+    "mapq0_same_chrom_only": 512,
+    "mapq0_with_same_chrom": 535,
+    "changed": {
+     "score": 36,
+     "band": 9,
+     "split_component": 40,
+     "split_sentence": 47
+    }
+   }
+  },
+  "control_mismatches": [],
+  "positions": [
+   {
+    "group": "detected",
+    "label": "IMP01",
+    "position": "chr21:14100001",
+    "mapq20": {
+     "split_reads": 10,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 10,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "10 split reads (7% of reads in window) with supplementary alignments mapping predominantly to chr20 (10/10)."
+      ]
+     },
+     "counterfactual": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "10 split reads (7% of reads in window) with supplementary alignments mapping predominantly to chr20 (10/10)."
+      ]
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": false
+     }
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP01",
+    "position": "chr20:200000",
+    "mapq20": {
+     "split_reads": 6,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 8,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "6 split reads (4% of reads in window) with supplementary alignments mapping predominantly to chr21 (6/6)."
+      ]
+     },
+     "counterfactual": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "6 split reads (4% of reads in window) with supplementary alignments mapping predominantly to chr21 (6/6)."
+      ]
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": false
+     }
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP01",
+    "position": "chr21:14100000",
+    "mapq20": {
+     "split_reads": 10,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 10,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "10 split reads (7% of reads in window) with supplementary alignments mapping predominantly to chr20 (10/10)."
+      ]
+     },
+     "counterfactual": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "10 split reads (7% of reads in window) with supplementary alignments mapping predominantly to chr20 (10/10)."
+      ]
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": false
+     }
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP01",
+    "position": "chr20:200001",
+    "mapq20": {
+     "split_reads": 6,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 8,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "6 split reads (4% of reads in window) with supplementary alignments mapping predominantly to chr21 (6/6)."
+      ]
+     },
+     "counterfactual": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "6 split reads (4% of reads in window) with supplementary alignments mapping predominantly to chr21 (6/6)."
+      ]
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": false
+     }
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP02",
+    "position": "chr21:33900001",
+    "mapq20": {
+     "split_reads": 10,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 10,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "10 split reads (9% of reads in window) with supplementary alignments mapping predominantly to chr20 (10/10)."
+      ]
+     },
+     "counterfactual": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "10 split reads (9% of reads in window) with supplementary alignments mapping predominantly to chr20 (10/10)."
+      ]
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": false
+     }
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP02",
+    "position": "chr20:45500000",
+    "mapq20": {
+     "split_reads": 8,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 8,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "8 split reads (7% of reads in window) with supplementary alignments mapping predominantly to chr21 (8/8)."
+      ]
+     },
+     "counterfactual": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "8 split reads (7% of reads in window) with supplementary alignments mapping predominantly to chr21 (8/8)."
+      ]
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": false
+     }
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP02",
+    "position": "chr21:33900000",
+    "mapq20": {
+     "split_reads": 10,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 10,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "10 split reads (9% of reads in window) with supplementary alignments mapping predominantly to chr20 (10/10)."
+      ]
+     },
+     "counterfactual": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "10 split reads (9% of reads in window) with supplementary alignments mapping predominantly to chr20 (10/10)."
+      ]
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": false
+     }
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP02",
+    "position": "chr20:45500001",
+    "mapq20": {
+     "split_reads": 8,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 8,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "8 split reads (7% of reads in window) with supplementary alignments mapping predominantly to chr21 (8/8)."
+      ]
+     },
+     "counterfactual": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "8 split reads (7% of reads in window) with supplementary alignments mapping predominantly to chr21 (8/8)."
+      ]
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": false
+     }
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP03",
+    "position": "chr21:45700000",
+    "mapq20": {
+     "split_reads": 9,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 13,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "9 split reads (6% of reads in window) with supplementary alignments mapping predominantly to chr20 (9/9)."
+      ]
+     },
+     "counterfactual": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "9 split reads (6% of reads in window) with supplementary alignments mapping predominantly to chr20 (9/9)."
+      ]
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": false
+     }
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP03",
+    "position": "chr20:4899999",
+    "mapq20": {
+     "split_reads": 3,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 6,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "3 split reads (2% of reads in window) with supplementary alignments mapping predominantly to chr21 (3/3)."
+      ]
+     },
+     "counterfactual": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "3 split reads (2% of reads in window) with supplementary alignments mapping predominantly to chr21 (3/3)."
+      ]
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": false
+     }
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP03",
+    "position": "chr21:45699999",
+    "mapq20": {
+     "split_reads": 9,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 13,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "9 split reads (6% of reads in window) with supplementary alignments mapping predominantly to chr20 (9/9)."
+      ]
+     },
+     "counterfactual": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "9 split reads (6% of reads in window) with supplementary alignments mapping predominantly to chr20 (9/9)."
+      ]
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": false
+     }
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP03",
+    "position": "chr20:4900000",
+    "mapq20": {
+     "split_reads": 3,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 6,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "3 split reads (2% of reads in window) with supplementary alignments mapping predominantly to chr21 (3/3)."
+      ]
+     },
+     "counterfactual": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "3 split reads (2% of reads in window) with supplementary alignments mapping predominantly to chr21 (3/3)."
+      ]
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": false
+     }
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP04",
+    "position": "chr21:29200000",
+    "mapq20": {
+     "split_reads": 8,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 10,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 45.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "8 split reads (6% of reads in window) with supplementary alignments mapping predominantly to chr20 (8/8)."
+      ]
+     },
+     "counterfactual": {
+      "score": 45.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "8 split reads (6% of reads in window) with supplementary alignments mapping predominantly to chr20 (8/8)."
+      ]
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": false
+     }
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP04",
+    "position": "chr20:46899999",
+    "mapq20": {
+     "split_reads": 2,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 7,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 32.5,
+      "band": "weak",
+      "split_component": 0.0,
+      "split_sentence": [
+       "2 split reads (2% of reads in window) with all 2 supplementary alignments on chr21 \u2014 too few reads to establish a clustering pattern."
+      ]
+     },
+     "counterfactual": {
+      "score": 32.5,
+      "band": "weak",
+      "split_component": 0.0,
+      "split_sentence": [
+       "2 split reads (2% of reads in window) with all 2 supplementary alignments on chr21 \u2014 too few reads to establish a clustering pattern."
+      ]
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": false
+     }
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP04",
+    "position": "chr21:29199999",
+    "mapq20": {
+     "split_reads": 8,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 10,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 45.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "8 split reads (6% of reads in window) with supplementary alignments mapping predominantly to chr20 (8/8)."
+      ]
+     },
+     "counterfactual": {
+      "score": 45.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "8 split reads (6% of reads in window) with supplementary alignments mapping predominantly to chr20 (8/8)."
+      ]
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": false
+     }
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP04",
+    "position": "chr20:46900000",
+    "mapq20": {
+     "split_reads": 2,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 7,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 32.5,
+      "band": "weak",
+      "split_component": 0.0,
+      "split_sentence": [
+       "2 split reads (2% of reads in window) with all 2 supplementary alignments on chr21 \u2014 too few reads to establish a clustering pattern."
+      ]
+     },
+     "counterfactual": {
+      "score": 32.5,
+      "band": "weak",
+      "split_component": 0.0,
+      "split_sentence": [
+       "2 split reads (2% of reads in window) with all 2 supplementary alignments on chr21 \u2014 too few reads to establish a clustering pattern."
+      ]
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": false
+     }
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP05",
+    "position": "chr21:13300001",
+    "mapq20": {
+     "split_reads": 5,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 7,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "5 split reads (4% of reads in window) with supplementary alignments mapping predominantly to chr20 (5/5)."
+      ]
+     },
+     "counterfactual": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "5 split reads (4% of reads in window) with supplementary alignments mapping predominantly to chr20 (5/5)."
+      ]
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": false
+     }
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP05",
+    "position": "chr20:1900000",
+    "mapq20": {
+     "split_reads": 5,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 9,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "5 split reads (4% of reads in window) with supplementary alignments mapping predominantly to chr21 (5/5)."
+      ]
+     },
+     "counterfactual": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "5 split reads (4% of reads in window) with supplementary alignments mapping predominantly to chr21 (5/5)."
+      ]
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": false
+     }
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP05",
+    "position": "chr21:13300000",
+    "mapq20": {
+     "split_reads": 5,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 7,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "5 split reads (4% of reads in window) with supplementary alignments mapping predominantly to chr20 (5/5)."
+      ]
+     },
+     "counterfactual": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "5 split reads (4% of reads in window) with supplementary alignments mapping predominantly to chr20 (5/5)."
+      ]
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": false
+     }
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP05",
+    "position": "chr20:1900001",
+    "mapq20": {
+     "split_reads": 5,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 9,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 55.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "5 split reads (4% of reads in window) with supplementary alignments mapping predominantly to chr21 (5/5)."
+      ]
+     },
+     "counterfactual": {
+      "score": 55.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "5 split reads (4% of reads in window) with supplementary alignments mapping predominantly to chr21 (5/5)."
+      ]
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": false
+     }
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP06",
+    "position": "chr21:17200000",
+    "mapq20": {
+     "split_reads": 7,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 17,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "7 split reads (5% of reads in window) with supplementary alignments mapping predominantly to chr20 (7/7)."
+      ]
+     },
+     "counterfactual": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "7 split reads (5% of reads in window) with supplementary alignments mapping predominantly to chr20 (7/7)."
+      ]
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": false
+     }
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP06",
+    "position": "chr20:3899999",
+    "mapq20": {
+     "split_reads": 15,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 19,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "15 split reads (9% of reads in window) with supplementary alignments mapping predominantly to chr21 (14/15)."
+      ]
+     },
+     "counterfactual": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "15 split reads (9% of reads in window) with supplementary alignments mapping predominantly to chr21 (14/15)."
+      ]
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": false
+     }
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP06",
+    "position": "chr21:17199999",
+    "mapq20": {
+     "split_reads": 7,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 17,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "7 split reads (5% of reads in window) with supplementary alignments mapping predominantly to chr20 (7/7)."
+      ]
+     },
+     "counterfactual": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "7 split reads (5% of reads in window) with supplementary alignments mapping predominantly to chr20 (7/7)."
+      ]
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": false
+     }
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP06",
+    "position": "chr20:3900000",
+    "mapq20": {
+     "split_reads": 15,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 19,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "15 split reads (9% of reads in window) with supplementary alignments mapping predominantly to chr21 (14/15)."
+      ]
+     },
+     "counterfactual": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "15 split reads (9% of reads in window) with supplementary alignments mapping predominantly to chr21 (14/15)."
+      ]
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": false
+     }
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP07",
+    "position": "chr21:41200000",
+    "mapq20": {
+     "split_reads": 11,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 16,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 55.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "11 split reads (9% of reads in window) with supplementary alignments mapping predominantly to chr20 (11/11)."
+      ]
+     },
+     "counterfactual": {
+      "score": 55.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "11 split reads (9% of reads in window) with supplementary alignments mapping predominantly to chr20 (11/11)."
+      ]
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": false
+     }
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP07",
+    "position": "chr20:54999999",
+    "mapq20": {
+     "split_reads": 4,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 10,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 55.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "4 split reads (4% of reads in window) with supplementary alignments mapping predominantly to chr21 (4/4)."
+      ]
+     },
+     "counterfactual": {
+      "score": 55.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "4 split reads (4% of reads in window) with supplementary alignments mapping predominantly to chr21 (4/4)."
+      ]
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": false
+     }
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP07",
+    "position": "chr21:41199999",
+    "mapq20": {
+     "split_reads": 11,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 16,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 55.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "11 split reads (9% of reads in window) with supplementary alignments mapping predominantly to chr20 (11/11)."
+      ]
+     },
+     "counterfactual": {
+      "score": 55.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "11 split reads (9% of reads in window) with supplementary alignments mapping predominantly to chr20 (11/11)."
+      ]
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": false
+     }
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP07",
+    "position": "chr20:55000000",
+    "mapq20": {
+     "split_reads": 4,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 10,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 55.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "4 split reads (4% of reads in window) with supplementary alignments mapping predominantly to chr21 (4/4)."
+      ]
+     },
+     "counterfactual": {
+      "score": 55.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "4 split reads (4% of reads in window) with supplementary alignments mapping predominantly to chr21 (4/4)."
+      ]
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": false
+     }
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP08",
+    "position": "chr21:39300000",
+    "mapq20": {
+     "split_reads": 10,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 10,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "10 split reads (7% of reads in window) with supplementary alignments mapping predominantly to chr20 (10/10)."
+      ]
+     },
+     "counterfactual": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "10 split reads (7% of reads in window) with supplementary alignments mapping predominantly to chr20 (10/10)."
+      ]
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": false
+     }
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP08",
+    "position": "chr20:13499999",
+    "mapq20": {
+     "split_reads": 12,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 13,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "12 split reads (10% of reads in window) with supplementary alignments mapping predominantly to chr21 (12/12)."
+      ]
+     },
+     "counterfactual": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "12 split reads (10% of reads in window) with supplementary alignments mapping predominantly to chr21 (12/12)."
+      ]
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": false
+     }
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP08",
+    "position": "chr21:39299999",
+    "mapq20": {
+     "split_reads": 10,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 10,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "10 split reads (7% of reads in window) with supplementary alignments mapping predominantly to chr20 (10/10)."
+      ]
+     },
+     "counterfactual": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "10 split reads (7% of reads in window) with supplementary alignments mapping predominantly to chr20 (10/10)."
+      ]
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": false
+     }
+    }
+   },
+   {
+    "group": "detected",
+    "label": "IMP08",
+    "position": "chr20:13500000",
+    "mapq20": {
+     "split_reads": 12,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 13,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "12 split reads (10% of reads in window) with supplementary alignments mapping predominantly to chr21 (12/12)."
+      ]
+     },
+     "counterfactual": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "12 split reads (10% of reads in window) with supplementary alignments mapping predominantly to chr21 (12/12)."
+      ]
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": false
+     }
+    }
+   },
+   {
+    "group": "missed",
+    "label": "IMP09",
+    "position": "chr20:33700000",
+    "mapq20": {
+     "split_reads": 0,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 9,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 22.5,
+      "band": "weak",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "counterfactual": {
+      "score": 22.5,
+      "band": "weak",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": false
+     }
+    }
+   },
+   {
+    "group": "missed",
+    "label": "IMP09",
+    "position": "chr21:5900000",
+    "mapq20": {
+     "split_reads": 0,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 2,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": null,
+      "band": "QUALITY-LIMITED",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "counterfactual": {
+      "score": null,
+      "band": "QUALITY-LIMITED",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": false
+     }
+    }
+   },
+   {
+    "group": "missed",
+    "label": "IMP10",
+    "position": "chr20:25800000",
+    "mapq20": {
+     "split_reads": 0,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 2,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": null,
+      "band": "QUALITY-LIMITED",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "counterfactual": {
+      "score": null,
+      "band": "QUALITY-LIMITED",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": false
+     }
+    }
+   },
+   {
+    "group": "missed",
+    "label": "IMP10",
+    "position": "chr21:7600000",
+    "mapq20": {
+     "split_reads": 0,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 1,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": null,
+      "band": "QUALITY-LIMITED",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "counterfactual": {
+      "score": null,
+      "band": "QUALITY-LIMITED",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": false
+     }
+    }
+   },
+   {
+    "group": "missed",
+    "label": "IMP11",
+    "position": "chr20:31100000",
+    "mapq20": {
+     "split_reads": 0,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 31,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": null,
+      "band": "QUALITY-LIMITED",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "counterfactual": {
+      "score": null,
+      "band": "QUALITY-LIMITED",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": false
+     }
+    }
+   },
+   {
+    "group": "missed",
+    "label": "IMP11",
+    "position": "chr21:20200000",
+    "mapq20": {
+     "split_reads": 0,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 5,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": null,
+      "band": "QUALITY-LIMITED",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "counterfactual": {
+      "score": null,
+      "band": "QUALITY-LIMITED",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": false
+     }
+    }
+   },
+   {
+    "group": "missed",
+    "label": "IMP12",
+    "position": "chr20:47900000",
+    "mapq20": {
+     "split_reads": 0,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 3,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": null,
+      "band": "QUALITY-LIMITED",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "counterfactual": {
+      "score": null,
+      "band": "QUALITY-LIMITED",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": false
+     }
+    }
+   },
+   {
+    "group": "missed",
+    "label": "IMP12",
+    "position": "chr21:44100000",
+    "mapq20": {
+     "split_reads": 0,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 2,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": null,
+      "band": "QUALITY-LIMITED",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "counterfactual": {
+      "score": null,
+      "band": "QUALITY-LIMITED",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": false
+     }
+    }
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:1410171",
+    "mapq20": {
+     "split_reads": 7,
+     "same_chrom_only": 7,
+     "with_same_chrom": 7,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 7,
+     "same_chrom_only": 7,
+     "with_same_chrom": 7,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 22.5,
+      "band": "weak",
+      "split_component": 7.5,
+      "split_sentence": [
+       "7 split reads (6% of reads in window) with supplementary alignments mapping predominantly to chr20 (7/7)."
+      ]
+     },
+     "counterfactual": {
+      "score": 15.0,
+      "band": "weak",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": true,
+      "band": false,
+      "split_component": true,
+      "split_sentence": true
+     }
+    },
+    "svtype": "DEL"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:1408499",
+    "mapq20": {
+     "split_reads": 2,
+     "same_chrom_only": 2,
+     "with_same_chrom": 2,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 2,
+     "same_chrom_only": 2,
+     "with_same_chrom": 2,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 47.5,
+      "band": "moderate",
+      "split_component": 0.0,
+      "split_sentence": [
+       "2 split reads (3% of reads in window) with all 2 supplementary alignments on chr20 \u2014 too few reads to establish a clustering pattern."
+      ]
+     },
+     "counterfactual": {
+      "score": 47.5,
+      "band": "moderate",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": true
+     }
+    },
+    "svtype": "DEL"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:2379966",
+    "mapq20": {
+     "split_reads": 0,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 9,
+     "same_chrom_only": 5,
+     "with_same_chrom": 5,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 25.0,
+      "band": "weak",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "counterfactual": {
+      "score": 25.0,
+      "band": "weak",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": false
+     }
+    },
+    "svtype": "DUP"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:2379050",
+    "mapq20": {
+     "split_reads": 10,
+     "same_chrom_only": 10,
+     "with_same_chrom": 10,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 11,
+     "same_chrom_only": 11,
+     "with_same_chrom": 11,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 32.5,
+      "band": "weak",
+      "split_component": 7.5,
+      "split_sentence": [
+       "10 split reads (6% of reads in window) with supplementary alignments mapping predominantly to chr20 (10/10)."
+      ]
+     },
+     "counterfactual": {
+      "score": 25.0,
+      "band": "weak",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": true,
+      "band": false,
+      "split_component": true,
+      "split_sentence": true
+     }
+    },
+    "svtype": "DUP"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:2379963",
+    "mapq20": {
+     "split_reads": 0,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 9,
+     "same_chrom_only": 5,
+     "with_same_chrom": 5,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 25.0,
+      "band": "weak",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "counterfactual": {
+      "score": 25.0,
+      "band": "weak",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": false
+     }
+    },
+    "svtype": "DEL"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:2379257",
+    "mapq20": {
+     "split_reads": 10,
+     "same_chrom_only": 10,
+     "with_same_chrom": 10,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 12,
+     "same_chrom_only": 11,
+     "with_same_chrom": 11,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 32.5,
+      "band": "weak",
+      "split_component": 7.5,
+      "split_sentence": [
+       "10 split reads (5% of reads in window) with supplementary alignments mapping predominantly to chr20 (10/10)."
+      ]
+     },
+     "counterfactual": {
+      "score": 25.0,
+      "band": "weak",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": true,
+      "band": false,
+      "split_component": true,
+      "split_sentence": true
+     }
+    },
+    "svtype": "DEL"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:2825764",
+    "mapq20": {
+     "split_reads": 7,
+     "same_chrom_only": 7,
+     "with_same_chrom": 7,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 8,
+     "same_chrom_only": 7,
+     "with_same_chrom": 7,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": null,
+      "band": "QUALITY-LIMITED",
+      "split_component": 7.5,
+      "split_sentence": [
+       "7 split reads (10% of reads in window) with supplementary alignments mapping predominantly to chr20 (7/7)."
+      ]
+     },
+     "counterfactual": {
+      "score": null,
+      "band": "QUALITY-LIMITED",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": true,
+      "split_sentence": true
+     }
+    },
+    "svtype": "DEL"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:2822501",
+    "mapq20": {
+     "split_reads": 11,
+     "same_chrom_only": 11,
+     "with_same_chrom": 11,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 11,
+     "same_chrom_only": 11,
+     "with_same_chrom": 11,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 72.5,
+      "band": "strong",
+      "split_component": 15.0,
+      "split_sentence": [
+       "11 split reads (14% of reads in window) with supplementary alignments mapping predominantly to chr20 (11/11)."
+      ]
+     },
+     "counterfactual": {
+      "score": 57.5,
+      "band": "moderate",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": true,
+      "band": true,
+      "split_component": true,
+      "split_sentence": true
+     }
+    },
+    "svtype": "DEL"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:17123154",
+    "mapq20": {
+     "split_reads": 9,
+     "same_chrom_only": 9,
+     "with_same_chrom": 9,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 9,
+     "same_chrom_only": 9,
+     "with_same_chrom": 9,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 65.0,
+      "band": "moderate",
+      "split_component": 15.0,
+      "split_sentence": [
+       "9 split reads (12% of reads in window) with supplementary alignments mapping predominantly to chr20 (9/9)."
+      ]
+     },
+     "counterfactual": {
+      "score": 50.0,
+      "band": "moderate",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": true,
+      "band": false,
+      "split_component": true,
+      "split_sentence": true
+     }
+    },
+    "svtype": "DEL"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:17122806",
+    "mapq20": {
+     "split_reads": 17,
+     "same_chrom_only": 17,
+     "with_same_chrom": 17,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 21,
+     "same_chrom_only": 19,
+     "with_same_chrom": 19,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 72.5,
+      "band": "strong",
+      "split_component": 15.0,
+      "split_sentence": [
+       "17 split reads (25% of reads in window) with supplementary alignments mapping predominantly to chr20 (17/17)."
+      ]
+     },
+     "counterfactual": {
+      "score": 57.5,
+      "band": "moderate",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": true,
+      "band": true,
+      "split_component": true,
+      "split_sentence": true
+     }
+    },
+    "svtype": "DEL"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:18262323",
+    "mapq20": {
+     "split_reads": 1,
+     "same_chrom_only": 1,
+     "with_same_chrom": 1,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 10,
+     "same_chrom_only": 10,
+     "with_same_chrom": 10,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 25.0,
+      "band": "weak",
+      "split_component": 0.0,
+      "split_sentence": [
+       "1 split read (supplementary alignment on chr20) \u2014 single read, not a clustering signal."
+      ]
+     },
+     "counterfactual": {
+      "score": 25.0,
+      "band": "weak",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": true
+     }
+    },
+    "svtype": "DEL"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:18261069",
+    "mapq20": {
+     "split_reads": 1,
+     "same_chrom_only": 1,
+     "with_same_chrom": 1,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 5,
+     "same_chrom_only": 4,
+     "with_same_chrom": 4,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 15.0,
+      "band": "weak",
+      "split_component": 0.0,
+      "split_sentence": [
+       "1 split read (supplementary alignment on chr20) \u2014 single read, not a clustering signal."
+      ]
+     },
+     "counterfactual": {
+      "score": 15.0,
+      "band": "weak",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": true
+     }
+    },
+    "svtype": "DEL"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:18262525",
+    "mapq20": {
+     "split_reads": 1,
+     "same_chrom_only": 1,
+     "with_same_chrom": 1,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 10,
+     "same_chrom_only": 10,
+     "with_same_chrom": 10,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 25.0,
+      "band": "weak",
+      "split_component": 0.0,
+      "split_sentence": [
+       "1 split read (supplementary alignment on chr20) \u2014 single read, not a clustering signal."
+      ]
+     },
+     "counterfactual": {
+      "score": 25.0,
+      "band": "weak",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": true
+     }
+    },
+    "svtype": "DUP"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:18261081",
+    "mapq20": {
+     "split_reads": 1,
+     "same_chrom_only": 1,
+     "with_same_chrom": 1,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 5,
+     "same_chrom_only": 4,
+     "with_same_chrom": 4,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 15.0,
+      "band": "weak",
+      "split_component": 0.0,
+      "split_sentence": [
+       "1 split read (supplementary alignment on chr20) \u2014 single read, not a clustering signal."
+      ]
+     },
+     "counterfactual": {
+      "score": 15.0,
+      "band": "weak",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": true
+     }
+    },
+    "svtype": "DUP"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:32724966",
+    "mapq20": {
+     "split_reads": 0,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 9,
+     "same_chrom_only": 3,
+     "with_same_chrom": 3,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": null,
+      "band": "QUALITY-LIMITED",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "counterfactual": {
+      "score": null,
+      "band": "QUALITY-LIMITED",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": false
+     }
+    },
+    "svtype": "DEL"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:32723063",
+    "mapq20": {
+     "split_reads": 0,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 4,
+     "same_chrom_only": 4,
+     "with_same_chrom": 4,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 15.0,
+      "band": "weak",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "counterfactual": {
+      "score": 15.0,
+      "band": "weak",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": false
+     }
+    },
+    "svtype": "DEL"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:32941581",
+    "mapq20": {
+     "split_reads": 3,
+     "same_chrom_only": 3,
+     "with_same_chrom": 3,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 9,
+     "same_chrom_only": 8,
+     "with_same_chrom": 8,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 47.5,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "3 split reads (3% of reads in window) with supplementary alignments mapping predominantly to chr20 (3/3)."
+      ]
+     },
+     "counterfactual": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": true,
+      "band": false,
+      "split_component": true,
+      "split_sentence": true
+     }
+    },
+    "svtype": "DEL"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:32937682",
+    "mapq20": {
+     "split_reads": 8,
+     "same_chrom_only": 8,
+     "with_same_chrom": 8,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 8,
+     "same_chrom_only": 8,
+     "with_same_chrom": 8,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 32.5,
+      "band": "weak",
+      "split_component": 7.5,
+      "split_sentence": [
+       "8 split reads (9% of reads in window) with supplementary alignments mapping predominantly to chr20 (8/8)."
+      ]
+     },
+     "counterfactual": {
+      "score": 25.0,
+      "band": "weak",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": true,
+      "band": false,
+      "split_component": true,
+      "split_sentence": true
+     }
+    },
+    "svtype": "DEL"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:34231420",
+    "mapq20": {
+     "split_reads": 12,
+     "same_chrom_only": 12,
+     "with_same_chrom": 12,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 12,
+     "same_chrom_only": 12,
+     "with_same_chrom": 12,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 15.0,
+      "split_sentence": [
+       "12 split reads (16% of reads in window) with supplementary alignments mapping predominantly to chr20 (12/12)."
+      ]
+     },
+     "counterfactual": {
+      "score": 25.0,
+      "band": "weak",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": true,
+      "band": true,
+      "split_component": true,
+      "split_sentence": true
+     }
+    },
+    "svtype": "DEL"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:34228122",
+    "mapq20": {
+     "split_reads": 13,
+     "same_chrom_only": 13,
+     "with_same_chrom": 13,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 1693,
+     "same_chrom_only": 28,
+     "with_same_chrom": 48,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": null,
+      "band": "QUALITY-LIMITED",
+      "split_component": 15.0,
+      "split_sentence": [
+       "13 split reads (10% of reads in window) with supplementary alignments mapping predominantly to chr20 (13/13)."
+      ]
+     },
+     "counterfactual": {
+      "score": null,
+      "band": "QUALITY-LIMITED",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": true,
+      "split_sentence": true
+     }
+    },
+    "svtype": "DEL"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:38427168",
+    "mapq20": {
+     "split_reads": 7,
+     "same_chrom_only": 7,
+     "with_same_chrom": 7,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 7,
+     "same_chrom_only": 7,
+     "with_same_chrom": 7,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 47.5,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "7 split reads (6% of reads in window) with supplementary alignments mapping predominantly to chr20 (7/7)."
+      ]
+     },
+     "counterfactual": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": true,
+      "band": false,
+      "split_component": true,
+      "split_sentence": true
+     }
+    },
+    "svtype": "DEL"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:38426467",
+    "mapq20": {
+     "split_reads": 9,
+     "same_chrom_only": 9,
+     "with_same_chrom": 9,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 9,
+     "same_chrom_only": 9,
+     "with_same_chrom": 9,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 47.5,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "9 split reads (9% of reads in window) with supplementary alignments mapping predominantly to chr20 (9/9)."
+      ]
+     },
+     "counterfactual": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": true,
+      "band": false,
+      "split_component": true,
+      "split_sentence": true
+     }
+    },
+    "svtype": "DEL"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:43397153",
+    "mapq20": {
+     "split_reads": 3,
+     "same_chrom_only": 3,
+     "with_same_chrom": 3,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 9,
+     "same_chrom_only": 7,
+     "with_same_chrom": 7,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 57.5,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "3 split reads (4% of reads in window) with supplementary alignments mapping predominantly to chr20 (3/3)."
+      ]
+     },
+     "counterfactual": {
+      "score": 50.0,
+      "band": "moderate",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": true,
+      "band": false,
+      "split_component": true,
+      "split_sentence": true
+     }
+    },
+    "svtype": "DEL"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:43395954",
+    "mapq20": {
+     "split_reads": 18,
+     "same_chrom_only": 18,
+     "with_same_chrom": 18,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 21,
+     "same_chrom_only": 18,
+     "with_same_chrom": 18,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 65.0,
+      "band": "moderate",
+      "split_component": 15.0,
+      "split_sentence": [
+       "18 split reads (17% of reads in window) with supplementary alignments mapping predominantly to chr20 (18/18)."
+      ]
+     },
+     "counterfactual": {
+      "score": 50.0,
+      "band": "moderate",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": true,
+      "band": false,
+      "split_component": true,
+      "split_sentence": true
+     }
+    },
+    "svtype": "DEL"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:43696990",
+    "mapq20": {
+     "split_reads": 3,
+     "same_chrom_only": 3,
+     "with_same_chrom": 3,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 3,
+     "same_chrom_only": 3,
+     "with_same_chrom": 3,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "3 split reads (2% of reads in window) with supplementary alignments mapping predominantly to chr20 (3/3)."
+      ]
+     },
+     "counterfactual": {
+      "score": 32.5,
+      "band": "weak",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": true,
+      "band": true,
+      "split_component": true,
+      "split_sentence": true
+     }
+    },
+    "svtype": "DUP"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:43696487",
+    "mapq20": {
+     "split_reads": 5,
+     "same_chrom_only": 3,
+     "with_same_chrom": 3,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 5,
+     "same_chrom_only": 3,
+     "with_same_chrom": 3,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "5 split reads (2% of reads in window) with supplementary alignments mapping predominantly to chr20 (3/5)."
+      ]
+     },
+     "counterfactual": {
+      "score": 32.5,
+      "band": "weak",
+      "split_component": 0.0,
+      "split_sentence": [
+       "2 split reads (1% of reads in window) with supplementary alignments scattered across 2 chromosomes \u2014 no dominant partner."
+      ]
+     },
+     "changed": {
+      "score": true,
+      "band": true,
+      "split_component": true,
+      "split_sentence": true
+     }
+    },
+    "svtype": "DUP"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:54041464",
+    "mapq20": {
+     "split_reads": 4,
+     "same_chrom_only": 4,
+     "with_same_chrom": 4,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 4,
+     "same_chrom_only": 4,
+     "with_same_chrom": 4,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 32.5,
+      "band": "weak",
+      "split_component": 7.5,
+      "split_sentence": [
+       "4 split reads (5% of reads in window) with supplementary alignments mapping predominantly to chr20 (4/4)."
+      ]
+     },
+     "counterfactual": {
+      "score": 25.0,
+      "band": "weak",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": true,
+      "band": false,
+      "split_component": true,
+      "split_sentence": true
+     }
+    },
+    "svtype": "DEL"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:54030525",
+    "mapq20": {
+     "split_reads": 10,
+     "same_chrom_only": 10,
+     "with_same_chrom": 10,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 10,
+     "same_chrom_only": 10,
+     "with_same_chrom": 10,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "10 split reads (9% of reads in window) with supplementary alignments mapping predominantly to chr20 (10/10)."
+      ]
+     },
+     "counterfactual": {
+      "score": 32.5,
+      "band": "weak",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": true,
+      "band": true,
+      "split_component": true,
+      "split_sentence": true
+     }
+    },
+    "svtype": "DEL"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:54250804",
+    "mapq20": {
+     "split_reads": 10,
+     "same_chrom_only": 10,
+     "with_same_chrom": 10,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 10,
+     "same_chrom_only": 10,
+     "with_same_chrom": 10,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 55.0,
+      "band": "moderate",
+      "split_component": 15.0,
+      "split_sentence": [
+       "10 split reads (10% of reads in window) with supplementary alignments mapping predominantly to chr20 (10/10)."
+      ]
+     },
+     "counterfactual": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": true,
+      "band": false,
+      "split_component": true,
+      "split_sentence": true
+     }
+    },
+    "svtype": "DEL"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:54249698",
+    "mapq20": {
+     "split_reads": 6,
+     "same_chrom_only": 5,
+     "with_same_chrom": 5,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 172,
+     "same_chrom_only": 6,
+     "with_same_chrom": 7,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": null,
+      "band": "QUALITY-LIMITED",
+      "split_component": 7.5,
+      "split_sentence": [
+       "6 split reads (6% of reads in window) with supplementary alignments mapping predominantly to chr20 (5/6)."
+      ]
+     },
+     "counterfactual": {
+      "score": null,
+      "band": "QUALITY-LIMITED",
+      "split_component": 0.0,
+      "split_sentence": [
+       "1 split read (supplementary alignment on chr16) \u2014 single read, not a clustering signal."
+      ]
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": true,
+      "split_sentence": true
+     }
+    },
+    "svtype": "DEL"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:55865561",
+    "mapq20": {
+     "split_reads": 7,
+     "same_chrom_only": 7,
+     "with_same_chrom": 7,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 61,
+     "same_chrom_only": 8,
+     "with_same_chrom": 8,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": null,
+      "band": "QUALITY-LIMITED",
+      "split_component": 7.5,
+      "split_sentence": [
+       "7 split reads (7% of reads in window) with supplementary alignments mapping predominantly to chr20 (7/7)."
+      ]
+     },
+     "counterfactual": {
+      "score": null,
+      "band": "QUALITY-LIMITED",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": true,
+      "split_sentence": true
+     }
+    },
+    "svtype": "DEL"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:55859554",
+    "mapq20": {
+     "split_reads": 5,
+     "same_chrom_only": 5,
+     "with_same_chrom": 5,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 5,
+     "same_chrom_only": 5,
+     "with_same_chrom": 5,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 32.5,
+      "band": "weak",
+      "split_component": 7.5,
+      "split_sentence": [
+       "5 split reads (5% of reads in window) with supplementary alignments mapping predominantly to chr20 (5/5)."
+      ]
+     },
+     "counterfactual": {
+      "score": 25.0,
+      "band": "weak",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": true,
+      "band": false,
+      "split_component": true,
+      "split_sentence": true
+     }
+    },
+    "svtype": "DEL"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:62673788",
+    "mapq20": {
+     "split_reads": 4,
+     "same_chrom_only": 4,
+     "with_same_chrom": 4,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 4,
+     "same_chrom_only": 4,
+     "with_same_chrom": 4,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 47.5,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "4 split reads (4% of reads in window) with supplementary alignments mapping predominantly to chr20 (4/4)."
+      ]
+     },
+     "counterfactual": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": true,
+      "band": false,
+      "split_component": true,
+      "split_sentence": true
+     }
+    },
+    "svtype": "DEL"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:62672898",
+    "mapq20": {
+     "split_reads": 6,
+     "same_chrom_only": 6,
+     "with_same_chrom": 6,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 6,
+     "same_chrom_only": 6,
+     "with_same_chrom": 6,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 47.5,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "6 split reads (6% of reads in window) with supplementary alignments mapping predominantly to chr20 (6/6)."
+      ]
+     },
+     "counterfactual": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": true,
+      "band": false,
+      "split_component": true,
+      "split_sentence": true
+     }
+    },
+    "svtype": "DEL"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:63094244",
+    "mapq20": {
+     "split_reads": 9,
+     "same_chrom_only": 9,
+     "with_same_chrom": 9,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 9,
+     "same_chrom_only": 9,
+     "with_same_chrom": 9,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 65.0,
+      "band": "moderate",
+      "split_component": 15.0,
+      "split_sentence": [
+       "9 split reads (13% of reads in window) with supplementary alignments mapping predominantly to chr20 (9/9)."
+      ]
+     },
+     "counterfactual": {
+      "score": 50.0,
+      "band": "moderate",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": true,
+      "band": false,
+      "split_component": true,
+      "split_sentence": true
+     }
+    },
+    "svtype": "DEL"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:63093345",
+    "mapq20": {
+     "split_reads": 3,
+     "same_chrom_only": 3,
+     "with_same_chrom": 3,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 3,
+     "same_chrom_only": 3,
+     "with_same_chrom": 3,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 57.5,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "3 split reads (4% of reads in window) with supplementary alignments mapping predominantly to chr20 (3/3)."
+      ]
+     },
+     "counterfactual": {
+      "score": 50.0,
+      "band": "moderate",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": true,
+      "band": false,
+      "split_component": true,
+      "split_sentence": true
+     }
+    },
+    "svtype": "DEL"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:10476287",
+    "mapq20": {
+     "split_reads": 0,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 16,
+     "same_chrom_only": 13,
+     "with_same_chrom": 13,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 22.5,
+      "band": "weak",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "counterfactual": {
+      "score": 22.5,
+      "band": "weak",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": false
+     }
+    },
+    "svtype": "DEL"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:10475719",
+    "mapq20": {
+     "split_reads": 0,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 29,
+     "same_chrom_only": 15,
+     "with_same_chrom": 15,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 47.5,
+      "band": "moderate",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "counterfactual": {
+      "score": 47.5,
+      "band": "moderate",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": false
+     }
+    },
+    "svtype": "DEL"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:10770078",
+    "mapq20": {
+     "split_reads": 3,
+     "same_chrom_only": 3,
+     "with_same_chrom": 3,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 12,
+     "same_chrom_only": 12,
+     "with_same_chrom": 12,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 55.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "3 split reads (1% of reads in window) with supplementary alignments mapping predominantly to chr21 (3/3)."
+      ]
+     },
+     "counterfactual": {
+      "score": 47.5,
+      "band": "moderate",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": true,
+      "band": false,
+      "split_component": true,
+      "split_sentence": true
+     }
+    },
+    "svtype": "DEL"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:10769164",
+    "mapq20": {
+     "split_reads": 0,
+     "same_chrom_only": 0,
+     "with_same_chrom": 0,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 20,
+     "same_chrom_only": 17,
+     "with_same_chrom": 17,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 32.5,
+      "band": "weak",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "counterfactual": {
+      "score": 32.5,
+      "band": "weak",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": false
+     }
+    },
+    "svtype": "DEL"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:21412386",
+    "mapq20": {
+     "split_reads": 3,
+     "same_chrom_only": 3,
+     "with_same_chrom": 3,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 3,
+     "same_chrom_only": 3,
+     "with_same_chrom": 3,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 22.5,
+      "band": "weak",
+      "split_component": 7.5,
+      "split_sentence": [
+       "3 split reads (2% of reads in window) with supplementary alignments mapping predominantly to chr21 (3/3)."
+      ]
+     },
+     "counterfactual": {
+      "score": 15.0,
+      "band": "weak",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": true,
+      "band": false,
+      "split_component": true,
+      "split_sentence": true
+     }
+    },
+    "svtype": "DUP"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:21411143",
+    "mapq20": {
+     "split_reads": 6,
+     "same_chrom_only": 6,
+     "with_same_chrom": 6,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 8,
+     "same_chrom_only": 7,
+     "with_same_chrom": 7,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 45.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "6 split reads (8% of reads in window) with supplementary alignments mapping predominantly to chr21 (6/6)."
+      ]
+     },
+     "counterfactual": {
+      "score": 37.5,
+      "band": "weak",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": true,
+      "band": true,
+      "split_component": true,
+      "split_sentence": true
+     }
+    },
+    "svtype": "DUP"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:23003088",
+    "mapq20": {
+     "split_reads": 8,
+     "same_chrom_only": 8,
+     "with_same_chrom": 8,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 8,
+     "same_chrom_only": 8,
+     "with_same_chrom": 8,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 65.0,
+      "band": "moderate",
+      "split_component": 15.0,
+      "split_sentence": [
+       "8 split reads (14% of reads in window) with supplementary alignments mapping predominantly to chr21 (8/8)."
+      ]
+     },
+     "counterfactual": {
+      "score": 50.0,
+      "band": "moderate",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": true,
+      "band": false,
+      "split_component": true,
+      "split_sentence": true
+     }
+    },
+    "svtype": "DEL"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:23002473",
+    "mapq20": {
+     "split_reads": 11,
+     "same_chrom_only": 11,
+     "with_same_chrom": 11,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 11,
+     "same_chrom_only": 11,
+     "with_same_chrom": 11,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 65.0,
+      "band": "moderate",
+      "split_component": 15.0,
+      "split_sentence": [
+       "11 split reads (20% of reads in window) with supplementary alignments mapping predominantly to chr21 (11/11)."
+      ]
+     },
+     "counterfactual": {
+      "score": 50.0,
+      "band": "moderate",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": true,
+      "band": false,
+      "split_component": true,
+      "split_sentence": true
+     }
+    },
+    "svtype": "DEL"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:26002391",
+    "mapq20": {
+     "split_reads": 18,
+     "same_chrom_only": 18,
+     "with_same_chrom": 18,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 18,
+     "same_chrom_only": 18,
+     "with_same_chrom": 18,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 15.0,
+      "split_sentence": [
+       "18 split reads (13% of reads in window) with supplementary alignments mapping predominantly to chr21 (18/18)."
+      ]
+     },
+     "counterfactual": {
+      "score": 25.0,
+      "band": "weak",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": true,
+      "band": true,
+      "split_component": true,
+      "split_sentence": true
+     }
+    },
+    "svtype": "INV"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:26001836",
+    "mapq20": {
+     "split_reads": 24,
+     "same_chrom_only": 24,
+     "with_same_chrom": 24,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 24,
+     "same_chrom_only": 24,
+     "with_same_chrom": 24,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 62.5,
+      "band": "moderate",
+      "split_component": 15.0,
+      "split_sentence": [
+       "24 split reads (18% of reads in window) with supplementary alignments mapping predominantly to chr21 (24/24)."
+      ]
+     },
+     "counterfactual": {
+      "score": 47.5,
+      "band": "moderate",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": true,
+      "band": false,
+      "split_component": true,
+      "split_sentence": true
+     }
+    },
+    "svtype": "INV"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:26002386",
+    "mapq20": {
+     "split_reads": 18,
+     "same_chrom_only": 18,
+     "with_same_chrom": 18,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 18,
+     "same_chrom_only": 18,
+     "with_same_chrom": 18,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 15.0,
+      "split_sentence": [
+       "18 split reads (13% of reads in window) with supplementary alignments mapping predominantly to chr21 (18/18)."
+      ]
+     },
+     "counterfactual": {
+      "score": 25.0,
+      "band": "weak",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": true,
+      "band": true,
+      "split_component": true,
+      "split_sentence": true
+     }
+    },
+    "svtype": "INV"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:26001844",
+    "mapq20": {
+     "split_reads": 24,
+     "same_chrom_only": 24,
+     "with_same_chrom": 24,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 24,
+     "same_chrom_only": 24,
+     "with_same_chrom": 24,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 62.5,
+      "band": "moderate",
+      "split_component": 15.0,
+      "split_sentence": [
+       "24 split reads (18% of reads in window) with supplementary alignments mapping predominantly to chr21 (24/24)."
+      ]
+     },
+     "counterfactual": {
+      "score": 47.5,
+      "band": "moderate",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": true,
+      "band": false,
+      "split_component": true,
+      "split_sentence": true
+     }
+    },
+    "svtype": "INV"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:41933377",
+    "mapq20": {
+     "split_reads": 7,
+     "same_chrom_only": 7,
+     "with_same_chrom": 7,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 7,
+     "same_chrom_only": 7,
+     "with_same_chrom": 7,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 32.5,
+      "band": "weak",
+      "split_component": 7.5,
+      "split_sentence": [
+       "7 split reads (6% of reads in window) with supplementary alignments mapping predominantly to chr21 (7/7)."
+      ]
+     },
+     "counterfactual": {
+      "score": 25.0,
+      "band": "weak",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": true,
+      "band": false,
+      "split_component": true,
+      "split_sentence": true
+     }
+    },
+    "svtype": "DEL"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:41930007",
+    "mapq20": {
+     "split_reads": 3,
+     "same_chrom_only": 3,
+     "with_same_chrom": 3,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 3,
+     "same_chrom_only": 3,
+     "with_same_chrom": 3,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 32.5,
+      "band": "weak",
+      "split_component": 7.5,
+      "split_sentence": [
+       "3 split reads (3% of reads in window) with supplementary alignments mapping predominantly to chr21 (3/3)."
+      ]
+     },
+     "counterfactual": {
+      "score": 25.0,
+      "band": "weak",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": true,
+      "band": false,
+      "split_component": true,
+      "split_sentence": true
+     }
+    },
+    "svtype": "DEL"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:43262809",
+    "mapq20": {
+     "split_reads": 9,
+     "same_chrom_only": 5,
+     "with_same_chrom": 5,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 77,
+     "same_chrom_only": 14,
+     "with_same_chrom": 15,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": null,
+      "band": "QUALITY-LIMITED",
+      "split_component": 7.5,
+      "split_sentence": [
+       "9 split reads (2% of reads in window) with supplementary alignments scattered across 5 chromosomes \u2014 no dominant partner."
+      ]
+     },
+     "counterfactual": {
+      "score": null,
+      "band": "QUALITY-LIMITED",
+      "split_component": 7.5,
+      "split_sentence": [
+       "4 split reads (1% of reads in window) with supplementary alignments scattered across 4 chromosomes \u2014 no dominant partner."
+      ]
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": true
+     }
+    },
+    "svtype": "DUP"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:43262522",
+    "mapq20": {
+     "split_reads": 10,
+     "same_chrom_only": 5,
+     "with_same_chrom": 5,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 119,
+     "same_chrom_only": 17,
+     "with_same_chrom": 18,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": null,
+      "band": "QUALITY-LIMITED",
+      "split_component": 7.5,
+      "split_sentence": [
+       "10 split reads (2% of reads in window) with supplementary alignments scattered across 6 chromosomes \u2014 no dominant partner."
+      ]
+     },
+     "counterfactual": {
+      "score": null,
+      "band": "QUALITY-LIMITED",
+      "split_component": 7.5,
+      "split_sentence": [
+       "5 split reads (1% of reads in window) with supplementary alignments scattered across 5 chromosomes \u2014 no dominant partner."
+      ]
+     },
+     "changed": {
+      "score": false,
+      "band": false,
+      "split_component": false,
+      "split_sentence": true
+     }
+    },
+    "svtype": "DUP"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:45969811",
+    "mapq20": {
+     "split_reads": 7,
+     "same_chrom_only": 7,
+     "with_same_chrom": 7,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 8,
+     "same_chrom_only": 7,
+     "with_same_chrom": 7,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 65.0,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "7 split reads (7% of reads in window) with supplementary alignments mapping predominantly to chr21 (7/7)."
+      ]
+     },
+     "counterfactual": {
+      "score": 57.5,
+      "band": "moderate",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": true,
+      "band": false,
+      "split_component": true,
+      "split_sentence": true
+     }
+    },
+    "svtype": "DEL"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:45968107",
+    "mapq20": {
+     "split_reads": 4,
+     "same_chrom_only": 4,
+     "with_same_chrom": 4,
+     "control_matches_tool": true
+    },
+    "mapq0": {
+     "split_reads": 10,
+     "same_chrom_only": 4,
+     "with_same_chrom": 4,
+     "control_matches_tool": true
+    },
+    "summary": {
+     "as_is": {
+      "score": 47.5,
+      "band": "moderate",
+      "split_component": 7.5,
+      "split_sentence": [
+       "4 split reads (4% of reads in window) with supplementary alignments mapping predominantly to chr21 (4/4)."
+      ]
+     },
+     "counterfactual": {
+      "score": 40.0,
+      "band": "moderate",
+      "split_component": 0.0,
+      "split_sentence": []
+     },
+     "changed": {
+      "score": true,
+      "band": false,
+      "split_component": true,
+      "split_sentence": true
+     }
+    },
+    "svtype": "DEL"
+   }
+  ],
+  "background_by_svtype": {
+   "DEL": {
+    "breakends": 40,
+    "changed_any": 34,
+    "changed_band": 4
+   },
+   "DUP": {
+    "breakends": 10,
+    "changed_any": 9,
+    "changed_band": 3
+   },
+   "INV": {
+    "breakends": 4,
+    "changed_any": 4,
+    "changed_band": 2
+   }
+  }
+ },
+ "blinding": "patient figures are totals over the 100 seeded positions per BAM",
+ "SAMPLE_A": {
+  "label": "SAMPLE_A",
+  "seed": "20260927:SAMPLE_A",
+  "positions": 100,
+  "mapq20_control_mismatches": 0,
+  "mapq20_split_reads": 18,
+  "mapq20_same_chrom_only": 13,
+  "mapq20_with_same_chrom": 13,
+  "mapq0_control_mismatches": 0,
+  "mapq0_split_reads": 34,
+  "mapq0_same_chrom_only": 21,
+  "mapq0_with_same_chrom": 21,
+  "positions_changed_score": 1,
+  "positions_changed_band": 0,
+  "positions_changed_split_component": 1,
+  "positions_changed_split_sentence": 1
+ },
+ "SAMPLE_B": {
+  "label": "SAMPLE_B",
+  "seed": "20260927:SAMPLE_B",
+  "positions": 100,
+  "mapq20_control_mismatches": 0,
+  "mapq20_split_reads": 7,
+  "mapq20_same_chrom_only": 0,
+  "mapq20_with_same_chrom": 0,
+  "mapq0_control_mismatches": 0,
+  "mapq0_split_reads": 18,
+  "mapq0_same_chrom_only": 0,
+  "mapq0_with_same_chrom": 0,
+  "positions_changed_score": 0,
+  "positions_changed_band": 0,
+  "positions_changed_split_component": 0,
+  "positions_changed_split_sentence": 0
+ }
+}

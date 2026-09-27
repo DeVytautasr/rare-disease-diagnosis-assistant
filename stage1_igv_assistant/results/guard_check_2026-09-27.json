@@ -1,0 +1,21 @@
+{
+ "what": "Protection guard moved to base a6c887f and checked with a positive control (Phase 15 Task 1, 2026-09-27)",
+ "commit": "91134f1 (DEFAULT_BASE a6c887f, was 9ae73bc)",
+ "definitions": "exit status of scripts/guard_protected.py: 0 all protected files identical (working tree vs HEAD, HEAD vs base), 1 a difference",
+ "clean_before": {
+  "exit": 0,
+  "output": "guard: 4 file(s) checked against HEAD (4 protected, also against a6c887f): ALL IDENTICAL"
+ },
+ "positive_control_scratch_edit": {
+  "edit": "one comment line appended to stage1_igv_assistant/tools/bam_tools.py in the working tree",
+  "exit": 1,
+  "output": [
+   "DIFFERS  stage1_igv_assistant/tools/bam_tools.py: working tree vs HEAD: bytes differ, AST identical (formatting/comments)"
+  ]
+ },
+ "clean_after_revert": {
+  "exit": 0,
+  "output": "guard: 4 file(s) checked against HEAD (4 protected, also against a6c887f): ALL IDENTICAL",
+  "sha256_identical_to_before": true
+ }
+}
