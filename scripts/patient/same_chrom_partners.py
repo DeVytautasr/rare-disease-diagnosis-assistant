@@ -210,6 +210,25 @@ def step_patient(label):
 
 def step_record():
     pub = json.load(open(os.path.join(LOGDIR, "same_chrom_public.json")))
+    # The SV type of each background breakend's candidate (get_candidate in the
+    # evidence chain), because a same-chromosome partner is the expected split
+    # evidence of an intra-chromosomal event (DEL, DUP, INV).
+    import gzip
+    ch = json.load(gzip.open(os.path.join(dp.AN, "chain", "background.json.gz")))
+    calls = {c["id"]: c for c in ch["calls"]}
+    svtype = {}
+    for e in ch["evidence"]:
+        st = calls[e["get_candidate"]]["result"].get("svtype")
+        for be in e["breakends"].values():
+            svtype[f"{be['chromosome']}:{be['position']}"] = st
+    for r in pub["positions"]:
+        if r["group"] == "background":
+            r["svtype"] = svtype.get(r["position"])
+    pub["background_by_svtype"] = {
+        st: {"breakends": sum(1 for r in pub["positions"] if r.get("svtype") == st),
+             "changed_any": sum(1 for r in pub["positions"] if r.get("svtype") == st and any(r["summary"]["changed"].values())),
+             "changed_band": sum(1 for r in pub["positions"] if r.get("svtype") == st and r["summary"]["changed"]["band"])}
+        for st in sorted({r.get("svtype") for r in pub["positions"] if r["group"] == "background"})}
     out = {"what": "Same-chromosome SA partners in the split-read layer, measured, not fixed (Phase 15 Task 2)",
            "treatment_in_code": " ".join(__doc__.split("HOW THE CODE TREATS THEM")[1].split("METHOD.")[0].split()),
            "method": " ".join(__doc__.split("METHOD.")[1].split("FIGURES AND")[0].split()),
