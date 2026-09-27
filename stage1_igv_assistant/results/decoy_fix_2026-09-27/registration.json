@@ -1,0 +1,28 @@
+{
+ "what": "Registration of the decoy-partner fix to the split-read layer (Phase 14), committed before any code changes",
+ "date": "2026-09-27",
+ "pre_fix_commit": "7bb4379",
+ "authorisation": "the user authorised one change to stage1_igv_assistant/tools/bam_tools.py for this defect only, and asked for the tool description to be updated where it describes split-read partners; that description is the docstring of split_reads in stage1_igv_assistant/server.py, so that docstring sentence is the second, text-only, edit. No threshold and no scoring tier changes.",
+ "defect": "get_split_reads counts an SA entry naming a decoy contig as a split-read partner (phase 13: decoy_partners_2026-09-27.json); at the public background breakend chr21:10,770,078 this raised the summary from 55.0 moderate to 72.5 strong",
+ "change": {
+  "rule": "in get_split_reads, an SA entry whose contig name ends in _decoy is not counted as a partner. The entry's own mapQ filter is applied first, as now; a decoy entry that passes it is set aside instead of being added to the read's partners. A read left with no partner is not counted as a split read.",
+  "visibility": "two new fields in the split-read result: decoy_partners -- {decoy contig: number of reads whose SA tag names it (after the mapQ filter)}, excluded from partner_chromosomes; decoy_only_reads -- reads that carried an SA tag but whose every surviving entry named a decoy, and so are not counted in split_reads",
+  "strand": "decoy entries are not counted in partner_strand_concordant / partner_strand_flipped, which describe partners",
+  "unchanged": "sa_entries_total and sa_entries_below_min_mapq keep their meaning (every entry parsed; entries dropped by their own mapQ). No threshold, tier, band, window or default changes. Alternate-haplotype, unplaced and HLA contigs are treated as before.",
+  "description": "server.py split_reads docstring: one sentence stating that partners on decoy contigs are not counted and are reported in decoy_partners"
+ },
+ "regression_tests": {
+  "file": "stage1_igv_assistant/tests/test_decoy_partners.py",
+  "positive_control": "a synthetic BAM with reads whose only SA entry names a decoy contig: on the pre-fix code they are counted as split reads with the decoy as partner (the test fails there); after the fix split_reads excludes them, decoy_partners names the decoy and decoy_only_reads counts them",
+  "negative_control": "reads with an ordinary inter-chromosomal SA entry (chr8) are still counted, with chr8 as partner; a read with both a chr8 and a decoy entry is counted once, with chr8 as its only partner",
+  "the_test_is_shown_to_fail_on_the_pre_fix_code": "by running it against bam_tools.py from 7bb4379 loaded in a scratch module, before the fix is committed",
+  "suites": "every suite in stage1_igv_assistant/tests/ is run once after the fix (24 existing plus this one)"
+ },
+ "remeasurement": {
+  "method": "before = bam_tools.py at 7bb4379 loaded as a separate module; after = the fixed file. Same calls, same process. Recorded per position: evidence score, band, split-read component, split-read sentence, split_reads, decoy_only_reads, at the summary's geometry (window 500, split window 200, min_mapq 20, all four layers); plus split_reads at min_mapq 0, the MCP split_reads tool's default",
+  "a_background_survivors": "all breakends of the 27 survivors. Expected: chr21:10,770,078 falls from 72.5 strong to 55.0 moderate, split_reads 269 -> 3 (phase 13 counterfactual); no other background breakend changes at min_mapq 20 (phase 13 found decoy partners at min_mapq 20 only there); split_reads falls at more positions at min_mapq 0",
+  "b_implants": "the 32 detected breakends and the 8 breakpoints of the 4 missed implants. Expected: no score, band, component or sentence changes (phase 13: no decoy partner at min_mapq 20); at min_mapq 0, split_reads falls at IMP05 chr20 (2) and IMP11 chr20 (up to 20)",
+  "c_phase10_locus": "IMP01 chr20:200,000, the full summary return: every field present before is identical after; the new fields are decoy_partners {} and decoy_only_reads 0; and the model-visible payload after chat.shrink_for_model still carries every ceiling key. Expected: holds, so the ceiling experiment stands",
+  "d_patients": "the same 100 seeded autosomal positions per BAM as phase 13 (seed '20260927:<label>'), totals only: split_reads before and after at min_mapq 20 and 0, decoy_only_reads, and the number of positions whose score, band or split component changes. Expected: SAMPLE_A 20 -> 18 at min_mapq 20, SAMPLE_B 7 -> 7"
+ }
+}
