@@ -231,6 +231,13 @@ protingas žmogus būtų pasirinkęs kitaip, ir rezultatas būtų kitoks.
 su maždaug dešimt kartų didesnio padengimo duomenimis. Vertinkite jį kaip
 silpną papildomą požymį, ne daugiau.
 
+> *Pataisyta 2026-09-27.* Perskeltų skaitinių sluoksnis anksčiau skaičiavo papildomą
+> sulygiavimą ant „decoy“ kontigo (`chrUn_..._decoy`) kaip jungties partnerį. Viešuose
+> NA12878 duomenyse vienoje vietoje (chr21:10 770 078) dėl to įvertis buvo 72,5 „strong“
+> vietoje 55,0 „moderate“. Dabar tokie įrašai partneriais nelaikomi, bet rodomi atskirai
+> (`decoy_partners`, `decoy_only_reads`), kad kartografavimo dviprasmiškumas liktų matomas.
+> Jokia riba nepakeista.
+
 **Įvertinimas nėra tikimybė.** Tai suskaidytas aprašas, kas suveikė, o ne
 apskaičiuota tikimybė, kad variantas tikras.
 

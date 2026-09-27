@@ -324,7 +324,7 @@ the fields reached it in 4 of those runs. Every run and its deciding sentence:
 |---|---|---|
 | Synthetic translocation, chr1↔chr8 | Ground truth known exactly | Discordant-pair and split-read layers confirmed against planted counts; reciprocal verdict confirmed |
 | HCC1143 chr21, 2018 Illumina | Public cancer line, no signal expected | Weak signal correctly reported; BAM contains zero SA tags across 572,731 reads, a documented pipeline limitation |
-| GIAB HG002, PacBio HiFi | Confirmed 3,359 bp deletion, NIST CMRG benchmark | Detected; split-read partner 1 bp from documented endpoint |
+| GIAB HG002, PacBio HiFi | Confirmed 3,359 bp deletion, NIST CMRG benchmark *(correction, 2026-09-27: 3,357 bp — the VCF gives REF 3,358, ALT 1)* | Detected; split-read partner 1 bp from documented endpoint |
 | GIAB HG002, Illumina 300x | Same deletion, different technology and aligner | Detected; soft-clip consensus matched PacBio to the base |
 | Blind test, three positions | Two controls plus the confirmed deletion, undisclosed | Both controls correctly negative at high confidence, variant correctly positive, sixfold separation |
 | Model comparison, 3 models × 3 cases | Adversarial case asserts a translocation the data does not support | `claude-sonnet-5` rejects the false premise 3/3; `qwen2.5:7b` confirms it in 5 of 6 runs; `llama3.1:8b` could not use the tools reliably enough to assess |
