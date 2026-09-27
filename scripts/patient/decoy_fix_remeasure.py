@@ -105,7 +105,10 @@ def measure(bam, c, p):
 def phase10_locus():
     from stage1_igv_assistant import chat, ui
     ui.discover_public()
-    now = ui._chat_exec("breakpoint_evidence_summary", {"dataset": "IMP01", "chromosome": "chr20", "position": 200000})
+    rec_now, err = ui._chat_exec("breakpoint_evidence_summary", {"dataset": "IMP01", "chromosome": "chr20", "position": 200000})
+    if err:
+        die(f"the Phase 10 locus call failed: {err}")
+    now = rec_now["result"]
     proof = json.load(open(os.path.join(REPO, "stage1_igv_assistant", "benchmark", "runs", "phase10_rerun_2026-09-25",
                                         "proof_prepared_payload_2026-09-26.json")))
     rec = proof["loci"][0]["with_result"]
