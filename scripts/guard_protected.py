@@ -6,7 +6,8 @@ unchanged, and any script about to run must be exactly what is committed.
     guard_protected.py --self-test
 
 PROTECTED files are compared three ways: the working tree against HEAD (bytes
-and AST), and HEAD against --base (bytes; default 9ae73bc, the last commit on
+and AST), and HEAD against --base (bytes; default a6c887f, the authorised decoy-partner
+fix of 2026-09-27 -- until then 9ae73bc, the last commit on
 the public remote before the 2026-09 recovery work). Any difference fails --
 a comment-only edit is still an edit to a file nobody may edit.
 
@@ -29,7 +30,7 @@ PROTECTED = [
     "stage1_igv_assistant/tools/vcf_tools.py",      # candidate-set parsing, dedup and recurrence
     "stage1_igv_assistant/candidate_server.py",     # the four candidate-set tools
 ]
-DEFAULT_BASE = "9ae73bc"
+DEFAULT_BASE = "a6c887f"  # was 9ae73bc; moved on the user's instruction (Phase 15)
 
 
 def git_bytes(rev, path):
