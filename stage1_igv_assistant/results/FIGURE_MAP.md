@@ -401,3 +401,5 @@ Flagged:
 | H2 | Results, Deployability | "scored 43.3 instead of 47.5†" | 43.3 is, like 47.5, a figure of the first demonstration bundle (`docs/NAUDOJIMAS.md`, 2026-09-25 note); no record | minor: the † follows 47.5 only; 43.3 has no record either |
 
 No † figure is supported by a committed record.
+
+*Re-check, 2026-09-27 13:20 draft* (sha256 b519469a…a413115a, replacing eeccb653…30ed7d; the thesis file is not committed): H2 resolved (43.3† and 47.5†). H1 resolved in the count — the ceiling section, decoy subsection and Discussion now state three strong positions before the fix, two of them deletion breakends — but one clause still differs: the decoy subsection calls chr21:10,770,078 "the only one that was not a deletion breakend" (and the ceiling section contrasts it with "two deletion breakends"), whereas it too is a breakend of a deletion call (`same_chrom_partners_2026-09-27.json` `public.positions[*].svtype` = DEL, from the evidence chain's get_candidate); what set it apart is that its split partners lay on a decoy rather than on its own chromosome.
