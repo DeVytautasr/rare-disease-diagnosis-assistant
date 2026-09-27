@@ -1,0 +1,59 @@
+====================================================================
+DECOY PARTNER REGRESSION SUITE
+====================================================================
+
+positive control: a decoy-only SA entry is not a partner
+  FAILED ✗  reads whose only partner is a decoy are not split reads
+             got split_reads=20
+  FAILED ✗  the decoy is not in partner_chromosomes
+             got {'chrUn_JTFH01000001v1_decoy': 20}
+  FAILED ✗  the decoy is reported in decoy_partners
+             got None
+  FAILED ✗  decoy_only_reads counts the dropped reads
+             got None
+  FAILED ✗  the fraction no longer counts them
+             got 0.5
+  FAILED ✗  decoy entries are not partner strands
+             got 20/0
+
+positive control through the summary: no split score, no decoy named
+  FAILED ✗  split_read_score is 0 when every SA partner is a decoy
+             got 25.0
+  FAILED ✗  no observation names the decoy
+             got ['20 split reads (50% of reads in window) with supplementary alignments mapping predominantly to chrUn_JTFH01000001v1_decoy (20/20).']
+
+negative control: an ordinary inter-chromosomal entry is still counted
+  PASSED ✓  chr8 partners are counted
+  PASSED ✓  chr8 is the partner
+  FAILED ✗  no decoy is reported
+             got None / None
+
+negative control: a read naming chr8 and a decoy is counted once, for chr8
+  PASSED ✓  mixed reads are still split reads
+  FAILED ✗  only chr8 is a partner
+             got {'chr8': 10, 'chrUn_JTFH01000001v1_decoy': 10}
+  FAILED ✗  the decoy is still reported
+             got None
+  FAILED ✗  mixed reads are not decoy-only
+             got None
+
+the mapQ filter still comes first: a low-mapQ decoy entry is a mapQ drop, not a decoy
+  PASSED ✓  sa_entries_below_min_mapq counts it
+  FAILED ✗  and it is not reported as a decoy partner
+             got None
+
+====================================================================
+13 FAILURE(S)
+  - reads whose only partner is a decoy are not split reads
+  - the decoy is not in partner_chromosomes
+  - the decoy is reported in decoy_partners
+  - decoy_only_reads counts the dropped reads
+  - the fraction no longer counts them
+  - decoy entries are not partner strands
+  - split_read_score is 0 when every SA partner is a decoy
+  - no observation names the decoy
+  - no decoy is reported
+  - only chr8 is a partner
+  - the decoy is still reported
+  - mixed reads are not decoy-only
+  - and it is not reported as a decoy partner

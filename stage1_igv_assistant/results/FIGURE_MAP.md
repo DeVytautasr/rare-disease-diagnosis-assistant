@@ -337,3 +337,23 @@ beyond E9 and E11; the "all", "every", "none" statements checked below hold.
 | E159 | "sensitivity limited by candidate discovery in ambiguously mapped regions, not by filter thresholds" | E89, E90 | supported |
 
 The abstract has no † and needs none: every figure in it has a record.
+
+## F. Phase 14 — the decoy-partner fix, 2026-09-27
+
+`DF` is `results/decoy_fix_2026-09-27/`. Before = `bam_tools.py` at `7bb4379`,
+after = the fix (`a6c887f`), registered first (`DF/registration.json`, `8ed46e1`).
+Definitions beside every figure in `DF/remeasure.json` and `DF/suites.json`.
+
+| # | Figure | Before | After | Record : key | Status |
+|---|---|---|---|---|---|
+| F1 | chr21:10,770,078 (NA12878 background): score, band | 72.5, strong | 55.0, moderate | `DF/remeasure.json` `public.positions[…]` | new; as registered |
+| F2 | same: split reads (MAPQ 20); split component | 269; 25.0 | 3; 7.5 (266 decoy-only, `chrUn_KN707891v1_decoy`) | as F1 | new |
+| F3 | same: split-read sentence | "269 split reads … predominantly to chrUn_KN707891v1_decoy (266/269)" | "3 split reads … predominantly to chr21 (3/3)" | as F1 | new |
+| F4 | background survivors, 54 breakends: positions changed; split reads at MAPQ 20 / 0 | — | 1; 643 → 377 / 2,994 → 2,617 | `DF/remeasure.json` `public.aggregate.background` | new |
+| F5 | 32 detected implant breakends: changed; split reads MAPQ 20 / 0 | — | 0; 250 → 250 / 350 → 346 | `…aggregate.detected` | new; nothing changes, as registered |
+| F6 | 8 missed breakpoints: changed; split reads MAPQ 20 / 0 | — | 0; 0 → 0 / 65 → 55 | `…aggregate.missed` | new |
+| F7 | Phase 10 locus IMP01 chr20:200,000 | — | every earlier field identical; model-visible payload identical (4,111 characters), 9 ceiling keys present | `DF/remeasure.json` `public.phase10_locus` | new; the ceiling experiment stands |
+| F8 | patients, 100 Phase 13 positions each: split reads MAPQ 20 | 20 / 7 | 18 / 7; no score or band changes; one SAMPLE_A split sentence changes | `DF/remeasure.json` `SAMPLE_*` | new; totals only |
+| F9 | regression suite on the pre-fix code | — | exit 1: every positive-control check fails | `DF/test_on_prefix_code_7bb4379.log.txt` | new |
+| F10 | all suites after the fix | 24 suites | 25 suites, all passed; 734 assertions held, 0 failed, none NOT RUN (IGV available) | `DF/suites.json` `summary` | new |
+| F11 | Phase 13 figure: background strong because of decoy partners | 72.5 | superseded by F1 | `decoy_partners_2026-09-27.json` | historical (the pre-fix measurement) |
