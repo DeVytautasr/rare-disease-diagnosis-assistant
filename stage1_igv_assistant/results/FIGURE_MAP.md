@@ -380,3 +380,24 @@ yet been examined", and Limitations, "how the split-read layer weighs partners o
 decoy contigs … has not been examined" — measured in
 `decoy_partners_2026-09-27.json` and fixed in `a6c887f`
 (`decoy_fix_2026-09-27/remeasure.json`).
+
+## H. The final thesis draft (27 September), 2026-09-27
+
+`docs/thesis/Rimas_MSc_Thesis.docx`, sha256 eeccb653…30ed7d (76,231 bytes; the
+Desktop file `Rimas_MSc_Thesis_2026-09-27.docx`, copied; `thesis_install_2026-09-27.json`),
+read only. 25,637 words, 20 † marks. Methods through both summaries, including the
+Results subsection "Decoy Contigs as Split-Read Partners" and its same-chromosome
+paragraph, against `decoy_partners_2026-09-27.json`, `decoy_fix_2026-09-27/` and
+`same_chrom_partners_2026-09-27.json`. Every flag of section E.1 is resolved in this
+draft (E1 0.62–0.71; E2–E7 and the Table 2 column now †; E8 1.6 MB — the bundle is
+1,590,676 bytes; E9 "at most eleven"; E11 removed; E13 "nineteen tests" removed),
+and the decoy and same-chromosome figures agree with their records.
+
+Flagged:
+
+| # | Where | Claim | Record | Flag |
+|---|---|---|---|---|
+| H1 | Results, ceiling section; the decoy subsection; Discussion | the decoy-driven background junction was "the only position rated strong anywhere in the synthetic data" / "the one strong rating anywhere in the synthetic data" | `decoy_fix_2026-09-27/remeasure.json` `public.positions`: before the fix three positions were strong — chr20:2,822,501 and chr20:17,122,806 (deletion breakends of the background, 72.5) and chr21:10,770,078 (72.5); after it the two deletion breakends remain strong | **differs**. The claim was first made in the Phase 13 report to the user, not in any record; the records never supported it. The two remaining strong ratings are deletion breakends whose split partners lie on their own chromosome — genuine evidence for a deletion (`same_chrom_partners_2026-09-27.json`) |
+| H2 | Results, Deployability | "scored 43.3 instead of 47.5†" | 43.3 is, like 47.5, a figure of the first demonstration bundle (`docs/NAUDOJIMAS.md`, 2026-09-25 note); no record | minor: the † follows 47.5 only; 43.3 has no record either |
+
+No † figure is supported by a committed record.

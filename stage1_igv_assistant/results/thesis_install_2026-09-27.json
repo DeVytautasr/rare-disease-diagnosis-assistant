@@ -1,0 +1,10 @@
+{
+ "what": "The final thesis draft copied into docs/thesis/ on the user's authorisation (Phase 16 Task 1); the thesis file itself is not committed",
+ "source": "Desktop: Rimas_MSc_Thesis_2026-09-27.docx (76,231 bytes, modified 2026-09-27 12:56:38), copied, not moved",
+ "target": "docs/thesis/Rimas_MSc_Thesis.docx",
+ "sha256_old_target": "be95f2426366647adbe6b1438f37ef09d42595e50fc24dc49b430157476c88c3",
+ "old_target_size_bytes": 75954,
+ "sha256_new_target": "eeccb653a73dc46713cef0935f415405be6f7219847ca9394f8d58d4ab30ed7d",
+ "new_equals_source": true,
+ "note": "the old target was root-owned and not writable in place, so it was replaced (cp --remove-destination); the new file is owned by the WSL user. The old target (75,954 bytes, 12:57) differed from the version mapped in section E (74,617 bytes)."
+}
