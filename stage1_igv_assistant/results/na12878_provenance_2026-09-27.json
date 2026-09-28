@@ -1,0 +1,215 @@
+{
+ "what": "Provenance of the public NA12878 background, ~/public_data/NA12878.chr20_chr21.bam (Phase 17 Task 1)",
+ "definitions": "the header lines are the BAM's @HD, @RG and @PG lines as `samtools head` prints them; md5 and size are of the whole file; \"source\" is what the file itself and its sidecar say produced it -- the CL of the last @PG record (the slicing command) and ~/public_data/NA12878.chr20_chr21.bam.provenance.json, written when the slice was made and never committed, by a script that was never committed either. The NYGC comparison checks, on every bwa @PG record: VN 0.7.15-r1140, a `bwa mem` command line carrying -Y and -K 100000000, and a reference named GRCh38_full_analysis_set_plus_decoy_hla.fa. The published md5 of the source CRAM is quoted from the sidecar and was not verified (that would need the whole 15.8 GB file).",
+ "file": {
+  "path": "~/public_data/NA12878.chr20_chr21.bam",
+  "bytes": 1636070786,
+  "md5": "02ee30b25365c8a7e1083455007628ac",
+  "sq_lines": 3366
+ },
+ "header_lines": [
+  "@HD\tVN:1.5\tGO:none\tSO:coordinate",
+  "@PG\tID:MarkDuplicates\tVN:2.4.1(7c4d36e011df1aec4689b51efcada44e92d1817f_1464389670)\tCL:picard.sam.markduplicates.MarkDuplicates INPUT=[/data/analysis/DarnellR/Project_CCDG_13607_B01_GRM_WGS/Sample_NA12878/analysis/NA12878.merged.bam] OUTPUT=/scratch/4c34c2ffd82a4f21b198ef68525177ce/NA12878.bam METRICS_FILE=/data/analysis/DarnellR/Project_CCDG_13607_B01_GRM_WGS/Sample_NA12878/qc/NA12878.dedup.metrics VALIDATION_STRINGENCY=SILENT COMPRESSION_LEVEL=0 MAX_RECORDS_IN_RAM=2000000    MAX_SEQUENCES_FOR_DISK_READ_ENDS_MAP=50000 MAX_FILE_HANDLES_FOR_READ_ENDS_MAP=8000 SORTING_COLLECTION_SIZE_RATIO=0.25 REMOVE_SEQUENCING_DUPLICATES=false TAGGING_POLICY=DontTag REMOVE_DUPLICATES=false ASSUME_SORTED=false DUPLICATE_SCORING_STRATEGY=SUM_OF_BASE_QUALITIES PROGRAM_RECORD_ID=MarkDuplicates PROGRAM_GROUP_NAME=MarkDuplicates READ_NAME_REGEX=<optimized capture of last three ':' separated fields as numeric values> OPTICAL_DUPLICATE_PIXEL_DISTANCE=100 VERBOSITY=INFO QUIET=false CREATE_INDEX=false CREATE_MD5_FILE=false GA4GH_CLIENT_SECRETS=client_secrets.json\tPN:MarkDuplicates",
+  "@PG\tID:bwa\tPN:bwa\tVN:0.7.15-r1140\tCL:/data/NYGC/Software/bwa/bwa-0.7.15/bwa mem -Y -K 100000000 -t 16 -R @RG\\tID:NA12878_TTGCCTAG-ACCACTTA_HFLT3DSXX_L004\\tPL:illumina\\tPM:Unknown\\tLB:NA12878\\tDS:GRCh38\\tSM:NA12878\\tCN:NYGenome\\tPU:HFLT3DSXX.4.TTGCCTAG /gpfs/internal/sweng/production/Resources/GRCh38_1000genomes/GRCh38_full_analysis_set_plus_decoy_hla.fa /gpfs/internal/sequence/demux/ILLUMINA_NOVASEQ/SNA00217/181121_SNA00217_0076_BHFLT3DSXX/01.2018-11-23_13.10.30/CCDG_13607_B01_GRM_WGS/NYGC/Project_CCDG_13607_B01_GRM_WGS/Sample_NA12878/NA12878_TTGCCTAG-ACCACTTA_HFLT3DSXX_L004/fastq/NA12878_TTGCCTAG-ACCACTTA_HFLT3DSXX_L004_001.R1.fastq.gz /gpfs/internal/sequence/demux/ILLUMINA_NOVASEQ/SNA00217/181121_SNA00217_0076_BHFLT3DSXX/01.2018-11-23_13.10.30/CCDG_13607_B01_GRM_WGS/NYGC/Project_CCDG_13607_B01_GRM_WGS/Sample_NA12878/NA12878_TTGCCTAG-ACCACTTA_HFLT3DSXX_L004/fastq/NA12878_TTGCCTAG-ACCACTTA_HFLT3DSXX_L004_001.R2.fastq.gz",
+  "@PG\tID:bwa.1\tPN:bwa\tVN:0.7.15-r1140\tCL:/data/NYGC/Software/bwa/bwa-0.7.15/bwa mem -Y -K 100000000 -t 16 -R @RG\\tID:NA12878_TTGCCTAG-ACCACTTA_HCLHLDSXX_L002\\tPL:illumina\\tPM:Unknown\\tLB:NA12878\\tDS:GRCh38\\tSM:NA12878\\tCN:NYGenome\\tPU:HCLHLDSXX.2.TTGCCTAG /gpfs/internal/sweng/production/Resources/GRCh38_1000genomes/GRCh38_full_analysis_set_plus_decoy_hla.fa /gpfs/internal/sequence/demux/ILLUMINA_NOVASEQ/SNA00296/181118_SNA00296_0043_BHCLHLDSXX/01.2018-11-20_11.02.48/CCDG_13607_B01_GRM_WGS/NYGC/Project_CCDG_13607_B01_GRM_WGS/Sample_NA12878/NA12878_TTGCCTAG-ACCACTTA_HCLHLDSXX_L002/fastq/NA12878_TTGCCTAG-ACCACTTA_HCLHLDSXX_L002_001.R1.fastq.gz /gpfs/internal/sequence/demux/ILLUMINA_NOVASEQ/SNA00296/181118_SNA00296_0043_BHCLHLDSXX/01.2018-11-20_11.02.48/CCDG_13607_B01_GRM_WGS/NYGC/Project_CCDG_13607_B01_GRM_WGS/Sample_NA12878/NA12878_TTGCCTAG-ACCACTTA_HCLHLDSXX_L002/fastq/NA12878_TTGCCTAG-ACCACTTA_HCLHLDSXX_L002_001.R2.fastq.gz",
+  "@PG\tID:bwa.2\tPN:bwa\tVN:0.7.15-r1140\tCL:/data/NYGC/Software/bwa/bwa-0.7.15/bwa mem -Y -K 100000000 -t 16 -R @RG\\tID:NA12878_TTGCCTAG-ACCACTTA_HFLT3DSXX_L001\\tPL:illumina\\tPM:Unknown\\tLB:NA12878\\tDS:GRCh38\\tSM:NA12878\\tCN:NYGenome\\tPU:HFLT3DSXX.1.TTGCCTAG /gpfs/internal/sweng/production/Resources/GRCh38_1000genomes/GRCh38_full_analysis_set_plus_decoy_hla.fa /gpfs/internal/sequence/demux/ILLUMINA_NOVASEQ/SNA00217/181121_SNA00217_0076_BHFLT3DSXX/01.2018-11-23_13.10.30/CCDG_13607_B01_GRM_WGS/NYGC/Project_CCDG_13607_B01_GRM_WGS/Sample_NA12878/NA12878_TTGCCTAG-ACCACTTA_HFLT3DSXX_L001/fastq/NA12878_TTGCCTAG-ACCACTTA_HFLT3DSXX_L001_001.R1.fastq.gz /gpfs/internal/sequence/demux/ILLUMINA_NOVASEQ/SNA00217/181121_SNA00217_0076_BHFLT3DSXX/01.2018-11-23_13.10.30/CCDG_13607_B01_GRM_WGS/NYGC/Project_CCDG_13607_B01_GRM_WGS/Sample_NA12878/NA12878_TTGCCTAG-ACCACTTA_HFLT3DSXX_L001/fastq/NA12878_TTGCCTAG-ACCACTTA_HFLT3DSXX_L001_001.R2.fastq.gz",
+  "@PG\tID:bwa.3\tPN:bwa\tVN:0.7.15-r1140\tCL:/data/NYGC/Software/bwa/bwa-0.7.15/bwa mem -Y -K 100000000 -t 16 -R @RG\\tID:NA12878_TTGCCTAG-ACCACTTA_HCLHLDSXX_L003\\tPL:illumina\\tPM:Unknown\\tLB:NA12878\\tDS:GRCh38\\tSM:NA12878\\tCN:NYGenome\\tPU:HCLHLDSXX.3.TTGCCTAG /gpfs/internal/sweng/production/Resources/GRCh38_1000genomes/GRCh38_full_analysis_set_plus_decoy_hla.fa /gpfs/internal/sequence/demux/ILLUMINA_NOVASEQ/SNA00296/181118_SNA00296_0043_BHCLHLDSXX/01.2018-11-20_11.02.48/CCDG_13607_B01_GRM_WGS/NYGC/Project_CCDG_13607_B01_GRM_WGS/Sample_NA12878/NA12878_TTGCCTAG-ACCACTTA_HCLHLDSXX_L003/fastq/NA12878_TTGCCTAG-ACCACTTA_HCLHLDSXX_L003_001.R1.fastq.gz /gpfs/internal/sequence/demux/ILLUMINA_NOVASEQ/SNA00296/181118_SNA00296_0043_BHCLHLDSXX/01.2018-11-20_11.02.48/CCDG_13607_B01_GRM_WGS/NYGC/Project_CCDG_13607_B01_GRM_WGS/Sample_NA12878/NA12878_TTGCCTAG-ACCACTTA_HCLHLDSXX_L003/fastq/NA12878_TTGCCTAG-ACCACTTA_HCLHLDSXX_L003_001.R2.fastq.gz",
+  "@PG\tID:bwa.4\tPN:bwa\tVN:0.7.15-r1140\tCL:/data/NYGC/Software/bwa/bwa-0.7.15/bwa mem -Y -K 100000000 -t 16 -R @RG\\tID:NA12878_TTGCCTAG-ACCACTTA_HCLHLDSXX_L004\\tPL:illumina\\tPM:Unknown\\tLB:NA12878\\tDS:GRCh38\\tSM:NA12878\\tCN:NYGenome\\tPU:HCLHLDSXX.4.TTGCCTAG /gpfs/internal/sweng/production/Resources/GRCh38_1000genomes/GRCh38_full_analysis_set_plus_decoy_hla.fa /gpfs/internal/sequence/demux/ILLUMINA_NOVASEQ/SNA00296/181118_SNA00296_0043_BHCLHLDSXX/01.2018-11-20_11.02.48/CCDG_13607_B01_GRM_WGS/NYGC/Project_CCDG_13607_B01_GRM_WGS/Sample_NA12878/NA12878_TTGCCTAG-ACCACTTA_HCLHLDSXX_L004/fastq/NA12878_TTGCCTAG-ACCACTTA_HCLHLDSXX_L004_001.R1.fastq.gz /gpfs/internal/sequence/demux/ILLUMINA_NOVASEQ/SNA00296/181118_SNA00296_0043_BHCLHLDSXX/01.2018-11-20_11.02.48/CCDG_13607_B01_GRM_WGS/NYGC/Project_CCDG_13607_B01_GRM_WGS/Sample_NA12878/NA12878_TTGCCTAG-ACCACTTA_HCLHLDSXX_L004/fastq/NA12878_TTGCCTAG-ACCACTTA_HCLHLDSXX_L004_001.R2.fastq.gz",
+  "@PG\tID:bwa.5\tPN:bwa\tVN:0.7.15-r1140\tCL:/data/NYGC/Software/bwa/bwa-0.7.15/bwa mem -Y -K 100000000 -t 16 -R @RG\\tID:NA12878_TTGCCTAG-ACCACTTA_HFJWFDSXX_L001\\tPL:illumina\\tPM:Unknown\\tLB:NA12878\\tDS:GRCh38\\tSM:NA12878\\tCN:NYGenome\\tPU:HFJWFDSXX.1.TTGCCTAG /gpfs/internal/sweng/production/Resources/GRCh38_1000genomes/GRCh38_full_analysis_set_plus_decoy_hla.fa /gpfs/internal/sequence/demux/ILLUMINA_NOVASEQ/SNA00217/181121_SNA00217_0077_AHFJWFDSXX/01.2018-11-23_13.07.42/CCDG_13607_B01_GRM_WGS/NYGC/Project_CCDG_13607_B01_GRM_WGS/Sample_NA12878/NA12878_TTGCCTAG-ACCACTTA_HFJWFDSXX_L001/fastq/NA12878_TTGCCTAG-ACCACTTA_HFJWFDSXX_L001_001.R1.fastq.gz /gpfs/internal/sequence/demux/ILLUMINA_NOVASEQ/SNA00217/181121_SNA00217_0077_AHFJWFDSXX/01.2018-11-23_13.07.42/CCDG_13607_B01_GRM_WGS/NYGC/Project_CCDG_13607_B01_GRM_WGS/Sample_NA12878/NA12878_TTGCCTAG-ACCACTTA_HFJWFDSXX_L001/fastq/NA12878_TTGCCTAG-ACCACTTA_HFJWFDSXX_L001_001.R2.fastq.gz",
+  "@PG\tID:bwa.6\tPN:bwa\tVN:0.7.15-r1140\tCL:/data/NYGC/Software/bwa/bwa-0.7.15/bwa mem -Y -K 100000000 -t 16 -R @RG\\tID:NA12878_TTGCCTAG-ACCACTTA_HFJWFDSXX_L003\\tPL:illumina\\tPM:Unknown\\tLB:NA12878\\tDS:GRCh38\\tSM:NA12878\\tCN:NYGenome\\tPU:HFJWFDSXX.3.TTGCCTAG /gpfs/internal/sweng/production/Resources/GRCh38_1000genomes/GRCh38_full_analysis_set_plus_decoy_hla.fa /gpfs/internal/sequence/demux/ILLUMINA_NOVASEQ/SNA00217/181121_SNA00217_0077_AHFJWFDSXX/01.2018-11-23_13.07.42/CCDG_13607_B01_GRM_WGS/NYGC/Project_CCDG_13607_B01_GRM_WGS/Sample_NA12878/NA12878_TTGCCTAG-ACCACTTA_HFJWFDSXX_L003/fastq/NA12878_TTGCCTAG-ACCACTTA_HFJWFDSXX_L003_001.R1.fastq.gz /gpfs/internal/sequence/demux/ILLUMINA_NOVASEQ/SNA00217/181121_SNA00217_0077_AHFJWFDSXX/01.2018-11-23_13.07.42/CCDG_13607_B01_GRM_WGS/NYGC/Project_CCDG_13607_B01_GRM_WGS/Sample_NA12878/NA12878_TTGCCTAG-ACCACTTA_HFJWFDSXX_L003/fastq/NA12878_TTGCCTAG-ACCACTTA_HFJWFDSXX_L003_001.R2.fastq.gz",
+  "@PG\tID:bwa.7\tPN:bwa\tVN:0.7.15-r1140\tCL:/data/NYGC/Software/bwa/bwa-0.7.15/bwa mem -Y -K 100000000 -t 16 -R @RG\\tID:NA12878_TTGCCTAG-ACCACTTA_HFLT3DSXX_L002\\tPL:illumina\\tPM:Unknown\\tLB:NA12878\\tDS:GRCh38\\tSM:NA12878\\tCN:NYGenome\\tPU:HFLT3DSXX.2.TTGCCTAG /gpfs/internal/sweng/production/Resources/GRCh38_1000genomes/GRCh38_full_analysis_set_plus_decoy_hla.fa /gpfs/internal/sequence/demux/ILLUMINA_NOVASEQ/SNA00217/181121_SNA00217_0076_BHFLT3DSXX/01.2018-11-23_13.10.30/CCDG_13607_B01_GRM_WGS/NYGC/Project_CCDG_13607_B01_GRM_WGS/Sample_NA12878/NA12878_TTGCCTAG-ACCACTTA_HFLT3DSXX_L002/fastq/NA12878_TTGCCTAG-ACCACTTA_HFLT3DSXX_L002_001.R1.fastq.gz /gpfs/internal/sequence/demux/ILLUMINA_NOVASEQ/SNA00217/181121_SNA00217_0076_BHFLT3DSXX/01.2018-11-23_13.10.30/CCDG_13607_B01_GRM_WGS/NYGC/Project_CCDG_13607_B01_GRM_WGS/Sample_NA12878/NA12878_TTGCCTAG-ACCACTTA_HFLT3DSXX_L002/fastq/NA12878_TTGCCTAG-ACCACTTA_HFLT3DSXX_L002_001.R2.fastq.gz",
+  "@PG\tID:bwa.8\tPN:bwa\tVN:0.7.15-r1140\tCL:/data/NYGC/Software/bwa/bwa-0.7.15/bwa mem -Y -K 100000000 -t 16 -R @RG\\tID:NA12878_TTGCCTAG-ACCACTTA_HFJWFDSXX_L002\\tPL:illumina\\tPM:Unknown\\tLB:NA12878\\tDS:GRCh38\\tSM:NA12878\\tCN:NYGenome\\tPU:HFJWFDSXX.2.TTGCCTAG /gpfs/internal/sweng/production/Resources/GRCh38_1000genomes/GRCh38_full_analysis_set_plus_decoy_hla.fa /gpfs/internal/sequence/demux/ILLUMINA_NOVASEQ/SNA00217/181121_SNA00217_0077_AHFJWFDSXX/01.2018-11-23_13.07.42/CCDG_13607_B01_GRM_WGS/NYGC/Project_CCDG_13607_B01_GRM_WGS/Sample_NA12878/NA12878_TTGCCTAG-ACCACTTA_HFJWFDSXX_L002/fastq/NA12878_TTGCCTAG-ACCACTTA_HFJWFDSXX_L002_001.R1.fastq.gz /gpfs/internal/sequence/demux/ILLUMINA_NOVASEQ/SNA00217/181121_SNA00217_0077_AHFJWFDSXX/01.2018-11-23_13.07.42/CCDG_13607_B01_GRM_WGS/NYGC/Project_CCDG_13607_B01_GRM_WGS/Sample_NA12878/NA12878_TTGCCTAG-ACCACTTA_HFJWFDSXX_L002/fastq/NA12878_TTGCCTAG-ACCACTTA_HFJWFDSXX_L002_001.R2.fastq.gz",
+  "@PG\tID:bwa.9\tPN:bwa\tVN:0.7.15-r1140\tCL:/data/NYGC/Software/bwa/bwa-0.7.15/bwa mem -Y -K 100000000 -t 16 -R @RG\\tID:NA12878_TTGCCTAG-ACCACTTA_HCLHLDSXX_L001\\tPL:illumina\\tPM:Unknown\\tLB:NA12878\\tDS:GRCh38\\tSM:NA12878\\tCN:NYGenome\\tPU:HCLHLDSXX.1.TTGCCTAG /gpfs/internal/sweng/production/Resources/GRCh38_1000genomes/GRCh38_full_analysis_set_plus_decoy_hla.fa /gpfs/internal/sequence/demux/ILLUMINA_NOVASEQ/SNA00296/181118_SNA00296_0043_BHCLHLDSXX/01.2018-11-20_11.02.48/CCDG_13607_B01_GRM_WGS/NYGC/Project_CCDG_13607_B01_GRM_WGS/Sample_NA12878/NA12878_TTGCCTAG-ACCACTTA_HCLHLDSXX_L001/fastq/NA12878_TTGCCTAG-ACCACTTA_HCLHLDSXX_L001_001.R1.fastq.gz /gpfs/internal/sequence/demux/ILLUMINA_NOVASEQ/SNA00296/181118_SNA00296_0043_BHCLHLDSXX/01.2018-11-20_11.02.48/CCDG_13607_B01_GRM_WGS/NYGC/Project_CCDG_13607_B01_GRM_WGS/Sample_NA12878/NA12878_TTGCCTAG-ACCACTTA_HCLHLDSXX_L001/fastq/NA12878_TTGCCTAG-ACCACTTA_HCLHLDSXX_L001_001.R2.fastq.gz",
+  "@PG\tID:bwa.A\tPN:bwa\tVN:0.7.15-r1140\tCL:/data/NYGC/Software/bwa/bwa-0.7.15/bwa mem -Y -K 100000000 -t 16 -R @RG\\tID:NA12878_TTGCCTAG-ACCACTTA_HFJWFDSXX_L004\\tPL:illumina\\tPM:Unknown\\tLB:NA12878\\tDS:GRCh38\\tSM:NA12878\\tCN:NYGenome\\tPU:HFJWFDSXX.4.TTGCCTAG /gpfs/internal/sweng/production/Resources/GRCh38_1000genomes/GRCh38_full_analysis_set_plus_decoy_hla.fa /gpfs/internal/sequence/demux/ILLUMINA_NOVASEQ/SNA00217/181121_SNA00217_0077_AHFJWFDSXX/01.2018-11-23_13.07.42/CCDG_13607_B01_GRM_WGS/NYGC/Project_CCDG_13607_B01_GRM_WGS/Sample_NA12878/NA12878_TTGCCTAG-ACCACTTA_HFJWFDSXX_L004/fastq/NA12878_TTGCCTAG-ACCACTTA_HFJWFDSXX_L004_001.R1.fastq.gz /gpfs/internal/sequence/demux/ILLUMINA_NOVASEQ/SNA00217/181121_SNA00217_0077_AHFJWFDSXX/01.2018-11-23_13.07.42/CCDG_13607_B01_GRM_WGS/NYGC/Project_CCDG_13607_B01_GRM_WGS/Sample_NA12878/NA12878_TTGCCTAG-ACCACTTA_HFJWFDSXX_L004/fastq/NA12878_TTGCCTAG-ACCACTTA_HFJWFDSXX_L004_001.R2.fastq.gz",
+  "@PG\tID:bwa.B\tPN:bwa\tVN:0.7.15-r1140\tCL:/data/NYGC/Software/bwa/bwa-0.7.15/bwa mem -Y -K 100000000 -t 16 -R @RG\\tID:NA12878_TTGCCTAG-ACCACTTA_HFLT3DSXX_L003\\tPL:illumina\\tPM:Unknown\\tLB:NA12878\\tDS:GRCh38\\tSM:NA12878\\tCN:NYGenome\\tPU:HFLT3DSXX.3.TTGCCTAG /gpfs/internal/sweng/production/Resources/GRCh38_1000genomes/GRCh38_full_analysis_set_plus_decoy_hla.fa /gpfs/internal/sequence/demux/ILLUMINA_NOVASEQ/SNA00217/181121_SNA00217_0076_BHFLT3DSXX/01.2018-11-23_13.10.30/CCDG_13607_B01_GRM_WGS/NYGC/Project_CCDG_13607_B01_GRM_WGS/Sample_NA12878/NA12878_TTGCCTAG-ACCACTTA_HFLT3DSXX_L003/fastq/NA12878_TTGCCTAG-ACCACTTA_HFLT3DSXX_L003_001.R1.fastq.gz /gpfs/internal/sequence/demux/ILLUMINA_NOVASEQ/SNA00217/181121_SNA00217_0076_BHFLT3DSXX/01.2018-11-23_13.10.30/CCDG_13607_B01_GRM_WGS/NYGC/Project_CCDG_13607_B01_GRM_WGS/Sample_NA12878/NA12878_TTGCCTAG-ACCACTTA_HFLT3DSXX_L003/fastq/NA12878_TTGCCTAG-ACCACTTA_HFLT3DSXX_L003_001.R2.fastq.gz",
+  "@PG\tID:GATK PrintReads\tVN:3.5-0-g36282e4\tCL:readGroup=null platform=null number=-1 sample_file=[] sample_name=[] simplify=false no_pg_tag=false",
+  "@PG\tID:samtools\tPN:samtools\tPP:GATK PrintReads\tVN:1.23.1 (pysam)\tCL:samtools view -b -o ~/public_data/NA12878.chr20_chr21.bam.part.bam -T ~/reference/GRCh38_full_analysis_set_plus_decoy_hla.fa -X https://1000genomes.s3.amazonaws.com/1000G_2504_high_coverage/data/ERR3239334/NA12878.final.cram ~/public_data/NA12878.final.cram.crai chr20 chr21",
+  "@RG\tID:NA12878_TTGCCTAG-ACCACTTA_HCLHLDSXX_L001\tPL:illumina\tPM:Unknown\tLB:NA12878\tDS:GRCh38\tSM:NA12878\tCN:NYGenome\tPU:HCLHLDSXX.1.TTGCCTAG",
+  "@RG\tID:NA12878_TTGCCTAG-ACCACTTA_HCLHLDSXX_L002\tPL:illumina\tPM:Unknown\tLB:NA12878\tDS:GRCh38\tSM:NA12878\tCN:NYGenome\tPU:HCLHLDSXX.2.TTGCCTAG",
+  "@RG\tID:NA12878_TTGCCTAG-ACCACTTA_HCLHLDSXX_L003\tPL:illumina\tPM:Unknown\tLB:NA12878\tDS:GRCh38\tSM:NA12878\tCN:NYGenome\tPU:HCLHLDSXX.3.TTGCCTAG",
+  "@RG\tID:NA12878_TTGCCTAG-ACCACTTA_HCLHLDSXX_L004\tPL:illumina\tPM:Unknown\tLB:NA12878\tDS:GRCh38\tSM:NA12878\tCN:NYGenome\tPU:HCLHLDSXX.4.TTGCCTAG",
+  "@RG\tID:NA12878_TTGCCTAG-ACCACTTA_HFJWFDSXX_L001\tPL:illumina\tPM:Unknown\tLB:NA12878\tDS:GRCh38\tSM:NA12878\tCN:NYGenome\tPU:HFJWFDSXX.1.TTGCCTAG",
+  "@RG\tID:NA12878_TTGCCTAG-ACCACTTA_HFJWFDSXX_L002\tPL:illumina\tPM:Unknown\tLB:NA12878\tDS:GRCh38\tSM:NA12878\tCN:NYGenome\tPU:HFJWFDSXX.2.TTGCCTAG",
+  "@RG\tID:NA12878_TTGCCTAG-ACCACTTA_HFJWFDSXX_L003\tPL:illumina\tPM:Unknown\tLB:NA12878\tDS:GRCh38\tSM:NA12878\tCN:NYGenome\tPU:HFJWFDSXX.3.TTGCCTAG",
+  "@RG\tID:NA12878_TTGCCTAG-ACCACTTA_HFJWFDSXX_L004\tPL:illumina\tPM:Unknown\tLB:NA12878\tDS:GRCh38\tSM:NA12878\tCN:NYGenome\tPU:HFJWFDSXX.4.TTGCCTAG",
+  "@RG\tID:NA12878_TTGCCTAG-ACCACTTA_HFLT3DSXX_L001\tPL:illumina\tPM:Unknown\tLB:NA12878\tDS:GRCh38\tSM:NA12878\tCN:NYGenome\tPU:HFLT3DSXX.1.TTGCCTAG",
+  "@RG\tID:NA12878_TTGCCTAG-ACCACTTA_HFLT3DSXX_L002\tPL:illumina\tPM:Unknown\tLB:NA12878\tDS:GRCh38\tSM:NA12878\tCN:NYGenome\tPU:HFLT3DSXX.2.TTGCCTAG",
+  "@RG\tID:NA12878_TTGCCTAG-ACCACTTA_HFLT3DSXX_L003\tPL:illumina\tPM:Unknown\tLB:NA12878\tDS:GRCh38\tSM:NA12878\tCN:NYGenome\tPU:HFLT3DSXX.3.TTGCCTAG",
+  "@RG\tID:NA12878_TTGCCTAG-ACCACTTA_HFLT3DSXX_L004\tPL:illumina\tPM:Unknown\tLB:NA12878\tDS:GRCh38\tSM:NA12878\tCN:NYGenome\tPU:HFLT3DSXX.4.TTGCCTAG"
+ ],
+ "source": {
+  "from_header_last_pg": {
+   "id": "samtools",
+   "pn": "samtools",
+   "vn": "1.23.1 (pysam)",
+   "cl": "samtools view -b -o ~/public_data/NA12878.chr20_chr21.bam.part.bam -T ~/reference/GRCh38_full_analysis_set_plus_decoy_hla.fa -X https://1000genomes.s3.amazonaws.com/1000G_2504_high_coverage/data/ERR3239334/NA12878.final.cram ~/public_data/NA12878.final.cram.crai chr20 chr21",
+   "urls": [
+    "https://1000genomes.s3.amazonaws.com/1000G_2504_high_coverage/data/ERR3239334/NA12878.final.cram"
+   ]
+  },
+  "from_sidecar": {
+   "mode": "full",
+   "regions": [
+    "chr20",
+    "chr21"
+   ],
+   "output": "~/public_data/NA12878.chr20_chr21.bam",
+   "output_bytes": 1636070786,
+   "source_url": "https://1000genomes.s3.amazonaws.com/1000G_2504_high_coverage/data/ERR3239334/NA12878.final.cram",
+   "source_bytes": 15797182294,
+   "source_md5_published": "7b60651143aa1b18e807ced767886fd2",
+   "source_md5_verified": false,
+   "source_integrity_note": "whole-file md5 needs the full 15.8 GB; the slice relies on HTTPS and htslib's per-block CRC32 checks",
+   "crai": "~/public_data/NA12878.final.cram.crai",
+   "crai_bytes": 1378885,
+   "crai_md5": "cc4cbfd43c2ee258a09ed505f6b4491e",
+   "reference": "~/reference/GRCh38_full_analysis_set_plus_decoy_hla.fa",
+   "reference_md5": "64b32de2fc934679c16e83a2bc072064",
+   "pysam": "0.24.0",
+   "samtools": "1.23.1",
+   "started_utc": "2026-09-25T01:31:38+00:00",
+   "wall_seconds": 2352.1,
+   "idxstats": {
+    "chr20": {
+     "mapped": 17681348,
+     "unmapped": 24306
+    },
+    "chr21": {
+     "mapped": 11606775,
+     "unmapped": 18439
+    }
+   },
+   "pg_records": 15,
+   "pg_ids": [
+    "MarkDuplicates",
+    "bwa",
+    "bwa.1",
+    "bwa.2",
+    "bwa.3",
+    "bwa.4",
+    "bwa.5",
+    "bwa.6",
+    "bwa.7",
+    "bwa.8",
+    "bwa.9",
+    "bwa.A",
+    "bwa.B",
+    "GATK PrintReads",
+    "samtools"
+   ]
+  },
+  "sidecar_committed": false,
+  "producing_script_committed": false,
+  "established": true,
+  "statement": "the slice was cut from the CRAM at the URL named in both the header's last @PG command line and the sidecar (samtools view -X <crai> ... chr20 chr21); the code that ran it was not committed"
+ },
+ "nygc_high_coverage_match": {
+  "bwa_pg_records": 12,
+  "per_record": [
+   {
+    "id": "bwa",
+    "vn_0.7.15-r1140": true,
+    "bwa_mem": true,
+    "-Y": true,
+    "-K 100000000": true,
+    "reference_GRCh38_full_analysis_set_plus_decoy_hla": true
+   },
+   {
+    "id": "bwa.1",
+    "vn_0.7.15-r1140": true,
+    "bwa_mem": true,
+    "-Y": true,
+    "-K 100000000": true,
+    "reference_GRCh38_full_analysis_set_plus_decoy_hla": true
+   },
+   {
+    "id": "bwa.2",
+    "vn_0.7.15-r1140": true,
+    "bwa_mem": true,
+    "-Y": true,
+    "-K 100000000": true,
+    "reference_GRCh38_full_analysis_set_plus_decoy_hla": true
+   },
+   {
+    "id": "bwa.3",
+    "vn_0.7.15-r1140": true,
+    "bwa_mem": true,
+    "-Y": true,
+    "-K 100000000": true,
+    "reference_GRCh38_full_analysis_set_plus_decoy_hla": true
+   },
+   {
+    "id": "bwa.4",
+    "vn_0.7.15-r1140": true,
+    "bwa_mem": true,
+    "-Y": true,
+    "-K 100000000": true,
+    "reference_GRCh38_full_analysis_set_plus_decoy_hla": true
+   },
+   {
+    "id": "bwa.5",
+    "vn_0.7.15-r1140": true,
+    "bwa_mem": true,
+    "-Y": true,
+    "-K 100000000": true,
+    "reference_GRCh38_full_analysis_set_plus_decoy_hla": true
+   },
+   {
+    "id": "bwa.6",
+    "vn_0.7.15-r1140": true,
+    "bwa_mem": true,
+    "-Y": true,
+    "-K 100000000": true,
+    "reference_GRCh38_full_analysis_set_plus_decoy_hla": true
+   },
+   {
+    "id": "bwa.7",
+    "vn_0.7.15-r1140": true,
+    "bwa_mem": true,
+    "-Y": true,
+    "-K 100000000": true,
+    "reference_GRCh38_full_analysis_set_plus_decoy_hla": true
+   },
+   {
+    "id": "bwa.8",
+    "vn_0.7.15-r1140": true,
+    "bwa_mem": true,
+    "-Y": true,
+    "-K 100000000": true,
+    "reference_GRCh38_full_analysis_set_plus_decoy_hla": true
+   },
+   {
+    "id": "bwa.9",
+    "vn_0.7.15-r1140": true,
+    "bwa_mem": true,
+    "-Y": true,
+    "-K 100000000": true,
+    "reference_GRCh38_full_analysis_set_plus_decoy_hla": true
+   },
+   {
+    "id": "bwa.A",
+    "vn_0.7.15-r1140": true,
+    "bwa_mem": true,
+    "-Y": true,
+    "-K 100000000": true,
+    "reference_GRCh38_full_analysis_set_plus_decoy_hla": true
+   },
+   {
+    "id": "bwa.B",
+    "vn_0.7.15-r1140": true,
+    "bwa_mem": true,
+    "-Y": true,
+    "-K 100000000": true,
+    "reference_GRCh38_full_analysis_set_plus_decoy_hla": true
+   }
+  ],
+  "all_match": true,
+  "other_steps": [
+   "MarkDuplicates 2.4.1(7c4d36e011df1aec4689b51efcada44e92d1817f_1464389670)",
+   "GATK PrintReads 3.5-0-g36282e4",
+   "samtools 1.23.1 (pysam)"
+  ]
+ },
+ "reference_5_statement": "the URL path 1000G_2504_high_coverage/data/ERR3239334/NA12878.final.cram is the 1000 Genomes high-coverage release, and every aligner record matches the stated NYGC settings; the record does not itself name the publication",
+ "code": "scripts/abstract_records.py provenance"
+}

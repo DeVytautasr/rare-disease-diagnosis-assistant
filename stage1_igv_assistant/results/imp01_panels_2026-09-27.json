@@ -1,0 +1,54 @@
+{
+ "what": "IGV evidence panels for the talk, IMP01 chr20:200000 (Phase 17 Task 3)",
+ "locus": "IMP01, chr20:200000: the first synthetic implant (a heterozygous balanced t(20;21), simulated with ART and aligned into the public NA12878 chr20-chr21 background); public synthetic data, not a patient locus",
+ "made": "2026-09-27 by scripts/igv_panel_demo.py through the MCP evidence_panel tool (IGV 2.17.4); record igv_panel_demo_2026-09-27.json; copied unchanged, sha256 prefixes checked against that record",
+ "checked_before_commit": "no PNG text chunks; the rendered labels are the BAM name, coverage, locus and Refseq track only",
+ "directory": "stage1_igv_assistant/screenshots/imp01_2026-09-27/",
+ "files": {
+  "discordant_pairs.png": {
+   "bytes": 39426,
+   "sha256": "39929b27c454f9d9760dbb29c98190fa373ed400eaf3f342b6eb5707698c23a3",
+   "dimensions": "1140x1112",
+   "layer": "discordant_pairs",
+   "panel_return": {
+    "image_ref": "IMG_d1fb",
+    "region": "chr20:198500-201500",
+    "color_by": "UNEXPECTED_PAIR"
+   }
+  },
+  "read_depth.png": {
+   "bytes": 24435,
+   "sha256": "8a7b32080d6b37501d017450732fe57551787881ac597495fb335063998367eb",
+   "dimensions": "1140x1112",
+   "layer": "read_depth",
+   "panel_return": {
+    "image_ref": "IMG_535f",
+    "region": "chr20:197000-203000",
+    "color_by": "NONE"
+   }
+  },
+  "soft_clipped_reads.png": {
+   "bytes": 42811,
+   "sha256": "ac68e0e22436a27433b842e1dda70cc70cf0f3c21c23c3f195a128a4f590517b",
+   "dimensions": "1140x1112",
+   "layer": "soft_clipped_reads",
+   "panel_return": {
+    "image_ref": "IMG_96b7",
+    "region": "chr20:199850-200150",
+    "color_by": "NONE"
+   }
+  },
+  "split_reads.png": {
+   "bytes": 45790,
+   "sha256": "b433cc5a65c96d5c866b39c9cc9292892328e28361865cf74d9d64b1f16e7c3b",
+   "dimensions": "1074x883",
+   "layer": "split_reads",
+   "panel_return": {
+    "image_ref": "IMG_0578",
+    "region": "chr20:198500-201500",
+    "color_by": "UNEXPECTED_PAIR"
+   }
+  }
+ },
+ "code": "scripts/abstract_records.py panels"
+}

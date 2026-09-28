@@ -1,0 +1,52 @@
+{
+ "what": "The local models of the ceiling experiment as served by Ollama, and the GPU (Phase 17)",
+ "definitions": "`ollama show` for each local model used in the ceiling experiment (parameters, quantization, architecture, context length, capabilities), the model IDs from `ollama list`, the Ollama version, and the GPU from nvidia-smi.",
+ "models": {
+  "qwen2.5:7b": {
+   "ollama_show": {
+    "Model": {
+     "architecture": "qwen2",
+     "parameters": "7.6B",
+     "context length": "32768",
+     "embedding length": "3584",
+     "quantization": "Q4_K_M"
+    },
+    "Capabilities": {
+     "completion": true,
+     "tools": true
+    }
+   },
+   "ollama_id": "845dbda0ea48"
+  },
+  "qwen3.5:4b": {
+   "ollama_show": {
+    "Model": {
+     "architecture": "qwen35",
+     "parameters": "4.7B",
+     "context length": "262144",
+     "embedding length": "2560",
+     "quantization": "Q4_K_M",
+     "requires": "0.17.1"
+    },
+    "Capabilities": {
+     "completion": true,
+     "vision": true,
+     "tools": true,
+     "thinking": true
+    },
+    "Parameters": {
+     "top_p": "0.95",
+     "presence_penalty": "1.5",
+     "temperature": "1",
+     "top_k": "20"
+    }
+   },
+   "ollama_id": "2a654d98e6fb"
+  }
+ },
+ "ollama_version": "ollama version is 0.32.9",
+ "gpu": "NVIDIA GeForce RTX 5060 Laptop GPU, 8151 MiB",
+ "run_records_ids": "qwen2.5:7b runs record 'ollama ps' ID 845dbda0ea48 (phase10_rerun_2026-09-25/qwen2.5-7b/*.json)",
+ "note": "Q4_K_M is llama.cpp's medium 4-bit K-quant (some tensors kept at higher precision)",
+ "code": "scripts/abstract_records.py models"
+}
