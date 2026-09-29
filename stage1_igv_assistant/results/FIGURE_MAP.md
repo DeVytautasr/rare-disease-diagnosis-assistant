@@ -591,3 +591,63 @@ Notes, not flags: J3 ("independent" holds for the scores, not the reads); J16 (d
 "correctly scores 0" is its intent: it added 15 at 7 of the 32 detected breakends); J21
 (the limits panel says 14 of 16 cut-offs, the abstract 10 of 11 thresholds; both are
 recorded).
+
+### J.5 Re-check of the revised files (v2), 2026-09-29
+
+`Rimas_abstract_EN_2026-09-29_v2.docx` (9def8b94…c659328f), `Rimas_tezes_DI_medicinoje_LT_2026-09-29_v2.docx`
+(0c583660…57a06c74) and `Rimas_tezes_paaiskinimai_2026-09-29_v2.docx` (343642d8…04b5dee6):
+Desktop, read only, hashes as given with the task. Two paragraph diffs against the
+v1 files agree. The first compares body paragraphs, table rows, images, headers and
+footers; the second compares every paragraph in `word/document.xml`, table cells
+included. In each file only `word/document.xml` and the file metadata
+(`docProps/core.xml`) differ; there are no text boxes, tracked changes, comments or
+fields, and the sheet's two images are byte-identical to v1. In the EN and LT only the
+Methods, Results and Conclusions paragraphs changed, with the same edits and identical
+figures in both languages. In the sheet the 13 changed regions are the intended
+changes, including the new question in section 7 (J40: compare the novelty wording with
+the literature, naming four published tools; a question, not a claim). The only other
+edits are the version labels ("v2") in the header and in the heading of the section 3
+table. Nothing else changed.
+
+| J.4 | Revised wording (v2) | Record : key | Status |
+|---|---|---|---|
+| 1 (J28) | "three read layers look only at a ±200–500 base window … (the depth layer ±2,000 bases)" | `ui.assess` (`read_depth_profile` ±2,000); `depth_window_bp=2000` | agrees |
+| 2 (J26) | two rows: DELLY's BND records 9,187 / 9,676; "the same, with duplicate records merged (±500 bases)" 9,172 / 9,655 | `patient_rerun_2026-09.json` `funnel.SAMPLE_*.bnd_records`, `bnd_after_dedup`; `funnel_filters.dedup_tolerance_bp` 500 | agrees |
+| 3 (J26) | "found (±500 bases) in the other patient's genome" | `survivors_recurrent_in_other_sample` 40 / 44; `recurrence_tolerance_bp` 500 | agrees |
+| 4 (J38) | "only 896 and 923 passed its own quality filter" | `per_step.filter_pass` | agrees |
+| 5 (J35, J48) | "above 0 weak, 0 no evidence", in the section 3 table and the glossary | `bam_tools.py:2243–2250` (> 0 weak, otherwise "none") | agrees |
+| 6 (J49; J36 row) | the ceiling is the highest score "at a given position with a given window … at the default ±500 window 57.5 at all 32 ends; at a narrower window 65.0; below 70 in both cases" | `AN/figures.json` `ceiling_summary.attainable_here_range` [57.5, 57.5]; 65.0 at ±200 at chr21:14,100,000 (`PF` `loci[1]`) and at ±50 at chr20:200,000 (`DR` `observations.chat_vs_panel`) | 57.5 agrees. **Partly open**: 65.0 is recorded at those two IMP01 ends only, not at the other 30 ends or at every narrower window. No Phase 10 summary call used a window below 500 |
+| 7 (J41; J18) | sheet: "in the chat window every number of the model is checked against the tool returns; a number no tool returned is shown, but marked"; abstracts: "checks every number it shows against a tool output" | `chat.py:495`, `chat.py:767` (`verify_numbers(final_text, …)`); `ui.py` `sendChat`, `markUnsupported` | the flagged point agrees (shown, marked). **Partly open**: the check covers the model's final answer only; text from its intermediate turns is shown unmarked ("model — prose, not verified except where marked"), and the limits panel's figures come from committed records, not tool outputs. "every number in the model's answer" would be exact |
+| 8 (J40) | the literature clause removed from Novelty; a question in section 7 | — | agrees |
+| 9 (J23, J45) | "both cloud models at times called the evidence strong although the tool rated it moderate (Claude Sonnet 5 in all 5 answers given the ceiling, Claude Opus 5 in 4 of 10)", in the EN, the LT and the sheet | `P10B` `cells.api_runs_1_5` (Sonnet WITH C1b 0 of 5); `items` (Opus WITH__run1, WITH__run5, WITHOUT__run3, WITHOUT__run5: C1b false); the summary returned 40.0 "moderate" at the default window in all nine runs (`recorder_calls_unablated`) | agrees |
+| 10 (J17, J37) | abstracts: "(at most 0.164 at the default window)"; sheet: "at the default ±500 window at most 0.164 (not reaching even the 0.2 tier), at ±200 at the same place 0.25" | `AN/figures.json` `ceiling[*].observed_discordant_fraction` (the maximum, 0.164, is at IMP01 chr21:14,100,000 / 14,100,001); 0.25 at ±200 there (`PF` `loci[1]`) | agrees |
+| 11 (J44) | "the scoring function drops a layer its data cannot show (no pairs, no SA tags) but does not tell a layer this event cannot change (depth, for a balanced translocation) from a layer that looked and found nothing" | `CH` call 20 (`applicable_layers` decided from the BAM; depth "always applicable") | agrees |
+| 12 (J53) | "the 'tool call #N' button beside a layer's number or the combined score …; not every number has one; every call is listed under 'Where every number came from'" | `ui.py:1057` (layer chips "tool call #N"); `ui.py:1125` (the combined score's chip reads "breakpoint_evidence_summary #N"); `showCalls` | **minor, open**: the combined score's button is labelled "breakpoint_evidence_summary #N"; the rest agrees |
+| 13 (J55) | "show the pre-made images (stage1_igv_assistant/screenshots/imp01_2026-09-27/); live, each image downloads the genome and the RefSeq track from the internet; in the dry run the depth image did not finish within 180 s" | the four committed PNGs (`imp01_panels_2026-09-27.json`); `DR` `observations.igv_log_during_run`, `steps.6_igv.panel_errors.read_depth` | agrees |
+| 14 (J.3 step 7) | a new limitation: "the number check checks only numbers, not words: in the dry run qwen2.5:7b gave all 7 numbers as the tools returned them but called the evidence 'strong' although the tool said 'moderate'"; the demo line: window 50, 47.5, ceiling 65.0 | `DR` `steps.7_chat.numbers_matched` (7, none unsupported), `final_text`, `observations.chat_vs_panel` | agrees |
+| note J3 | "measure, and score separately" | `bam_tools.py:1808` | agrees |
+| note J16 | depth "should score 0"; "such a signal added 15 points at 7 ends, while the highest score observed was 55.0" | `AN/figures.json` `ceiling[*].depth_score` (15 at 7 of the 32 ends, 0 at 25); `ceiling_summary.evidence_score_range` [32.5, 55.0] | agrees |
+| note J21 | abstracts: "14 of the tool's 16 thresholds are judgement calls, not calibrated values"; the sheet adds "(the interface's limits panel says so too); of the 11 tier cut-offs only one is calibrated, against one confirmed locus" | `bam_tools.py:32–39` (16 thresholds, 2 empirically derived); `ui.build_limits`; `bam_tools.py:1885–1889` | agrees |
+
+The other intended changes agree with their records:
+- J1: the tool example is removed.
+- J10: the evaluator knew neither the version nor the model (`P10B` `method`).
+- J14: "at its default window".
+- J50–J52 and J54: the demo lines quote `DR`. Datasets IMP01–IMP12 and the NA12878 background; no config file; 896 → 515 → 157 → 29; 40.0 = 7.5 + 25 + 7.5 + 0 with ceiling 57.5; 44 and 40.0 equal their returns; IMP09 22.5 weak, 15 points of it depth; 404 s.
+
+**New, open (found while checking J14 and J49).** The ceiling of 57.5, and "only a false
+copy-number signal could lift it higher", hold when all four measurements are counted,
+as the interface and the evidence chain count them. But the summary tool also accepts a
+caller's own list of applicable layers. In one Phase 10 run the model declared two:
+`P10/qwen3.5-4b/WITH__run15.json`, `recorder_calls_unablated`, the call with
+applicable_layers [discordant_pairs, soft_clipped_reads]. It returned 65.0 "moderate" at
+the default window, normalised over those two layers ((7.5 + 25) / 50). The same return
+reported `attainable_here` 57.5 and "the top band is UNREACHABLE here". By the same
+arithmetic, soft clips and split reads counted alone could reach 100. The recorded
+figures stand, since they count four layers. The ceiling field does not follow a
+caller's layer list; that is a matter for the protected tool, which is unchanged.
+
+Still open: the new item (a qualifier such as "counting all four measurements" would
+cover it); 6 (65.0 recorded at IMP01's two ends only); 7 (the check covers the final
+answer only); 12 (the combined score's button label). Flags 1–5, 8–11, 13 and 14 and
+all three notes are resolved.
