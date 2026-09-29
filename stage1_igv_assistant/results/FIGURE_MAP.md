@@ -716,3 +716,24 @@ defect lies in `server.py`'s wrapper and `score_tiers.py`, not the scoring itsel
 K7 (to be updated after the Phase 20 fix); K2 (the summaries carry half the restated claim);
 K4 (the cloud chat needs the network); K9 (earlier uncited mentions in the review). Nothing
 else changed.
+
+## L. The thesis after the ceiling fix (30 September, v2) and the meeting sheet v5, 2026-09-30
+
+`Rimas_MSc_Thesis_2026-09-30_v2.docx` (1df2f62f…d0946fc2) was copied over `docs/thesis/`
+(verified by sha256, not committed), replacing 32d5ff13…9abbd121. The sheet
+`Rimas_tezes_paaiskinimai_2026-09-30_v5.docx` (a632f2ec…2983168b) replaces v4. Both were
+read only from the Desktop. `FX` = `results/ceiling_layers_fix_2026-09-30/`.
+
+| # | Change | Record : key | Status |
+|---|---|---|---|
+| L1 | K10: [43] → Ladewig MS, Jacobsen JOB, Wagner AH, et al., Advanced Genetics 2023;4(1):2200016, doi:10.1002/ggn2.202200016; [44] → Danis D, Bamshad MJ, Bridges Y, et al., HGG Advances 2025;6(1):100371, doi:10.1016/j.xhgg.2024.100371 (now [21] and [22]) | Crossref for both DOIs: title, first three authors, volume, issue and article number match (Ladewig issued online 2022, in the 2023 issue) | resolved |
+| L2 | K9: citations at the first mentions in the literature review: VCF [13] (Exomiser paragraph), MCP [20] and Phenopackets [21][22] (MARRVEL-MCP paragraph), DELLY [39] (list of callers) | the new numbers map back to the VCF, MCP, Phenopackets and DELLY entries | resolved |
+| L3 | renumbering by order of first citation | 60 entries matched between the drafts by identical text; they give exactly the stated mapping (old→new), and the two rewritten entries are 43→21 and 44→22 as stated. All 165 earlier body citations point at the same work after mapping; the only additions are L2's four. First citations run 1, 2, …, 62 in order; no entry is uncited; there are no citations after the list | agrees |
+| L4 | K2: both summaries carry the whole claim ("…so that every figure it reports can be checked against a tool return" / "…todėl kiekvieną jo pateiktą skaičių galima patikrinti pagal įrankio atsakymą"); EN rewording: "four signals", "A separate caller performs discovery", "while no tool returned the number it required; with the number added, …, often never calling the tool that returned it" | K2's records | resolved. The EN summary is 300 words (≤ 300), the LT 268 |
+| L5 | K4: "the image tools, the gene lookup and the chat panel's cloud models" need the network | K4's records; the cloud chat goes to the Anthropic API (`chat.run_turn_api`) | resolved |
+| L6 | K3 and the fix: until 30 September the reported ceiling did not follow a restricted list; the score was right, and the ceiling fields were derived in a separate module and attached by the wrapper; 72 summary calls, 5 restricted, all from qwen3.5:4b, 1 above its ceiling; a registered fix; at IMP01 chr20:200000 57.5 / 65.0 / 100 / 43.3; the test failed first; the 94 breakends identical; the payload unchanged; 26 suites, 759 assertions. The interface's ceiling is "over the layers the score counts" | `FX/before.json` `phase10.total` (72, 5, 1; all restricted calls from qwen3.5:4b); `FX/registration.json` (commit 95e1927, before the fix 25d12bb); `FX/after.json` `imp01_agreement`, `identity.all_identical`, `proof`; `FX/test_before_fix.log`, `test_head_copies_prefix.log`; `FX/suites.json` `summary`; `ui.py` `ceiling_for(obs, counted_layers(sm))` | agrees |
+| L7 | K7: the limitation sentence on the ceiling and the recommendation clause removed | — | resolved (both were stale after the fix) |
+| L8 | sheet v5: the limitation now reads "found and fixed": until 30 September the ceiling ignored the model's layer list; one case (65.0 against 57.5) in 72 summary calls; now computed over the score's layers (IMP01: 57.5 / 65.0 / 100), with all four layers every ceiling field unchanged. Section 3 bracket: "from 09-30 the ceiling is computed over the same layers as the score". Glossary: the ceiling is per position, window and counted layers | as L6 (`FX/before.json`, `after.json`); `test_ceiling_layers.py` negative control (160 grid cases) and `after.json` `identity` (94 breakends) for "unchanged" | agrees |
+| L9 | nothing else changed | thesis: two paragraph diffs against the morning draft, with citation numbers masked (body and summaries), show 9 changed paragraphs, all under L2 and L4–L7; apart from those, only citation numbers and the reference list's order changed. Only `document.xml` and `docProps/core.xml` differ; no tracked changes, comments or text boxes. Sheet: only the version label ("v5") and the three L8 items changed | agrees |
+
+No flag remains open from section K, and none is raised by these files.
