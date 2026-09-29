@@ -5,6 +5,8 @@
     abstract_records.py uicheck      -> results/ui_check_2026-09-27.json
     abstract_records.py panels       -> screenshots/imp01_2026-09-27/*.png + results/imp01_panels_2026-09-27.json
     abstract_records.py models       -> results/local_models_2026-09-28.json
+    abstract_records.py sheet DIR    -> results/meeting_sheet_checks_2026-09-29.json  (Phase 18;
+                                        DIR holds the three 29 September files, read only)
 
 No step reads ~/patient_data. Every path written into a record has the home
 directory replaced by "~". A committed record is never overwritten.
@@ -34,6 +36,27 @@ control, built on the public NA12878 background.
 MODELS: `ollama show` for each local model used in the ceiling experiment
 (parameters, quantization, architecture, context length, capabilities), the
 model IDs from `ollama list`, the Ollama version, and the GPU from nvidia-smi.
+
+SHEET: the three files of 29 September (the EN and LT abstracts and the meeting
+sheet), read only, their sha256 set against the values given with the task. The two
+images embedded in the meeting sheet: each is searched as a pixel-exact crop of the
+four committed IMP01 panels (RGB values; the panels' alpha channel is dropped and
+the number of pixels it did not leave opaque is reported), with a positive control
+(a crop cut here from a committed panel must be found at its own offset) and a
+negative control (the same crop with one pixel changed must not be found); Word's
+display crop (a:srcRect, in thousandths of a percent) is reported beside each. For
+the sheet's two captions, the reads the panels show. Discordant-pair panel: every
+primary, paired alignment in the panel's region whose mate maps to another
+chromosome, split by side of chr20:200,000 (left: its aligned bases end at or
+before 200,000; right: they start at or after 200,001; otherwise crossing), by
+origin from the read name the construction gave each implanted fragment
+(IMP01_J20_* lies on der(20), IMP01_J21_* on der(21); any other name is background
+sequence), by mate chromosome (chr21 or elsewhere) and by strand, with MAPQ below
+20 and duplicates counted apart; the same
+count on the public background BAM before implanting is the negative control.
+Soft-clip panel: every primary, non-duplicate alignment in that panel's region with
+a soft clip, by the reference base its clip boundary follows (a leading clip: the
+base before the first aligned base; a trailing clip: the last aligned base).
 """
 import glob
 import hashlib
@@ -215,8 +238,195 @@ def step_models():
     return 0
 
 
+SHEET_FILES = {  # sha256 as given with the Phase 18 task
+    "Rimas_abstract_EN_2026-09-29.docx": "ca3b3303bce62a1fddb88acfb1e8d9596dd49072c2bc7272285e5d6a2387ebcf",
+    "Rimas_tezes_DI_medicinoje_LT_2026-09-29.docx": "d2471702ecde7c48669b5feb8582125fe151330f82c1fb2806363e6e3ab00732",
+    "Rimas_tezes_paaiskinimai_2026-09-29.docx": "c6bb20a62bd10ce7c534c18bae1d25eb4e654270b12052e79dcda7e651d66dc9",
+}
+SHEET = "Rimas_tezes_paaiskinimai_2026-09-29.docx"
+IMP01_BAM = os.path.join(HOME, "public_data", "sim", "bams", "IMP01.bam")
+BREAK = 200000   # IMP01's chr20 breakpoint: the junction lies between 200,000 and 200,001
+
+
+def png_rgb(data):
+    """(width, height, RGB rows, pixels not left opaque) from a PNG's bytes; 8-bit,
+    non-interlaced only. Pure Python: PIL is not installed here."""
+    import struct
+    import zlib
+    if data[:8] != b"\x89PNG\r\n\x1a\n":
+        raise ValueError("not a PNG")
+    pos, idat, plte = 8, [], b""
+    while pos < len(data):
+        n = struct.unpack(">I", data[pos:pos + 4])[0]
+        kind, body = data[pos + 4:pos + 8], data[pos + 8:pos + 8 + n]
+        pos += 12 + n
+        if kind == b"IHDR":
+            w, h, depth, ctype, _, _, interlace = struct.unpack(">IIBBBBB", body)
+        elif kind == b"PLTE":
+            plte = body
+        elif kind == b"IDAT":
+            idat.append(body)
+        elif kind == b"IEND":
+            break
+    if depth != 8 or interlace or ctype not in (0, 2, 3, 4, 6):
+        raise ValueError(f"unsupported PNG (bit depth {depth}, colour type {ctype}, interlace {interlace})")
+    bpp = {0: 1, 2: 3, 3: 1, 4: 2, 6: 4}[ctype]
+    raw, stride = zlib.decompress(b"".join(idat)), w * bpp
+    rows, prev, i, translucent = [], bytearray(stride), 0, 0
+    for _ in range(h):
+        ft, line = raw[i], bytearray(raw[i + 1:i + 1 + stride])
+        i += 1 + stride
+        for x in range(stride if ft else 0):
+            a = line[x - bpp] if x >= bpp else 0
+            if ft == 1:
+                line[x] = (line[x] + a) & 255
+            elif ft == 2:
+                line[x] = (line[x] + prev[x]) & 255
+            elif ft == 3:
+                line[x] = (line[x] + (a + prev[x]) // 2) & 255
+            elif ft == 4:
+                b, c = prev[x], (prev[x - bpp] if x >= bpp else 0)
+                p = a + b - c
+                pa, pb, pc = abs(p - a), abs(p - b), abs(p - c)
+                line[x] = (line[x] + (a if pa <= pb and pa <= pc else b if pb <= pc else c)) & 255
+        prev = line
+        if ctype == 2:
+            rgb = bytes(line)
+        elif ctype == 6:
+            out = bytearray(w * 3)
+            out[0::3], out[1::3], out[2::3] = line[0::4], line[1::4], line[2::4]
+            translucent += w - line[3::4].count(255)
+            rgb = bytes(out)
+        elif ctype == 3:
+            rgb = b"".join(plte[3 * k:3 * k + 3] for k in line)
+        else:
+            grey = line if ctype == 0 else line[0::2]
+            translucent += 0 if ctype == 0 else w - line[1::2].count(255)
+            rgb = bytes(v for g in grey for v in (g, g, g))
+        rows.append(rgb)
+    return w, h, rows, translucent
+
+
+def find_crop(big, small):
+    """Every (x0, y0) at which `small` sits pixel-exact inside `big`."""
+    (W, H, B, _), (w, h, S, _) = big, small
+    if w > W or h > H:
+        return []
+    hits = []
+    for x0 in range(W - w + 1):
+        a, b = 3 * x0, 3 * (x0 + w)
+        for y0 in range(H - h + 1):
+            if B[y0][a:b] == S[0] and all(B[y0 + k][a:b] == S[k] for k in range(1, h)):
+                hits.append([x0, y0])
+    return hits
+
+
+def step_sheet(folder):
+    import zipfile
+    import pysam
+    files = {}
+    for name, want in SHEET_FILES.items():
+        b = open(os.path.join(folder, name), "rb").read()
+        files[name] = {"bytes": len(b), "sha256": hashlib.sha256(b).hexdigest(),
+                       "matches_task": hashlib.sha256(b).hexdigest() == want}
+    if not all(f["matches_task"] for f in files.values()):
+        sys.exit("STOPPED: a file differs from the sha256 given with the task")
+
+    panels_rec = json.load(open(os.path.join(RES, "imp01_panels_2026-09-27.json")))
+    panels = {}
+    for name in sorted(panels_rec["files"]):
+        b = open(os.path.join(PANEL_DST, name), "rb").read()
+        if hashlib.sha256(b).hexdigest() != panels_rec["files"][name]["sha256"]:
+            sys.exit(f"STOPPED: committed panel {name} differs from its record")
+        panels[name] = png_rgb(b)
+    ctl_src = panels["discordant_pairs.png"]
+    crop = (ctl_src[0], 500, ctl_src[2][100:600], 0)
+    changed_rows = list(crop[2])
+    row = bytearray(changed_rows[250])
+    row[300] ^= 0x01
+    changed_rows[250] = bytes(row)
+    controls = {"positive_crop_rows_100_599_of_discordant_pairs_found_at": find_crop(ctl_src, crop),
+                "negative_same_crop_one_byte_changed_found_at": find_crop(ctl_src, (crop[0], 500, changed_rows, 0))}
+    controls["pass"] = (controls["positive_crop_rows_100_599_of_discordant_pairs_found_at"] == [[0, 100]]
+                        and controls["negative_same_crop_one_byte_changed_found_at"] == [])
+
+    z = zipfile.ZipFile(os.path.join(folder, SHEET))
+    doc = z.read("word/document.xml").decode()
+    rels = z.read("word/_rels/document.xml.rels").decode()
+    target = {m.group(1): m.group(2) for m in re.finditer(r'Id="(rId\d+)"[^>]*Target="(media/[^"]+)"', rels)}
+    order = re.findall(r'r:embed="(rId\d+)"', doc)
+    crops = [dict(re.findall(r'(\w)="(-?\d+)"', m)) for m in re.findall(r"<a:srcRect([^>]*)/>", doc)]
+    images = []
+    for k, rid in enumerate(order):
+        b = z.read("word/" + target[rid])
+        img = png_rgb(b)
+        images.append({"order_in_sheet": k + 1, "media": target[rid], "bytes": len(b),
+                       "sha256": hashlib.sha256(b).hexdigest(), "dimensions": f"{img[0]}x{img[1]}",
+                       "word_display_crop_srcRect": crops[k] if k < len(crops) else None,
+                       "pixel_exact_crop_of": {n: {"found_at_x_y": find_crop(p, img),
+                                                   "panel_pixels_not_opaque": p[3],
+                                                   "panel_dimensions": f"{p[0]}x{p[1]}"}
+                                               for n, p in panels.items()}})
+
+    def region(layer):
+        c, span = panels_rec["files"][layer + ".png"]["panel_return"]["region"].split(":")
+        s, e = (int(x) for x in span.split("-"))
+        return c, s, e
+
+    def discordant(bam_path):
+        c, s, e = region("discordant_pairs")
+        tally = {}
+        with pysam.AlignmentFile(bam_path) as f:
+            for r in f.fetch(c, s - 1, e):
+                if (r.is_secondary or r.is_supplementary or r.is_unmapped or not r.is_paired
+                        or r.mate_is_unmapped or r.next_reference_name == c):
+                    continue
+                side = ("left" if r.reference_end <= BREAK else "right" if r.reference_start >= BREAK
+                        else "crossing")
+                origin = ("der(20)" if r.query_name.startswith("IMP01_J20_") else
+                          "der(21)" if r.query_name.startswith("IMP01_J21_") else "background")
+                cls = "duplicate" if r.is_duplicate else ("mapq_below_20" if r.mapping_quality < 20 else "mapq_20_plus")
+                mate = "mate chr21" if r.next_reference_name == "chr21" else "mate elsewhere"
+                key = f"{side} | {origin} | {mate} | {'reverse' if r.is_reverse else 'forward'} | {cls}"
+                tally[key] = tally.get(key, 0) + 1
+        return {"region": f"{c}:{s}-{e}", "counts": dict(sorted(tally.items()))}
+
+    def clips():
+        c, s, e = region("soft_clipped_reads")
+        at = {}
+        with pysam.AlignmentFile(IMP01_BAM) as f:
+            for r in f.fetch(c, s - 1, e):
+                if r.is_secondary or r.is_supplementary or r.is_unmapped or r.is_duplicate or not r.cigartuples:
+                    continue
+                for boundary, op in ((r.reference_start, r.cigartuples[0][0]),
+                                     (r.reference_end, r.cigartuples[-1][0])):
+                    if op == 4:
+                        k = "at the breakpoint (follows 200,000)" if boundary == BREAK else "elsewhere"
+                        k += " | mapq_20_plus" if r.mapping_quality >= 20 else " | mapq_below_20"
+                        at[k] = at.get(k, 0) + 1
+        return {"region": f"{c}:{s}-{e}", "clip_boundaries": dict(sorted(at.items()))}
+
+    rec = {"what": "Checks behind the 29 September meeting sheet's images and captions (Phase 18 Task 1)",
+           "definitions": section("SHEET"), "files": files, "image_search_controls": controls,
+           "sheet_images": images,
+           "captions": {"discordant_pairs_panel": {"IMP01": discordant(IMP01_BAM),
+                                                   "background_before_implanting (negative control)": discordant(BG)},
+                        "soft_clipped_reads_panel": clips()},
+           "construction": "implants_ground_truth.json: IMP01 J20 on der(20) (chr20:200000 joined to chr21:14100001), "
+                           "J21 on der(21) (chr21:14100000 joined to chr20:200001)",
+           "code": "scripts/abstract_records.py sheet DIR"}
+    write("meeting_sheet_checks_2026-09-29.json", rec)
+    print(json.dumps({"controls_pass": controls["pass"],
+                      "images": [{i["media"][-12:]: {n: v["found_at_x_y"] for n, v in i["pixel_exact_crop_of"].items()}}
+                                 for i in images],
+                      "captions": rec["captions"]}, indent=1))
+    return 0
+
+
 if __name__ == "__main__":
     steps = {"provenance": step_provenance, "uicheck": step_uicheck, "panels": step_panels, "models": step_models}
+    if len(sys.argv) == 3 and sys.argv[1] == "sheet":
+        sys.exit(step_sheet(sys.argv[2]))
     if len(sys.argv) != 2 or sys.argv[1] not in steps:
-        sys.exit("usage: abstract_records.py provenance | uicheck | panels | models")
+        sys.exit("usage: abstract_records.py provenance | uicheck | panels | models | sheet DIR")
     sys.exit(steps[sys.argv[1]]())
