@@ -1,0 +1,52 @@
+{
+ "what": "Registration of the ceiling-field fix (Phase 20 Step 2), committed before any code change",
+ "date": "2026-09-30",
+ "defect": "breakpoint_evidence_summary normalises evidence_score over the layers it counts (applicable_layers minus unassessable_layers), but the ceiling fields server.py's _with_ceiling adds (attainable_here, max_with_flat_depth, strong_band_reachable_here, attainable_basis, attainable_note) come from score_tiers.ceiling_from_observed, which always assumes all four layers are counted. Measured in before.json: at IMP01 chr20:200000 (default window) the score is 65.0 with [discordant_pairs, soft_clipped_reads] and 65.0 with [soft_clipped_reads, split_reads], while attainable_here reads 57.5 for every layer list; in the Phase 10 run files 5 of 72 summary calls passed a restricted list and 1 (qwen3.5:4b WITH run 15) returned a score above the reported ceiling.",
+ "rule": {
+  "counted_layers": "the return's applicable_layers minus its unassessable_layers, in that order -- exactly the layers in evidence_score's denominator",
+  "attainable_here": "round(100 x S / M, 1), where S sums over the counted layers: the discordant layer's observed tier score, the soft-clip and split-read maxima, and 0 for depth; and M is the sum of the counted layers' maxima. Rounded as evidence_score is. None when the discordant layer is counted and its observed value is missing, or when no layer is counted",
+  "max_with_flat_depth": "round(100 x (sum of the counted layers' maxima except depth) / M, 1)",
+  "strong_band_reachable_here": "attainable_here >= the strong band (unchanged rule)",
+  "max_all_layers": "unchanged (100: every counted layer at its maximum normalises to 100)",
+  "new_field": "ceiling_counted_layers names the counted layers; it is added only when fewer than four layers are counted, so that the default return, and the model-visible payload built from it, stay byte-identical",
+  "sentences": "when fewer than four layers are counted, attainable_basis and attainable_note say which ones and describe only those",
+  "single_derivation": "score_tiers.ceiling_from_observed takes the counted layers; server.py's _with_ceiling and ui.py's evidence panel both pass them"
+ },
+ "default_identity": "with no layer list, or with all four layers counted (in any order), every ceiling field must be byte-identical to today's",
+ "expected_at_IMP01_chr20_200000": {
+  "all four": {
+   "attainable_here": 57.5,
+   "max_with_flat_depth": 75.0,
+   "strong_band_reachable_here": false
+  },
+  "discordant_pairs + soft_clipped_reads": {
+   "attainable_here": 65.0,
+   "max_with_flat_depth": 100.0,
+   "strong_band_reachable_here": false
+  },
+  "soft_clipped_reads + split_reads": {
+   "attainable_here": 100.0,
+   "max_with_flat_depth": 100.0,
+   "strong_band_reachable_here": true
+  },
+  "discordant_pairs + soft_clipped_reads + read_depth": {
+   "attainable_here": 43.3,
+   "max_with_flat_depth": 66.7,
+   "strong_band_reachable_here": false
+  }
+ },
+ "authorised_files": [
+  "stage1_igv_assistant/server.py (_with_ceiling; one docstring sentence if it describes the ceiling)",
+  "stage1_igv_assistant/score_tiers.py",
+  "stage1_igv_assistant/ui.py"
+ ],
+ "must_stay_byte_identical": [
+  "stage1_igv_assistant/tools/bam_tools.py",
+  "stage1_igv_assistant/tools/vcf_tools.py",
+  "stage1_igv_assistant/candidate_server.py"
+ ],
+ "no_changes_to": "any threshold, tier, band, window or default",
+ "tests": "stage1_igv_assistant/tests/test_ceiling_layers.py, written first and shown failing on the pre-fix score_tiers.py and server.py (loaded from git into scratch modules). Self-contained: tiers derived from the source, synthetic observed values, no BAM; plus one integration check through the MCP dispatch at IMP01. Positive control: with a restricted list the ceiling equals the normalised maximum over those layers, and whenever the depth component is 0 the score does not exceed attainable_here. Negative control: with all four layers and with no list, every ceiling field equals the pre-fix output.",
+ "remeasurement": "after.json and suites.json: (a) the four IMP01 calls, score and ceiling agreeing and matching the expected values above; (b) the 40 implant and 54 background breakends, default geometry, all four layers: every ceiling field byte-identical to before.json; (c) the prepared-payload proof re-run, its locus's model-visible payload byte-identical to the 2026-09-26 proof; (d) ui --check exit 0 and the IMP01 panel still 40.0 and 57.5; (e) every suite in stage1_igv_assistant/tests/ with the assertion census (scripts/run_suites.py).",
+ "guard": "after the fix is committed, scripts/guard_protected.py's DEFAULT_BASE moves to the fix commit"
+}

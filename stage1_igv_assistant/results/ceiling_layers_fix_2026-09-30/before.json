@@ -1,0 +1,1119 @@
+{
+ "what": "Ceiling fields vs counted layers, BEFORE the fix (Phase 20 Step 1)",
+ "definitions": {
+  "counted_layers": "the layers in evidence_score's denominator: the return's applicable_layers minus its unassessable_layers, in that order",
+  "ceiling_fields": "attainable_ceiling_derivable, score_bands, strong_band, max_all_layers, max_with_flat_depth, attainable_here, strong_band_reachable_here, attainable_basis, attainable_note and, after the fix, ceiling_counted_layers (present only when fewer than four layers are counted)",
+  "imp01_calls": "breakpoint_evidence_summary at IMP01 chr20:200000, default window, with applicable_layers = all four; [discordant_pairs, soft_clipped_reads]; [soft_clipped_reads, split_reads]; [discordant_pairs, soft_clipped_reads, read_depth]",
+  "phase10": "every breakpoint_evidence_summary call recorded in the committed Phase 10 run files (recorder_calls_unablated), per model and condition: calls; calls that passed a restricted layer list (a list that is not all four layers); and calls whose returned evidence_score exceeded the returned attainable_here. Aggregate only",
+  "breakends": "the 40 implant breakends (32 detected, 8 missed) and 54 background breakends of the synthetic control (analysis_2026-09-25: figures.json and chain/background.json.gz), default window, applicable_layers = all four: evidence_score, attainable_here, and the sha256 of the ceiling fields serialised with sorted keys",
+  "identity": "after the fix, the breakends' ceiling-field hashes set against before.json, position by position",
+  "proof": "the prepared-payload proof of the ceiling experiment (phase10_rerun.py prove, run separately), its locus 1 (IMP01 chr20:200000): the model-visible payload (chat.shrink_for_model, home replaced by ~) and the ceiling fields, set against the 2026-09-26 proof",
+  "panel": "ui.assess at IMP01 chr20:200000 (the evidence panel): score and attainable ceiling"
+ },
+ "code": "scripts/ceiling_layers_fix.py before",
+ "imp01_calls": {
+  "all four": {
+   "applicable_layers_passed": [
+    "discordant_pairs",
+    "soft_clipped_reads",
+    "split_reads",
+    "read_depth"
+   ],
+   "counted_layers": [
+    "discordant_pairs",
+    "soft_clipped_reads",
+    "split_reads",
+    "read_depth"
+   ],
+   "evidence_score": 40.0,
+   "evidence_strength": "moderate",
+   "components": {
+    "discordant_pair_score": 7.5,
+    "soft_clip_score": 25.0,
+    "split_read_score": 7.5,
+    "depth_score": 0.0
+   },
+   "ceiling_fields": {
+    "attainable_ceiling_derivable": true,
+    "score_bands": [
+     {
+      "strength": "strong",
+      "op": ">=",
+      "threshold": 70.0
+     },
+     {
+      "strength": "moderate",
+      "op": ">=",
+      "threshold": 40.0
+     },
+     {
+      "strength": "weak",
+      "op": ">",
+      "threshold": 0.0
+     }
+    ],
+    "strong_band": 70.0,
+    "max_all_layers": 100.0,
+    "max_with_flat_depth": 75.0,
+    "attainable_here": 57.5,
+    "strong_band_reachable_here": false,
+    "attainable_basis": "the paired-read measurement held at the band its measured value reaches \u2014 in a HETEROZYGOUS rearrangement roughly half the reads crossing the breakpoint come from the intact homolog, so the discordant fraction is capped well below the 0.5 its top band requires and no amount of extra coverage or a wider window moves it; the soft-clip and split-read measurements at their best possible band; and the depth measurement contributing nothing, because a balanced rearrangement gains and loses no DNA.",
+    "attainable_note": "Attainable-score note: for a heterozygous balanced rearrangement the highest score reachable at this locus is 57.5/100, below the 70.0/100 at which the top band begins \u2014 so the top band is UNREACHABLE here by arithmetic, and a middling band is the ceiling rather than a weak result. Two of the four layers are structurally limited for such an event: the depth layer contributes nothing because no DNA is gained or lost, and the paired-read layer is capped because roughly half the reads crossing the breakpoint come from the intact homolog. Judge a balanced event on the four measurements, not on the band it lands in."
+   },
+   "score_exceeds_attainable": false
+  },
+  "discordant_pairs + soft_clipped_reads": {
+   "applicable_layers_passed": [
+    "discordant_pairs",
+    "soft_clipped_reads"
+   ],
+   "counted_layers": [
+    "discordant_pairs",
+    "soft_clipped_reads"
+   ],
+   "evidence_score": 65.0,
+   "evidence_strength": "moderate",
+   "components": {
+    "discordant_pair_score": 7.5,
+    "soft_clip_score": 25.0,
+    "split_read_score": 7.5,
+    "depth_score": 0.0
+   },
+   "ceiling_fields": {
+    "attainable_ceiling_derivable": true,
+    "score_bands": [
+     {
+      "strength": "strong",
+      "op": ">=",
+      "threshold": 70.0
+     },
+     {
+      "strength": "moderate",
+      "op": ">=",
+      "threshold": 40.0
+     },
+     {
+      "strength": "weak",
+      "op": ">",
+      "threshold": 0.0
+     }
+    ],
+    "strong_band": 70.0,
+    "max_all_layers": 100.0,
+    "max_with_flat_depth": 75.0,
+    "attainable_here": 57.5,
+    "strong_band_reachable_here": false,
+    "attainable_basis": "the paired-read measurement held at the band its measured value reaches \u2014 in a HETEROZYGOUS rearrangement roughly half the reads crossing the breakpoint come from the intact homolog, so the discordant fraction is capped well below the 0.5 its top band requires and no amount of extra coverage or a wider window moves it; the soft-clip and split-read measurements at their best possible band; and the depth measurement contributing nothing, because a balanced rearrangement gains and loses no DNA.",
+    "attainable_note": "Attainable-score note: for a heterozygous balanced rearrangement the highest score reachable at this locus is 57.5/100, below the 70.0/100 at which the top band begins \u2014 so the top band is UNREACHABLE here by arithmetic, and a middling band is the ceiling rather than a weak result. Two of the four layers are structurally limited for such an event: the depth layer contributes nothing because no DNA is gained or lost, and the paired-read layer is capped because roughly half the reads crossing the breakpoint come from the intact homolog. Judge a balanced event on the four measurements, not on the band it lands in."
+   },
+   "score_exceeds_attainable": true
+  },
+  "soft_clipped_reads + split_reads": {
+   "applicable_layers_passed": [
+    "soft_clipped_reads",
+    "split_reads"
+   ],
+   "counted_layers": [
+    "soft_clipped_reads",
+    "split_reads"
+   ],
+   "evidence_score": 65.0,
+   "evidence_strength": "moderate",
+   "components": {
+    "discordant_pair_score": 7.5,
+    "soft_clip_score": 25.0,
+    "split_read_score": 7.5,
+    "depth_score": 0.0
+   },
+   "ceiling_fields": {
+    "attainable_ceiling_derivable": true,
+    "score_bands": [
+     {
+      "strength": "strong",
+      "op": ">=",
+      "threshold": 70.0
+     },
+     {
+      "strength": "moderate",
+      "op": ">=",
+      "threshold": 40.0
+     },
+     {
+      "strength": "weak",
+      "op": ">",
+      "threshold": 0.0
+     }
+    ],
+    "strong_band": 70.0,
+    "max_all_layers": 100.0,
+    "max_with_flat_depth": 75.0,
+    "attainable_here": 57.5,
+    "strong_band_reachable_here": false,
+    "attainable_basis": "the paired-read measurement held at the band its measured value reaches \u2014 in a HETEROZYGOUS rearrangement roughly half the reads crossing the breakpoint come from the intact homolog, so the discordant fraction is capped well below the 0.5 its top band requires and no amount of extra coverage or a wider window moves it; the soft-clip and split-read measurements at their best possible band; and the depth measurement contributing nothing, because a balanced rearrangement gains and loses no DNA.",
+    "attainable_note": "Attainable-score note: for a heterozygous balanced rearrangement the highest score reachable at this locus is 57.5/100, below the 70.0/100 at which the top band begins \u2014 so the top band is UNREACHABLE here by arithmetic, and a middling band is the ceiling rather than a weak result. Two of the four layers are structurally limited for such an event: the depth layer contributes nothing because no DNA is gained or lost, and the paired-read layer is capped because roughly half the reads crossing the breakpoint come from the intact homolog. Judge a balanced event on the four measurements, not on the band it lands in."
+   },
+   "score_exceeds_attainable": true
+  },
+  "discordant_pairs + soft_clipped_reads + read_depth": {
+   "applicable_layers_passed": [
+    "discordant_pairs",
+    "soft_clipped_reads",
+    "read_depth"
+   ],
+   "counted_layers": [
+    "discordant_pairs",
+    "soft_clipped_reads",
+    "read_depth"
+   ],
+   "evidence_score": 43.3,
+   "evidence_strength": "moderate",
+   "components": {
+    "discordant_pair_score": 7.5,
+    "soft_clip_score": 25.0,
+    "split_read_score": 7.5,
+    "depth_score": 0.0
+   },
+   "ceiling_fields": {
+    "attainable_ceiling_derivable": true,
+    "score_bands": [
+     {
+      "strength": "strong",
+      "op": ">=",
+      "threshold": 70.0
+     },
+     {
+      "strength": "moderate",
+      "op": ">=",
+      "threshold": 40.0
+     },
+     {
+      "strength": "weak",
+      "op": ">",
+      "threshold": 0.0
+     }
+    ],
+    "strong_band": 70.0,
+    "max_all_layers": 100.0,
+    "max_with_flat_depth": 75.0,
+    "attainable_here": 57.5,
+    "strong_band_reachable_here": false,
+    "attainable_basis": "the paired-read measurement held at the band its measured value reaches \u2014 in a HETEROZYGOUS rearrangement roughly half the reads crossing the breakpoint come from the intact homolog, so the discordant fraction is capped well below the 0.5 its top band requires and no amount of extra coverage or a wider window moves it; the soft-clip and split-read measurements at their best possible band; and the depth measurement contributing nothing, because a balanced rearrangement gains and loses no DNA.",
+    "attainable_note": "Attainable-score note: for a heterozygous balanced rearrangement the highest score reachable at this locus is 57.5/100, below the 70.0/100 at which the top band begins \u2014 so the top band is UNREACHABLE here by arithmetic, and a middling band is the ceiling rather than a weak result. Two of the four layers are structurally limited for such an event: the depth layer contributes nothing because no DNA is gained or lost, and the paired-read layer is capped because roughly half the reads crossing the breakpoint come from the intact homolog. Judge a balanced event on the four measurements, not on the band it lands in."
+   },
+   "score_exceeds_attainable": false
+  }
+ },
+ "phase10": {
+  "per_model_condition": {
+   "claude-opus-5 WITH": {
+    "summary_calls": 7,
+    "restricted_layer_list": 0,
+    "score_above_attainable": 0,
+    "restricted_and_above": 0
+   },
+   "claude-opus-5 WITHOUT": {
+    "summary_calls": 10,
+    "restricted_layer_list": 0,
+    "score_above_attainable": 0,
+    "restricted_and_above": 0
+   },
+   "claude-sonnet-5 WITH": {
+    "summary_calls": 5,
+    "restricted_layer_list": 0,
+    "score_above_attainable": 0,
+    "restricted_and_above": 0
+   },
+   "claude-sonnet-5 WITHOUT": {
+    "summary_calls": 5,
+    "restricted_layer_list": 0,
+    "score_above_attainable": 0,
+    "restricted_and_above": 0
+   },
+   "qwen2.5:7b WITH": {
+    "summary_calls": 11,
+    "restricted_layer_list": 0,
+    "score_above_attainable": 0,
+    "restricted_and_above": 0
+   },
+   "qwen2.5:7b WITHOUT": {
+    "summary_calls": 13,
+    "restricted_layer_list": 0,
+    "score_above_attainable": 0,
+    "restricted_and_above": 0
+   },
+   "qwen3.5:4b WITH": {
+    "summary_calls": 8,
+    "restricted_layer_list": 1,
+    "score_above_attainable": 1,
+    "restricted_and_above": 1
+   },
+   "qwen3.5:4b WITHOUT": {
+    "summary_calls": 13,
+    "restricted_layer_list": 4,
+    "score_above_attainable": 0,
+    "restricted_and_above": 0
+   }
+  },
+  "total": {
+   "summary_calls": 72,
+   "restricted_layer_list": 5,
+   "score_above_attainable": 1,
+   "restricted_and_above": 1
+  }
+ },
+ "breakends": {
+  "counts": {
+   "detected": 32,
+   "missed": 8,
+   "background": 54
+  },
+  "rows": [
+   {
+    "group": "detected",
+    "label": "IMP01",
+    "position": "chr21:14100001",
+    "counted_layers": 4,
+    "evidence_score": 40.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "detected",
+    "label": "IMP01",
+    "position": "chr20:200000",
+    "counted_layers": 4,
+    "evidence_score": 40.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "detected",
+    "label": "IMP01",
+    "position": "chr21:14100000",
+    "counted_layers": 4,
+    "evidence_score": 40.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "detected",
+    "label": "IMP01",
+    "position": "chr20:200001",
+    "counted_layers": 4,
+    "evidence_score": 40.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "detected",
+    "label": "IMP02",
+    "position": "chr21:33900001",
+    "counted_layers": 4,
+    "evidence_score": 40.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "detected",
+    "label": "IMP02",
+    "position": "chr20:45500000",
+    "counted_layers": 4,
+    "evidence_score": 40.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "detected",
+    "label": "IMP02",
+    "position": "chr21:33900000",
+    "counted_layers": 4,
+    "evidence_score": 40.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "detected",
+    "label": "IMP02",
+    "position": "chr20:45500001",
+    "counted_layers": 4,
+    "evidence_score": 40.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "detected",
+    "label": "IMP03",
+    "position": "chr21:45700000",
+    "counted_layers": 4,
+    "evidence_score": 40.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "detected",
+    "label": "IMP03",
+    "position": "chr20:4899999",
+    "counted_layers": 4,
+    "evidence_score": 40.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "detected",
+    "label": "IMP03",
+    "position": "chr21:45699999",
+    "counted_layers": 4,
+    "evidence_score": 40.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "detected",
+    "label": "IMP03",
+    "position": "chr20:4900000",
+    "counted_layers": 4,
+    "evidence_score": 40.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "detected",
+    "label": "IMP04",
+    "position": "chr21:29200000",
+    "counted_layers": 4,
+    "evidence_score": 45.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "detected",
+    "label": "IMP04",
+    "position": "chr20:46899999",
+    "counted_layers": 4,
+    "evidence_score": 32.5,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "detected",
+    "label": "IMP04",
+    "position": "chr21:29199999",
+    "counted_layers": 4,
+    "evidence_score": 45.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "detected",
+    "label": "IMP04",
+    "position": "chr20:46900000",
+    "counted_layers": 4,
+    "evidence_score": 32.5,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "detected",
+    "label": "IMP05",
+    "position": "chr21:13300001",
+    "counted_layers": 4,
+    "evidence_score": 40.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "detected",
+    "label": "IMP05",
+    "position": "chr20:1900000",
+    "counted_layers": 4,
+    "evidence_score": 40.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "detected",
+    "label": "IMP05",
+    "position": "chr21:13300000",
+    "counted_layers": 4,
+    "evidence_score": 40.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "detected",
+    "label": "IMP05",
+    "position": "chr20:1900001",
+    "counted_layers": 4,
+    "evidence_score": 55.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "detected",
+    "label": "IMP06",
+    "position": "chr21:17200000",
+    "counted_layers": 4,
+    "evidence_score": 40.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "detected",
+    "label": "IMP06",
+    "position": "chr20:3899999",
+    "counted_layers": 4,
+    "evidence_score": 40.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "detected",
+    "label": "IMP06",
+    "position": "chr21:17199999",
+    "counted_layers": 4,
+    "evidence_score": 40.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "detected",
+    "label": "IMP06",
+    "position": "chr20:3900000",
+    "counted_layers": 4,
+    "evidence_score": 40.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "detected",
+    "label": "IMP07",
+    "position": "chr21:41200000",
+    "counted_layers": 4,
+    "evidence_score": 55.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "detected",
+    "label": "IMP07",
+    "position": "chr20:54999999",
+    "counted_layers": 4,
+    "evidence_score": 55.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "detected",
+    "label": "IMP07",
+    "position": "chr21:41199999",
+    "counted_layers": 4,
+    "evidence_score": 55.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "detected",
+    "label": "IMP07",
+    "position": "chr20:55000000",
+    "counted_layers": 4,
+    "evidence_score": 55.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "detected",
+    "label": "IMP08",
+    "position": "chr21:39300000",
+    "counted_layers": 4,
+    "evidence_score": 40.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "detected",
+    "label": "IMP08",
+    "position": "chr20:13499999",
+    "counted_layers": 4,
+    "evidence_score": 40.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "detected",
+    "label": "IMP08",
+    "position": "chr21:39299999",
+    "counted_layers": 4,
+    "evidence_score": 40.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "detected",
+    "label": "IMP08",
+    "position": "chr20:13500000",
+    "counted_layers": 4,
+    "evidence_score": 40.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "missed",
+    "label": "IMP09",
+    "position": "chr20:33700000",
+    "counted_layers": 4,
+    "evidence_score": 22.5,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "missed",
+    "label": "IMP09",
+    "position": "chr21:5900000",
+    "counted_layers": 4,
+    "evidence_score": null,
+    "attainable_here": 50.0,
+    "ceiling_sha256": "082b7c4aa40479be2ee7211a26bc5b1a932b9a052643bfd1269595a8c399a3c4"
+   },
+   {
+    "group": "missed",
+    "label": "IMP10",
+    "position": "chr20:25800000",
+    "counted_layers": 4,
+    "evidence_score": null,
+    "attainable_here": 50.0,
+    "ceiling_sha256": "082b7c4aa40479be2ee7211a26bc5b1a932b9a052643bfd1269595a8c399a3c4"
+   },
+   {
+    "group": "missed",
+    "label": "IMP10",
+    "position": "chr21:7600000",
+    "counted_layers": 4,
+    "evidence_score": null,
+    "attainable_here": 50.0,
+    "ceiling_sha256": "082b7c4aa40479be2ee7211a26bc5b1a932b9a052643bfd1269595a8c399a3c4"
+   },
+   {
+    "group": "missed",
+    "label": "IMP11",
+    "position": "chr20:31100000",
+    "counted_layers": 4,
+    "evidence_score": null,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "missed",
+    "label": "IMP11",
+    "position": "chr21:20200000",
+    "counted_layers": 4,
+    "evidence_score": null,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "missed",
+    "label": "IMP12",
+    "position": "chr20:47900000",
+    "counted_layers": 4,
+    "evidence_score": null,
+    "attainable_here": 50.0,
+    "ceiling_sha256": "082b7c4aa40479be2ee7211a26bc5b1a932b9a052643bfd1269595a8c399a3c4"
+   },
+   {
+    "group": "missed",
+    "label": "IMP12",
+    "position": "chr21:44100000",
+    "counted_layers": 4,
+    "evidence_score": null,
+    "attainable_here": 50.0,
+    "ceiling_sha256": "082b7c4aa40479be2ee7211a26bc5b1a932b9a052643bfd1269595a8c399a3c4"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:1410171",
+    "counted_layers": 4,
+    "evidence_score": 22.5,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:1408499",
+    "counted_layers": 4,
+    "evidence_score": 47.5,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:2379966",
+    "counted_layers": 4,
+    "evidence_score": 25.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:2379050",
+    "counted_layers": 4,
+    "evidence_score": 32.5,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:2379963",
+    "counted_layers": 4,
+    "evidence_score": 25.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:2379257",
+    "counted_layers": 4,
+    "evidence_score": 32.5,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:2825764",
+    "counted_layers": 4,
+    "evidence_score": null,
+    "attainable_here": 50.0,
+    "ceiling_sha256": "082b7c4aa40479be2ee7211a26bc5b1a932b9a052643bfd1269595a8c399a3c4"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:2822501",
+    "counted_layers": 4,
+    "evidence_score": 72.5,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:17123154",
+    "counted_layers": 4,
+    "evidence_score": 65.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:17122806",
+    "counted_layers": 4,
+    "evidence_score": 72.5,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:18262323",
+    "counted_layers": 4,
+    "evidence_score": 25.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:18261069",
+    "counted_layers": 4,
+    "evidence_score": 15.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:18262525",
+    "counted_layers": 4,
+    "evidence_score": 25.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:18261081",
+    "counted_layers": 4,
+    "evidence_score": 15.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:32724966",
+    "counted_layers": 4,
+    "evidence_score": null,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:32723063",
+    "counted_layers": 4,
+    "evidence_score": 15.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:32941581",
+    "counted_layers": 4,
+    "evidence_score": 47.5,
+    "attainable_here": 50.0,
+    "ceiling_sha256": "082b7c4aa40479be2ee7211a26bc5b1a932b9a052643bfd1269595a8c399a3c4"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:32937682",
+    "counted_layers": 4,
+    "evidence_score": 32.5,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:34231420",
+    "counted_layers": 4,
+    "evidence_score": 40.0,
+    "attainable_here": 50.0,
+    "ceiling_sha256": "082b7c4aa40479be2ee7211a26bc5b1a932b9a052643bfd1269595a8c399a3c4"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:34228122",
+    "counted_layers": 4,
+    "evidence_score": null,
+    "attainable_here": 65.0,
+    "ceiling_sha256": "927d749170078885f9efa24b2fa86b38594cf603b207a986c5561a84950163ba"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:38427168",
+    "counted_layers": 4,
+    "evidence_score": 47.5,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:38426467",
+    "counted_layers": 4,
+    "evidence_score": 47.5,
+    "attainable_here": 50.0,
+    "ceiling_sha256": "082b7c4aa40479be2ee7211a26bc5b1a932b9a052643bfd1269595a8c399a3c4"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:43397153",
+    "counted_layers": 4,
+    "evidence_score": 57.5,
+    "attainable_here": 50.0,
+    "ceiling_sha256": "082b7c4aa40479be2ee7211a26bc5b1a932b9a052643bfd1269595a8c399a3c4"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:43395954",
+    "counted_layers": 4,
+    "evidence_score": 65.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:43696990",
+    "counted_layers": 4,
+    "evidence_score": 40.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:43696487",
+    "counted_layers": 4,
+    "evidence_score": 40.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:54041464",
+    "counted_layers": 4,
+    "evidence_score": 32.5,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:54030525",
+    "counted_layers": 4,
+    "evidence_score": 40.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:54250804",
+    "counted_layers": 4,
+    "evidence_score": 55.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:54249698",
+    "counted_layers": 4,
+    "evidence_score": null,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:55865561",
+    "counted_layers": 4,
+    "evidence_score": null,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:55859554",
+    "counted_layers": 4,
+    "evidence_score": 32.5,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:62673788",
+    "counted_layers": 4,
+    "evidence_score": 47.5,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:62672898",
+    "counted_layers": 4,
+    "evidence_score": 47.5,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:63094244",
+    "counted_layers": 4,
+    "evidence_score": 65.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr20:63093345",
+    "counted_layers": 4,
+    "evidence_score": 57.5,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:10476287",
+    "counted_layers": 4,
+    "evidence_score": 22.5,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:10475719",
+    "counted_layers": 4,
+    "evidence_score": 47.5,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:10770078",
+    "counted_layers": 4,
+    "evidence_score": 55.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:10769164",
+    "counted_layers": 4,
+    "evidence_score": 32.5,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:21412386",
+    "counted_layers": 4,
+    "evidence_score": 22.5,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:21411143",
+    "counted_layers": 4,
+    "evidence_score": 45.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:23003088",
+    "counted_layers": 4,
+    "evidence_score": 65.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:23002473",
+    "counted_layers": 4,
+    "evidence_score": 65.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:26002391",
+    "counted_layers": 4,
+    "evidence_score": 40.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:26001836",
+    "counted_layers": 4,
+    "evidence_score": 62.5,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:26002386",
+    "counted_layers": 4,
+    "evidence_score": 40.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:26001844",
+    "counted_layers": 4,
+    "evidence_score": 62.5,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:41933377",
+    "counted_layers": 4,
+    "evidence_score": 32.5,
+    "attainable_here": 50.0,
+    "ceiling_sha256": "082b7c4aa40479be2ee7211a26bc5b1a932b9a052643bfd1269595a8c399a3c4"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:41930007",
+    "counted_layers": 4,
+    "evidence_score": 32.5,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:43262809",
+    "counted_layers": 4,
+    "evidence_score": null,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:43262522",
+    "counted_layers": 4,
+    "evidence_score": null,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:45969811",
+    "counted_layers": 4,
+    "evidence_score": 65.0,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   },
+   {
+    "group": "background",
+    "label": "background",
+    "position": "chr21:45968107",
+    "counted_layers": 4,
+    "evidence_score": 47.5,
+    "attainable_here": 57.5,
+    "ceiling_sha256": "5ee04b9cc698981c2c2e7cf915cdc874dcf624c60d12d70d5cd9a02e5e244925"
+   }
+  ]
+ }
+}
