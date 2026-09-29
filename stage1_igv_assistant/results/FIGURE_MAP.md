@@ -445,3 +445,149 @@ not a contradiction: "cannot be rated strong" holds when the depth layer behaves
 it should, which the Conclusions state). No other claim differs from a record.
 
 *Re-check, 2026-09-28, LT sha256 5ad80c07…c5b24788 and EN 120aa565…62c6847d7709* (replacing 12b8b3a9…d7a63ba1 and e77df205…467dd49a; read only): a paragraph diff of the 27 and 28 September files shows changes only in the Methods, Results and Conclusions paragraphs, and only these, identically in both languages — I4 the fourth bridge tool named ("pateikia pasirinktą kandidatą" / "retrieve a single candidate"; get_candidate); I6 the background stated as chromosomes 20 and 21 of the public NA12878 data (`na12878_provenance_2026-09-27.json` `source.from_header_last_pg.cl`); I9 "7,6 ir 4,7 mlrd." (`local_models_2026-09-28.json` `models.*.ollama_show.Model.parameters`); I16 "gali gauti tik dėl klaidingo signalo (didžiausias stebėtas įvertis — 55,0)" (`AN/figures.json` `ceiling_summary.evidence_score_range` [32.5, 55.0], `attainable_here` 57.5 with depth at 0); I22 the forecast qualified "nesant klaidingo signalo"; and the removal of "sulygintų skaitinių" and "ir modelių nekeičiant", which leaves every claim true. All five changed clauses agree with their records; no flag remains open in section I.
+
+## J. The plain-language abstract and the meeting sheet, 2026-09-29
+
+Three Desktop files, read only, not yet sent; each sha256 matches the value given
+with the task (`SH` `files`): `Rimas_abstract_EN_2026-09-29.docx` (ca3b3303…2387ebcf;
+1,053 words), `Rimas_tezes_DI_medicinoje_LT_2026-09-29.docx` (d2471702…3ab00732; 894
+words) and the meeting sheet `Rimas_tezes_paaiskinimai_2026-09-29.docx`
+(c6bb20a6…51d66dc9; 1,676 words, 3 tables, 2 images). The two abstracts carry the same
+figures (compared number by number over the Methods, Results and Conclusions) and the
+same references, so one row covers both. The abstract was rewritten in plain language
+and nearly every clause is reworded: each row gives the new wording and cites the
+section I row whose record it rests on. `SH` = `results/meeting_sheet_checks_2026-09-29.json`,
+`DR` = `results/demo_dry_run_2026-09-29.json`, `CH` = `AN/chain/IMP01.json.gz` (call ids),
+`P10` = `benchmark/runs/phase10_rerun_2026-09-25/`, `PF` = `P10/proof_prepared_payload_2026-09-26.json`;
+`AN` and `P10B` as in section I. The two scripts (`scripts/abstract_records.py sheet`,
+`scripts/demo_dry_run.py`) were committed before they ran.
+
+### J.1 The abstracts (EN wording; the LT says the same)
+
+| # | Claim (29 September) | Value | Record : key | Status |
+|---|---|---|---|---|
+| J1 | tools are "small programs that the model runs on a patient's aligned sequencing reads (a BAM file) …, such as 'count the read pairs at chromosome 20, position 200,000', and that return exact measurements" | — | the MCP tool `discordant_pairs` (`count_discordant_pairs`, `bam_tools.py:784`: pairs whose mate maps to a different chromosome, ±500 bases); at IMP01 chr20:200,000 it returns 44 (`DR` `steps.4_tool_return`; `CH` call 323) | supported; the example tool counts only the pairs whose mate lies on another chromosome |
+| J2 | "The model sees the data only through these tools … so every number it reports can be checked against a tool output" | — | I1; `chat.verify_numbers` (every number in the final answer checked against the turn's tool returns) | supported |
+| J3 | four tools measure "independent signs": pairs whose ends map to different chromosomes, reads cut off at the breakpoint, reads split between the two chromosomes, depth | 4 | I2; `bam_tools.py:1808` (each layer "scored independently on a 0-25 scale") | supported for the scores. The reads can overlap: a split read's primary alignment carries a soft clip where it splits |
+| J4 | each sign 0–25 points; total scaled to 0–100; 70 or more strong, 40 or more moderate | — | I3 | supported |
+| J5 | other tools "check data quality, name the gene at the breakpoint, check the partner breakpoint and draw IGV images" | — | I4 | supported (the applicability and score tools and the four candidate-set tools are not named) |
+| J6 | "The assistant does not scan the genome itself: … DELLY scans the BAM file and lists candidate breakpoints, which the assistant filters and assesses, as it does any position the user enters" | — | `vcf_tools.load_candidate_set`, `list_candidates` (the filters); `ui.assess` runs the same four layers for a candidate and a typed position (`DR` steps 3 and 5); the limits panel's first item, "It checks positions. It does not search for them." (`ui.build_limits`) | supported |
+| J7 | "twelve balanced translocations between chromosomes 20 and 21 were inserted at known positions into public whole-genome data of NA12878 …, with reads across the new junctions simulated by ART" | 12 | I6, I7 | supported with I6's note: the background is the chr20–chr21 slice of the whole-genome alignment (the Limitations say "two chromosomes of one public genome") |
+| J8 | four models; the open ones "run through Ollama on an ordinary computer with an 8 GB graphics card, so the data never leave it" | 8 GB | I8, I9 (`local_models_2026-09-28.json` `gpu` 8,151 MiB) | supported; the parameter counts are no longer given |
+| J9 | "Each model answered the same question about one breakpoint five times with each of two versions of the tool output, identical except for one piece of information (confirmed by 71 automated checks)" | 5 × 2; 71 | `P10B` `cells.original_runs_1_5`, `cells.api_runs_1_5` (`runs` 5 per cell); I10 | supported; the one piece is the ceiling, carried in 10 fields (`PF` `ceiling_keys`) |
+| J10 | "an AI evaluator that did not know which version it was reading graded the answers against fixed criteria" | — | `P10B` `scorer` ("verifier subagent, fresh context, blind: read the packet only"), `method` (the packet holds the prompt and the final answer only: no model, condition, file name, tool call or tool return), `criteria` C1, C1b, C2, C3, fixed before the extension (`P10/registration_local_extension_2026-09-26.json` `analysis_fixed_in_advance`) | supported; the evaluator did not know the model either |
+| J11 | the interface: the user "loads the candidate list, sees how many candidates each filter removes, opens a candidate or types a position, and sees the four measurements, each linked to the tool output behind it; a language model can be asked questions in the same window" | — | I11; walked on 29 September (J.3) | supported |
+| J12 | 16 of 24 junctions found: all 8 in unique sequence, all 8 next to repeats, none of the 8 in low-mappability regions "where reads cannot be placed unambiguously" | — | I12 | supported |
+| J13 | "missed by the candidate search, not removed by the filters: 106 of the 114 reads crossing them could not be assigned to a single location" | 106 / 114 | I13 (MAPQ 0: an equally good alignment elsewhere) | supported |
+| J14 | "at all 32 breakpoint ends found, the highest score the tool could give was 57.5, below the 70 needed for 'strong' (only a false copy-number signal from the depth measurement could lift it higher; the highest score observed was 55.0)" | 57.5; 55.0 | I15, I16 and the 28 September re-check | supported at the default ±500 window; the ceiling moves with the window (65.0 at ±200 at chr21:14,100,000, `PF` `loci[1]`; 65.0 at ±50 at chr20:200,000 in the dry-run chat, `DR` `observations.chat_vs_panel`), still below 70 |
+| J15 | without the ceiling 0 of 20 answers said strong was impossible; with it 12 of 20, "all 10 from the cloud models and 2 of 10 from the open models" | — | I17 | supported |
+| J16 | "A balanced translocation neither adds nor removes DNA, so the depth measurement correctly scores 0" | 0 | `PF` `loci[0].with_result.attainable_basis`; `DR` step 3 (depth component 0 at both IMP01 ends) | supported as what the layer should do; in the synthetic data it added 15 at 7 of the 32 detected breakends (I16), and 15 of the 22.5 at the hand-entered IMP09 end (`DR` `steps.5_hand_entry`) |
+| J17 | "because only one of the two copies of each chromosome is rearranged, about half of the reads at the breakpoint come from the normal copy and look normal, so the share of abnormal read pairs (at most 0.164) stays far below the 0.5 needed for the top score" | 0.164; 0.5 | construction: half the pairs spanning each breakpoint were removed and replaced by junction fragments (`implants_ground_truth.json` `implants[0].compensation.removal`: 34 of 68 at chr20:200,000, 24 of 49 at chr21:14,100,000); `AN/figures.json` `ceiling_summary.max_observed_discordant_fraction` 0.164; top tier 0.5 (`score_tiers`) | **qualification**: the numbers hold at ±500, but the share also depends on the window. At chr21:14,100,000 it is 0.164 at ±500 (`CH` call 303) and 0.25 at ±200 (`PF` `loci[1]`). The normal copy explains why the share cannot pass about 0.5, and the window explains why it sits at 0.16–0.25; "far below 0.5" holds at both windows. The tool's own `attainable_basis` gives the same one-factor account |
+| J18 | Novelty: an assistant that "ties every number it reports to a tool output and shows its own limits to the user" | — | evidence panel: each layer count and the combined score carries a call chip (`ui.py` `layerBlock`, `renderEvidence`; `DR` step 4: 44 and 40.0 equal their returns); chat panel: `chat.verify_numbers`, `ui.py` `markUnsupported`; limits: as J42 | supported with J41's qualification: in the chat panel a number is matched by value to any return of the turn, and one with no match is shown, marked |
+| J19 | Novelty: "an experiment showing that a language model can explain a limit of the analysis only when a tool reports it" | 0/20 → 12/20 | I17, I18 | supported for this experiment (one question at one locus; 5 or 15 runs per cell) |
+| J20 | Limitations: simulated translocations on two chromosomes of one public genome; low-mappability breakpoints missed by the candidate search | — | I6, I7, I12, I13 | supported |
+| J21 | Limitations: "10 of the 11 scoring thresholds are judgement calls not yet calibrated on confirmed cases" | 10 of 11 | `bam_tools.py:1883–1900` (`breakpoint_evidence_summary`, THRESHOLD PROVENANCE: "of the 11 tier-cutoff values … only ONE … is empirically calibrated, and against a single confirmed real locus … The other 10 … are HEURISTIC"); `server.py:318–319` | supported. The interface's limits panel counts the whole inventory instead: "14 of the 16 cut-offs are judgement calls" (E64; `DR` `steps.1_load.limits_panel_headings`); a viewer of the demo sees 14 of 16 |
+| J22 | Limitations: "the open models used the tools unreliably" | — | `phase8_final_record.json` `models.*.schema_invalid_pct` (qwen2.5:7b 13.4, qwen3.5:4b 26.3; 30 runs each); `P10B` `cells.*.ceiling_fields_reached_model` (WITH runs whose ceiling reached the model: 4 and 3 of 5, 11 and 8 of 15); 1 of 7 calls rejected in the dry run (`DR` `steps.7_chat`) | supported |
+| J23 | Limitations: "one cloud model, given the ceiling, called the evidence strong in all 5 answers although the tool rated it moderate" | 5 of 5 | I19 (Claude Sonnet 5: `P10B` `cells.api_runs_1_5` C1b 0 of 5 WITH) | **incomplete**: the other cloud model, Claude Opus 5, called the evidence strong in 2 of 5 answers with the ceiling and 2 of 5 without (`P10B` `items`, claude-opus-5 WITH__run1, WITH__run5, WITHOUT__run3, WITHOUT__run5: C1b false; e.g. "strong in substance but labelled moderate"). I19 missed this too |
+| J24 | "in these genomes the candidate search and filters already reduced about 9,000 possible joins between chromosomes to fewer than twenty per genome" | 9,172 / 9,655 → 17 / 19 | I21 | supported ("about 9,000" for 9,172 and 9,655) |
+| — | "Interpretable AI systems should therefore report the facts needed to check their conclusions, not only the conclusions" | — | — | a recommendation, not a factual claim |
+
+### J.2 The meeting sheet
+
+| # | Claim | Value | Record : key | Status |
+|---|---|---|---|---|
+| J25 | DELLY reads the whole BAM "once per sample, about 1–2 hours" | 1–2 h | `patient_rerun_2026-09.json` `delly.SAMPLE_*.wall_clock` 1:01:48 and 1:44:54 | supported |
+| J26 | filter table: DELLY junctions between chromosomes 9,172 / 9,655; PASS 896 / 923; ≥ 3 discordant pairs 664 / 642; ≥ 1 split read 57 / 63; none found (±500) "in another, unrelated genome" 17 / 19 | as stated | `patient_rerun_2026-09.json` `funnel.SAMPLE_*.per_step` (svtype, filter_pass, min_pe, min_sr, after_recurrence_500bp) | every count matches. **First row**: 9,172 / 9,655 are the inter-chromosomal junctions after the bridge merged records within 500 bases; DELLY wrote 9,187 / 9,676 BND records (`bnd_records`). Two steps that removed none (both ends on primary contigs; exclude template) are not listed. **Last row**: the other genome is the other patient's (`survivors_recurrent_in_other_sample` 40 / 44); "unrelated" has no record |
+| J27 | "Only aggregate counts"; the candidates (coordinates, genes) not yet looked at | — | `patient_rerun_2026-09.json` `blinding` | supported |
+| J28 | a known position can be typed in, but "the evidence tools look only at a ±200–500 base window around it, so it must be accurate to within a few hundred bases" | ±200–500 | `ui.assess`: discordant pairs and the summary ±500, soft clips and split reads ±200 (tool defaults), read depth ±2,000 (`read_depth_profile` start and end; `summarize_breakpoint_evidence` `depth_window_bp=2000`), a dip counting only within 1,000 bases of the position (`dip_tolerance_bp`) | **differs** for the depth layer (±2,000); the conclusion (a few hundred bases) holds for the three read layers |
+| J29 | the candidate list cannot at present be filtered by region | — | `vcf_tools.list_candidates(set_id, svtype, filter_pass, min_pe, min_sr, primary_only, mask_path, limit, offset)`: no region parameter; the page offers none | supported |
+| J30 | if DELLY misses a breakpoint, as 8 of 24 synthetic junctions in low-mappability regions, the assistant does not see it unless the exact position is typed in | 8 of 24 | I12, I13; typed in on 29 September, IMP09 chr20:33,700,000 returned 22.5 weak (`DR` `steps.5_hand_entry`, as `AN/figures.json` `rescue`); the other seven ends are withheld (QUALITY-LIMITED, `rescue`) | supported |
+| J31 | the IGV tool makes one image per evidence layer; two of the four at IMP01 chr20:200,000 (public data); "a vertical line marks the position" | 4 | `imp01_panels_2026-09-27.json` (four PNGs, one per layer); `SH` `sheet_images`: the first image is rows 0–499 and the second rows 0–469 of the committed `discordant_pairs.png` and `soft_clipped_reads.png`, pixel-exact at full width (`image_search_controls.pass`; no display crop in Word); the line at the 200,000 tick is visible in the committed panel | supported |
+| J32 | discordant-pair caption: coloured reads are pairs whose mate maps to another chromosome, the colour naming it; they cluster on both sides of the breakpoint because the translocation is reciprocal, with reads from one derivative on one side and from the other on the other | — | `SH` `captions.discordant_pairs_panel`: in chr20:198,500–201,500, 25 reads end left of the breakpoint, all from der(20), all forward, and 19 start right of it, all from der(21), all reverse; every mate is on chr21, MAPQ ≥ 20. The 6 other inter-chromosomal reads (mates elsewhere) are also there before implanting (negative control) | supported; the colours are IGV's (`color_by` UNEXPECTED_PAIR) |
+| J33 | soft-clip caption: the clipped, coloured parts begin at exactly the same place, the breakpoint | — | `SH` `captions.soft_clipped_reads_panel`: 13 of 14 primary non-duplicate clipped alignments in chr20:199,850–200,150 clip after base 200,000; the tool (±200, MAPQ ≥ 20, clips ≥ 10 bases, supplementary alignments counted): 19 of 20 at 200,000 (`CH` call 324 `consensus_clip_position`, `max_clips_at_position`) | supported |
+| J34 | section 3: the ablation (one question, two tool-output versions differing only in the ceiling); the evaluator, a "Claude Code verifier subagent" without earlier context, blind to the version, agreeing with the earlier unblinded scoring in 22–23 of 23; the 15-run extension (5 and 3; p = 0.042 and 0.22) | 22–23 of 23 | J9, J10; `P10B` `agreement_with_unblinded_2026_09_25` (C1 and C1b 22 of 23, C2 and C3 23 of 23: the 23 local runs scored unblinded on 25 September); I18 | supported |
+| J35 | section 3, bands: "70 and more strong, 40 and more moderate, less weak" | — | I3 | **differs slightly**: a score of 0 is "none", not weak (the glossary row has it right: "> 0 weak") |
+| J36 | section 3: "57.5 = discordant pairs 7.5 + clipped reads 25 + split reads 25 + depth 0"; above 70 only with a false depth signal (7.5 + 25 + 25 + 15 = 72.5); in the synthetic data depth wrongly added 15 at 7 breakends, but no score passed 55.0 | 57.5; 72.5; 7; 55.0 | `PF` `loci[0].with_result` (`attainable_here` 57.5, `attainable_basis`: discordant held at its band, 7.5 in `DR` step 3's components); `AN/figures.json` `ceiling_summary` (7 breakends with a depth contribution; `evidence_score_range` [32.5, 55.0]) | supported at the default window (J14) |
+| J37 | section 3: about half the reads covering the breakpoint come from the normal copy, so the share of unusual pairs stays small ("at most 0.164") and "does not reach even the 0.2 tier" | 0.164; 0.2 | as J17 | supported at ±500; at ±200 the same breakend reaches 0.25, above the 0.2 tier (`PF` `loci[1]`) |
+| J38 | section 3: DELLY found about 9,000 junctions between chromosomes in each genome "(mostly artefacts)"; 17 and 19 after the filters | — | I21 | "mostly artefacts": **no record**, and it reads as a judgement on the patient calls, which stay blinded. What is recorded is that only 896 and 923 pass DELLY's own quality filter (`per_step.filter_pass`) |
+| J39 | section 3: three forecasts (few candidates; no more than moderate unless depth errs; some low-mappability breakpoints undetected, lost at discovery) | — | I22 | supported (forecasts from the records) |
+| J40 | Novelty: read-level evidence at breakpoints "including balanced translocations, which most existing interpretation tools do not examine" | — | — | **no record** (a literature claim) |
+| J41 | Novelty: "every number the assistant reports is linked to the tool return behind it; the interface does not show a number without such a return" | — | evidence panel as J18; chat panel: the model's prose is shown in full ("model — prose, not verified except where marked"), a number with no matching return is shown, marked "no tool call returned this number" (`ui.py` `markUnsupported`), and listed in the verification pass; matching is by value against every return of the turn (`chat.verify_numbers`: within 0.011, roundings, percentages), not a link to one call | **differs** for the chat panel: such numbers are shown, marked, not withheld |
+| J42 | Novelty: the system shows its own limits: the highest attainable score, the withheld score (QUALITY-LIMITED) and the limits of the candidate search | — | `ui.py` `ceilBlock` ("Highest score reachable at this position", `DR` step 3), the "withheld — quality limited" badges (`layerBlock`, `renderEvidence`), the limits panel ("It checks positions. It does not search for them.") | supported |
+| J43 | Novelty: 0 of 20 → 12 of 20; Limitations: sensitivity from 12 simulated translocations on two chromosomes of one public genome, no confirmed real cases yet; DELLY misses low-mappability breakpoints (0 of 8); 10 of 11 thresholds set by the author's judgement; blind scoring by an AI agent, not a person | — | I17; I7; I12 (and `AN/ladder/analysis.json` `summary.q0_r0`: with DELLY's mapping-quality floors at 0 it called 1 of the 8, and none survived the filters); J21; `P10B` `scorer` | supported |
+| J44 | Limitations: a balanced translocation cannot score "strong": "the scoring function does not distinguish a layer that does not apply to this event from a layer whose data are missing" | — | `applicable_layers` decides from the BAM, not the event: depth is "always applicable — any aligned BAM can show a coverage drop" (`CH` call 20); a layer the data cannot show is dropped from the normalisation; `max_with_flat_depth` 75 (`DR` step 3) | supported in substance; **wording**: the function does set aside a layer whose data are missing (no paired reads, no SA tags). What it cannot tell apart is a layer the event cannot move (depth, for a balanced event) from a layer that looked and found nothing |
+| J45 | Limitations: few runs (5 or 15 per condition); local models called tools with wrong arguments in 13–26 % of calls; "one cloud model re-rated the tool's score" | 5, 15; 13–26 % | `P10B` `cells`; `phase8_final_record.json` `models.*.schema_invalid_pct` 13.4 and 26.3 (Phase 8; qwen3.5:9b's 17.1 lies between); J23 | first two supported; the third **incomplete** as J23 (the other cloud model did so in 4 of its 10 answers) |
+| J46 | glossary: reads of 150 bases; pair ends a few hundred bases apart; a discordant pair has its ends on different chromosomes; a clip marks the breakpoint; a split read carries an SA tag; MAPQ 0 means several equally good places | 150 | `implants_ground_truth.json` `implants[*].simulation` (read length 150, fragment mean 443, sd 105); `count_discordant_pairs`; J33; `get_split_reads` (SA) | supported (150 is recorded for the simulated reads; the background's read length is in no record) |
+| J47 | glossary: "12 translocations = 24 junctions = 48 breakends (32 detected)" | 12, 24, 48, 32 | I12; `AN/figures.json` `ceiling_summary.breakends` 32 | supported |
+| J48 | glossary: bands "≥ 70 strong, ≥ 40 moderate, > 0 weak" | — | I3 | supported |
+| J49 | glossary: the ceiling is the highest score the tool can give at a particular position; "for a heterozygous balanced translocation, 57.5" | 57.5 | `AN/figures.json` `ceiling_summary.attainable_here_range` [57.5, 57.5] (the 32 detected breakends, default window); `PF` `loci[1].with_result.attainable_here` 65.0 (±200) | **differs** as a general statement: 57.5 is the default-window value at every detected breakend of the synthetic control; the ceiling is computed per position and window |
+| J50 | demo: `python -m stage1_igv_assistant.ui`, http://127.0.0.1:8765; the interface finds only public data and shows no patient data | — | `DR` (J.3) | supported; autodiscovery reads only ~/public_data, but a config file can register other data (`ui.discover_public` reads `CFG.registered` first), and none exists on this machine |
+| J51 | demo: load a synthetic implant's candidate set (IMP01) and show how many candidates each filter removes | — | `DR` steps 1–2 | supported; the page's default type is "any", so the chain starts from all 896 IMP01 junctions, not from BND as in the patient table |
+| J52 | demo: the IMP01 candidate (chr20:200,000 and chr21:14,100,001), four layers at both ends, the chr20 end 40 "moderate", ceiling 57.5 and its explanation | 40; 57.5 | `DR` `steps.3_candidate` (CAND_52179e966345; both ends 40.0 moderate, components 7.5, 25, 7.5, 0; `attainable_here` 57.5 with `attainable_basis`) | supported |
+| J53 | demo: "clicking any number opens the tool return behind it" | — | `ui.py:940` `chip`: a "tool call #N" button beside each layer count and the combined score (`showCall`); one chip for the whole filter table; none in the ceiling block or the limits panel; "Where every number came from" lists every call | **differs slightly**: one clicks the chip beside a number, and not every number has one |
+| J54 | demo: a missed implant's position typed in; the interface shows what the reads show and marks the position as entered by the user | — | `DR` `steps.5_hand_entry` ("This position was entered by hand."; `position_provenance` caller_supplied) | supported |
+| J55 | demo: IGV images, four layers | 4 | `DR` `steps.6_igv` | **differs on 29 September**: three of four produced; the read-depth panel timed out (J.3) |
+| J56 | demo: a question to a local model or to Claude, with its tool calls | — | `DR` `steps.7_chat` (qwen2.5:7b); Claude not exercised (no API call in this run) | supported for the local model |
+| — | section 7 (questions for the meeting); the authors, affiliations and e-mail line | — | — | not mapped (no repository claim; e-mail addresses stay out of the repository) |
+
+### J.3 Demo dry run, 2026-09-29 (`DR`)
+
+The interface was started as the sheet describes (`python -m stage1_igv_assistant.ui`,
+repository root, no flags). There was no config file and no SV_* variable, and
+ANTHROPIC_BASE_URL pointed at a closed local port (positive control passed). It
+answered in 1.7 s and was stopped by its PID (SIGTERM; no child process left; port
+8765 free after). The run took 404 s, 378 s of it in the IGV step. The seven steps:
+
+1. Listed: datasets IMP01–IMP12 and NA12878.chr20_chr21 (13); candidate sets IMP01–IMP12
+   and background (13). Loaded: IMP01 (918 records, 896 junctions after the merge).
+2. Filters at the page's defaults: 896 → PASS 515 → PE ≥ 3 157 → SR ≥ 1 29 → primary 29
+   → exclude template 29.
+3. CAND_52179e966345 (chr21:14,100,001 ↔ chr20:200,000; PASS, PE 25, SR 6): both ends
+   40.0 moderate (7.5, 25, 7.5, 0), ceiling 57.5 with its basis, and the page's sentence
+   that the position cannot reach strong.
+4. The discordant count 44 (call 13) and the combined score 40.0 (call 17) equal their
+   tool returns.
+5. IMP09 chr20:33,700,000 typed in: 22.5 weak (7.5, 0, 0, 15), marked "This position was
+   entered by hand."; 10 discordant pairs and 7 clipped reads, as the committed rescue
+   record. 15 of its 22.5 points are depth, where 36.4 % of reads have MAPQ < 20 and no
+   copy-number change was built in.
+6. IGV: the discordant-pair, soft-clip and split-read panels were produced (the
+   discordant-pair PNG is byte-identical to the committed one; the other two differ in
+   size from theirs). The read-depth panel timed out at 180 s. IGV's log shows each
+   panel's IGV loading the hg38 genome from igv.org and the RefSeq track from UCSC over
+   the internet. The fourth stopped while still loading RefSeq, before the BAM
+   (`observations.igv_log_during_run`).
+7. qwen2.5:7b through Ollama, one question, 22.5 s, 7 tool calls (1 rejected: `window_bp`
+   passed to `read_depth_profile`). The verification pass found 7 numbers, none
+   unsupported. The model chose a 50-base window (47.5 moderate, ceiling 65.0) where the
+   panel uses 500 (40.0, ceiling 57.5). Its answer calls the evidence "strong" while
+   quoting the tool's "moderate", says the position "could theoretically reach" strong,
+   and does not give the ceiling (`observations.final_text_mentions`: strong 4,
+   moderate 1, 65.0 0).
+
+No patient dataset was listed or loaded. The listed labels equal those derived from
+~/public_data; no label contains an identifier (positive control caught); the 31 files
+named in the call log are all listed labels; and no open file lay outside the allowed
+locations in 8 samples (`no_patient_data`).
+
+### J.4 Flags
+
+1. J28: "±200–500 bases": the depth layer uses ±2,000 (`ui.assess` `read_depth_profile`; `depth_window_bp=2000`).
+2. J26, first row: 9,172 / 9,655 are counted after the bridge's 500-base merge; DELLY's BND records are 9,187 / 9,676 (`bnd_records`).
+3. J26, last row: "unrelated" has no record; the other genome is the other patient's.
+4. J38: "(mostly artefacts)" has no record and judges blinded patient calls; the recorded fact is 896 / 923 PASS.
+5. J35: the bands row omits "none" (a score of 0).
+6. J49: the glossary gives 57.5 as the ceiling of any heterozygous balanced translocation; it is the default-window value here (65.0 at ±200).
+7. J41: "the interface does not show a number without such a return": the chat panel shows such numbers, marked.
+8. J40: "most existing interpretation tools do not examine" balanced translocations: no record.
+9. J23, J45: "one cloud model": Claude Opus 5 also called the evidence strong, in 4 of its 10 answers (2 with the ceiling, 2 without); I19 did not note it.
+10. J17, J37: the account of the 0.164 share leaves out the window (0.25 at ±200 at the same breakend); "does not reach even the 0.2 tier" holds at ±500 only.
+11. J44: "a layer whose data are missing": the function does set such a layer aside; the case it cannot tell apart is a layer that found nothing.
+12. J53: "clicking any number": one clicks the chip beside a number, and not every number has one.
+13. J55: in the dry run three of four IGV panels were made; the read-depth panel timed out while IGV was still downloading RefSeq. Every panel downloads the genome and RefSeq over the internet.
+14. J.3 step 7: the local model's numbers matched its tool returns, but its words did not ("strong", "could theoretically reach"); the number check cannot catch this.
+
+Notes, not flags: J3 ("independent" holds for the scores, not the reads); J16 (depth
+"correctly scores 0" is its intent: it added 15 at 7 of the 32 detected breakends); J21
+(the limits panel says 14 of 16 cut-offs, the abstract 10 of 11 thresholds; both are
+recorded).
