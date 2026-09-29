@@ -1,0 +1,27 @@
+tool contract OK: 11 evidence tools + 4 bridge tools
+scoring tiers: derived from bam_tools source
+datasets: 13   candidate files: 13
+
+  available tier: COMPLETE
+    [x] MINIMAL   filter chain, four evidence layers, hand-entered coordinates — self-test passed (5 conditions)
+    [x] FULL      IGV panels — prerequisites verified: ~/IGV_2.17.4/igv.sh executable, Java 21, display :0 (no test render)
+    [x] COMPLETE  local model chat — 2 model(s): qwen2.5:7b, qwen3.5:4b
+    [x] exclude template  ~/reference/human.hg38.excl.tsv  [built-in default]
+    [x] data directory    ~/public_data  [built-in default]
+    [x] Anthropic key     present
+    config file: none found (searched SV_CONFIG, ./sv-assistant.conf, ~/.config/sv-assistant/config.ini)
+
+  http://127.0.0.1:8765
+
+  CHECK MINIMAL [PASS] tool contract — 11 evidence + 4 bridge tools
+  CHECK MINIMAL [PASS] scoring tiers derivable from bam_tools' source
+  CHECK MINIMAL [PASS] four evidence layers at a hand-entered coordinate — summary strength 'moderate'
+  CHECK MINIMAL [PASS] candidate set through load and the filter chain — 2 records loaded, 2 pass filter_pass (the fixture has 2 PASS records)
+  CHECK MINIMAL [PASS] every registered file exists (each BAM indexed) — 13 dataset(s), 13 candidate set(s)
+  CHECK FULL    [PASS] igv.sh found by the panel tool's own search — ~/IGV_2.17.4/igv.sh
+  CHECK FULL    [PASS] igv.sh is executable
+  CHECK FULL    [PASS] IGV's lib/igv.jar is readable — compiled for Java 17
+  CHECK FULL    [PASS] a Java runtime igv.sh will use — Java 21 (on PATH)
+  CHECK FULL    [PASS] that Java is new enough for this IGV — Java 21; IGV was compiled for Java 17
+  CHECK FULL    [PASS] a display for IGV's window — DISPLAY=:0
+  CHECK: MINIMAL tier OK — every condition above was exercised, none assumed.

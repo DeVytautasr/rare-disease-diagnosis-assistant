@@ -292,6 +292,8 @@ all derived from the scoring source rather than written as literals, so a
 revised ladder moves them with it. No model was changed, retrained, or
 re-prompted.
 
+*Note, 2026-09-30:* since fix 25d12bb the ceiling (`attainable_here` and the fields beside it) is computed over the layers the score actually counts (applicable minus unassessable), normalised as the score is. A caller that restricts the layers now gets `ceiling_counted_layers` and a basis naming them; with all four layers counted the fields are unchanged.
+
 **After: 19 runs in 20 state the ceiling; 17 of 20 give the full argument.** A
 4-billion-parameter model running on a laptop GPU — one that produced malformed
 tool arguments in a quarter of its calls — laid out the complete arithmetic in

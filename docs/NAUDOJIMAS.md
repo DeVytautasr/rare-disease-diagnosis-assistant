@@ -165,6 +165,8 @@ juosta pasidaro **nepasiekiama**.
 (nuo kiek prasideda „strong“). Jei pirmasis mažesnis už antrąjį — „strong“
 čia neįmanomas, kad ir kokie geri būtų duomenys.
 
+*Pastaba, 2026-09-30:* nuo pataisymo 25d12bb riba skaičiuojama tik pagal tuos sluoksnius, kuriuos skaičiuoja pats įvertis (tinkami sluoksniai, atėmus neįvertinamus). Jei nurodoma mažiau nei keturi sluoksniai, atsakyme atsiranda laukas `ceiling_counted_layers`, o paaiškinimas juos įvardija. Kai skaičiuojami visi keturi, laukai tokie patys kaip anksčiau.
+
 > Subalansuotą translokaciją vertinkite pagal **keturis atskirus matavimus**,
 > o ne pagal juostą, į kurią pateko bendras skaičius.
 
