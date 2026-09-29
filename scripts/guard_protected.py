@@ -6,9 +6,10 @@ unchanged, and any script about to run must be exactly what is committed.
     guard_protected.py --self-test
 
 PROTECTED files are compared three ways: the working tree against HEAD (bytes
-and AST), and HEAD against --base (bytes; default a6c887f, the authorised decoy-partner
-fix of 2026-09-27 -- until then 9ae73bc, the last commit on
-the public remote before the 2026-09 recovery work). Any difference fails --
+and AST), and HEAD against --base (bytes; default 25d12bb, the authorised ceiling-field
+fix of 2026-09-30 -- before it a6c887f, the decoy-partner fix of 2026-09-27, and
+before that 9ae73bc, the last commit on the public remote before the 2026-09
+recovery work). Any difference fails --
 a comment-only edit is still an edit to a file nobody may edit.
 
 --also PATH adds a file that must be identical to its committed version (bytes
@@ -30,7 +31,7 @@ PROTECTED = [
     "stage1_igv_assistant/tools/vcf_tools.py",      # candidate-set parsing, dedup and recurrence
     "stage1_igv_assistant/candidate_server.py",     # the four candidate-set tools
 ]
-DEFAULT_BASE = "a6c887f"  # was 9ae73bc; moved on the user's instruction (Phase 15)
+DEFAULT_BASE = "25d12bb"  # was a6c887f (Phase 15); moved to the ceiling-field fix on the user's instruction (Phase 20)
 
 
 def git_bytes(rev, path):
