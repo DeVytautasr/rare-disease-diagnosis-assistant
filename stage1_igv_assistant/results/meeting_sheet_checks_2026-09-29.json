@@ -1,0 +1,136 @@
+{
+ "what": "Checks behind the 29 September meeting sheet's images and captions (Phase 18 Task 1)",
+ "definitions": "the three files of 29 September (the EN and LT abstracts and the meeting sheet), read only, their sha256 set against the values given with the task. The two images embedded in the meeting sheet: each is searched as a pixel-exact crop of the four committed IMP01 panels (RGB values; the panels' alpha channel is dropped and the number of pixels it did not leave opaque is reported), with a positive control (a crop cut here from a committed panel must be found at its own offset) and a negative control (the same crop with one pixel changed must not be found); Word's display crop (a:srcRect, in thousandths of a percent) is reported beside each. For the sheet's two captions, the reads the panels show. Discordant-pair panel: every primary, paired alignment in the panel's region whose mate maps to another chromosome, split by side of chr20:200,000 (left: its aligned bases end at or before 200,000; right: they start at or after 200,001; otherwise crossing), by origin from the read name the construction gave each implanted fragment (IMP01_J20_* lies on der(20), IMP01_J21_* on der(21); any other name is background sequence), by mate chromosome (chr21 or elsewhere) and by strand, with MAPQ below 20 and duplicates counted apart; the same count on the public background BAM before implanting is the negative control. Soft-clip panel: every primary, non-duplicate alignment in that panel's region with a soft clip, by the reference base its clip boundary follows (a leading clip: the base before the first aligned base; a trailing clip: the last aligned base).",
+ "files": {
+  "Rimas_abstract_EN_2026-09-29.docx": {
+   "bytes": 12142,
+   "sha256": "ca3b3303bce62a1fddb88acfb1e8d9596dd49072c2bc7272285e5d6a2387ebcf",
+   "matches_task": true
+  },
+  "Rimas_tezes_DI_medicinoje_LT_2026-09-29.docx": {
+   "bytes": 12474,
+   "sha256": "d2471702ecde7c48669b5feb8582125fe151330f82c1fb2806363e6e3ab00732",
+   "matches_task": true
+  },
+  "Rimas_tezes_paaiskinimai_2026-09-29.docx": {
+   "bytes": 38653,
+   "sha256": "c6bb20a62bd10ce7c534c18bae1d25eb4e654270b12052e79dcda7e651d66dc9",
+   "matches_task": true
+  }
+ },
+ "image_search_controls": {
+  "positive_crop_rows_100_599_of_discordant_pairs_found_at": [
+   [
+    0,
+    100
+   ]
+  ],
+  "negative_same_crop_one_byte_changed_found_at": [],
+  "pass": true
+ },
+ "sheet_images": [
+  {
+   "order_in_sheet": 1,
+   "media": "media/9e7cc0d4b90755517059b407354eadde241a5d16.png",
+   "bytes": 14923,
+   "sha256": "9cd25351eb6cdcdde01165521c2171211daca57751151e2a5104cf936ad2bb24",
+   "dimensions": "1140x500",
+   "word_display_crop_srcRect": {},
+   "pixel_exact_crop_of": {
+    "discordant_pairs.png": {
+     "found_at_x_y": [
+      [
+       0,
+       0
+      ]
+     ],
+     "panel_pixels_not_opaque": 0,
+     "panel_dimensions": "1140x1112"
+    },
+    "read_depth.png": {
+     "found_at_x_y": [],
+     "panel_pixels_not_opaque": 0,
+     "panel_dimensions": "1140x1112"
+    },
+    "soft_clipped_reads.png": {
+     "found_at_x_y": [],
+     "panel_pixels_not_opaque": 0,
+     "panel_dimensions": "1140x1112"
+    },
+    "split_reads.png": {
+     "found_at_x_y": [],
+     "panel_pixels_not_opaque": 0,
+     "panel_dimensions": "1074x883"
+    }
+   }
+  },
+  {
+   "order_in_sheet": 2,
+   "media": "media/9845b5dc8a2aa5f5978477703788dc59e7798001.png",
+   "bytes": 10630,
+   "sha256": "de6ececf7e28a273103caf1ada392521205daffd818847156d6d4d36ca6bb77c",
+   "dimensions": "1140x470",
+   "word_display_crop_srcRect": {},
+   "pixel_exact_crop_of": {
+    "discordant_pairs.png": {
+     "found_at_x_y": [],
+     "panel_pixels_not_opaque": 0,
+     "panel_dimensions": "1140x1112"
+    },
+    "read_depth.png": {
+     "found_at_x_y": [],
+     "panel_pixels_not_opaque": 0,
+     "panel_dimensions": "1140x1112"
+    },
+    "soft_clipped_reads.png": {
+     "found_at_x_y": [
+      [
+       0,
+       0
+      ]
+     ],
+     "panel_pixels_not_opaque": 0,
+     "panel_dimensions": "1140x1112"
+    },
+    "split_reads.png": {
+     "found_at_x_y": [],
+     "panel_pixels_not_opaque": 0,
+     "panel_dimensions": "1074x883"
+    }
+   }
+  }
+ ],
+ "captions": {
+  "discordant_pairs_panel": {
+   "IMP01": {
+    "region": "chr20:198500-201500",
+    "counts": {
+     "left | background | mate elsewhere | forward | mapq_20_plus": 1,
+     "left | background | mate elsewhere | reverse | mapq_20_plus": 3,
+     "left | der(20) | mate chr21 | forward | mapq_20_plus": 25,
+     "right | background | mate elsewhere | forward | mapq_20_plus": 1,
+     "right | background | mate elsewhere | reverse | mapq_20_plus": 1,
+     "right | der(21) | mate chr21 | reverse | mapq_20_plus": 19
+    }
+   },
+   "background_before_implanting (negative control)": {
+    "region": "chr20:198500-201500",
+    "counts": {
+     "left | background | mate elsewhere | forward | mapq_20_plus": 1,
+     "left | background | mate elsewhere | reverse | mapq_20_plus": 3,
+     "right | background | mate elsewhere | forward | mapq_20_plus": 1,
+     "right | background | mate elsewhere | reverse | mapq_20_plus": 1
+    }
+   }
+  },
+  "soft_clipped_reads_panel": {
+   "region": "chr20:199850-200150",
+   "clip_boundaries": {
+    "at the breakpoint (follows 200,000) | mapq_20_plus": 13,
+    "elsewhere | mapq_20_plus": 1
+   }
+  }
+ },
+ "construction": "implants_ground_truth.json: IMP01 J20 on der(20) (chr20:200000 joined to chr21:14100001), J21 on der(21) (chr21:14100000 joined to chr20:200001)",
+ "code": "scripts/abstract_records.py sheet DIR"
+}

@@ -1,0 +1,938 @@
+{
+ "what": "Dry run of the meeting sheet's seven demonstration steps (Phase 18 Task 2, 2026-09-29)",
+ "definitions": {
+  "wall_s": "seconds from sending a request to its response; startup_s from process start to the first answered /api/bootstrap",
+  "numbers_matched": "the verification pass the page shows under a chat answer: every number in the final answer checked against every tool return of that turn (chat.verify_numbers: within 0.011, their roundings and percentages, or literal text); `unsupported` lists the others",
+  "no_patient_data": "(a) the listed labels equal those discover_public's rules derive from ~/public_data alone; (b) no label contains an entry of the identifier list (a count; positive control: a label built from the list's first entry is caught; no entry is printed or recorded); (c) every dataset or candidate file named in the session's call log is a listed label (positive control: an unlisted label is caught); (d) every regular file held open by the interface or its children, sampled after each step, lies under an allowed public or system location (a count; positive control: a path under ~/patient_data is caught -- a string test, nothing there is opened)",
+  "igv_log_during_run": "the lines of IGV's own log (~/igv/igv0.log) stamped between the run's start and end that record an IGV start, a genome or resource load, or a shutdown -- one IGV process per panel",
+  "chat_vs_panel": "the combined-score call(s) the model made in its turn, set beside the panel's value at the same position (window 500, the interface's default)",
+  "final_text_mentions": "case-insensitive whole-word counts in the model's final answer: the band words, and the ceiling figures returned in the turn and shown on the panel"
+ },
+ "code": "scripts/demo_dry_run.py",
+ "git_head": "ed82ed0",
+ "started": "2026-09-29T13:10:57+0300",
+ "preconditions": {
+  "config_files_present": 0,
+  "sv_environment_variables": 0,
+  "port_8765_free": true,
+  "anthropic_guard": {
+   "ANTHROPIC_BASE_URL": "http://127.0.0.1:9",
+   "control": {
+    "sdk_base_url": "http://127.0.0.1:9",
+    "call_outcome": "APIConnectionError",
+    "pass": true
+   }
+  }
+ },
+ "interface": {
+  "command": "python -m stage1_igv_assistant.ui",
+  "interpreter": "~/rare-disease-diagnosis-assistant/.venv/bin/python",
+  "pid": 15013,
+  "env_added": [
+   "PATH += ~/miniconda3/envs/igv-java/bin",
+   "DISPLAY=:0",
+   "ANTHROPIC_BASE_URL=http://127.0.0.1:9"
+  ],
+  "startup_s": 1.7,
+  "page": {
+   "bytes": 32089,
+   "wall_s": 0.0,
+   "routes_called_by_page": {
+    "/api/bootstrap": true,
+    "/api/load": true,
+    "/api/funnel": true,
+    "/api/candidate": true,
+    "/api/assess": true,
+    "/api/call?id=": true,
+    "/api/igv": true,
+    "/api/chat_models": true,
+    "/api/chat": true
+   }
+  },
+  "stopped": {
+   "pid": 15013,
+   "children_before_stop": 0,
+   "method": "SIGTERM",
+   "exit_status": -15,
+   "children_left_and_stopped_by_pid": 0,
+   "port_8765_free_after": true
+  },
+  "log_mentions_patient_data": 0,
+  "banner": [
+   "tool contract OK: 11 evidence tools + 4 bridge tools",
+   "scoring tiers: derived from bam_tools source",
+   "datasets: 13   candidate files: 13",
+   "",
+   "  available tier: COMPLETE",
+   "    [x] MINIMAL   filter chain, four evidence layers, hand-entered coordinates \u2014 self-test passed (5 conditions)",
+   "    [x] FULL      IGV panels \u2014 prerequisites verified: ~/IGV_2.17.4/igv.sh executable, Java 21, display :0 (no test render)",
+   "    [x] COMPLETE  local model chat \u2014 2 model(s): qwen2.5:7b, qwen3.5:4b",
+   "    [x] exclude template  ~/reference/human.hg38.excl.tsv  [built-in default]",
+   "    [x] data directory    ~/public_data  [built-in default]",
+   "    [x] Anthropic key     present",
+   "    config file: none found (searched SV_CONFIG, ./sv-assistant.conf, ~/.config/sv-assistant/config.ini)",
+   "",
+   "  http://127.0.0.1:8765",
+   "",
+   "[09/29/26 13:17:27] WARNING  Invalid arguments for tool           server.py:1325",
+   "                             'read_depth_profile': [{'type':                    ",
+   "                             'unexpected_keyword_argument',                     ",
+   "                             'loc': ('window_bp',), 'msg':                      ",
+   "                             'Unexpected keyword argument',                     ",
+   "                             'input': 100}]                                     "
+  ]
+ },
+ "call_log": {
+  "calls": 33,
+  "by_tool": {
+   "applicable_layers": 4,
+   "bam_stats_at_locus": 4,
+   "breakpoint_evidence_summary": 4,
+   "discordant_pairs": 4,
+   "evidence_panel": 1,
+   "get_candidate": 1,
+   "list_candidates": 1,
+   "load_candidate_set": 1,
+   "read_depth_profile": 5,
+   "soft_clipped_reads": 4,
+   "split_reads": 4
+  },
+  "errors": 1
+ },
+ "no_patient_data": {
+  "a_listed_equal_derived_from_public_data": {
+   "datasets": true,
+   "candidate_files": true
+  },
+  "b_identifier_list": {
+   "identifiers_read": 6,
+   "labels_containing_an_identifier": 0,
+   "positive_control_caught": true
+  },
+  "c_call_log": {
+   "files_named": 31,
+   "not_a_listed_label": 0,
+   "positive_control_caught": true
+  },
+  "d_open_files": {
+   "samples": {
+    "startup": {
+     "open_files": 4,
+     "outside_allowed": 0
+    },
+    "1_load": {
+     "open_files": 4,
+     "outside_allowed": 0
+    },
+    "2_filters": {
+     "open_files": 4,
+     "outside_allowed": 0
+    },
+    "3_candidate": {
+     "open_files": 4,
+     "outside_allowed": 0
+    },
+    "4_tool_return": {
+     "open_files": 4,
+     "outside_allowed": 0
+    },
+    "5_hand_entry": {
+     "open_files": 4,
+     "outside_allowed": 0
+    },
+    "6_igv": {
+     "open_files": 4,
+     "outside_allowed": 0
+    },
+    "7_chat": {
+     "open_files": 4,
+     "outside_allowed": 0
+    }
+   },
+   "outside_allowed_total": 0,
+   "allowed": [
+    "~/rare-disease-diagnosis-assistant",
+    "~/public_data",
+    "~/reference",
+    "~/IGV_2.17.4",
+    "~/igv",
+    "~/miniconda3",
+    "~/.cache",
+    "/usr",
+    "/lib",
+    "/lib64",
+    "/etc",
+    "/dev",
+    "/proc",
+    "/sys",
+    "/tmp",
+    "/var",
+    "/run",
+    "/opt"
+   ],
+   "positive_control_caught": true
+  }
+ },
+ "total_wall_s": 404.0,
+ "steps": {
+  "1_load": {
+   "dataset_labels_listed": [
+    "IMP01",
+    "IMP02",
+    "IMP03",
+    "IMP04",
+    "IMP05",
+    "IMP06",
+    "IMP07",
+    "IMP08",
+    "IMP09",
+    "IMP10",
+    "IMP11",
+    "IMP12",
+    "NA12878.chr20_chr21"
+   ],
+   "candidate_set_labels_listed": [
+    "IMP01",
+    "IMP02",
+    "IMP03",
+    "IMP04",
+    "IMP05",
+    "IMP06",
+    "IMP07",
+    "IMP08",
+    "IMP09",
+    "IMP10",
+    "IMP11",
+    "IMP12",
+    "background"
+   ],
+   "page_default_dataset": "IMP01",
+   "candidate_set_used": "IMP01",
+   "load": {
+    "set_id": "CSET_253c82fe",
+    "label": "IMP01",
+    "caller_convention": "chr2_pos2",
+    "total_records": 918,
+    "junctions_before_dedup": 918,
+    "junctions_after_dedup": 896,
+    "records_merged_by_dedup": 22,
+    "counts_by_svtype": {
+     "INV": 72,
+     "DUP": 191,
+     "DEL": 565,
+     "INS": 75,
+     "BND": 15
+    }
+   },
+   "is_error": false,
+   "call": 1,
+   "limits_panel_headings": [
+    "It checks positions. It does not search for them.",
+    "On a controlled test it found 16 of 24 known breakpoints.",
+    "14 of the 16 cut-offs are judgement calls, not calibrated values.",
+    "The read-depth measurement is unreliable at this coverage.",
+    "A balanced translocation can never score \"strong\" here.",
+    "\"Quality limited\" means no score was calculated."
+   ],
+   "hand_entry_note": "In the controlled test the caller missed 4 of the 12 implanted translocations. Typed in by hand, the strongest of their breakpoints (chr20:31,100,000) showed 11 discordant read pairs, 4 soft-clipped reads and 41 split reads, of which 1 came from the junction; its score was withheld as quality-limited.",
+   "wall_s": {
+    "bootstrap": 0.12,
+    "load": 0.03
+   }
+  },
+  "2_filters": {
+   "total_in_set": 896,
+   "chain": [
+    {
+     "filter": "filter_pass",
+     "value": true,
+     "provenance": "tool-defined",
+     "surviving_after_this_step": 515,
+     "removed_cumulatively_here": 381,
+     "would_remove_from_unfiltered_set": 381
+    },
+    {
+     "filter": "min_pe",
+     "value": 3,
+     "provenance": "author judgement",
+     "surviving_after_this_step": 157,
+     "removed_cumulatively_here": 358,
+     "would_remove_from_unfiltered_set": 527
+    },
+    {
+     "filter": "min_sr",
+     "value": 1,
+     "provenance": "author judgement",
+     "surviving_after_this_step": 29,
+     "removed_cumulatively_here": 128,
+     "would_remove_from_unfiltered_set": 418
+    },
+    {
+     "filter": "primary_only",
+     "value": true,
+     "provenance": "reference-defined",
+     "surviving_after_this_step": 29,
+     "removed_cumulatively_here": 0,
+     "would_remove_from_unfiltered_set": 0
+    },
+    {
+     "filter": "exclude_masked",
+     "value": true,
+     "provenance": "reference-defined",
+     "surviving_after_this_step": 29,
+     "removed_cumulatively_here": 0,
+     "would_remove_from_unfiltered_set": 0
+    }
+   ],
+   "total_matching": 29,
+   "returned": 29,
+   "mask": {
+    "requested": true,
+    "applied": true,
+    "reason": null,
+    "path": "human.hg38.excl.tsv",
+    "source": "built-in default"
+   },
+   "call": 2,
+   "wall_s": 0.01
+  },
+  "3_candidate": {
+   "candidate_id": "CAND_52179e966345",
+   "funnel_row": {
+    "candidate_id": "CAND_52179e966345",
+    "caller_id": "BND00000878",
+    "chrom1": "chr21",
+    "pos1": 14100001,
+    "chrom2": "chr20",
+    "pos2": 200000,
+    "orientation": "5to3",
+    "svtype": "BND",
+    "filter": "PASS",
+    "pe": 25,
+    "sr": 6,
+    "precise": true,
+    "ci_pos1": [
+     -2,
+     2
+    ],
+    "ci_pos2": [
+     -2,
+     2
+    ],
+    "n_merged": 1
+   },
+   "dataset_assessed": "IMP01",
+   "shown": [
+    {
+     "at": "chr21:14100001",
+     "dataset": "IMP01",
+     "error": null,
+     "score": 40.0,
+     "band": "moderate",
+     "components": {
+      "discordant_pairs": 7.5,
+      "soft_clipped_reads": 25.0,
+      "split_reads": 7.5,
+      "read_depth": 0.0
+     },
+     "low_mapq_fraction": 0.0,
+     "ceiling": {
+      "derivable": true,
+      "attainable_here": 57.5,
+      "attainable_basis": "the paired-read measurement held at the band its measured value reaches \u2014 in a HETEROZYGOUS rearrangement roughly half the reads crossing the breakpoint come from the intact homolog, so the discordant fraction is capped well below the 0.5 its top band requires and no amount of extra coverage or a wider window moves it; the soft-clip and split-read measurements at their best possible band; and the depth measurement contributing nothing, because a balanced rearrangement gains and loses no DNA.",
+      "strong_band": 70.0,
+      "max_with_flat_depth": 75.0,
+      "max_all_layers": 100.0
+     },
+     "page_says_cannot_reach_strong": true,
+     "layers": {
+      "discordant_pairs": {
+       "count": 46,
+       "fraction": 0.164,
+       "consensus": null,
+       "max_clips": null,
+       "partners": {
+        "chr20": 44,
+        "chr19": 1,
+        "chr2": 1
+       },
+       "mean_depth": null,
+       "quality_limited": false,
+       "min_mapq": 20,
+       "call": 6
+      },
+      "soft_clipped_reads": {
+       "count": 24,
+       "fraction": 0.163,
+       "consensus": 14100000,
+       "max_clips": 24,
+       "partners": null,
+       "mean_depth": null,
+       "quality_limited": false,
+       "min_mapq": 20,
+       "call": 7
+      },
+      "split_reads": {
+       "count": 10,
+       "fraction": 0.071,
+       "consensus": null,
+       "max_clips": null,
+       "partners": {
+        "chr20": 10
+       },
+       "mean_depth": null,
+       "quality_limited": false,
+       "min_mapq": 0,
+       "call": 8
+      },
+      "read_depth": {
+       "count": 23.8,
+       "fraction": 0.87,
+       "consensus": null,
+       "max_clips": null,
+       "partners": null,
+       "mean_depth": 34.05,
+       "quality_limited": null,
+       "min_mapq": null,
+       "call": 9
+      }
+     },
+     "summary_call": 10,
+     "position_provenance": "candidate_set",
+     "page_banner": "This position came from the loaded call set."
+    },
+    {
+     "at": "chr20:200000",
+     "dataset": "IMP01",
+     "error": null,
+     "score": 40.0,
+     "band": "moderate",
+     "components": {
+      "discordant_pairs": 7.5,
+      "soft_clipped_reads": 25.0,
+      "split_reads": 7.5,
+      "read_depth": 0.0
+     },
+     "low_mapq_fraction": 0.0,
+     "ceiling": {
+      "derivable": true,
+      "attainable_here": 57.5,
+      "attainable_basis": "the paired-read measurement held at the band its measured value reaches \u2014 in a HETEROZYGOUS rearrangement roughly half the reads crossing the breakpoint come from the intact homolog, so the discordant fraction is capped well below the 0.5 its top band requires and no amount of extra coverage or a wider window moves it; the soft-clip and split-read measurements at their best possible band; and the depth measurement contributing nothing, because a balanced rearrangement gains and loses no DNA.",
+      "strong_band": 70.0,
+      "max_with_flat_depth": 75.0,
+      "max_all_layers": 100.0
+     },
+     "page_says_cannot_reach_strong": true,
+     "layers": {
+      "discordant_pairs": {
+       "count": 44,
+       "fraction": 0.157,
+       "consensus": null,
+       "max_clips": null,
+       "partners": {
+        "chr21": 44
+       },
+       "mean_depth": null,
+       "quality_limited": false,
+       "min_mapq": 20,
+       "call": 13
+      },
+      "soft_clipped_reads": {
+       "count": 20,
+       "fraction": 0.136,
+       "consensus": 200000,
+       "max_clips": 19,
+       "partners": null,
+       "mean_depth": null,
+       "quality_limited": false,
+       "min_mapq": 20,
+       "call": 14
+      },
+      "split_reads": {
+       "count": 8,
+       "fraction": 0.058,
+       "consensus": null,
+       "max_clips": null,
+       "partners": {
+        "chr21": 8
+       },
+       "mean_depth": null,
+       "quality_limited": false,
+       "min_mapq": 0,
+       "call": 15
+      },
+      "read_depth": {
+       "count": 23.52,
+       "fraction": 0.779,
+       "consensus": null,
+       "max_clips": null,
+       "partners": null,
+       "mean_depth": 38.3,
+       "quality_limited": null,
+       "min_mapq": null,
+       "call": 16
+      }
+     },
+     "summary_call": 17,
+     "position_provenance": "candidate_set",
+     "page_banner": "This position came from the loaded call set."
+    }
+   ],
+   "wall_s": {
+    "get_candidate": 0.0,
+    "assess_each_breakend": [
+     0.12,
+     0.1
+    ]
+   }
+  },
+  "4_tool_return": {
+   "discordant_pairs": {
+    "call": 13,
+    "tool": "discordant_pairs",
+    "params": {
+     "bam_path": "<IMP01>",
+     "chromosome": "chr20",
+     "position": 200000,
+     "window_bp": 500
+    },
+    "shown": 44,
+    "in_return": 44,
+    "return_fields": [
+     "assessable",
+     "chromosome",
+     "discordant_fraction",
+     "discordant_pairs",
+     "mate_chromosomes",
+     "min_mapq_applied",
+     "position",
+     "position_provenance",
+     "quality_limited",
+     "reads_below_min_mapq",
+     "reason",
+     "same_primary_alt_mates",
+     "total_reads_in_window",
+     "window_bp"
+    ]
+   },
+   "combined_score": {
+    "call": 17,
+    "tool": "breakpoint_evidence_summary",
+    "shown": 40.0,
+    "in_return": 40.0,
+    "band_in_return": "moderate"
+   },
+   "wall_s": [
+    0.0,
+    0.0
+   ],
+   "equal": true
+  },
+  "5_hand_entry": {
+   "missed_implant": "IMP09",
+   "position": "chr20:33700000",
+   "shown": {
+    "at": "chr20:33700000",
+    "dataset": "IMP09",
+    "error": null,
+    "score": 22.5,
+    "band": "weak",
+    "components": {
+     "discordant_pairs": 7.5,
+     "soft_clipped_reads": 0.0,
+     "split_reads": 0.0,
+     "read_depth": 15.0
+    },
+    "low_mapq_fraction": 0.364,
+    "ceiling": {
+     "derivable": true,
+     "attainable_here": 57.5,
+     "attainable_basis": "the paired-read measurement held at the band its measured value reaches \u2014 in a HETEROZYGOUS rearrangement roughly half the reads crossing the breakpoint come from the intact homolog, so the discordant fraction is capped well below the 0.5 its top band requires and no amount of extra coverage or a wider window moves it; the soft-clip and split-read measurements at their best possible band; and the depth measurement contributing nothing, because a balanced rearrangement gains and loses no DNA.",
+     "strong_band": 70.0,
+     "max_with_flat_depth": 75.0,
+     "max_all_layers": 100.0
+    },
+    "page_says_cannot_reach_strong": true,
+    "layers": {
+     "discordant_pairs": {
+      "count": 10,
+      "fraction": 0.063,
+      "consensus": null,
+      "max_clips": null,
+      "partners": {
+       "chr21": 6,
+       "chr19": 2,
+       "chrX": 1,
+       "chr22_KI270733v1_random": 1
+      },
+      "mean_depth": null,
+      "quality_limited": false,
+      "min_mapq": 20,
+      "call": 20
+     },
+     "soft_clipped_reads": {
+      "count": 7,
+      "fraction": 0.171,
+      "consensus": 33699980,
+      "max_clips": 1,
+      "partners": null,
+      "mean_depth": null,
+      "quality_limited": false,
+      "min_mapq": 20,
+      "call": 21
+     },
+     "split_reads": {
+      "count": 9,
+      "fraction": 0.093,
+      "consensus": null,
+      "max_clips": null,
+      "partners": {
+       "chr21": 4,
+       "chr22_KI270733v1_random": 2,
+       "chrUn_GL000220v1": 2,
+       "chr6_GL000251v2_alt": 1
+      },
+      "mean_depth": null,
+      "quality_limited": false,
+      "min_mapq": 0,
+      "call": 22
+     },
+     "read_depth": {
+      "count": 15.44,
+      "fraction": 0.369,
+      "consensus": null,
+      "max_clips": null,
+      "partners": null,
+      "mean_depth": 41.79,
+      "quality_limited": null,
+      "min_mapq": null,
+      "call": 23
+     }
+    },
+    "summary_call": 24,
+    "position_provenance": "caller_supplied",
+    "page_banner": "This position was entered by hand."
+   },
+   "committed_rescue_record": {
+    "position": 33700000,
+    "discordant_pairs": 10,
+    "soft_clipped_reads": 7,
+    "split_reads_min_mapq_0": 9,
+    "evidence_score": 22.5,
+    "evidence_strength": "weak",
+    "low_mapq_fraction": 0.364
+   },
+   "agrees_with_rescue_record": {
+    "discordant_pairs": true,
+    "soft_clipped_reads": true,
+    "score": true,
+    "band": true
+   },
+   "wall_s": 0.14
+  },
+  "6_igv": {
+   "images": [
+    {
+     "ref": "IMG_60af",
+     "bytes": 39426,
+     "sha256": "39929b27c454f9d9760dbb29c98190fa373ed400eaf3f342b6eb5707698c23a3",
+     "dimensions": [
+      1140,
+      1112
+     ],
+     "identical_to_committed_panel": "discordant_pairs.png",
+     "fetch_wall_s": 0.0
+    },
+    {
+     "ref": "IMG_6f92",
+     "bytes": 38079,
+     "sha256": "964674fc5d22385f90c8ba34132a983b01c46d173275cb989f3cf48436782461",
+     "dimensions": [
+      1074,
+      1074
+     ],
+     "identical_to_committed_panel": null,
+     "fetch_wall_s": 0.0
+    },
+    {
+     "ref": "IMG_8118",
+     "bytes": 46706,
+     "sha256": "d92c81b8f4ad6290639eb9ebc07854a711f8c3ce8cbfb3dec774b8302f6129ef",
+     "dimensions": [
+      1140,
+      903
+     ],
+     "identical_to_committed_panel": null,
+     "fetch_wall_s": 0.0
+    }
+   ],
+   "error": null,
+   "panel_errors": {
+    "read_depth": {
+     "error": "IGV timed out after 180s",
+     "searched": null,
+     "note": "An image was generated but has NOT been provided to you: you have an opaque reference (image_ref) only -- no file path, and no pixel data. You cannot see this image and must not describe what it shows, contains, or looks like. Report that it was generated, which layer and region it covers, and what a human reviewer should check."
+    }
+   },
+   "panels": {
+    "discordant_pairs": {
+     "image_ref": "IMG_60af",
+     "region": "chr20:198500-201500",
+     "color_by": "UNEXPECTED_PAIR",
+     "error": null
+    },
+    "soft_clipped_reads": {
+     "image_ref": "IMG_6f92",
+     "region": "chr20:199850-200150",
+     "color_by": "NONE",
+     "error": null
+    },
+    "split_reads": {
+     "image_ref": "IMG_8118",
+     "region": "chr20:198500-201500",
+     "color_by": "UNEXPECTED_PAIR",
+     "error": null
+    },
+    "read_depth": {
+     "image_ref": null,
+     "region": "chr20:197000-203000",
+     "color_by": "NONE",
+     "error": "IGV timed out after 180s"
+    }
+   },
+   "call": 26,
+   "wall_s": 378.23
+  },
+  "7_chat": {
+   "models_offered": [
+    "qwen2.5:7b",
+    "qwen3.5:4b"
+   ],
+   "ollama_reachable": true,
+   "tool_schemas_offered": 15,
+   "model": "qwen2.5:7b",
+   "backend": "ollama (chat.run_turn)",
+   "question": "In dataset IMP01, how strong is the evidence for a breakpoint at chr20:200000? Give the evidence score and its band, and say whether this position could reach the strong band.",
+   "settings": {
+    "num_ctx": 32768,
+    "think": false,
+    "max_iters": "page default (8)"
+   },
+   "error": null,
+   "final_text": "The evidence for a breakpoint at chr20:200000 in dataset IMP01 is strong, with an integrated score of 47.5/100 over four applicable layers (3 out of the 4 showing signal). The evidence strength is classified as \"moderate\" according to the provided thresholds.\n\nThis position could theoretically reach the \"strong\" band, which requires a score of at least 70. However, given that this breakpoint is suspected to be part of a balanced translocation, specific structural limitations apply:\n- The read depth layer contributes no points because it's expected for a balanced translocation to have flat read depth.\n- The paired-reads layer is capped due to roughly half the reads crossing the breakpoint coming from the intact homolog.\n\nTherefore, while the score of 47.5 indicates strong evidence, it falls short of reaching the \"strong\" band by arithmetic constraints specific to balanced translocations.",
+   "tool_calls": [
+    {
+     "name": "applicable_layers",
+     "params": {
+      "bam_path": "<IMP01>"
+     },
+     "call_id": 27,
+     "rejected_or_error": false
+    },
+    {
+     "name": "read_depth_profile",
+     "params": {
+      "chromosome": "chr20",
+      "start": 199995,
+      "end": 200005,
+      "focus_position": 200000,
+      "window_bp": 100,
+      "bam_path": "<IMP01>"
+     },
+     "call_id": 28,
+     "rejected_or_error": true,
+     "error": "1 validation error for call[read_depth_profile]\nwindow_bp\n  Unexpected keyword argument [type=unexpected_keyword_argument, input_value=100, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.13/v/unexpected_keyword_argument"
+    },
+    {
+     "name": "read_depth_profile",
+     "params": {
+      "chromosome": "chr20",
+      "end": 200005,
+      "focus_position": 200000,
+      "start": 199995,
+      "bam_path": "<IMP01>"
+     },
+     "call_id": 29,
+     "rejected_or_error": false
+    },
+    {
+     "name": "soft_clipped_reads",
+     "params": {
+      "chromosome": "chr20",
+      "position": 200000,
+      "min_clip_bases": 3,
+      "window_bp": 50,
+      "bam_path": "<IMP01>"
+     },
+     "call_id": 30,
+     "rejected_or_error": false,
+     "window_bp": 50
+    },
+    {
+     "name": "discordant_pairs",
+     "params": {
+      "position": 200000,
+      "min_mapq": 20,
+      "window_bp": 50,
+      "chromosome": "chr20",
+      "bam_path": "<IMP01>"
+     },
+     "call_id": 31,
+     "rejected_or_error": false,
+     "window_bp": 50
+    },
+    {
+     "name": "split_reads",
+     "params": {
+      "window_bp": 50,
+      "chromosome": "chr20",
+      "position": 200000,
+      "bam_path": "<IMP01>"
+     },
+     "call_id": 32,
+     "rejected_or_error": false,
+     "window_bp": 50
+    },
+    {
+     "name": "breakpoint_evidence_summary",
+     "params": {
+      "applicable_layers": [
+       "discordant_pairs",
+       "soft_clipped_reads",
+       "split_reads",
+       "read_depth"
+      ],
+      "chromosome": "chr20",
+      "position": 200000,
+      "window_bp": 50,
+      "bam_path": "<IMP01>"
+     },
+     "call_id": 33,
+     "rejected_or_error": false,
+     "evidence_score": 47.5,
+     "evidence_strength": "moderate",
+     "attainable_here": 65.0,
+     "window_bp": 50
+    }
+   ],
+   "numbers_matched": {
+    "numbers_in_prose": 7,
+    "unsupported": [],
+    "no_tool_calls": false,
+    "details": [
+     {
+      "text": "200000",
+      "value": 200000.0,
+      "supported": true
+     },
+     {
+      "text": "47.5",
+      "value": 47.5,
+      "supported": true
+     },
+     {
+      "text": "100",
+      "value": 100.0,
+      "supported": true
+     },
+     {
+      "text": "3",
+      "value": 3.0,
+      "supported": true
+     },
+     {
+      "text": "4",
+      "value": 4.0,
+      "supported": true
+     },
+     {
+      "text": "70",
+      "value": 70.0,
+      "supported": true
+     },
+     {
+      "text": "47.5",
+      "value": 47.5,
+      "supported": true
+     }
+    ]
+   },
+   "ended_without_answer": false,
+   "malformed_tool_calls": 1,
+   "text_tool_call_failures": 0,
+   "context_truncated": 0,
+   "iterations": 8,
+   "gen_tokens": 580,
+   "wall_s": {
+    "chat_models": 0.0,
+    "chat": 22.51,
+    "reported_by_chat": 22.4
+   }
+  }
+ },
+ "attempts": {
+  "n": 1,
+  "recorded": "attempt_1.json",
+  "earlier": []
+ },
+ "observations": {
+  "igv_log_during_run": [
+   "INFO [Sep 29,2026 13:11] [Main] Startup  IGV Version 2.17.4 03/26/2024 12:38 PM",
+   "INFO [Sep 29,2026 13:11] [GenomeManager] Loading genome: https://igv.org/genomes/legacy/json/hg38.json",
+   "INFO [Sep 29,2026 13:11] [TrackLoader] Loading resource:  https://hgdownload.soe.ucsc.edu/goldenPath/hg38/database/ncbiRefSeq.txt.gz",
+   "INFO [Sep 29,2026 13:11] [TrackLoader] Loading resource:  https://hgdownload.soe.ucsc.edu/goldenPath/hg38/database/ncbiRefSeq.txt.gz",
+   "INFO [Sep 29,2026 13:11] [TrackLoader] Loading resource:  ~/public_data/sim/bams/IMP01.bam",
+   "INFO [Sep 29,2026 13:12] [ShutdownThread] Shutting down",
+   "INFO [Sep 29,2026 13:12] [Main] Startup  IGV Version 2.17.4 03/26/2024 12:38 PM",
+   "INFO [Sep 29,2026 13:12] [GenomeManager] Loading genome: https://igv.org/genomes/legacy/json/hg38.json",
+   "INFO [Sep 29,2026 13:12] [TrackLoader] Loading resource:  https://hgdownload.soe.ucsc.edu/goldenPath/hg38/database/ncbiRefSeq.txt.gz",
+   "INFO [Sep 29,2026 13:12] [TrackLoader] Loading resource:  https://hgdownload.soe.ucsc.edu/goldenPath/hg38/database/ncbiRefSeq.txt.gz",
+   "INFO [Sep 29,2026 13:12] [TrackLoader] Loading resource:  ~/public_data/sim/bams/IMP01.bam",
+   "INFO [Sep 29,2026 13:13] [ShutdownThread] Shutting down",
+   "INFO [Sep 29,2026 13:13] [Main] Startup  IGV Version 2.17.4 03/26/2024 12:38 PM",
+   "INFO [Sep 29,2026 13:13] [GenomeManager] Loading genome: https://igv.org/genomes/legacy/json/hg38.json",
+   "INFO [Sep 29,2026 13:13] [TrackLoader] Loading resource:  https://hgdownload.soe.ucsc.edu/goldenPath/hg38/database/ncbiRefSeq.txt.gz",
+   "INFO [Sep 29,2026 13:13] [TrackLoader] Loading resource:  https://hgdownload.soe.ucsc.edu/goldenPath/hg38/database/ncbiRefSeq.txt.gz",
+   "INFO [Sep 29,2026 13:14] [TrackLoader] Loading resource:  ~/public_data/sim/bams/IMP01.bam",
+   "INFO [Sep 29,2026 13:14] [ShutdownThread] Shutting down",
+   "INFO [Sep 29,2026 13:14] [Main] Startup  IGV Version 2.17.4 03/26/2024 12:38 PM",
+   "INFO [Sep 29,2026 13:14] [GenomeManager] Loading genome: https://igv.org/genomes/legacy/json/hg38.json",
+   "INFO [Sep 29,2026 13:14] [TrackLoader] Loading resource:  https://hgdownload.soe.ucsc.edu/goldenPath/hg38/database/ncbiRefSeq.txt.gz",
+   "INFO [Sep 29,2026 13:17] [ShutdownThread] Shutting down"
+  ],
+  "chat_vs_panel": {
+   "chat_summary_calls": [
+    {
+     "params": {
+      "applicable_layers": [
+       "discordant_pairs",
+       "soft_clipped_reads",
+       "split_reads",
+       "read_depth"
+      ],
+      "chromosome": "chr20",
+      "position": 200000,
+      "window_bp": 50,
+      "bam_path": "<IMP01>"
+     },
+     "evidence_score": 47.5,
+     "evidence_strength": "moderate",
+     "attainable_here": 65.0
+    }
+   ],
+   "panel_at_same_position": {
+    "window_bp": 500,
+    "score": 40.0,
+    "band": "moderate",
+    "attainable_here": 57.5
+   }
+  },
+  "final_text_mentions": {
+   "strong": 4,
+   "moderate": 1,
+   "weak": 0,
+   "57.5": 0,
+   "65.0": 0
+  }
+ }
+}
