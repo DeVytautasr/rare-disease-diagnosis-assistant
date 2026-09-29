@@ -484,6 +484,44 @@ def run():
     return 1 if rec.get("failure") else 0
 
 
+OBS_DEFINITIONS = {
+    "igv_log_during_run": "the lines of IGV's own log (~/igv/igv0.log) stamped between the run's start and "
+                          "end that record an IGV start, a genome or resource load, or a shutdown -- one IGV "
+                          "process per panel",
+    "chat_vs_panel": "the combined-score call(s) the model made in its turn, set beside the panel's value at "
+                     "the same position (window 500, the interface's default)",
+    "final_text_mentions": "case-insensitive whole-word counts in the model's final answer: the band words, "
+                           "and the ceiling figures returned in the turn and shown on the panel",
+}
+
+
+def observations(rec):
+    t0 = time.mktime(time.strptime(rec["started"][:19], "%Y-%m-%dT%H:%M:%S"))
+    t1 = t0 + rec["total_wall_s"] + 60
+    lines = []
+    for line in open(os.path.join(HOME, "igv", "igv0.log"), errors="replace"):
+        m = re.match(r"\w+ \[(\w{3} \d+,\d{4} \d\d:\d\d)\]", line)
+        if not m or not re.search(r"\] (Startup|Loading genome|Loading resource|Shutting down)|\[(Main|GenomeManager|"
+                                  r"TrackLoader|ShutdownThread)\] (Startup|Loading|Shutting)", line):
+            continue
+        t = time.mktime(time.strptime(m.group(1), "%b %d,%Y %H:%M"))
+        if t0 - 60 <= t <= t1:
+            lines.append(tilde(line.strip()))
+    chat = rec["steps"]["7_chat"]
+    panel = next(e for e in rec["steps"]["3_candidate"]["shown"] if e["at"] == "chr20:200000")
+    summ = [t for t in chat["tool_calls"] if t["name"] == "breakpoint_evidence_summary"]
+    text = chat.get("final_text") or ""
+    words = ["strong", "moderate", "weak"] + sorted({str(t.get("attainable_here")) for t in summ} |
+                                                    {str(panel["ceiling"]["attainable_here"])})
+    return {"igv_log_during_run": lines,
+            "chat_vs_panel": {"chat_summary_calls": [{k: t.get(k) for k in ("params", "evidence_score", "evidence_strength",
+                                                                            "attainable_here")} for t in summ],
+                              "panel_at_same_position": {"window_bp": 500, "score": panel["score"], "band": panel["band"],
+                                                         "attainable_here": panel["ceiling"]["attainable_here"]}},
+            "final_text_mentions": {w: len(re.findall(r"(?<![\w.])" + re.escape(w) + r"(?![\w.])", text, re.I))
+                                    for w in words}}
+
+
 def record():
     attempts = sorted(glob.glob(os.path.join(LOGDIR, "attempt_*.json")),
                       key=lambda p: int(re.search(r"attempt_(\d+)", p).group(1)))
@@ -495,6 +533,8 @@ def record():
     rec["attempts"] = {"n": len(attempts), "recorded": os.path.basename(attempts[-1]),
                        "earlier": [{"file": os.path.basename(a), "failure": json.load(open(a)).get("failure")}
                                    for a in attempts[:-1]]}
+    rec["observations"] = observations(rec)
+    rec["definitions"].update(OBS_DEFINITIONS)
     json.dump(rec, open(DEST, "w"), indent=1)
     print("written:", os.path.relpath(DEST, REPO))
     return 0
