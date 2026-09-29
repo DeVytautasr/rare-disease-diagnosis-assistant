@@ -249,6 +249,8 @@ def proof():
 def panel():
     from stage1_igv_assistant import ui
     ui.discover_public()
+    # ui.main() derives the tiers at startup (ui.py:1704-1708); assess() alone does not.
+    ui.TIERS, ui.BANDS = ui.derive_tiers(), ui.derive_bands()
     E = ui.assess("IMP01", "chr20", 200000)
     return {"score": E["summary"]["evidence_score"], "band": E["summary"]["evidence_strength"],
             "attainable_here": E["ceiling"].get("attainable_here"),
