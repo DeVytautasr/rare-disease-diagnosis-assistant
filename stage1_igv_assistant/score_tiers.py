@@ -178,14 +178,39 @@ _BALANCED_ZERO_LAYER = "read_depth"
 _HET_CAPPED_LAYER = "discordant_pairs"
 
 
-def ceiling_from_observed(tiers, bands, observed):
+def counted_layers(summary):
+    """The layers in evidence_score's denominator: the summary's applicable_layers
+    minus its unassessable_layers, in that order. None when the return does not say
+    (then every layer is taken as counted, as before)."""
+    if not isinstance(summary, dict) or summary.get("applicable_layers") is None:
+        return None
+    gone = summary.get("unassessable_layers") or {}
+    return [l for l in summary["applicable_layers"] if l not in gone]
+
+
+_LAYER_WORDS = {
+    "discordant_pairs": "the paired-read measurement held at the band its measured value reaches",
+    "soft_clipped_reads": "the soft-clip measurement at its best possible band",
+    "split_reads": "the split-read measurement at its best possible band",
+    "read_depth": "the depth measurement contributing nothing, because a balanced rearrangement gains and loses no DNA",
+}
+
+
+def ceiling_from_observed(tiers, bands, observed, counted=None):
     """Attainable-score analysis, derived from the live tiers and bands.
 
     Shared by the UI panel and the MCP summary tool so there is one derivation,
     not two that can drift. `observed` is {layer: observed_value_or_None}.
+
+    `counted` is the list of layers the score counted (counted_layers()). The
+    score is normalised over exactly those layers, so the ceiling must be too
+    (Phase 20: a caller that counted two layers was told 57.5 while it scored
+    65.0). None, or all four, gives the four-layer analysis unchanged.
     """
     if tiers is None:
         return {"derivable": False, "reason": "tiers not derivable"}
+    if counted is not None and sorted(counted) != sorted(tiers):
+        return _ceiling_over(tiers, bands, observed, list(counted))
     per, flat = {}, 0.0
     for layer, t in tiers.items():
         v = observed.get(layer)
@@ -238,6 +263,49 @@ def ceiling_from_observed(tiers, bands, observed):
     }
 
 
+def _ceiling_over(tiers, bands, observed, counted):
+    """The ceiling over a restricted set of counted layers, normalised as the score
+    is: 100 x (the paired-read layer at its observed tier, the soft-clip and
+    split-read layers at their maxima, depth at 0) / (the counted layers' maxima),
+    rounded as evidence_score is."""
+    per = {}
+    for layer, t in tiers.items():
+        v = observed.get(layer)
+        per[layer] = {
+            "observed_field": t["observed_field"], "observed": v,
+            "score_now": score_for(t, v) if v is not None else None,
+            "max_score": t["max_score"],
+            "next_tier": next_tier_up(t, v) if v is not None else None,
+            "tiers": t["tiers"], "extra_gate": t.get("extra_gate"),
+        }
+    m = sum(tiers[l]["max_score"] for l in counted)
+    attainable = flat = None
+    if m:
+        flat = round(100.0 * sum(tiers[l]["max_score"] for l in counted if l != _BALANCED_ZERO_LAYER) / m, 1)
+        disc_now = per[_HET_CAPPED_LAYER]["score_now"] if _HET_CAPPED_LAYER in per else None
+        if _HET_CAPPED_LAYER not in counted or disc_now is not None:
+            s = sum(0.0 if l == _BALANCED_ZERO_LAYER else disc_now if l == _HET_CAPPED_LAYER
+                    else tiers[l]["max_score"] for l in counted)
+            attainable = round(100.0 * s / m, 1)
+    sb = strong_band(bands) if bands else None
+    basis = ("counting only the layers this score counted (" + ", ".join(counted) + "), normalised over their "
+             "maxima as the score is: " + "; ".join(_LAYER_WORDS[l] for l in counted) + ".")
+    return {
+        "derivable": True, "per_layer": per, "counted_layers": counted, "restricted": True,
+        "max_with_flat_depth": flat,
+        "max_all_layers": sum(t["max_score"] for t in tiers.values()),
+        "attainable_here": attainable,
+        "attainable_basis": basis,
+        "bands": bands,
+        "strong_band": sb,
+        "strong_band_reachable_here": (None if (attainable is None or sb is None)
+                                       else attainable >= sb),
+        "note": ("Calculated from the scoring rules in force right now, over the layers this score "
+                 "counted. The flat-depth figure is the highest score reachable over those layers "
+                 "when the depth measurement contributes nothing."),
+    }
+
+
 def ceiling_sentence(ceiling):
     """One plain sentence stating the consequence, for the observation channel.
 
@@ -250,6 +318,20 @@ def ceiling_sentence(ceiling):
     a, sb = ceiling.get("attainable_here"), ceiling.get("strong_band")
     if a is None or sb is None:
         return None
+    if ceiling.get("restricted"):
+        c = ceiling["counted_layers"]
+        head = (f"Attainable-score note: counting only {', '.join(c)} -- the layers this score counted -- "
+                f"the highest score reachable at this locus is {a}/100")
+        if a >= sb:
+            return head + f", which does reach the {sb}/100 at which the top band begins."
+        limits = []
+        if _BALANCED_ZERO_LAYER in c:
+            limits.append("the depth layer contributes nothing because no DNA is gained or lost")
+        if _HET_CAPPED_LAYER in c:
+            limits.append("the paired-read layer is capped because roughly half the reads crossing the "
+                          "breakpoint come from the intact homolog")
+        return (head + f", below the {sb}/100 at which the top band begins — so the top band is UNREACHABLE "
+                "here by arithmetic." + (" Among the counted layers, " + " and ".join(limits) + "." if limits else ""))
     if a >= sb:
         return (f"Attainable-score note: for a heterozygous balanced rearrangement the highest "
                 f"score reachable at this locus is {a}/100, which does reach the {sb}/100 at "

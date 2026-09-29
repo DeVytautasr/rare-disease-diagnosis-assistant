@@ -289,7 +289,12 @@ def _with_ceiling(result):
             if nest and isinstance(d, dict):
                 d = d.get(nest)
             observed[layer] = d.get(field) if isinstance(d, dict) else None
-        c = _st.ceiling_from_observed(tiers, bands, observed)
+        # Phase 20: the ceiling is computed over the layers the score counted
+        # (applicable minus unassessable). The field naming them appears only when
+        # fewer than four are counted, so the default return is unchanged.
+        c = _st.ceiling_from_observed(tiers, bands, observed, _st.counted_layers(result))
+        if c.get("restricted"):
+            out["ceiling_counted_layers"] = c["counted_layers"]
         out["attainable_ceiling_derivable"] = True
         out["score_bands"] = c["bands"]
         out["strong_band"] = c["strong_band"]

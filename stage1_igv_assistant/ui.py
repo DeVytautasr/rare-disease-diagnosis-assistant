@@ -43,7 +43,7 @@ from stage1_igv_assistant import chat as chatmod
 from stage1_igv_assistant import config as CFG
 from stage1_igv_assistant.score_tiers import (
     derive_tiers, derive_bands, score_for, next_tier_up, TierDerivationError,
-    ceiling_from_observed as derive_ceiling,
+    ceiling_from_observed as derive_ceiling, counted_layers,
 )
 
 EXPECTED_EVIDENCE_TOOLS = {
@@ -299,22 +299,24 @@ def assess(bam_label, chromosome, position, window_bp=500, split_min_mapq=None):
             "low_mapq_fraction": (stats["result"] or {}).get("low_mapq_fraction"),
             "low_mapq_window": gate_window,
         },
-        "ceiling": ceiling_for(obs),
+        "ceiling": ceiling_for(obs, counted_layers(sm)),
         "position_provenance": (d.get("position_provenance") or s_.get("position_provenance")),
     }
 
 
-def ceiling_for(observed):
+def ceiling_for(observed, counted=None):
     """Attainable-score analysis, derived from the live tiers and bands.
 
     Phase 10: the derivation moved into score_tiers.ceiling_from_observed so the
     UI panel and the MCP summary tool share ONE implementation rather than two
     that can drift, and so the "strong" boundary is read out of the scoring
     source instead of being the literal 70 that used to sit here.
+    Phase 20: `counted` is the summary's counted layers (applicable minus
+    unassessable), passed as the tool passes them, so both keep one derivation.
     """
     if TIERS is None:
         return {"derivable": False, "reason": TIER_ERROR}
-    return derive_ceiling(TIERS, BANDS, observed)
+    return derive_ceiling(TIERS, BANDS, observed, counted)
 
 
 # ── limits panel (Addition 3) ───────────────────────────────────────────────
