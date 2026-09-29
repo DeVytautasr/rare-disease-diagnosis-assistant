@@ -1,0 +1,73 @@
+# test_ceiling_layers.py on the pre-fix working tree (HEAD 95e1927), 2026-09-30T02:01:52+03:00; exit 1
+code under test: the working tree
+====================================================================
+CEILING OVER THE COUNTED LAYERS
+====================================================================
+
+1. positive control: the registered values at IMP01's observed values
+  FAILED ✗  discordant_pairs+soft_clipped_reads: attainable_here 65.0
+             got 57.5
+  FAILED ✗  discordant_pairs+soft_clipped_reads: max_with_flat_depth 100.0
+             got 75.0
+  PASSED ✓  discordant_pairs+soft_clipped_reads: strong_band_reachable_here False
+  FAILED ✗  soft_clipped_reads+split_reads: attainable_here 100.0
+             got 57.5
+  FAILED ✗  soft_clipped_reads+split_reads: max_with_flat_depth 100.0
+             got 75.0
+  FAILED ✗  soft_clipped_reads+split_reads: strong_band_reachable_here True
+             got False
+  FAILED ✗  discordant_pairs+soft_clipped_reads+read_depth: attainable_here 43.3
+             got 57.5
+  FAILED ✗  discordant_pairs+soft_clipped_reads+read_depth: max_with_flat_depth 66.7
+             got 75.0
+  PASSED ✓  discordant_pairs+soft_clipped_reads+read_depth: strong_band_reachable_here False
+  PASSED ✓  discordant_pairs+soft_clipped_reads+split_reads+read_depth: attainable_here 57.5
+  PASSED ✓  discordant_pairs+soft_clipped_reads+split_reads+read_depth: max_with_flat_depth 75.0
+  PASSED ✓  discordant_pairs+soft_clipped_reads+split_reads+read_depth: strong_band_reachable_here False
+
+2. positive control: every restricted list over a grid of observed values
+  FAILED ✗  the ceiling is the normalised maximum over the counted layers (2240 cases)
+             2240 wrong, e.g. [({'discordant_pairs': 0.0, 'soft_clipped_reads': 0, 'split_reads': 0.0, 'read_depth': 1.0}, ['discordant_pairs'], 50.0, 0.0), ({'discordant_pairs': 0.0, 'soft_clipped_reads': 0, 'split_reads': 0.0, 'read_depth': 1.0}, ['soft_clipped_reads'], 50.0, 100.0)]
+  FAILED ✗  with the depth component 0, the score never exceeds attainable_here
+             326 above, e.g. [({'discordant_pairs': 0.0, 'soft_clipped_reads': 0, 'split_reads': 0.2, 'read_depth': 1.0}, ['split_reads'], 60.0, 50.0), ({'discordant_pairs': 0.0, 'soft_clipped_reads': 0, 'split_reads': 0.2, 'read_depth': 0.779}, ['split_reads'], 60.0, 50.0)]
+  FAILED ✗  ceiling_counted_layers names the counted layers
+             2240 wrong, e.g. [(['discordant_pairs'], None), (['soft_clipped_reads'], None)]
+  FAILED ✗  attainable_basis names the counted layers
+             2240 wrong, e.g. [['discordant_pairs'], ['soft_clipped_reads']]
+
+3. an unassessable layer leaves the denominator, and the ceiling follows
+  FAILED ✗  all four applicable, split reads unassessable: attainable_here 43.3
+             got 57.5
+
+4. negative control: all four layers, and no list, give the pre-fix fields
+  PASSED ✓  all four counted: every ceiling field identical to the pre-fix output (160 cases)
+  PASSED ✓  all four in another order: identical to the pre-fix output
+  PASSED ✓  no ceiling_counted_layers field when all four are counted
+
+5. integration: through the MCP dispatch at IMP01 chr20:200000, default window
+  FAILED ✗  dispatch discordant_pairs+soft_clipped_reads: attainable_here 65.0, score 65.0 within it
+             got attainable 57.5, score 65.0
+  FAILED ✗  dispatch soft_clipped_reads+split_reads: attainable_here 100.0, score 65.0 within it
+             got attainable 57.5, score 65.0
+  FAILED ✗  dispatch discordant_pairs+soft_clipped_reads+read_depth: attainable_here 43.3, score 43.3 within it
+             got attainable 57.5, score 43.3
+  PASSED ✓  dispatch discordant_pairs+soft_clipped_reads+split_reads+read_depth: attainable_here 57.5, score 40.0 within it
+  PASSED ✓  dispatch, no list: the ceiling fields equal the pre-fix wrapper's on the same return
+
+====================================================================
+15 FAILURE(S)
+  - discordant_pairs+soft_clipped_reads: attainable_here 65.0
+  - discordant_pairs+soft_clipped_reads: max_with_flat_depth 100.0
+  - soft_clipped_reads+split_reads: attainable_here 100.0
+  - soft_clipped_reads+split_reads: max_with_flat_depth 100.0
+  - soft_clipped_reads+split_reads: strong_band_reachable_here True
+  - discordant_pairs+soft_clipped_reads+read_depth: attainable_here 43.3
+  - discordant_pairs+soft_clipped_reads+read_depth: max_with_flat_depth 66.7
+  - the ceiling is the normalised maximum over the counted layers (2240 cases)
+  - with the depth component 0, the score never exceeds attainable_here
+  - ceiling_counted_layers names the counted layers
+  - attainable_basis names the counted layers
+  - all four applicable, split reads unassessable: attainable_here 43.3
+  - dispatch discordant_pairs+soft_clipped_reads: attainable_here 65.0, score 65.0 within it
+  - dispatch soft_clipped_reads+split_reads: attainable_here 100.0, score 65.0 within it
+  - dispatch discordant_pairs+soft_clipped_reads+read_depth: attainable_here 43.3, score 43.3 within it
