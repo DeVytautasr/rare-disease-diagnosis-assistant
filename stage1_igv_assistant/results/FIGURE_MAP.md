@@ -651,3 +651,34 @@ Still open: the new item (a qualifier such as "counting all four measurements" w
 cover it); 6 (65.0 recorded at IMP01's two ends only); 7 (the check covers the final
 answer only); 12 (the combined score's button label). Flags 1–5, 8–11, 13 and 14 and
 all three notes are resolved.
+
+### J.6 Re-check of the v3 files, 2026-09-29
+
+`Rimas_abstract_EN_2026-09-29_v3.docx` (5ad2fc7e…b6b9ee57), `Rimas_tezes_DI_medicinoje_LT_2026-09-29_v3.docx`
+(fa4f3255…1f7530fe) and `Rimas_tezes_paaiskinimai_2026-09-29_v3.docx` (4e7098eb…09a3c8d1):
+Desktop, read only, hashes as given with the task. Two paragraph diffs against v2 agree
+(body blocks; every paragraph of `word/document.xml`, table cells included). In each
+file only `word/document.xml` and `docProps/core.xml` differ; there are no text boxes,
+tracked changes, comments or fields, and the sheet's images are byte-identical. The EN
+changed in its aim sentence (shortened; no figure), the Results and the Conclusions; the
+LT in the Results and the Conclusions; the figures are identical in both languages. The
+listed removals ("each linked to the tool output behind it", "(two per translocation)",
+"already", and their LT forms) carried no figure, and the first survives in the Novelty.
+The sheet changed in 8 regions: the items below, the new limitation and the version
+labels ("v3"). Nothing else changed.
+
+| J.5 open item | v3 wording | Record : key | Status |
+|---|---|---|---|
+| new: the ceiling and the layer list | abstracts: "the highest score the tool could give at its default window, counting all four measurements, was 57.5"; sheet: the section 3 row ("at the default ±500 window and counting all four layers"), the glossary ("with a given window, counting all four layers") and the J44 sentence ("at the default window, counting all four layers") | `AN/figures.json` `ceiling_summary`, counted over four layers (`applicable` lists all four at all 12 implants, `AN/chain/IMP*.json.gz`) | agrees |
+| the new limitation | "the ceiling field ignores which layers the model asked to count: when qwen3.5:4b in one run asked for discordant pairs and soft clips only, the tool returned 65.0 at the default window although the ceiling read 57.5. The interface always counts all four layers, so its numbers are correct; the tool's bug will need fixing" | `P10/qwen3.5-4b/WITH__run15.json` `recorder_calls_unablated` (applicable_layers [discordant_pairs, soft_clipped_reads], window 500, evidence_score 65.0, attainable_here 57.5); `ui.py:238` (the evidence panel passes the layers `applicable_layers` finds in the BAM); `chat.resolve_args`, `ui._chat_exec` (a model's own layer list reaches the tool unchanged); `benchmark/phase10_rerun.py:39–40, 198` (the Phase 10 runs, run 15 among them, called their tools through `ui._chat_exec`) | the run-15 facts agree. **Open**: "the interface always counts all four layers, so its numbers are correct", and the section 3 row's "(the interface always counts all four)", hold for the evidence panel only. In the chat panel the model sets the tool's arguments, and run 15 went through that same executor |
+| 6 | glossary: "at IMP01 with ±200 and ±50 base windows 65.0; below 70 in every case"; section 3 row: "at IMP01 at narrower windows (±200 and ±50 bases) the ceiling was 65.0, still below 70" | `PF` `loci[1]` (±200 at chr21:14,100,000: 65.0); `DR` `observations.chat_vs_panel` (±50 at chr20:200,000: 65.0) | agrees |
+| 7 | abstracts: "shows each measurement with the tool output behind it, checks every number in the model's answer against the tool outputs"; sheet: "every number in the model's final answer is checked (intermediate model text is shown unchecked)" | `ui.py:1057`, `ui.py:1125` (a chip beside each measurement and the combined score); `chat.py:495`, `chat.py:767` (`verify_numbers(final_text, …)`); `ui.py` `sendChat` (only the final text is marked) | agrees |
+| 12 | "the button beside a layer's number ('tool call #N') or the combined score ('breakpoint_evidence_summary #N')" | `ui.py:1057`, `ui.py:1125` | agrees |
+
+Still open: the new limitation's last sentence and the section 3 row's parenthesis,
+which are true of the evidence panel, not of the chat panel. Wording such as "the
+evidence panel always counts all four layers, so its figures are right; in the chat
+window the model sets the tool's arguments, so the bug can show there" would match the
+records. Flags 6, 7 and 12 are resolved, and so is the J.5 ceiling item as worded in
+the abstracts, the glossary and the J44 sentence. The tool's ceiling field itself is
+unchanged; fixing it is a code change outside this re-check.
