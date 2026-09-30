@@ -70,8 +70,10 @@ Lentelėje kiekviena eilutė — vienas filtras. Stulpeliai:
 | **still remaining** | kiek kandidatų liko **po** šio žingsnio |
 | **removed by this step** | kiek pašalino **šioje vietoje** grandinėje |
 | **this step would remove on its own** | kiek būtų pašalinęs **vienas**, be kitų |
+| **measured against** | kokio rinkinio atžvilgiu skaičiuotas ankstesnis stulpelis: tipo filtrui — visų įkeltų įrašų (`all svtypes`), vėlesniems žingsniams — pasirinkto tipo įrašų (pvz., `svtype=BND`) arba visų, jei tipas nepasirinktas |
 
-Du paskutiniai stulpeliai dažnai skiriasi, ir tai svarbu. Jei filtras
+Stulpeliai **removed by this step** ir **this step would remove on its own**
+dažnai skiriasi, ir tai svarbu. Jei filtras
 „pašalino 0“, bet „vienas būtų pašalinęs 300“, jis **nėra nenaudingas** —
 tiesiog ankstesni filtrai tuos įrašus jau buvo pašalinę. Įrankis tokius
 žingsnius pažymi atskirai, kad nepasirodytų, jog filtras nieko nedaro.
@@ -86,8 +88,8 @@ pasako garsiai.
 
 ### 3. Atverti kandidatą
 
-Paspauskite kandidato eilutę. Įrankis paleis keturis įrodymų sluoksnius abiejose
-lūžio taško pusėse.
+Kandidato eilutėje paspauskite mygtuką **evidence**. Įrankis paleis keturis
+įrodymų sluoksnius abiejuose kandidato lūžio galuose.
 
 ### 4. Įvesti koordinatę ranka
 
@@ -123,8 +125,11 @@ Kiekvienas vertinamas atskirai nuo 0 iki 25, iš viso 0–100.
 Vertinimas: **70 ir daugiau — „strong“**, **40 ir daugiau — „moderate“**,
 daugiau nei 0 — „weak“.
 
-Prie kiekvieno skaičiaus rodomas mygtukas, atidarantis **tikslų įrankio
-atsakymą**. Nė vienas ekrane matomas skaičius neatsirado kitaip.
+Prie kiekvieno sluoksnio skaičiaus ir prie bendro įverčio yra mygtukas,
+atidarantis **tikslų įrankio atsakymą**, kuris tą skaičių grąžino. Pasiekiama riba
+nėra įrankio atsakymas: sąsaja ją išveda iš vertinimo pakopų ir stebėtų reikšmių
+(dalių ir nukirptų skaitinių skaičiaus), skaičiuodama tuos pačius sluoksnius kaip
+įvertis. Visi sesijos kvietimai išvardyti skiltyje **Where every number came from**.
 
 ---
 

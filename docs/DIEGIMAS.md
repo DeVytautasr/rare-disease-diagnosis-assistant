@@ -156,7 +156,7 @@ Failas ieškomas eilės tvarka: `$SV_CONFIG`, `./sv-assistant.conf`,
 | `SV_EXCLUDE_TEMPLATE` | delly „neįtraukiamų sričių“ šablonas |
 | `IGV_PATH` | kelias iki `igv.sh` |
 | `SV_OLLAMA_URL` | kur veikia `ollama` (numatyta `http://127.0.0.1:11434`) |
-| `ANTHROPIC_API_KEY` | raktas Claude pokalbiui (neprivaloma) |
+| `ANTHROPIC_API_KEY` | raktas palyginimo (benchmark) skriptams, kurie kviečia Claude modelius per API (neprivaloma); naršyklės pokalbio langas siūlo tik vietinius (Ollama) modelius |
 
 Pirmenybė: komandinė eilutė → aplinkos kintamasis → konfigūracijos failas →
 numatytoji reikšmė.
@@ -262,9 +262,10 @@ Tai nėra klaida — tiesiog vienu filtru mažiau.
 
 ### IGV paveikslėliai nesusikuria, nors IGV rastas
 
-IGV pats **parsisiunčia genomo seką iš interneto** (`igv.org`) kiekvieną kartą,
-jei ji nėra išsaugota vietoje. Jei to serverio pasiekti nepavyksta, IGV pakimba
-ir įrankis po 120 s praneša `IGV timed out after 120s`.
+IGV kiekvienam paveikslėliui **iš interneto įkelia genomą** (`igv.org`) **ir
+RefSeq genų takelį** (`hgdownload.soe.ucsc.edu`). Jei šių serverių pasiekti
+nepavyksta arba jie atsako lėtai, IGV pakimba ir įrankis po 180 s praneša
+`IGV timed out after 180s`.
 
 Patikrinti:
 
@@ -275,9 +276,9 @@ curl -sS -o /dev/null -w '%{http_code}\n' https://igv.org/genomes/genomes.json
 Jei atsakymo nėra — tai **ne šio įrankio klaida**. Visi skaičiai ir visi keturi
 įrodymų sluoksniai veikia toliau; trūksta tik paveikslėlių.
 
-Ilgalaikis sprendimas — vieną kartą paleisti IGV rankomis, pasirinkti `hg38`
-genomą ir leisti jam išsisaugoti kataloge `~/igv/genomes`. Po to paveikslėliai
-veiks ir be interneto.
+Paveikslėlių be interneto šis įrankis neparengia: IGV dokumentacija nurodo, kad
+IGV talpinamiems genomams reikia interneto ryšio, o paveikslėlių įrankiai genomą
+įkelia pagal ID (`genome hg38`). Skaičiai nuo IGV nepriklauso.
 
 IGV taip pat perspėja `IGV requires Java 17`, jei sistemoje yra naujesnė Java.
 Iki šiol tai veikė ir su naujesne, bet jei paveikslėliai nesikuria — verta

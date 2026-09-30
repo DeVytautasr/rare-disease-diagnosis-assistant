@@ -3,15 +3,15 @@
 **Stage 1 prototype — MSc thesis, Systems Biology, Vilnius University**
 Vytautas Rimas · vytautas.rimas@mf.stud.vu.lt
 Repository: `github.com/DeVytautasr/rare-disease-diagnosis-assistant`
-State described here: commit `1809d2a` · 15 tools (11 evidence + 4 candidate-set) · 20 test files
+State described here: commit `1809d2a` (15 September 2026), with dated notes for later changes. At 30 September 2026 (commit `5c1c1bf`): 15 tools (11 evidence + 4 candidate-set) · 26 test files in `stage1_igv_assistant/tests/`
 
 ---
 
 ## What this is
 
-Fifteen tools across two MCP servers: eleven that read sequencing alignment files and report structured evidence at a candidate structural variant breakpoint, and four that load a variant caller's candidate set and filter it down to the junctions worth looking at. A local browser front end drives them by hand, and an optional LLM assistant calls the same tools through the same recorder and writes a report citing every number back to the tool that produced it.
+Fifteen tools across two MCP servers: eleven that read sequencing alignment files and report structured evidence at a candidate structural variant breakpoint, and four that load a variant caller's candidate set and filter it down to the junctions worth looking at. A local browser front end drives them by hand, and an optional LLM assistant calls the same tools through the same recorder; every number in its final answer is checked against the tool returns of that turn, and one that no tool returned is marked.
 
-The architectural principle is that the assistant cannot state a genomic fact unless a tool returned it during that session. It is given tool access and nothing else — no ability to read source code, run scripts, or consult its own training knowledge about genes, samples, or variants. This is enforced by what it can reach, not by instruction alone.
+The architectural principle is that the model reaches genomic data only through the tools — enforced by what it can reach, not by instruction — so that every figure it reports can be checked against a tool return. In the chat panel and the benchmark harnesses it is offered the fifteen tool schemas and nothing else: no file access, no scripts. (A general-purpose MCP client such as Claude Code, used in Tier 3 below, has other tools as well; there the restriction is an instruction.)
 
 **What it does.** Inspects read-level evidence at a position you supply: discordant pairs, soft-clipped reads, split reads, read depth. Identifies which gene the position falls in. Checks for a reciprocal breakpoint when a translocation is suspected. Integrates the layers into a scored summary that reports which layers the data can actually inform. Generates IGV images, one per evidence layer.
 
@@ -265,8 +265,9 @@ If you are evaluating this project, that last point is the one to press on. That
 This is the single finding most worth taking from the project, and it is not
 about any model.
 
-A balanced translocation can never score "strong" here. The reason is
-arithmetic, not data: the scoring bands start "strong" at 70 of 100, the depth
+With all four measurements counted, at the default window, a balanced
+translocation cannot score "strong" here unless the depth layer errs. The reason
+is arithmetic, not data: the scoring bands start "strong" at 70 of 100, the depth
 layer correctly contributes 0 when no DNA is gained or lost, and the
 paired-read layer cannot reach its top tier because roughly half the reads
 crossing the breakpoint come from the intact homolog — across the 32 breakends
@@ -279,12 +280,13 @@ replaced by the rebuild's.)*
 
 Twenty runs were put to four models of very different capability — two local,
 two through the Anthropic API — asking whether the evidence at a known
-implanted translocation was strong. **One run in twenty stated the ceiling.**
-The obvious reading is that this reasoning is beyond small models.
+implanted translocation was strong, with tool returns that did not carry the
+ceiling. Scored blind, **0 of 20 runs stated it.** The obvious reading is that
+this reasoning is beyond small models.
 
-That reading was wrong. The number 70 appeared in no tool return and in no tool
-description. No model could say "57.5 is below 70" because 70 was not in the
-session. The limit was informational, not cognitive.
+That reading was incomplete. The number 70 appeared in no tool return and in no
+tool description, so no model could say "57.5 is below 70". For the frontier
+models the limit was informational; for the local models it was not only that.
 
 Nine fields and one sentence were added to one tool's return —
 `strong_band`, `attainable_here`, `strong_band_reachable_here` and the rest,
@@ -294,13 +296,18 @@ re-prompted.
 
 *Note, 2026-09-30:* since fix 25d12bb the ceiling (`attainable_here` and the fields beside it) is computed over the layers the score actually counts (applicable minus unassessable), normalised as the score is. A caller that restricts the layers now gets `ceiling_counted_layers` and a basis naming them; with all four layers counted the fields are unchanged.
 
-**After: 19 runs in 20 state the ceiling; 17 of 20 give the full argument.** A
-4-billion-parameter model running on a laptop GPU — one that produced malformed
-tool arguments in a quarter of its calls — laid out the complete arithmetic in
-5 runs of 5.
+**After, scored blind: 12 of 20 runs state the ceiling, all 12 with the full
+argument** — `claude-sonnet-5` 5 of 5, `claude-opus-5` 5 of 5, `qwen3.5:4b` 2 of 5,
+`qwen2.5:7b` 0 of 5. In the pre-registered extension to 15 runs, `qwen3.5:4b`
+stated it in 5 of 15 (0 of 15 without; Fisher's exact test, two-sided,
+p = 0.042) and `qwen2.5:7b` in 3 of 15 (p = 0.22). With the fields,
+`claude-sonnet-5` also called the evidence strong in all 5 runs (in none
+without), and `claude-opus-5` in 2 of 5 (2 of 5 without). Record:
+`stage1_igv_assistant/benchmark/runs/phase10_rerun_2026-09-25/blind/blind_scores.json`.
 
-What a model can reach determines what it can say. That is a claim about tool
-design, and it is measurable.
+Exposing a quantity in a tool return is necessary for any model to reason from
+it and sufficient only for capable ones: the frontier models always called the
+tool that carries it and used it; the local models did both unreliably.
 
 *Correction, 2026-09-25.* The run counts in this section (one in twenty before,
 19 and 17 of twenty after, 5 of 5 for the 4-billion-parameter model) come from
@@ -341,7 +348,7 @@ itself, after it had already produced published results. None was caught by the 
 
 ## Limitations — please read before drawing conclusions
 
-**Balanced translocations are not validated on real data.** No public BAM with a confirmed germline balanced translocation and modern alignment could be located, despite searching HGSVC2, multiple SRA accessions, and both GIAB SV benchmarks — GIAB curates no inversion or breakend calls. The translocation-specific tools are tested on synthetic data only. **This is the largest gap in the project, and real patient data would close it.**
+**Balanced translocations are not validated on real data.** No public BAM with a confirmed germline balanced translocation and modern alignment could be located, despite searching HGSVC2, multiple SRA accessions, and both GIAB SV benchmarks — GIAB curates no inversion or breakend calls. The translocation-specific tools are tested on synthetic data only. **This is the largest gap in the project, and real patient data would close it.** Two clinical genomes are now being analysed under blinding: until they are unblinded with the supervisor only aggregate counts are looked at, so the gap stays open until then.
 
 **Two of sixteen thresholds are empirically derived.** *Threshold* here means any numeric cutoff that changes what the assistant reports — whether by altering a component score or by altering the prose a model reads and may quote. Strength bands are excluded, since they only rename an already-computed score. On that convention there are 16: **13 scoring** (three discordant-pair tiers, two soft-clip tiers, three split-read tiers, two depth-ratio tiers, the localisation tolerance that zeroes an unlocalised depth score, the minimum-supporting-read floor of 3 reads per 500 bp that the bottom discordant and split tier must clear, and the 40% low-MAPQ quality gate that withholds the normalised score entirely) and **3 text-only** (the two-part predominance gate, and the pileup cutoff that decides between "consensus clip position" and "no clip pileup").
 
@@ -355,7 +362,7 @@ The text-only gates are counted deliberately, and the reason is the most useful 
 
 **Split-read evidence is aligner-dependent.** Any BAM from an aligner not emitting SA tags returns zero from this layer regardless of what is present. This affected both the 2018 HCC1143 data and the Novoalign-aligned GIAB data. The tools detect and report this rather than misreading zero as absence.
 
-**IGV re-downloads genome annotation on every screenshot**, causing variable latency and occasional failure under rapid repeated calls. Single interactive calls are reliable.
+**IGV loads the genome and the RefSeq gene track from the internet for every image**, so latency varies and single calls can fail: in the dry run of 29 September one `evidence_panel` call took 378 s for four panels, and one of them timed out at 180 s while the gene track was still loading (`stage1_igv_assistant/results/demo_dry_run_2026-09-29.json`). The evidence numbers do not depend on IGV.
 
 **The benchmark's own scoring criteria proved unreliable.** Of five, three
 required correction or remain broken, one held up, and one has never been
@@ -373,7 +380,7 @@ manually.
 
 ## What would help most
 
-1. **One real patient BAM with a known karyotype.** A single case with a documented translocation would close the largest validation gap. Both breakpoint regions, approximate coordinates from the cytogenetic band, and whether the data is short-read or long-read is enough to begin.
+1. **One real patient BAM with a known karyotype.** A single case with a documented translocation would close the largest validation gap. Both breakpoint regions, approximate coordinates from the cytogenetic band, and whether the data is short-read or long-read is enough to begin. Two clinical genomes are now being analysed under blinding (aggregate counts only until unblinding with the supervisor); the gap stays open until then.
 
 2. **Judgement on whether the evidence scoring is clinically sensible** — whether the layers, their weighting, and the thresholds match how a clinical geneticist actually reasons about this evidence. Fourteen of sixteen thresholds are currently the author's judgement and would benefit from review; see Limitations for the convention behind that count and which two are empirical.
 

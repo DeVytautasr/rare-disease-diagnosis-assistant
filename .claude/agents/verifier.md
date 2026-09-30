@@ -140,7 +140,8 @@ verdict and must never appear in your output.
 
 - Stage folders are self-contained: `stage1_igv_assistant/` holds `tools/`,
   `tests/`, `data/`, `results/`, and `server.py`. `docs/thesis/` holds the
-  chapter. There is no top-level `src/`.
+  thesis draft (`Rimas_MSc_Thesis.docx`) and, in `archive_2026-08/`, the
+  superseded August chapter. There is no top-level `src/`.
 - `stage1_igv_assistant/results/README.md` gives the reading order and marks
   which documents are current and which are retained history. History
   documents describe an older system on purpose — a stale number in

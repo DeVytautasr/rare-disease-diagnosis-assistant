@@ -1,19 +1,22 @@
 # Thesis
 
-This directory contains the full MSc thesis draft and, superseded, the August
-background and methods chapter.
+This directory contains:
+- README.md — this file;
+- Rimas_MSc_Thesis.docx — the current draft (below);
+- archive_2026-08/ — the superseded August chapter (below).
 
 ## Current version
-- Rimas_MSc_Thesis.docx — the full thesis draft of 30 September 2026 (v2), 62
+- Rimas_MSc_Thesis.docx — the full thesis draft of 30 September 2026 (v3), 62
   references numbered by order of first citation. Its numeric claims (Methods
   through both summaries) are mapped in stage1_igv_assistant/results/FIGURE_MAP.md:
-  section E maps the draft of 26–27 September, and sections H, K and L the changes
-  in each draft since; sections K and L also check its references and citations.
+  section E maps the draft of 26–27 September, and sections H, K, L and M the
+  changes in each draft since; sections K and L also check its references and
+  citations.
 
-## Superseded: the August chapter (last changed 31 August 2026)
-- thesis_background_methods_chapter.md — full chapter, 47 references
-- thesis_chapter_updated.docx — Word format for supervisor submission (last
-  changed 13 August 2026)
+## Superseded: the August chapter (last changed 31 August 2026), in archive_2026-08/
+- archive_2026-08/thesis_background_methods_chapter.md — full chapter, 47 references
+- archive_2026-08/thesis_chapter_updated.docx — Word format for supervisor
+  submission (last changed 13 August 2026)
 
 The chapter's Stage 1 section now also covers the three-model comparison,
 the two retracted findings, and the scoring-criteria reliability analysis —

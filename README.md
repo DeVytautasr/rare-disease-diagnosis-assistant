@@ -77,14 +77,17 @@ details, `stage1_igv_assistant/results/` for validation write-ups, and
 interface on 127.0.0.1: the filter chain with every threshold's provenance,
 the four evidence layers at both breakends of a candidate, hand-entered
 coordinates, two-sample comparison, IGV panels, and a log of every tool call
-behind every number on screen. Two panels state what the tool cannot do:
+in the session; each layer count and the combined score links to the call that
+returned it. Two panels state what the tool cannot do:
 "What this tool cannot tell you" and "Where every number came from".
 
 **Model chat panel (`stage1_igv_assistant/chat.py`).** An optional side panel
 where a model calls the same tools through the same recorder. It is a second
 consumer, never a second path to the data: it receives dataset labels rather
-than file paths, and any number in its prose that no tool returned is marked
-on screen. Backends: a local model via ollama, or the Anthropic API.
+than file paths, and any number in its final answer that no tool returned is
+marked on screen (its intermediate text is shown unchecked). The page lists only
+the models the local Ollama serves; the Anthropic API transport in the same
+module (`chat.run_turn_api`) is used by the benchmark harnesses.
 
 **Controlled positive test.** Twelve heterozygous balanced translocations were
 implanted into real NA12878 reads at positions known in advance. In the rebuild
@@ -118,14 +121,23 @@ so before they say anything else. `results/README.md` indexes all of it with a
 reading order. Run logs from the earlier stages are grouped under
 `benchmark/runs/` (see its README).
 
-**The result worth knowing.** A balanced translocation can never score
-"strong" here: depth correctly contributes nothing when no DNA is gained or
-lost, and the paired-read layer is capped because roughly half the reads at
-the breakpoint come from the intact homolog. Initially no model at any tier
-could state this — 1 of 20 runs — because the score at which "strong" begins
-appeared in no tool return and no tool description. After adding nine fields
-and one sentence to one tool's return, with no change to any model, 19 of 20
-runs state it. What a model can reach determines what it can say.
+**The result worth knowing.** With all four measurements counted, at the default
+window, a balanced translocation cannot score "strong" here unless the depth
+layer errs: depth correctly contributes nothing when no DNA is gained or lost,
+and the paired-read layer is capped because roughly half the reads at the
+breakpoint come from the intact homolog. At all 32 breakends of the 16 detected
+junctions the attainable ceiling is 57.5, below the 70 at which "strong" begins.
+Scored blind, with four models and five runs per condition: while no tool
+return carried the ceiling, 0 of 20 runs stated it; with nine fields added to
+one tool's return and no change to any model, 12 of 20 did, all with the full
+argument — `claude-sonnet-5` 5 of 5, `claude-opus-5` 5 of 5, `qwen3.5:4b` 2 of
+5, `qwen2.5:7b` 0 of 5. In the pre-registered extension to 15 runs,
+`qwen3.5:4b` stated it in 5 of 15 (0 of 15 without; Fisher's exact test,
+two-sided, p = 0.042). With the fields, `claude-sonnet-5` also called the
+evidence strong in 5 of 5 runs (in none without), and `claude-opus-5` in 2 of 5
+(2 of 5 without). Exposing a quantity in a tool return is necessary for any
+model to reason from it and sufficient only for capable ones. Record:
+`stage1_igv_assistant/benchmark/runs/phase10_rerun_2026-09-25/blind/blind_scores.json`.
 
 > *Correction, 2026-09-25.* The run counts above (1 of 20 before, 19 of 20 after)
 > come from Phase 9 and 10 records that were lost in the 2026-09-23 reinstall and

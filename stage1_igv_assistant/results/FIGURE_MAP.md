@@ -739,3 +739,72 @@ read only from the Desktop. `FX` = `results/ceiling_layers_fix_2026-09-30/`.
 No flag remains open from section K, and none is raised by these files.
 
 *2026-09-30:* the v2 thesis is now tracked at `docs/thesis/Rimas_MSc_Thesis.docx` (sha256 1df2f62f…d0946fc2). The abstracts and the sheet v5 are not in the repository; the sha256 values recorded in sections J and L identify the versions checked.
+
+## M. Thesis v3, documentation accuracy, the archive move and the demo guide, 2026-09-30
+
+`Rimas_MSc_Thesis_2026-09-30_v3.docx` (ce2d3288…d8832267), read only from the Desktop folder
+`Atnaujinti_failai_2026-09-30`, was copied over `docs/thesis/Rimas_MSc_Thesis.docx`. Against
+HEAD's copy (v2, 1df2f62f…d0946fc2) only `word/document.xml` and `docProps/core.xml` differ, and
+a diff of every paragraph (table cells included; 529 in each) finds exactly one changed
+paragraph, the network sentence in "The Instrument". Documentation fixes below were each checked
+against the code or record named before the change; dated notes, `results/*.md` and the earlier
+sections of this map keep their wording. No code changed. `DR` = `results/demo_dry_run_2026-09-29.json`,
+`P10B` = `benchmark/runs/phase10_rerun_2026-09-25/blind/blind_scores.json`, `FX` = `results/ceiling_layers_fix_2026-09-30/`.
+
+| # | Change | Evidence | Status |
+|---|---|---|---|
+| M1 | thesis v3: the interface and the four layers "need no network access, nor does the chat panel, which lists only models served locally; the image tools and the gene lookup do" | `ui.py:916` (`<select id="cmodel">` is empty in the page), `ui.py:1158` (`loadModels` fills it from `/api/chat_models` only), `ui.py:758`–`764` (that route returns `probe_ollama()`'s models); no option in the page names a Claude model. `/api/chat` accepts a `claude-*` name (`ui.py:682`–`686`, `chat.run_turn_api`), which the benchmark harnesses use (`phase9_rerun.py:203`, `phase9_case_f_rerun.py:99`, `phase10_rerun.py:575`); the page offers none | agrees |
+| M2 | README, front end: "a log of every tool call behind every number on screen" → a log of every tool call in the session; each layer count and the combined score links to the call that returned it | `ui.py:1057`, `1125` (chips); the ceiling is derived, not returned (`ui.ceiling_for`, `ui.py:307`); the limits panel's figures come from committed records (`controlled_test_figures`, `ui.py:334`) | fixed |
+| M3 | README, chat panel: "any number in its prose" → in its final answer (intermediate text unchecked); "Backends: a local model via ollama, or the Anthropic API" → the page lists only the local Ollama models; `chat.run_turn_api` serves the benchmark harnesses | `chat.py:495`, `767` (`verify_numbers(final_text, …)`); M1 | fixed |
+| M4 | README, "The result worth knowing": leads with the blind-scored figures (0 of 20; 12 of 20 — sonnet 5/5, opus 5/5, qwen3.5:4b 2/5, qwen2.5:7b 0/5; extension 5 of 15, p = 0.042; with the fields sonnet called the evidence strong 5 of 5, opus 2 of 5, 2 of 5 without); "can never score strong" → with all four counted, at the default window, unless the depth layer errs; "What a model can reach…" → the thesis's conclusion ("necessary for any model … sufficient only for capable ones") | `P10B` `cells` (C2, C3, C1b), `fisher_exact_two_sided_15_run_cells`; `AN/figures.json` `ceiling_summary` (57.5 at 32; depth 15 at 7 ends); `FX` (the ceiling over the counted layers); the thesis v3 conclusion. The lost-record figures (1 of 20, 19 of 20) remain only in the dated correction notes | fixed |
+| M5 | TUTORIAL header: dated — the base state is `1809d2a` (15 September 2026); at `5c1c1bf` 15 tools and 26 test files | `server.py` 11 and `candidate_server.py` 4 `@mcp.tool`; `git ls-files 'stage1_igv_assistant/tests/test_*.py'` 26 (20 at `1809d2a`) | fixed |
+| M6 | TUTORIAL, "What this is": the assistant "writes a report citing every number back to the tool" → every number in its final answer is checked against the turn's tool returns, and one no tool returned is marked | `chat.py:495`, `767`; `ui.py` `markUnsupported` | fixed |
+| M7 | TUTORIAL, architecture: "cannot state a genomic fact unless a tool returned it … or consult its own training knowledge" → the model reaches genomic data only through the tools, enforced by what it can reach, so every figure it reports can be checked; in the chat panel and the harnesses it is offered the fifteen tool schemas only; a general MCP client such as Claude Code (Tier 3) has other tools, and there the restriction is an instruction | `ui._chat_tools` (15 schemas; `DR` `steps.7_chat.tool_schemas_offered` 15); `phase10_rerun.py` uses `ui._chat_tools` and `ui._chat_exec`; TUTORIAL Tier 3 (`claude mcp add`; the prompt's "Use ONLY the MCP tools") | fixed |
+| M8 | TUTORIAL, "The ceiling result": as M4; "One run in twenty" and "19 runs in 20 … 5 runs of 5" (lost records) replaced by the blind figures; "The limit was informational, not cognitive" → informational for the frontier models, not only that for the local ones | `P10B` (API WITH: `ceiling_fields_reached_model` 5 of 5 and C2 5 of 5 for both; local WITH: reached 4 and 3 of 5, C2 0 and 2 of 5) | fixed |
+| M9 | TUTORIAL, IGV limitation: "Single interactive calls are reliable" → IGV loads the genome and the RefSeq track from the internet for every image; one `evidence_panel` call took 378 s for four panels and one timed out at 180 s | `DR` `steps.6_igv` (`wall_s` 378.23; `panel_errors.read_depth` "IGV timed out after 180s"), `observations.igv_log_during_run` | fixed |
+| M10 | TUTORIAL, the real-data gap and "What would help most" item 1: two clinical genomes are being analysed under blinding, aggregate counts only until unblinding with the supervisor, so the gap stays open until then | `results/patient_rerun_2026-09.json` `blinding` | added |
+| M11 | DIEGIMAS, `ANTHROPIC_API_KEY`: "raktas Claude pokalbiui" → the key serves the benchmark scripts; the browser chat offers only local (Ollama) models | M1 | fixed |
+| M12 | DIEGIMAS, IGV images: "po 120 s … `IGV timed out after 120s`" → 180 s; and IGV loads, for every image, the genome from igv.org and the RefSeq track from UCSC (the text named igv.org only) | `bam_tools.py:2780`, `3309` (`timeout_sec` 180); `DR` panel error text; `DR` `observations.igv_log_during_run` (hg38.json from igv.org, ncbiRefSeq.txt.gz from hgdownload.soe.ucsc.edu; the timed-out panel stalled on the latter) | fixed |
+| M13 | DIEGIMAS, "Ilgalaikis sprendimas" (choosing hg38 once makes images work offline) → offline IGV images are not set up in this tool; IGV's hosted genomes need the internet; the panel tools load the genome by ID; the numbers do not depend on IGV | IGV User Guide, Reference genome (igv.org/doc/desktop/UserGuide/reference_genome/, read 2026-09-30): "IGV's hosted genomes require an internet connection" — the offline section it links to is absent from the live page, so no offline procedure is quoted; `bam_tools.py:2924` (`genome {genome_build}`), default `hg38` (`2770`, `3307`) | fixed |
+| M14 | NAUDOJIMAS: "Paspauskite kandidato eilutę" → the row's **evidence** button; "abiejose lūžio taško pusėse" → at both breakends of the candidate | `ui.py:1014`; `openCand` assesses `breakend_1` and `breakend_2` | fixed |
+| M15 | NAUDOJIMAS, filter columns: the seventh, **measured against**, added with its meaning; "Du paskutiniai stulpeliai" → the two columns meant ("removed by this step", "this step would remove on its own") | `ui.py:986`–`988` (seven headers); `vcf_tools.py:622`–`623` (`unfiltered_set_scope`: "all svtypes" for the type filter, otherwise "svtype=…" or "all svtypes") | fixed |
+| M16 | NAUDOJIMAS: "Prie kiekvieno skaičiaus … Nė vienas ekrane matomas skaičius neatsirado kitaip" → each layer count and the combined score has a button to its call; the ceiling is derived from the scoring tiers and the observed values over the counted layers, not returned; every call is listed under "Where every number came from" | `ui.py:1057`, `1125`, `307`, `854`, `1276` | fixed |
+| M17 | the three claims in the other current documents | changed: `.claude/agents/verifier.md:142` ("`docs/thesis/` holds the chapter" → the draft and the archived chapter). Left, and why: `CLAUDE.md:52` describes `chat.py`, which does implement both transports; `.claude/agents/benchmark-runner.md:23` is about the harness, correctly; `stage1_igv_assistant/README.md`, `benchmark/runs/README.md`, the undated text of `results/README.md` and the other agents state none of the three claims. Not one of the three but noted: `verifier.md:115` cites `docs/thesis/README.md:24` for "11 tools in bam_tools.py", now line 38 (already off before, at 26) | done |
+| M18 | the August chapter moved: `git mv` into `docs/thesis/archive_2026-08/` (both files byte-identical, recorded as renames); `docs/thesis/README.md` lists README.md, the current draft (v3) and `archive_2026-08/`; `.claude/agents/thesis-editor.md` points at the archived path (3 places) | dated records keep their paths (`results/AUDIT_2026_08.md:321`, `results/RESULTS_HCC1143.md:20`, section-0 line 20 of this map); `.claude/hooks/test_guard.py:132` keeps its test string (the hook tests still pass). The thesis-editor agent now checks the archived August chapter, not the current `.docx` | done |
+
+### M.2 The demo guide
+
+`demonstracijai/Demonstracija_kaip_parodyti_2026-09-30.docx` (f47699e5…58cab79c9), read only, against
+`DR`, `imp01_panels_2026-09-27.json`, `implants_ground_truth.json`, the aggregate funnel of
+`patient_rerun_2026-09.json` and the labels in `ui.py`. Matching: every page label it names
+("Start here — two ways to reach a breakpoint", sections A and B, Load, Apply, Assess, Send,
+evidence, "tool call #N", "breakpoint_evidence_summary #N", "Where every number came from",
+"What this tool cannot tell you", "generate IGV panel", "thinking mode", "context",
+"Surviving candidates (…)", "Reachable at this position", "This position was entered by hand.",
+"chat panel unavailable", the funnel headers, `--port`, `--dataset`, `--candidates`); the
+`--check` lines and "datasets: 13   candidate files: 13" (`FX/ui_check.log`); 918 records,
+896 junctions; 896 → 515 → 157 → 29 → 29 → 29 and 29 shown; the provenance labels; 527 and 358;
+the IMP01 row (chr21:14100001 — chr20:200000, BND, 25, 6); 40.0 = 7.5 + 25 + 7.5 + 0 at both
+ends; 57.5 below 70; 44 pairs in ±500; IMP09 chr20:33,700,000 22.5 weak = 7.5 + 0 + 0 + 15,
+36 % MAPQ < 20, low-mappability class, missed by DELLY; t(20;21) heterozygous balanced; the four
+images in `IGV_IMP01_chr20_200000/` are pixel-identical to the committed panels (re-encoded:
+0 differing pixels in each); the question file equals `DR`'s question (whitespace aside);
+qwen2.5:7b, 22 s, window 50 and 47.5, seven numbers matched, "strong" against "moderate";
+the six limits headings; 17 and 19 candidates; the listed labels; the chat colours
+(`ui.py` `.msg-tool`, `.msg-model`, `.unsup`); DELLY 1–2 h; filters and layers under a second.
+
+Flags:
+1. Step 4, spoken: "Subalansuota translokacija čia niekada negaus ‚strong‘." "Never" overstates
+   (a false depth signal could lift a balanced event to 72.5, and the ceiling assumes all four
+   layers; M4). Step 9 reports the page's own heading, "A balanced translocation can never score
+   "strong" here" (`ui.py` `build_limits`), which overstates in the same way; it is interface text
+   and was not changed in this documentation-only phase.
+2. Step 7, spoken: "keturi vaizdai užtruko apie 6 minutes, o vienas nespėjo per 180 sekundžių" —
+   `DR`: one call for the four panels took 378 s; three were made and one timed out at 180 s.
+3. Step 8, spoken: "kiekvienas jo skaičius patikrinamas" — only the numbers in the final answer
+   are checked (`chat.py:495`, `767`).
+4. Q&A, "Ar duomenys išeina iš kompiuterio? Ne." — no read data leave, but a queried coordinate
+   does: the gene lookup sends "chromosome:position" to rest.ensembl.org (`bam_tools.py:2488`)
+   and IGV fetches the genome and the gene track from igv.org and UCSC. Harmless for the public
+   demo; relevant for real data.
+Note, not a flag: step 1 allows "[ ] FULL (IGV)"; on this machine `--check` shows "[x] FULL".
