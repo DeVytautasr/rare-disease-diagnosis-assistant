@@ -1,16 +1,25 @@
-# Thesis Chapter: Background and Methodological Foundations
+# Thesis
 
-This directory contains the thesis background and methods chapter.
+This directory contains the full MSc thesis draft and, superseded, the August
+background and methods chapter.
 
 ## Current version
+- Rimas_MSc_Thesis.docx — the full thesis draft of 30 September 2026 (v2), 62
+  references numbered by order of first citation. Its numeric claims (Methods
+  through both summaries) are mapped in stage1_igv_assistant/results/FIGURE_MAP.md:
+  section E maps the draft of 26–27 September, and sections H, K and L the changes
+  in each draft since; sections K and L also check its references and citations.
+
+## Superseded: the August chapter (last changed 31 August 2026)
 - thesis_background_methods_chapter.md — full chapter, 47 references
-- thesis_chapter_updated.docx — Word format for supervisor submission
+- thesis_chapter_updated.docx — Word format for supervisor submission (last
+  changed 13 August 2026)
 
 The chapter's Stage 1 section now also covers the three-model comparison,
 the two retracted findings, and the scoring-criteria reliability analysis —
 see `stage1_igv_assistant/results/` for the underlying write-ups.
 
-## Chapter sections
+### Chapter sections
 1. Introduction and Motivation
 2. Related Work (includes Eilbeck 2017, AI-MARRVEL 2024, MARRVEL-MCP 2026)
 3. Structural Variants and Chromothripsis

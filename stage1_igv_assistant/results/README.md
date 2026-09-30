@@ -52,6 +52,8 @@ yet mapped.
 marked †. The thesis file is now in `docs/thesis/` (untracked, read only); it is still
 not mapped, as instructed.
 
+*2026-09-30:* the thesis (30 September v2) is now tracked at docs/thesis/Rimas_MSc_Thesis.docx; FIGURE_MAP sections E, H, K and L map its drafts.
+
 ## Not written up here — phases 5 to 11
 
 Everything indexed above predates a run of later work. That work produced

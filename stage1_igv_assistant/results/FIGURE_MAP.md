@@ -737,3 +737,5 @@ read only from the Desktop. `FX` = `results/ceiling_layers_fix_2026-09-30/`.
 | L9 | nothing else changed | thesis: two paragraph diffs against the morning draft, with citation numbers masked (body and summaries), show 9 changed paragraphs, all under L2 and L4–L7; apart from those, only citation numbers and the reference list's order changed. Only `document.xml` and `docProps/core.xml` differ; no tracked changes, comments or text boxes. Sheet: only the version label ("v5") and the three L8 items changed | agrees |
 
 No flag remains open from section K, and none is raised by these files.
+
+*2026-09-30:* the v2 thesis is now tracked at `docs/thesis/Rimas_MSc_Thesis.docx` (sha256 1df2f62f…d0946fc2). The abstracts and the sheet v5 are not in the repository; the sha256 values recorded in sections J and L identify the versions checked.
