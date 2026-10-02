@@ -11,7 +11,7 @@ State described here: commit `1809d2a` (15 September 2026), with dated notes for
 
 Fifteen tools across two MCP servers: eleven that read sequencing alignment files and report structured evidence at a candidate structural variant breakpoint, and four that load a variant caller's candidate set and filter it down to the junctions worth looking at. A local browser front end drives them by hand, and an optional LLM assistant calls the same tools through the same recorder; every number in its final answer is checked against the tool returns of that turn, and one that no tool returned is marked.
 
-The architectural principle is that the model reaches genomic data only through the tools — enforced by what it can reach, not by instruction — so that every figure it reports can be checked against a tool return. In the chat panel and the benchmark harnesses it is offered the fifteen tool schemas and nothing else: no file access, no scripts. (A general-purpose MCP client such as Claude Code, used in Tier 3 below, has other tools as well; there the restriction is an instruction.)
+The architectural principle is that the model reaches genomic data only through the tools — enforced by what it can reach, not by instruction — so that every figure it reports can be checked against a tool return. In the page's *Ask the assistant* step and the benchmark harnesses it is offered the fifteen tool schemas and nothing else: no file access, no scripts. (A general-purpose MCP client such as Claude Code, used in Tier 3 below, has other tools as well; there the restriction is an instruction.)
 
 **What it does.** Inspects read-level evidence at a position you supply: discordant pairs, soft-clipped reads, split reads, read depth. Identifies which gene the position falls in. Checks for a reciprocal breakpoint when a translocation is suspected. Integrates the layers into a scored summary that reports which layers the data can actually inform. Generates IGV images, one per evidence layer.
 
@@ -54,9 +54,10 @@ bash install.sh
 .venv/bin/python -m stage1_igv_assistant.ui           # http://127.0.0.1:8765
 ```
 
-It opens on a filter chain and four evidence layers, with every number on
-screen linking to the tool call that produced it. Lithuanian instructions are
-in `docs/DIEGIMAS.md` and `docs/NAUDOJIMAS.md`. The rest of this tier runs the
+It opens on test data in three steps — *Candidates* (the filter chain),
+*Evidence* (four layers at both ends of a junction; IGV images on request) and
+*Ask the assistant* — with the combined score and each measurement linking to
+the tool call that produced it. Lithuanian instructions are in `docs/DIEGIMAS.md` and `docs/NAUDOJIMAS.md`. The rest of this tier runs the
 same tools from a shell instead.
 
 **Order matters — activate the environment before installing IGV, or the installer will warn that java is missing.**

@@ -808,3 +808,62 @@ Flags:
    and IGV fetches the genome and the gene track from igv.org and UCSC. Harmless for the public
    demo; relevant for real data.
 Note, not a flag: step 1 allows "[ ] FULL (IGV)"; on this machine `--check` shows "[x] FULL".
+
+## N. Phase 24 — the interface page, 2026-10-02
+
+The new page (`stage1_igv_assistant/ui_page.html`) and the routes it needs were applied from a
+patch, checked here on public data, and the patient samples were registered once to check the
+privacy handling, aggregate counts only. `PC` = `results/phase24_checks_2026-10-02.json`,
+`WT` = `results/interface_walkthrough_2026-10-02.json`, `SU` = `results/suites_2026-10-02.json`,
+`DR29` = `results/demo_dry_run_2026-09-29.json`. Logs are outside the repository, under
+`~/public_data/sim/logs/phase24_2026-10-02/`. `PC` `code_state` gives the sha256 of the files
+every check ran on; they are the files committed with this section.
+
+| # | Claim | Evidence | Status |
+|---|---|---|---|
+| N1 | the patch: `phase24_interface.patch`, sha256 8681a22d…fdf7301f, made against `66db7b3`; 13 files, +2,350 −103; no protected file and nothing under `docs/thesis/` | preconditions: clean tree, `HEAD` = `origin/main` = `66db7b3`, sha256 as stated, `guard_protected.py` exit 0; `git apply --check` and `git apply` exit 0; `git apply --numstat` (13 files, 2,350 / 103); the whole diff was read; `guard_protected.py` exit 0 after (base 25d12bb); `PC` `patch` | applied. Five defects were then fixed on top of it (N.2) |
+| N2 | the tests | `tests/test_interface_page.py` as patched: 51 checks, all pass (the stated 52 counts the line `def check(`). With the 12 checks added in N.2: 55 pass and 8 fail on the as-patched code, 63 of 63 pass after the fixes (`PC` `new_test`). Every suite with the census, `SU`: 27 suites, 27 passed, 0 failed, 0 incomplete; 822 assertions held, 0 failed, 0 NOT RUN lines. Against the previous record (`ceiling_layers_fix_2026-09-30/suites.json`, 26 suites, 759 assertions) the only status change is the new suite; every other suite has the same status and the same count | pass |
+| N3 | the click-through, public data only | `scripts/interface_walkthrough.py --cloud`, headless Chromium (`PC` `browser`), the interface started with IGV's Java, `DISPLAY=:0` and a PUBLIC file registered as PRIVTEST: 18 of 18 checks, the 17 of the patch and the one added in F5 (`WT`). Opens on IMP01, "Test data"; nothing private loaded at start; 896 → 515 → 157 → 29 → 29 → 29; chr20:200,000 ↔ chr21:14,100,001, both ends 40 moderate; IGV 136 s, 4 images, none failed; IMP09 chr20:33,700,000 typed in, 22.5 weak; qwen2.5:7b: 7 tool calls, 1 malformed, "22 numbers checked — every one was returned by a tool in this answer"; the permission box for a question naming PRIVTEST and for a position read from it; the question posted without permission refused ("Not sent: …") before any model ran. Two questions to claude-sonnet-5: test data, "26.7 s · 4 model turns · 2,283 tokens written · cost $0.059", "1 of 26 numbers were not returned by any tool (marked in red): 0.4", "it was offered test data only"; PRIVTEST with permission, "4 of 39 numbers were not returned by any tool (marked in red): 11, 0.7, 0.3, 0.3", "Sent to Anthropic with your permission: tool results for PRIVTEST", the box unticked afterwards. 11 screenshots, `screenshots/interface_2026-10-02/`, each looked at | pass. The cost line of the second cloud answer is in no record: the script stored the first answer's only (F6) |
+| N4 | the demo dry run on the new page | `scripts/demo_dry_run.py run` (`record` not run; `DR29` unchanged); attempt 2, `PC` `dry_run`. `routes_called_by_page`: all nine true (page 84,679 bytes). Against `DR29`: step 1 same labels, 918 / 896 / 22, same hand-entry note, five of six limits headings the same and the sixth as the patch changes it; step 2 same chain; step 3 CAND_52179e966345, both ends 40.0 moderate, 57.5, every shown value the same; step 4 44 = 44 and 40.0 = 40.0; step 5 IMP09 chr20:33,700,000 22.5 weak (7.5, 0, 0, 15), "entered by hand", every shown value the same; step 6 four images in 167 s, no error (29 September: three, one timed out; 378 s), three byte-identical to the committed panels; step 7 qwen2.5:7b answered, 7 calls (1 rejected), 14 numbers, none unsupported (its window 10 bases: 55.0 moderate, ceiling 65.0). No failure; stopped by PID; the four no-patient-data checks hold, controls caught | agrees |
+| N5 | the patient registration, aggregate only | `PC` `patient_registration`. `--check` with the four files registered: exit 0, 11 + 4 tools, tiers derived from the source, 15 datasets and 15 candidate files. Interface with `ANTHROPIC_BASE_URL` on a closed port, curl only: SAMPLE_A and SAMPLE_B private (read files and candidate sets), the 13 + 13 autodiscovered labels public; `/api/load` 30,980 / 30,596 / 384 and 32,451 / 32,041 / 410, equal to `patient_rerun_2026-09.json` `funnel`; `/api/privacy_check` on "In dataset SAMPLE_A, how strong is the evidence?" → labels [SAMPLE_A], positions []; `/api/chat` with claude-sonnet-5 and no permission → "Not sent: this question names private data (SAMPLE_A). …", no events. The session's call log: 2 calls, both `load_candidate_set`. **No patient candidate was opened, no patient coordinate was seen, and no patient data reached any API**: no funnel, candidate, assess, igv or compare call on either sample, no browser while they were registered, no message with a number, and no identifier-list entry in any log of the step | agrees |
+| N6 | the documentation | carried by the patch: `docs/NAUDOJIMAS.md` (the workflow for the new page, "Asistentas", the heading), `docs/DIEGIMAS.md`, `README.md`, `TUTORIAL.md`, `stage1_igv_assistant/README.md`, `CLAUDE.md`. Checked: every English label they quote is in `ui_page.html` or built there from parts; the start commands work as written (`--check`; four `--dataset` / `--candidates` in N5; `/classic` in the test); 27 test files. Corrected: "every number links to its tool call" in README, TUTORIAL and NAUDOJIMAS → the combined score, each measurement and the quality line (the "reachable here" mark has no link: the page derives it); TUTORIAL "the chat panel" → the page's *Ask the assistant* step; README and NAUDOJIMAS now state F1, F5 and that a ticked permission offers the model every private label (`ui.py:841`–`846`). Left: DIEGIMAS's sample banner ("the chat panel will be unavailable" is `ui.py`'s own text); TUTORIAL's dated header (26 test files at 30 September; 27 now) | fixed |
+| N7 | statements elsewhere that the new page makes outdated; none changed in this phase | the thesis v3 (ce2d3288…d8832267), "The Instrument": "nor does the chat panel, which lists only models served locally" — with a key the page now offers claude-sonnet-5 and claude-opus-5 (`ui.py:963`); M1, M3 and M11 of this map (dated; left); the demo guide v2 (`Demonstracija_kaip_parodyti_2026-10-02_v2.docx`, 2ae84308…9c0e7e47) is written for the previous page: "Start here — two ways to reach a breakpoint", Apply, Assess, "tool call #…", "Where every number came from", the button "What this tool cannot tell you" (now "Limits"), "generate IGV panel" (now "Show IGV images"), and the old limits heading; the meeting sheet v5 (a632f2ec…2983168b) quotes "Where every number came from". The previous page, with those labels, is still served at `/classic`. In the repository the old heading "can never score "strong"" is quoted only in dated records: `DR29` `steps.1_load.limits_panel_headings` and M4 / M.2 of this map | open |
+
+### N.2 Fixes made on top of the patch
+
+Each was first shown as a failing check on the as-patched code (`PC` `new_test.before_fixes`,
+`scratch_probes`); none changes a label or the layout.
+
+| # | Fix | Why | Where |
+|---|---|---|---|
+| F1 | without permission, a tool call that names a file by its path instead of a label is refused | `chat.resolve_args` passes `bam_path`, `bam_paths` and `path` through untouched, and the guard looked at labels only: a cloud model that passed a private file's path had the tool run on it and received the result (a score from a private read file; the record counts of a private candidate file) | `ui.py:519`–`524` (`_private_hits`); test 4b (i) |
+| F2 | without permission, the error for an unknown label lists the test-data labels only | it listed every registered label, so the cloud model was told which private labels exist, against "is not even told a private label exists" | `ui.py:617`–`630` (`_chat_exec(public_only=…)`), `ui.py:865`; test 4b (ii) |
+| F3 | a candidate set is private when its file is not a test-data file or its label is a registered private label; a label of the model's own choosing no longer makes a test-data file private | `load_candidate_set`'s label is free text: in the committed runs it never equalled the registered label (qwen2.5:7b "chr20_200000" three times, claude-sonnet-5 "IMP01_calls" once). Such a set was then blocked as "private data" and its positions flagged, so a cloud model could not list a test-data candidate set it had loaded itself | `ui.py:536`–`547` (`_set_is_private`); test 4b (iii) |
+| F4 | the startup self-test removes its fixture candidate set | the set stayed in the registry under a label that is not test data, so 5000, 10000, 20000 and 21000 were flagged as "a position read from private data (__selftest__)" in every cloud question, with nothing private registered | `ui.py:1815`–`1819` (`verify_minimal`); test 6b |
+| F5 | the permission tick is cleared when the question is sent | it stayed ticked, so an edited or new question about the private sample went out with `allow_private_cloud: true` and no new confirmation (`PC` `scratch_probes.consent_before_fix`), against "only for that one question" | `ui_page.html:1041`; the walkthrough's added check, `interface_walkthrough.py:233`; `consent_after_fix` |
+| F6 | the walkthrough stores the meta line of the second cloud answer too | the task asks for both cost lines and the script kept the first only | `interface_walkthrough.py:224` (`cloud_private_meta`); added after the recorded run and checked with a stubbed answer only (`scratch_probes.walkthrough_meta_line`) |
+
+### N.3 Not changed — for the author before the meeting
+
+1. Blinding: choosing a private sample loads it and lists its candidates with coordinates at
+   once (`ui_page.html` `chooseSample` → `/api/load` → `runFilters`). There is no aggregate-only
+   view of a private sample on the new page; the previous page (`/classic`, Load without Apply)
+   has one. A stray arrow key on the Sample box is enough to choose one.
+2. A ticked permission is per question, not per sample: the model is then offered every private
+   label (`ui.py:841`–`846`), although the box names only those in the question.
+3. The question check matches whole numbers exactly (`ui.py` `_NUM_RE`, `private_refs_in_text`):
+   a private position off by one, or written "33 700 000" or "33.7 Mb", is not caught.
+4. Page wording against the tools: "read pairs whose mate maps to another chromosome or
+   unexpectedly far away" (`ui_page.html:437`) — `count_discordant_pairs` counts mates on another
+   chromosome only; "coverage dip or rise" (`:440`) — the score uses lowest ÷ mean depth, a dip;
+   "Every number on this page came from one of these N tool calls" (`:1194`) — the limits figures
+   come from committed records, the "reachable here" mark is derived and the chromosome lengths
+   are constants.
+5. Models on this computer, and a cloud model once permission is ticked, can still name a file
+   by its path (`chat.resolve_args`, not part of the patch).
+6. Answers are shown as plain text, so a model's Markdown marks (`**`, `##`) are visible.
+7. For a private position the gene lookup sends chromosome and position to Ensembl, and IGV
+   requests the reference for the region it draws from igv.org (hg38.json: `fastaURL`,
+   `twoBitURL`); the reads do not leave.
+8. The local `demo_bundle/` (built 25 September, not tracked) has no `[test_data]` section, so
+   its two samples would show as "Private data" until `make_demo_bundle.py` is run again.

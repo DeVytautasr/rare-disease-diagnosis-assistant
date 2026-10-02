@@ -1,0 +1,260 @@
+#!/usr/bin/env python3
+"""Click through the interface page in a real browser and record what it shows.
+
+PUBLIC DATA ONLY. The private path is exercised with a PUBLIC file registered under
+an explicit label (explicit registration is what makes a sample private), so the
+consent gate, the refusal and the "sent with permission" line can all be tested
+without any patient file being opened.
+
+Start the interface first, from the repository root, and stop it by its PID after:
+
+    python -m stage1_igv_assistant.ui \
+        --dataset PRIVTEST=$HOME/public_data/sim/bams/IMP09.bam \
+        --candidates PRIVTEST=$HOME/public_data/sim/delly/IMP09.bcf
+
+then:
+
+    python scripts/interface_walkthrough.py --out <dir> [--cloud]
+
+Without --cloud nothing is sent to Anthropic: the cloud model is only selected, the
+permission box is checked to appear, and one question that names private data is
+posted WITHOUT permission, which the interface must refuse before any model runs.
+With --cloud two questions are sent to claude-sonnet-5 (about 0.05-0.20 USD): one
+about test data, and one about PRIVTEST with the permission box ticked.
+
+Writes <out>/walkthrough.json (every fact below, with pass/fail) and numbered
+screenshots. Exit status 1 if any check failed. Needs Playwright with Chromium
+(pip install playwright; python -m playwright install chromium).
+"""
+import argparse
+import asyncio
+import json
+import os
+import sys
+import time
+
+from playwright.async_api import async_playwright
+
+
+def parse():
+    p = argparse.ArgumentParser()
+    p.add_argument("--url", default="http://127.0.0.1:8765/")
+    p.add_argument("--out", required=True)
+    p.add_argument("--junction-text", default="14,100,001",
+                   help="text identifying the candidate row to open (one end's position)")
+    p.add_argument("--hand-dataset", default="IMP09")
+    p.add_argument("--hand-position", default="chr20:33,700,000")
+    p.add_argument("--private-label", default="PRIVTEST")
+    p.add_argument("--private-position", default="chr20:33,700,000")
+    p.add_argument("--local-model", default="qwen2.5:7b")
+    p.add_argument("--cloud", action="store_true")
+    p.add_argument("--no-igv", action="store_true")
+    p.add_argument("--igv-timeout", type=int, default=900)
+    p.add_argument("--width", type=int, default=1440)
+    p.add_argument("--height", type=int, default=900)
+    return p.parse_args()
+
+
+async def main(a):
+    os.makedirs(a.out, exist_ok=True)
+    facts, checks, errors = {}, [], []
+    shot_n = [0]
+
+    def check(name, ok, detail=""):
+        checks.append({"check": name, "ok": bool(ok), "detail": str(detail)[:300]})
+        print(("  PASSED  " if ok else "  FAILED  ") + name + ("" if ok else f"  [{detail}]"), flush=True)
+
+    async def shot(pg, name, full=False):
+        shot_n[0] += 1
+        await pg.screenshot(path=os.path.join(a.out, f"{shot_n[0]:02d}_{name}.png"), full_page=full)
+
+    async def api(pg, method, path, body=None):
+        return await pg.evaluate("""([m, p, b]) => fetch(p, b ? {method: m, headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(b)} : {method: m}).then(r => r.json())""", [method, path, body])
+
+    async with async_playwright() as p:
+        b = await p.chromium.launch()
+        pg = await b.new_page(viewport={"width": a.width, "height": a.height})
+        pg.on("pageerror", lambda e: errors.append("pageerror: " + str(e)))
+        pg.on("console", lambda m: errors.append("console: " + m.text) if m.type == "error" else None)
+
+        # 1. the page opens on test data, and loads nothing private by itself
+        print("1. candidates", flush=True)
+        await pg.goto(a.url)
+        await pg.wait_for_selector("#funnel .funnel-count", timeout=120000)
+        await pg.wait_for_timeout(800)
+        facts["default_sample"] = await pg.input_value("#sample")
+        facts["default_sample_kind"] = await pg.inner_text("#sampleKind")
+        check("the page opens on a test-data sample", facts["default_sample_kind"] == "Test data", facts)
+        boot = await api(pg, "GET", "/api/bootstrap")
+        facts["kinds"] = boot.get("kinds")
+        check(f"{a.private_label} (registered explicitly) is reported as private",
+              (boot.get("kinds") or {}).get("datasets", {}).get(a.private_label) == "private", boot.get("kinds"))
+        calls = (await api(pg, "GET", "/api/calls")).get("calls", [])
+        loaded = [c["params"].get("label") for c in calls if c["tool"] == "load_candidate_set"]
+        facts["loaded_at_start"] = loaded
+        check("nothing private was loaded at start", a.private_label not in loaded, loaded)
+        facts["funnel_counts"] = [t.strip().split("\n")[0] for t in await pg.locator("#funnel .funnel-count").all_inner_texts()]
+        facts["candidates_title"] = await pg.inner_text("#cands-title")
+        await shot(pg, "candidates", full=True)
+
+        # 2. one junction's evidence
+        print("2. evidence", flush=True)
+        row = pg.locator("tr.cand", has_text=a.junction_text).first
+        check(f"a candidate row containing {a.junction_text} is listed", await row.count() == 1)
+        facts["row"] = (await row.inner_text()).replace("\t", " | ")
+        await row.locator("button", has_text="Review").click()
+        await pg.wait_for_selector(".be .gauge", timeout=120000)
+        await pg.wait_for_timeout(1500)
+        facts["evidence_title"] = await pg.inner_text(".ev-title")
+        facts["scores"] = await pg.locator(".be .gauge-line").all_inner_texts()
+        facts["notes"] = await pg.locator(".be .gauge-note").all_inner_texts()
+        check("both ends were measured", await pg.locator(".be .gauge").count() == 2)
+        await shot(pg, "evidence", full=True)
+
+        # 3. IGV, one run at a time
+        if not a.no_igv:
+            print("3. IGV (minutes)", flush=True)
+            t0 = time.time()
+            await pg.locator('[data-igv="0"]').click()
+            await pg.wait_for_timeout(800)
+            check("while IGV draws, the other IGV button is disabled",
+                  await pg.locator('[data-igv="1"]').is_disabled())
+            await shot(pg, "igv_waiting")
+            await pg.wait_for_selector("#igvb-0 .igv-grid, #igvb-0 .err", timeout=a.igv_timeout * 1000)
+            await pg.wait_for_timeout(1500)
+            facts["igv_seconds"] = round(time.time() - t0)
+            facts["igv_images"] = await pg.locator("#igvb-0 .igv-grid img").count()
+            facts["igv_failed_panels"] = await pg.locator("#igvb-0 .failed").count()
+            check("IGV produced four images", facts["igv_images"] == 4,
+                  await pg.locator("#igvb-0").inner_text())
+            await shot(pg, "igv")
+
+        # 4. a position typed in by hand
+        print("4. hand entry", flush=True)
+        await pg.select_option("#cp-ds", a.hand_dataset)
+        await pg.fill("#cp-pos", a.hand_position)
+        await pg.click("#checkpos button")
+        await pg.wait_for_selector(".banner.hand", timeout=120000)
+        await pg.wait_for_timeout(1000)
+        facts["hand_title"] = await pg.inner_text(".ev-title")
+        facts["hand_score"] = await pg.locator(".be .gauge-line").first.inner_text()
+        await shot(pg, "hand_entry", full=True)
+        # the same position in the private-labelled copy, so it becomes a private position
+        await pg.select_option("#cp-ds", a.private_label)
+        await pg.fill("#cp-pos", a.private_position)
+        await pg.click("#checkpos button")
+        await pg.wait_for_function("lbl => document.querySelector('#ev-head').innerText.includes(lbl) && "
+                                   "document.querySelector('.be .gauge')", arg=a.private_label, timeout=120000)
+        await pg.wait_for_timeout(800)
+        check("a private sample is marked private next to its name",
+              "Private data" in await pg.inner_text("#ev-head"))
+
+        # 5. the assistant on this computer
+        print("5. assistant, local", flush=True)
+        await pg.click("#tab-assistant")
+        await pg.wait_for_timeout(600)
+        models = await api(pg, "GET", "/api/chat_models")
+        facts["local_models"], facts["cloud_models"] = models.get("models"), models.get("cloud_models")
+        if a.local_model in (models.get("models") or []):
+            await pg.select_option("#model", a.local_model)
+            await pg.fill("#question", f"In dataset {facts['default_sample']}, how strong is the evidence for a breakpoint "
+                                       f"at {facts['evidence_title'].split(' ')[0].replace(',', '')}? Give the evidence "
+                                       f"score and its band, and say whether this position could reach the strong band.")
+            await pg.click("#askbtn")
+            await pg.wait_for_selector(".qa .answer, .qa .err", timeout=900000)
+            await pg.wait_for_timeout(800)
+            facts["local_verdict"] = (await pg.locator(".qa .verdict").all_inner_texts())[:3]
+            facts["local_tool_calls"] = await pg.locator(".qa .call").count()
+            check("the local model answered through tool calls", facts["local_tool_calls"] >= 1, facts["local_verdict"])
+            await shot(pg, "assistant_local")
+        else:
+            check(f"local model {a.local_model} is available", False, models.get("why"))
+
+        # 6. the cloud permission gate (nothing is sent here)
+        print("6. permission gate", flush=True)
+        if "claude-sonnet-5" in (models.get("cloud_models") or []):
+            await pg.select_option("#model", "claude-sonnet-5")
+            await pg.fill("#question", f"In dataset {a.private_label}, how strong is the evidence at {a.private_position}?")
+            await pg.dispatch_event("#question", "input")
+            await pg.wait_for_timeout(900)
+            check("naming a private sample shows the permission box", await pg.locator("#consent").count() == 1)
+            check("... and the Ask button stays off until it is ticked", await pg.locator("#askbtn").is_disabled())
+            await shot(pg, "permission_named")
+            pos_only = f"Which gene, if any, lies at {a.private_position.replace(',', '')}?"
+            await pg.fill("#question", pos_only)
+            await pg.dispatch_event("#question", "input")
+            await pg.wait_for_timeout(900)
+            check("a position read from private data also needs permission", await pg.locator("#consent").count() == 1,
+                  await pg.inner_text("#privacy"))
+            r = await api(pg, "POST", "/api/chat", {"model": "claude-sonnet-5", "message": pos_only})
+            facts["refusal"] = (r.get("error") or "")[:200]
+            check("posted without permission, it is refused before any model runs",
+                  facts["refusal"].startswith("Not sent") and not r.get("events"), facts["refusal"])
+            await pg.fill("#question", f"In dataset {facts['default_sample']}, how strong is the evidence at chr20:200000?")
+            await pg.dispatch_event("#question", "input")
+            await pg.wait_for_timeout(900)
+            check("a test-data question needs no permission",
+                  await pg.locator("#consent").count() == 0 and not await pg.locator("#askbtn").is_disabled())
+        else:
+            check("claude-sonnet-5 is offered (needs the API key)", False, models.get("cloud_models"))
+
+        # 7. optional: two real cloud answers, test data only
+        if a.cloud and "claude-sonnet-5" in (models.get("cloud_models") or []):
+            print("7. assistant, cloud (sends two questions)", flush=True)
+            n0 = await pg.locator(".qa .meta").count()
+            await pg.click("#askbtn")
+            await pg.wait_for_function(f"document.querySelectorAll('.qa .meta').length > {n0}", timeout=900000)
+            await pg.wait_for_timeout(800)
+            first = pg.locator(".qa").first
+            facts["cloud_public_meta"] = await first.locator(".meta").inner_text()
+            facts["cloud_public_lines"] = await first.locator(".verdict").all_inner_texts()
+            check("the cloud model answered a test-data question", await first.locator(".answer").count() == 1,
+                  facts["cloud_public_lines"])
+            await shot(pg, "assistant_cloud")
+            n = await pg.locator(".qa .meta").count()
+            await pg.fill("#question", f"In dataset {a.private_label}, how strong is the evidence at {a.private_position}?")
+            await pg.dispatch_event("#question", "input")
+            await pg.wait_for_timeout(900)
+            await pg.check("#consent")
+            await pg.click("#askbtn")
+            await pg.wait_for_function(f"document.querySelectorAll('.qa .meta').length > {n}", timeout=900000)
+            await pg.wait_for_timeout(800)
+            first = pg.locator(".qa").first
+            facts["cloud_private_meta"] = await first.locator(".meta").inner_text()   # time, turns, tokens, cost
+            facts["cloud_private_lines"] = await first.locator(".verdict").all_inner_texts()
+            check("with permission, the answer says what was sent",
+                  any("Sent to Anthropic with your permission" in t for t in facts["cloud_private_lines"]),
+                  facts["cloud_private_lines"])
+            # permission is per question: the same text is still in the box, so the
+            # permission box is still shown, and it must be unticked again
+            await pg.wait_for_selector("#consent", timeout=20000)
+            facts["consent_ticked_after_sending"] = await pg.locator("#consent").is_checked()
+            check("once the question is sent, the permission box is unticked again",
+                  facts["consent_ticked_after_sending"] is False and await pg.locator("#askbtn").is_disabled())
+            await shot(pg, "assistant_cloud_permission")
+
+        # 8. limits and the call log
+        await pg.evaluate("window.scrollTo(0,0)")
+        await pg.click("#btnLimits")
+        await pg.wait_for_timeout(500)
+        facts["limits_headings"] = await pg.locator("#modal .limit h3").all_inner_texts()
+        await shot(pg, "limits")
+        await pg.keyboard.press("Escape")
+        await pg.click("#btnLog")
+        await pg.wait_for_timeout(600)
+        await shot(pg, "call_log")
+        await pg.keyboard.press("Escape")
+        await b.close()
+
+    check("no script error on the page", not errors, errors[:3])
+    out = {"url": a.url, "cloud_questions_sent": bool(a.cloud), "facts": facts, "checks": checks, "page_errors": errors}
+    with open(os.path.join(a.out, "walkthrough.json"), "w") as f:
+        json.dump(out, f, indent=1)
+    failed = [c["check"] for c in checks if not c["ok"]]
+    print(f"\n{len(checks) - len(failed)} of {len(checks)} checks passed" + (f"; FAILED: {failed}" if failed else ""))
+    return 1 if failed else 0
+
+
+if __name__ == "__main__":
+    sys.exit(asyncio.run(main(parse())))

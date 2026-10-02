@@ -39,6 +39,7 @@ from urllib.parse import urlparse, parse_qs
 from stage1_igv_assistant import server as evidence_server
 from stage1_igv_assistant import candidate_server
 from stage1_igv_assistant.tools import bam_tools
+from stage1_igv_assistant.tools import vcf_tools
 from stage1_igv_assistant import chat as chatmod
 from stage1_igv_assistant import config as CFG
 from stage1_igv_assistant.score_tiers import (
@@ -116,6 +117,12 @@ def tool_error(rec):
 RECORDER = ToolRecorder()
 DATASETS = {}          # label -> bam path      (never sent to the browser)
 CANDIDATE_FILES = {}   # label -> vcf/bcf path  (never sent to the browser)
+# Labels found by autodiscovery under the public data directory. Everything else
+# was registered explicitly (command line or config file) and is treated as
+# private: it is never offered to a cloud model unless the person asking confirms,
+# for that question, that they may send it.
+PUBLIC_LABELS = {"datasets": set(), "candidates": set()}
+CAPABILITY = {}        # the startup capability report, for the page's status line
 TIERS = None
 BANDS = None
 TIER_ERROR = None
@@ -445,13 +452,14 @@ def build_limits():
                   "own it distinguishes very little. (That 26% figure is carried over from earlier "
                   "testing and was not re-measured for this interface.)" + depth +
                   " Treat a depth contribution as weak support at best."},
-            {"h": "A balanced translocation can never score \"strong\" here.",
+            {"h": "A balanced translocation cannot score \"strong\" here unless the depth measurement errs.",
              "b": "This is arithmetic, not an accident of the data. In a balanced rearrangement no "
                   "DNA is gained or lost, so the depth measurement correctly contributes nothing. "
                   "And when only one of the two copies of a chromosome is rearranged, roughly half "
                   "the reads at the breakpoint come from the intact copy, which caps the "
                   "paired-read measurement well below its top band. The highest score actually "
-                  "reachable is calculated for each position and shown next to the score." + ceiling +
+                  "reachable is calculated for each position and shown next to the score, assuming "
+                  "the depth measurement behaves; a false depth signal is the one way past it." + ceiling +
                   " Judge a balanced translocation on the four measurements, not on the band it lands in."},
             {"h": "\"Quality limited\" means no score was calculated.",
              "b": "When too many reads at a position are ambiguously mapped, the combined score is "
@@ -465,29 +473,161 @@ _CHAT_TOOLS = {}
 _CHAT_WHERE = None
 
 
-def _chat_tools(trim=False):
+def _chat_tools(trim=False, public_only=False):
     """Schemas generated from list_tools() on BOTH servers, never hand-written.
     `trim` shortens descriptions on the MODEL path only; the MCP descriptions
     themselves are untouched, because benchmark/mcp_client.py forwards them to
-    models too and six recorded run sets depend on the current text."""
+    models too and six recorded run sets depend on the current text.
+    `public_only` builds the label enums from the public labels alone: a cloud
+    model without the person's confirmation is not even told a private label
+    exists. The executor's guard (_private_hits) is the second line."""
     global _CHAT_WHERE
-    if trim not in _CHAT_TOOLS:
+    key = (trim, public_only)
+    if key not in _CHAT_TOOLS:
         async def _all():
             return {"evidence": await evidence_server.mcp.list_tools(),
                     "bridge": await candidate_server.mcp.list_tools()}
         mcp_tools = asyncio.run(_all())
-        _CHAT_TOOLS[trim], _CHAT_WHERE = chatmod.build_tools(
-            mcp_tools, DATASETS, CANDIDATE_FILES, trim=trim)
-    return _CHAT_TOOLS[trim], _CHAT_WHERE
+        ds, cf = DATASETS, CANDIDATE_FILES
+        if public_only:
+            ds = {k: v for k, v in DATASETS.items() if k in PUBLIC_LABELS["datasets"]}
+            cf = {k: v for k, v in CANDIDATE_FILES.items() if k in PUBLIC_LABELS["candidates"]}
+        _CHAT_TOOLS[key], where = chatmod.build_tools(mcp_tools, ds, cf, trim=trim)
+        if _CHAT_WHERE is None:
+            _CHAT_WHERE = where
+    return _CHAT_TOOLS[key], _CHAT_WHERE
 
 
-def _chat_exec(name, args):
+def label_kind(kind, label):
+    return "public" if label in PUBLIC_LABELS[kind] else "private"
+
+
+def _private_hits(args):
+    """Private labels a tool call would touch, from the model's arguments: the
+    dataset and candidate labels it names, the label behind any candidate-set
+    id it passes (set ids are registered by load_candidate_set with their label),
+    and any file it names by path instead of by label.
+    An unknown label is not a hit here; resolve_args rejects it anyway."""
+    a = args or {}
+    hits = set()
+    ds = a.get("datasets")
+    for lbl in ([a.get("dataset")] + (ds if isinstance(ds, list) else [ds])):
+        if isinstance(lbl, str) and lbl in DATASETS and lbl not in PUBLIC_LABELS["datasets"]:
+            hits.add(lbl)
+    lbl = a.get("candidates")
+    if isinstance(lbl, str) and lbl in CANDIDATE_FILES and lbl not in PUBLIC_LABELS["candidates"]:
+        hits.add(lbl)
+    # The schemas offer labels only (chat._PATH_PARAMS), but resolve_args passes a
+    # path argument through untouched. A file named by its path would therefore
+    # reach the tool without any label to check, so it always counts as private.
+    if any(a.get(k) is not None for k in chatmod._PATH_PARAMS):
+        hits.add("a file named by its path instead of a label")
+    for k in ("set_id", "set_a", "set_b"):
+        sid = a.get(k)
+        if isinstance(sid, str):
+            s = vcf_tools._SETS.get(sid)
+            # A set loaded from a private file is private whatever it was labelled:
+            # the model chooses the label, so a public-looking one proves nothing.
+            if s and _set_is_private(s):
+                hits.add(s.get("label") or sid)
+    return sorted(h for h in hits if h)
+
+
+def _set_is_private(s):
+    """A candidate set is private when its FILE is not a test-data file, or when
+    it was loaded under a registered private label. The label alone cannot make
+    it private: load_candidate_set's label is the model's free choice (in the
+    recorded runs it was never the registered one), and requiring it to be a
+    test-data label blocked test data for a cloud model that named its own set."""
+    public_paths = {os.path.abspath(CANDIDATE_FILES[l])
+                    for l in PUBLIC_LABELS["candidates"] if l in CANDIDATE_FILES}
+    label = s.get("label")
+    named_private = any(label in table and label not in PUBLIC_LABELS[kind]
+                        for kind, table in (("datasets", DATASETS), ("candidates", CANDIDATE_FILES)))
+    return named_private or s.get("path") not in public_paths
+
+
+# ── private references in the question text ─────────────────────────────────
+# The tool-argument guard above cannot see the question itself, and a question
+# can carry private data without naming a sample: "which gene lies at
+# chr20:<a position read from a patient file>?" sends that coordinate to the
+# cloud in the prompt. So a cloud question is also checked for coordinates this
+# session has read from private data: the junctions of every private candidate
+# set, and every position in a call made on a private read file (its inputs and
+# what it returned, such as the base where clipped reads are cut).
+_NUM_RE = re.compile(r"(?<![\w.,])\d{1,3}(?:,\d{3})+(?![\w,])|(?<![\w.,])\d{4,}(?![\w,])")
+_LOCUS_RE = re.compile(r"\b(?:chr)?[0-9XYM]{1,2}:(\d[\d,]*)")
+
+
+def _private_positions():
+    """{position: {private labels it was read from}} for this session."""
+    out = {}
+
+    def add(pos, label):
+        if isinstance(pos, int) and not isinstance(pos, bool) and pos > 999:
+            out.setdefault(pos, set()).add(label)
+
+    for sid, s in list(vcf_tools._SETS.items()):
+        if _set_is_private(s):
+            for j in s.get("junctions", ()):
+                add(j.pos1, s.get("label") or sid)
+                add(j.pos2, s.get("label") or sid)
+    private_paths = {p: l for l, p in DATASETS.items() if l not in PUBLIC_LABELS["datasets"]}
+
+    def walk(x, label):
+        if isinstance(x, dict):
+            for k, v in x.items():
+                if "position" in k or k in ("start", "end", "pos"):
+                    add(v, label)
+                walk(v, label)
+        elif isinstance(x, list):
+            for v in x:
+                walk(v, label)
+        elif isinstance(x, str):
+            for m in _LOCUS_RE.finditer(x):
+                add(int(m.group(1).replace(",", "")), label)
+
+    for c in list(RECORDER.calls):
+        prm = c.get("params") or {}
+        paths = [prm.get("bam_path")] + list(prm.get("bam_paths") or [])
+        labels = [private_paths[p] for p in paths if isinstance(p, str) and p in private_paths]
+        if labels:
+            walk(prm, labels[0])
+            walk(c.get("result"), labels[0])
+    return out
+
+
+def private_refs_in_text(text):
+    """The private labels a question names, and the private coordinates it contains."""
+    text = text or ""
+    labels = set()
+    for kind, table in (("datasets", DATASETS), ("candidates", CANDIDATE_FILES)):
+        for lbl in table:
+            if lbl not in PUBLIC_LABELS[kind] and re.search(
+                    r"(?<![A-Za-z0-9_.])" + re.escape(lbl) + r"(?![A-Za-z0-9_]|\.[A-Za-z0-9_])", text):
+                labels.add(lbl)
+    nums = {int(m.group(0).replace(",", "")) for m in _NUM_RE.finditer(text)}
+    positions = []
+    if nums:
+        known = _private_positions()
+        positions = [{"position": n, "labels": sorted(known[n])} for n in sorted(nums) if n in known]
+    return {"labels": sorted(labels), "positions": positions}
+
+
+def _chat_exec(name, args, public_only=False):
     """The model's only route to a tool: label -> path, then ToolRecorder.
     The result is scrubbed BEFORE the model sees it, not only before the
     browser does -- applicable_layers echoes bam_path, and the model must not
-    receive a filesystem path it could then repeat in its prose."""
+    receive a filesystem path it could then repeat in its prose.
+    `public_only` resolves labels against the test-data labels alone: the error
+    for an unknown label lists the registered labels, and a cloud model without
+    the person's confirmation must not learn from it which private ones exist."""
     _, where = _chat_tools()
-    resolved, err = chatmod.resolve_args(name, args, DATASETS, CANDIDATE_FILES, MASK_PATH)
+    ds, cf = DATASETS, CANDIDATE_FILES
+    if public_only:
+        ds = {k: v for k, v in DATASETS.items() if k in PUBLIC_LABELS["datasets"]}
+        cf = {k: v for k, v in CANDIDATE_FILES.items() if k in PUBLIC_LABELS["candidates"]}
+    resolved, err = chatmod.resolve_args(name, args, ds, cf, MASK_PATH)
     if err:
         return None, err
     # Same guard the browser's panel route uses: the panel tools do not validate
@@ -524,8 +664,13 @@ def _chat_exec(name, args):
 
 def _api(path, body):
     if path == "/api/bootstrap":
+        full = CAPABILITY.get("FULL") or {}
         return {
             "datasets": sorted(DATASETS), "candidate_files": sorted(CANDIDATE_FILES),
+            "kinds": {"datasets": {l: label_kind("datasets", l) for l in DATASETS},
+                      "candidates": {l: label_kind("candidates", l) for l in CANDIDATE_FILES}},
+            "capabilities": {"igv_ready": bool(full.get("ok")), "igv_detail": full.get("detail"),
+                             "api_key": bool(API_KEY)},
             "tiers": TIERS, "tier_error": TIER_ERROR, "limits": build_limits(),
             "hand_entry_note": hand_entry_note(),
             "tool_counts": {"evidence": len(EXPECTED_EVIDENCE_TOOLS),
@@ -664,6 +809,11 @@ def _api(path, body):
                      "pos2": c["pos2"], "orientation": c["orientation"],
                      "svtype": c["svtype"], "pe": c["pe"], "sr": c["sr"]}
                     for c in uniq[:10]],
+                # The page marks each survivor instead of listing ten examples:
+                # the ids of the recurrent ones, and every unique one with its id
+                # so it can be opened. Same tool results, nothing recomputed.
+                "recurrent_ids": [c["candidate_id"] for c in rec],
+                "unique_ids": [c["candidate_id"] for c in uniq],
                 "call": fr["id"],
             }
         return {"compare": cres, "compare_call": cmpr["id"],
@@ -683,19 +833,55 @@ def _api(path, body):
             if not API_KEY:
                 return {"error": "no Anthropic API key: set ANTHROPIC_API_KEY "
                                  "or place one at .api/claude_api_key"}
-            return chatmod.run_turn_api(
+            # A cloud model receives the question, the schemas and every tool
+            # return, so private data reach it only on the person's explicit
+            # confirmation for this question. Without it the model is offered the
+            # public labels alone, and any call that still names a private label
+            # (or a set id loaded from one) is refused before it runs.
+            allow = body.get("allow_private_cloud") is True
+            if not allow:
+                tools, where = _chat_tools(trim=bool(body.get("trim", False)), public_only=True)
+                # The question itself goes to the cloud, so it is checked first.
+                refs = private_refs_in_text(body.get("message", ""))
+                if refs["labels"] or refs["positions"]:
+                    named = sorted(set(refs["labels"]) | {l for p in refs["positions"] for l in p["labels"]})
+                    return {"error": ("Not sent: this question "
+                                      + ("names " if refs["labels"] else "contains a position read from ")
+                                      + "private data (" + ", ".join(named) + "). A cloud model would receive it. "
+                                      "Confirm that you have permission to send it, or ask a model on this computer."),
+                            "privacy": {"cloud": True, "private_allowed": False, "blocked": [],
+                                        "question_refs": refs}}
+            blocked = []
+
+            def guarded_exec(name, args):
+                if not allow:
+                    hits = _private_hits(args)
+                    if hits:
+                        blocked.append({"tool": name, "labels": hits})
+                        return None, (f"blocked by the privacy setting: {', '.join(hits)} "
+                                      f"{'is' if len(hits) == 1 else 'are'} private data, and sending "
+                                      f"private data to a cloud model was not confirmed for this "
+                                      f"question. No tool was run.")
+                return _chat_exec(name, args, public_only=not allow)
+            r = chatmod.run_turn_api(
                 model, body.get("message", ""), tools, set(where),
-                _chat_exec, max_iters=int(body.get("max_iters", 40)),
+                guarded_exec, max_iters=int(body.get("max_iters", 40)),
                 max_tokens=int(body.get("max_tokens", 16000)),
                 effort=body.get("effort", "high"),
                 thinking=bool(body.get("thinking", True)),
                 api_key=API_KEY)
+            r["privacy"] = {"cloud": True, "private_allowed": allow, "blocked": blocked}
+            return r
         r = chatmod.run_turn(
             model, body.get("message", ""), tools, set(where),
             _chat_exec, num_ctx=int(body.get("num_ctx", 32768)),
             max_iters=int(body.get("max_iters", 8)),
             think=chatmod.normalise_think(body.get("think", False)))
         return r
+    if path == "/api/privacy_check":
+        # What the page needs to decide whether to ask for permission before a
+        # cloud question: the same check /api/chat enforces.
+        return private_refs_in_text(body.get("message", ""))
     if path == "/api/calls":
         return {"calls": [{k: v for k, v in c.items() if k != "result"}
                           for c in RECORDER.calls]}
@@ -754,6 +940,15 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         u = urlparse(self.path)
         if u.path in ("/", "/index.html"):
+            # The page is read from ui_page.html on every request, so an edit shows
+            # on reload. If it is missing, the previous page is served instead of
+            # an error: the instrument must still open.
+            try:
+                with open(PAGE_FILE, "rb") as fh:
+                    return self._send(200, fh.read(), "text/html; charset=utf-8")
+            except OSError:
+                return self._send(200, PAGE.encode(), "text/html; charset=utf-8")
+        if u.path == "/classic":
             return self._send(200, PAGE.encode(), "text/html; charset=utf-8")
         if u.path == "/api/chat_models":
             tools, where = _chat_tools()
@@ -761,7 +956,12 @@ class Handler(BaseHTTPRequestHandler):
             # which reads the same whether ollama is down or ollama is up with
             # nothing pulled. Those need different fixes, so say which.
             probed = probe_ollama()
+            # Cloud models are offered only with a key: the two evaluated in the
+            # thesis, and only while the cost table prices them, so every answer
+            # can report its cost.
             return self._send(200, {"models": probed or [],
+                                    "cloud_models": ([m for m in CLOUD_MODELS if m in chatmod.API_PRICES]
+                                                     if API_KEY else []),
                                     "reachable": probed is not None,
                                     "url": chatmod.OLLAMA,
                                     "why": (None if probed else
@@ -798,6 +998,11 @@ class Handler(BaseHTTPRequestHandler):
                                     "traceback": traceback.format_exc()[-800:]})
 
 
+CLOUD_MODELS = ("claude-sonnet-5", "claude-opus-5")
+PAGE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ui_page.html")
+
+# The previous page, kept as a fallback at /classic and served at / if ui_page.html
+# is missing. It calls the same routes.
 PAGE = r"""<!doctype html>
 <html><head><meta charset="utf-8"><title>Breakpoint evidence — local instrument</title>
 <style>
@@ -1075,7 +1280,7 @@ function ceilBlock(C,S){
       · highest if all four measurements were maximal: ${C.max_all_layers} · the "strong" band starts at ${C.strong_band}.</div>
     ${C.attainable_here==null?'':`<div style="margin-top:6px">Reachable <b>at this position</b>:
       <b>${C.attainable_here}</b> — ${esc(C.attainable_basis)}.
-      ${C.attainable_here<C.strong_band?`<b>That is below the "strong" band of ${C.strong_band}, so this position cannot reach "strong" however the other measurements turn out.</b>`
+      ${C.attainable_here<C.strong_band?`<b>That is below the "strong" band of ${C.strong_band}, so this position cannot reach "strong" unless the depth measurement errs.</b>`
         :'This position could reach the "strong" band if the read-based measurements were stronger.'}</div>`}
     <div class="mut">${esc(C.note)}</div>
     ${C.per_layer.read_depth&&C.per_layer.read_depth.extra_gate?`<div class="mut">depth measurement only counts when: ${esc(C.per_layer.read_depth.extra_gate)}</div>`:''}</div>`;
@@ -1352,10 +1557,19 @@ def discover_public():
     """Auto-register the public demo data only. ~/patient_data is never touched."""
     # Explicit registrations win: they are named by a human who knows where the
     # data is. Autodiscovery then fills in whatever else is under the data dir.
+    # A config file may declare some of its labels test data ([test_data] labels =
+    # ...), as the demo bundle does; every other explicit registration is private.
+    declared = CFG.test_data_labels()
     for label, path in CFG.registered("datasets").items():
-        DATASETS.setdefault(label, path)
+        if label not in DATASETS:
+            DATASETS[label] = path
+            if label in declared:
+                PUBLIC_LABELS["datasets"].add(label)
     for label, path in CFG.registered("candidates").items():
-        CANDIDATE_FILES.setdefault(label, path)
+        if label not in CANDIDATE_FILES:
+            CANDIDATE_FILES[label] = path
+            if label in declared:
+                PUBLIC_LABELS["candidates"].add(label)
     pub = DATA_DIR_STATUS["path"] or ""
     if not pub or not os.path.isdir(pub):
         return
@@ -1373,7 +1587,10 @@ def discover_public():
                 full = os.path.join(root, f)
                 if os.path.realpath(full) in {os.path.realpath(k) for k in known}:
                     continue
-                DATASETS.setdefault(os.path.splitext(f)[0], full)
+                lbl = os.path.splitext(f)[0]
+                if lbl not in DATASETS:
+                    DATASETS[lbl] = full
+                    PUBLIC_LABELS["datasets"].add(lbl)
     for root in (os.path.join(pub, "delly"), os.path.join(pub, "sim", "delly")):
         if not os.path.isdir(root):
             continue
@@ -1382,7 +1599,10 @@ def discover_public():
                 full = os.path.join(root, f)
                 if os.path.realpath(full) in {os.path.realpath(k) for k in CANDIDATE_FILES.values()}:
                     continue
-                CANDIDATE_FILES.setdefault(f.split(".")[0], full)
+                lbl = f.split(".")[0]
+                if lbl not in CANDIDATE_FILES:
+                    CANDIDATE_FILES[lbl] = full
+                    PUBLIC_LABELS["candidates"].add(lbl)
 
 
 # The panel tool's own search (bam_tools.run_igv_screenshot): $IGV_PATH first,
@@ -1592,6 +1812,11 @@ def verify_minimal():
     finally:
         DATASETS.pop(label, None)
         CANDIDATE_FILES.pop(label, None)
+        # The fixture's candidate set must not outlive the self-test: its label is
+        # not test data, so left in the registry it counted as a private set and
+        # its positions were flagged in every cloud question that contained them.
+        for sid in [k for k, s in vcf_tools._SETS.items() if s.get("label") == label]:
+            del vcf_tools._SETS[sid]
         RECORDER = saved
     problems = []
     for kind, reg in (("dataset", DATASETS), ("candidate set", CANDIDATE_FILES)):
@@ -1694,12 +1919,14 @@ def main():
     ne, nb = assert_tool_contract()
     if not a.no_autodiscover:
         discover_public()
-    for spec, target in ((a.dataset, DATASETS), (a.candidates, CANDIDATE_FILES)):
+    for spec, target, kind in ((a.dataset, DATASETS, "datasets"),
+                               (a.candidates, CANDIDATE_FILES, "candidates")):
         for item in spec:
             lbl, _, path = item.partition("=")
             if not path:
                 raise SystemExit(f"bad spec {item!r}; expected LABEL=PATH")
             target[lbl] = os.path.expanduser(path)
+            PUBLIC_LABELS[kind].discard(lbl)      # named explicitly: private
 
     try:
         TIERS = derive_tiers()
@@ -1711,6 +1938,8 @@ def main():
     print(f"scoring tiers: {'derived from bam_tools source' if TIERS else 'NOT DERIVABLE — ' + str(TIER_ERROR)}", flush=True)
     print(f"datasets: {len(DATASETS)}   candidate files: {len(CANDIDATE_FILES)}", flush=True)
     cap = capability_report(verify_minimal())
+    CAPABILITY.clear()
+    CAPABILITY.update(cap)
     print_banner(cap, a.port)
     if a.check:
         for tier in ("MINIMAL", "FULL"):

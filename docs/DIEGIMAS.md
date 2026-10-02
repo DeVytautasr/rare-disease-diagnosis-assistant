@@ -15,7 +15,7 @@ Prieš pradedant verta pasakyti, ko **nereikia** — tai dažniausiai ir atbaido
 | **samtools ar bcftools** | Tą darbą atlieka Python biblioteka `pysam` tame pačiame procese. |
 | **delly** | delly *pagamina* kandidatų rinkinį. Šis įrankis jį tik *skaito*. Žr. NAUDOJIMAS.md. |
 | **Vaizdo plokštės (GPU)** | Nė vienai pagrindinei funkcijai. |
-| **Interneto ryšio veikimo metu** | **MINIMAL lygiui — ne.** Genų pavadinimų paieškai — taip (neprivaloma). **IGV paveikslėliams — taip, būtinai** (žr. žemiau). |
+| **Interneto ryšio veikimo metu** | **MINIMAL lygiui — ne.** Genų pavadinimų paieškai — taip (neprivaloma). **IGV paveikslėliams — taip, būtinai** (žr. žemiau). Debesijos modeliams (Claude) — taip. |
 | **Administratoriaus teisių** | Išskyrus vieną atvejį — žr. „Klaida: nepavyko sukurti aplinkos“. |
 
 Reikia tik: **Python 3.10 arba naujesnio** ir maždaug **300 MB** vietos diske
@@ -93,7 +93,12 @@ Laužtiniuose skliaustuose `[x]` reiškia „veikia“, `[ ]` — „nėra“.
 | **FULL** | tas pats + IGV paveikslėliai | IGV ir Java |
 | **COMPLETE** | tas pats + pokalbis su vietiniu modeliu | `ollama` |
 
-Jei turite tik MINIMAL — įrankis veikia visas, tik be paveikslėlių ir be pokalbio.
+Jei turite tik MINIMAL — įrankis veikia visas, tik be paveikslėlių ir be vietinio
+modelio pokalbio.
+
+Nuo lygių nepriklauso **debesijos modeliai** (Claude Sonnet 5 ir Claude Opus 5):
+asistento skirtuke jie siūlomi, kai yra Anthropic API raktas (žr. `ANTHROPIC_API_KEY`
+skyriuje „Konfigūracija“), ir tam `ollama` nereikia.
 
 ## Paleidimas
 
@@ -102,7 +107,9 @@ Jei turite tik MINIMAL — įrankis veikia visas, tik be paveikslėlių ir be po
 ```
 
 Naršyklėje atsidarykite **http://127.0.0.1:8765**. Serveris klausosi tik
-šio kompiuterio — iš tinklo prie jo prieiti negalima.
+šio kompiuterio — iš tinklo prie jo prieiti negalima. Kaip naudotis puslapiu —
+NAUDOJIMAS.md. Ankstesnis puslapis su tais pačiais įrankiais tebėra adresu
+**http://127.0.0.1:8765/classic**.
 
 Sustabdyti: `Ctrl+C`.
 
@@ -122,6 +129,20 @@ Sustabdyti: `Ctrl+C`.
 
 `MEGINYS` — jūsų pasirinkta **etiketė**. Naršyklė ir pokalbio modelis mato
 **tik etiketę**, niekada failo kelio.
+
+Taip užregistruoti mėginiai laikomi **privačiais duomenimis**: puslapyje jie
+pažymėti **Private data**, o debesijos modeliui jų duomenys siunčiami tik
+pažymėjus leidimą tam klausimui (žr. NAUDOJIMAS.md, „Asistentas“). Failai, kuriuos
+įrankis randa pats viešų duomenų kataloge, pažymėti **Test data**. Kelis mėginius
+galima užregistruoti iš karto:
+
+```bash
+.venv/bin/python -m stage1_igv_assistant.ui \
+    --dataset SAMPLE_A=/kelias/iki/SAMPLE_A.bam \
+    --dataset SAMPLE_B=/kelias/iki/SAMPLE_B.bam \
+    --candidates SAMPLE_A=/kelias/iki/SAMPLE_A.bcf \
+    --candidates SAMPLE_B=/kelias/iki/SAMPLE_B.bcf
+```
 
 ### 2. Konfigūracijos failas
 
@@ -145,6 +166,17 @@ MEGINYS = /kelias/iki/meginys.bcf
 Santykiniai keliai skaičiuojami **nuo paties konfigūracijos failo katalogo**,
 todėl demonstracinį rinkinį galima išskleisti bet kur.
 
+Skiltyse `[datasets]` ir `[candidates]` įrašytos etiketės laikomos privačiais
+duomenimis, nebent skiltis `[test_data]` jas paskelbia testiniais:
+
+```ini
+[test_data]
+labels = MEGINYS
+```
+
+Demonstracinio rinkinio konfigūracija (`make_demo_bundle.py`) savo etiketes taip
+ir paskelbia.
+
 Failas ieškomas eilės tvarka: `$SV_CONFIG`, `./sv-assistant.conf`,
 `~/.config/sv-assistant/config.ini`.
 
@@ -156,7 +188,7 @@ Failas ieškomas eilės tvarka: `$SV_CONFIG`, `./sv-assistant.conf`,
 | `SV_EXCLUDE_TEMPLATE` | delly „neįtraukiamų sričių“ šablonas |
 | `IGV_PATH` | kelias iki `igv.sh` |
 | `SV_OLLAMA_URL` | kur veikia `ollama` (numatyta `http://127.0.0.1:11434`) |
-| `ANTHROPIC_API_KEY` | raktas palyginimo (benchmark) skriptams, kurie kviečia Claude modelius per API (neprivaloma); naršyklės pokalbio langas siūlo tik vietinius (Ollama) modelius |
+| `ANTHROPIC_API_KEY` | Anthropic API raktas (neprivaloma). Su juo asistento skirtuke siūlomi Claude Sonnet 5 ir Claude Opus 5; be jo — tik vietiniai (Ollama) modeliai. Juo naudojasi ir palyginimo (benchmark) skriptai. Vietoje kintamojo raktą galima laikyti faile `.api/claude_api_key` saugyklos šaknyje arba `~/.api/claude_api_key` (teisės 600; failas niekada nekeliamas į saugyklą) |
 
 Pirmenybė: komandinė eilutė → aplinkos kintamasis → konfigūracijos failas →
 numatytoji reikšmė.
@@ -295,7 +327,8 @@ matysite paaiškinimą. **Skaičiai nuo to nepriklauso** — juos duoda skaičia
 įrankiai, ne IGV.
 
 ### `[ ] COMPLETE — ollama not reachable`
-Neveikia `ollama`. Pokalbio skydelio nebus; visa kita veikia.
+Neveikia `ollama`. Vietinių modelių nebus; jei yra API raktas, asistento skirtuke
+liks Claude modeliai. Visa kita veikia.
 
 ### Prievadas 8765 užimtas
 `.venv/bin/python -m stage1_igv_assistant.ui --port 8790`

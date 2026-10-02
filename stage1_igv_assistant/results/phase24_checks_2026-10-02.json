@@ -1,0 +1,455 @@
+{
+ "what": "Phase 24 checks behind FIGURE_MAP section N (2026-10-02): the interface patch as applied, the fixes made on top of it, the demo dry run set against the committed record, and the patient registration (aggregate only)",
+ "definitions": {
+  "check": "one evaluation of check() in a suite or in the walkthrough",
+  "as_patched": "HEAD 66db7b3 with phase24_interface.patch applied and nothing else",
+  "before_fixes": "the new test with the 12 added checks, run on the as-patched ui.py and ui_page.html",
+  "code_state": "sha256 of the files every check below ran on; the same files are committed with this record",
+  "aggregate_only": "for SAMPLE_A and SAMPLE_B: record counts and label kinds; no coordinate, gene or candidate"
+ },
+ "patch": {
+  "file": "phase24_interface.patch (Desktop, read only)",
+  "sha256": "8681a22deb094a3fd479500fb4e7674cb6140dd976ad9568a2013861fdf7301f",
+  "made_against": "66db7b3",
+  "files": 13,
+  "insertions": 2350,
+  "deletions": 103,
+  "git_apply_check_exit": 0,
+  "git_apply_exit": 0,
+  "protected_files_in_the_patch": 0,
+  "guard_protected": "exit 0 before and after (bam_tools.py, server.py, vcf_tools.py, candidate_server.py identical to HEAD and to 25d12bb)"
+ },
+ "code_state": {
+  "stage1_igv_assistant/ui.py": "940c341bf2f8bb6ad2e9fae6cb675a6ece2cfc061a3424a56d8c7fb3504d48c8",
+  "stage1_igv_assistant/ui_page.html": "41a269de99459fa71a856c1ce14d4740d80b1bdd73df54025ad3a6659caef067",
+  "stage1_igv_assistant/config.py": "6ce02933d3510f1edb917850c3410af3969de821e2eedfa46b0e706993135aa4",
+  "stage1_igv_assistant/chat.py": "06339974754abb6cc77419ba4df1b46e4f054ed1d03f6ce525a195a5a4a5c7e8",
+  "stage1_igv_assistant/tests/test_interface_page.py": "97a1c5b5512d5c481127566031019808bae3e9f432ff70bc97e90646217ff3f0",
+  "scripts/demo_dry_run.py": "d7ee488fefd7dfb3e184a04bc389c72c61dd5ccdd8409a299a4d57e56cc5bf9b"
+ },
+ "new_test": {
+  "file": "stage1_igv_assistant/tests/test_interface_page.py",
+  "as_patched": {
+   "passed": 51,
+   "failed": 0,
+   "note": "51 check() calls; the task's 52 counts the line `def check(`"
+  },
+  "checks_added": 12,
+  "before_fixes": {
+   "passed": 55,
+   "failed": 8,
+   "failed_checks": [
+    "a read file named by its path, not a label, counts as private",
+    "... and so does a candidate file named by its path",
+    "without permission a call passing a private file's path is blocked and never runs",
+    "without permission an unknown-label error lists the test-data labels only",
+    "a test-data file loaded under a label of the model's own choosing stays usable without permission",
+    "... and its positions are not treated as private",
+    "the self-test's candidate set is removed when the self-test ends",
+    "so a question containing one of its positions is not flagged as private data"
+   ]
+  },
+  "after_fixes": {
+   "passed": 63,
+   "failed": 0
+  },
+  "logs": "~/public_data/sim/logs/phase24_2026-10-02/test_interface_page_{as_patched,new_checks_before_fixes,after_fixes}.log"
+ },
+ "scratch_probes": {
+  "guard_before_fixes": "raw bam_path to a private read file: not blocked, the tool ran and the model received a score; raw path to a private candidate file: not blocked, the model received its record counts; unknown label: the error listed the private label; after startup the self-test set stayed registered and the numbers 5000, 10000, 20000, 21000 were flagged as private positions; a test-data file loaded under the model's own label was blocked",
+  "guard_after_fixes": [
+   "4. after verify_minimal: sets left in vcf_tools._SETS: [] | their positions: []",
+   "   privacy check on a question naming that number, with NOTHING private registered: None",
+   "1. raw bam_path to the PRIVATE read file, no permission: blocked list = [{'tool': 'breakpoint_evidence_summary', 'labels': ['a file named by its path instead of a label']}] | tool calls that ran on the private file: 0 | model received a score: None",
+   "2. raw path to the PRIVATE candidate file, no permission: blocked list = [{'tool': 'load_candidate_set', 'labels': ['a file named by its path instead of a label']}] | model received counts: {'total_records': None, 'junctions_after_dedup': None}",
+   "3. unknown dataset label, no permission: the error returned to the model names PRIV: False | {\"error\": \"unknown dataset label 'NOPE'; registered: ['PUB']\"}",
+   "   unknown candidates label: names PRIV: False",
+   "5. PUBLIC file loaded under the model's own label, then listed, no permission: blocked = []",
+   "   ... loaded under its own label PUB, then listed: blocked = []"
+  ],
+  "consent_before_fix": [
+   "1. question names the private sample, before ticking: {'consent_box': True, 'ticked': False, 'ask_disabled': True}",
+   "2. after ticking: {'consent_box': True, 'ticked': True, 'ask_disabled': False}",
+   "3. after the question was sent (same text still in the box): {'consent_box': True, 'ticked': True, 'ask_disabled': False}",
+   "4. after editing it into a NEW question about the private sample: {'consent_box': True, 'ticked': True, 'ask_disabled': False}",
+   "5. bodies posted to /api/chat (allow_private_cloud): [('In dataset PRIVTEST, how strong is the evide', True), ('In dataset PRIVTEST, is there a reciprocal b', True)]",
+   "   page errors: []"
+  ],
+  "consent_after_fix": [
+   "1. question names the private sample, before ticking: {'consent_box': True, 'ticked': False, 'ask_disabled': True}",
+   "2. after ticking: {'consent_box': True, 'ticked': True, 'ask_disabled': False}",
+   "3. after the question was sent (same text still in the box): {'consent_box': True, 'ticked': False, 'ask_disabled': True}",
+   "4. after editing it into a NEW question about the private sample: {'consent_box': True, 'ticked': False, 'ask_disabled': True}",
+   "5. bodies posted to /api/chat (allow_private_cloud): [('In dataset PRIVTEST, how strong is the evide', True)]",
+   "   page errors: []"
+  ],
+  "walkthrough_meta_line": [
+   "'In dataset IMP01, how strong is the evidence?' -> 1.5 s · 2 model turns · 212 tokens written · cost $0.011",
+   "'In dataset PRIVTEST, how strong is the evidence?' -> 1.5 s · 2 model turns · 212 tokens written · cost $0.022"
+  ],
+  "how": "synthetic PUB/PRIV fixture with the test's scripted model, or a browser with /api/chat answered by a stub and ANTHROPIC_BASE_URL on a closed port; no API request"
+ },
+ "browser": {
+  "playwright": "1.63.0 (pip, with greenlet 3.5.6 and pyee 13.0.1, into .venv)",
+  "chromium": "headless shell 153.0.8010.12 (playwright build 1243)",
+  "system_libraries": "libnspr4, libnss3 and libasound2t64 were missing; fetched with `apt-get download` and unpacked with `dpkg-deb -x` under ~/.cache/ms-playwright-syslibs, used through LD_LIBRARY_PATH by the browser only; no sudo, nothing installed system-wide"
+ },
+ "walkthrough": {
+  "record": "interface_walkthrough_2026-10-02.json",
+  "screenshots": "stage1_igv_assistant/screenshots/interface_2026-10-02/ (11 PNG, each looked at; public data only; no PNG text chunk)",
+  "checks": "18 of 18: the 17 of the patch and one added with the permission fix",
+  "rehearsal": "13 of 13 without IGV and without --cloud, ANTHROPIC_BASE_URL on a closed port, before the recorded run",
+  "script_version": "the recorded run used the script before the line storing cloud_private_meta was added, so the record holds the first cloud answer's meta line only; the second answer's cost line was on the page but is in no record"
+ },
+ "dry_run": {
+  "command": ".venv/bin/python scripts/demo_dry_run.py run (the script starts its own interface on 8765 with ANTHROPIC_BASE_URL on a closed port; `record` was not run)",
+  "attempt_file": "~/public_data/sim/logs/phase18_2026-09-29/attempt_2.json (not committed; the committed record of 2026-09-29 is unchanged)",
+  "attempt_sha256": "1e446257077515126a0a2852d15c9bd8137f0aa086717bdc2a1d177ef1ac67d6",
+  "started": "2026-10-02T12:07:43+0300",
+  "failure": null,
+  "total_wall_s": 188.9,
+  "page_bytes": 84679,
+  "routes_called_by_page": {
+   "/api/bootstrap": true,
+   "/api/load": true,
+   "/api/funnel": true,
+   "/api/candidate": true,
+   "/api/assess": true,
+   "/api/call?id=": true,
+   "/api/igv": true,
+   "/api/chat_models": true,
+   "/api/chat": true
+  },
+  "all_nine_routes_true": true,
+  "interface_stopped": {
+   "pid": 34732,
+   "children_before_stop": 0,
+   "method": "SIGTERM",
+   "exit_status": -15,
+   "children_left_and_stopped_by_pid": 0,
+   "port_8765_free_after": true
+  },
+  "call_log": {
+   "calls": 33,
+   "by_tool": {
+    "applicable_layers": 4,
+    "bam_stats_at_locus": 4,
+    "breakpoint_evidence_summary": 4,
+    "discordant_pairs": 4,
+    "evidence_panel": 1,
+    "get_candidate": 1,
+    "list_candidates": 1,
+    "load_candidate_set": 1,
+    "read_depth_profile": 5,
+    "soft_clipped_reads": 4,
+    "split_reads": 4
+   },
+   "errors": 1
+  },
+  "no_patient_data": {
+   "a_listed_equal_derived_from_public_data": {
+    "datasets": true,
+    "candidate_files": true
+   },
+   "b_identifier_list": {
+    "identifiers_read": 6,
+    "labels_containing_an_identifier": 0,
+    "positive_control_caught": true
+   },
+   "c_call_log": {
+    "files_named": 31,
+    "not_a_listed_label": 0,
+    "positive_control_caught": true
+   },
+   "d_open_files_outside_allowed_total": 0,
+   "d_positive_control_caught": true
+  },
+  "against_demo_dry_run_2026-09-29": {
+   "1_load": {
+    "dataset_labels_same": true,
+    "candidate_set_labels_same": true,
+    "load_counts_same": true,
+    "load_counts": {
+     "total_records": 918,
+     "junctions_after_dedup": 896,
+     "records_merged_by_dedup": 22
+    },
+    "hand_entry_note_same": true,
+    "limits_headings_changed": [
+     {
+      "was": "A balanced translocation can never score \"strong\" here.",
+      "now": "A balanced translocation cannot score \"strong\" here unless the depth measurement errs."
+     }
+    ],
+    "limits_headings_unchanged": 5
+   },
+   "2_filters": {
+    "chain_same": true,
+    "total_in_set": 896,
+    "surviving_after_each_step": [
+     515,
+     157,
+     29,
+     29,
+     29
+    ],
+    "total_matching": 29
+   },
+   "3_candidate": {
+    "candidate_id": "CAND_52179e966345",
+    "candidate_same": true,
+    "shown": [
+     {
+      "at": "chr21:14100001",
+      "score": 40.0,
+      "band": "moderate",
+      "components": {
+       "discordant_pairs": 7.5,
+       "soft_clipped_reads": 25.0,
+       "split_reads": 7.5,
+       "read_depth": 0.0
+      },
+      "attainable_here": 57.5
+     },
+     {
+      "at": "chr20:200000",
+      "score": 40.0,
+      "band": "moderate",
+      "components": {
+       "discordant_pairs": 7.5,
+       "soft_clipped_reads": 25.0,
+       "split_reads": 7.5,
+       "read_depth": 0.0
+      },
+      "attainable_here": 57.5
+     }
+    ],
+    "every_shown_value_same": true
+   },
+   "4_tool_return": {
+    "discordant_pairs_shown_and_returned": [
+     44,
+     44
+    ],
+    "score_shown_and_returned": [
+     40.0,
+     40.0
+    ],
+    "equal": true
+   },
+   "5_hand_entry": {
+    "at": "chr20:33700000",
+    "dataset": "IMP09",
+    "score": 22.5,
+    "band": "weak",
+    "components": {
+     "discordant_pairs": 7.5,
+     "soft_clipped_reads": 0.0,
+     "split_reads": 0.0,
+     "read_depth": 15.0
+    },
+    "banner": "This position was entered by hand.",
+    "agrees_with_rescue_record": {
+     "discordant_pairs": true,
+     "soft_clipped_reads": true,
+     "score": true,
+     "band": true
+    },
+    "every_shown_value_same": true
+   },
+   "6_igv": {
+    "wall_s": 167.12,
+    "wall_s_2026-09-29": 378.23,
+    "images": 4,
+    "images_2026-09-29": 3,
+    "error": null,
+    "panel_errors": null,
+    "images_detail": [
+     {
+      "dimensions": [
+       1140,
+       1112
+      ],
+      "bytes": 39426,
+      "sha256": "39929b27c454f9d9760dbb29c98190fa373ed400eaf3f342b6eb5707698c23a3",
+      "identical_to_committed_panel": "discordant_pairs.png"
+     },
+     {
+      "dimensions": [
+       1140,
+       1112
+      ],
+      "bytes": 42811,
+      "sha256": "ac68e0e22436a27433b842e1dda70cc70cf0f3c21c23c3f195a128a4f590517b",
+      "identical_to_committed_panel": "soft_clipped_reads.png"
+     },
+     {
+      "dimensions": [
+       1140,
+       903
+      ],
+      "bytes": 46684,
+      "sha256": "7b94feb38d3a01104d9667de222300223a68275129dc30b38e88b5bbc915990b",
+      "identical_to_committed_panel": null
+     },
+     {
+      "dimensions": [
+       1140,
+       1112
+      ],
+      "bytes": 24435,
+      "sha256": "8a7b32080d6b37501d017450732fe57551787881ac597495fb335063998367eb",
+      "identical_to_committed_panel": "read_depth.png"
+     }
+    ]
+   },
+   "7_chat": {
+    "model": "qwen2.5:7b",
+    "models_offered": [
+     "qwen2.5:7b",
+     "qwen3.5:4b"
+    ],
+    "tool_schemas_offered": 15,
+    "error": null,
+    "ended_without_answer": false,
+    "malformed_tool_calls": 1,
+    "tool_calls": 7,
+    "rejected": 1,
+    "summary_call": {
+     "window_bp": 10,
+     "evidence_score": 55.0,
+     "evidence_strength": "moderate",
+     "attainable_here": 65.0
+    },
+    "numbers_in_final_answer": 14,
+    "unsupported": [],
+    "wall_s": 19.05,
+    "note": "a model's answer differs from run to run; on 2026-09-29 it chose a 50-base window (47.5, ceiling 65.0) and called the evidence strong"
+   }
+  }
+ },
+ "patient_registration": {
+  "blinding": "aggregate counts only: no /api/funnel, /api/candidate, /api/assess, /api/igv or /api/compare call was made on SAMPLE_A or SAMPLE_B; no browser was open while they were registered; no message containing a number was sent to /api/privacy_check or /api/chat",
+  "registered": "two de-identified read-file links and two DELLY call sets under ~/patient_data, as --dataset SAMPLE_A=, --dataset SAMPLE_B=, --candidates SAMPLE_A=, --candidates SAMPLE_B=; existence checked with test -e only (no link target printed)",
+  "a_check": {
+   "command": "python -m stage1_igv_assistant.ui --check, with the four registered",
+   "exit": 0,
+   "tool_contract": "11 evidence tools + 4 bridge tools",
+   "tiers": "derived from bam_tools source",
+   "datasets": 15,
+   "candidate_files": 15,
+   "check_lines_pass": 11,
+   "check_lines_fail": 0
+  },
+  "b_interface": {
+   "environment": "ANTHROPIC_BASE_URL=http://127.0.0.1:9 (a closed port: no API request could leave the machine); curl only",
+   "kinds_private": {
+    "datasets": [
+     "SAMPLE_A",
+     "SAMPLE_B"
+    ],
+    "candidates": [
+     "SAMPLE_A",
+     "SAMPLE_B"
+    ]
+   },
+   "kinds_public": {
+    "datasets": [
+     "IMP01",
+     "IMP02",
+     "IMP03",
+     "IMP04",
+     "IMP05",
+     "IMP06",
+     "IMP07",
+     "IMP08",
+     "IMP09",
+     "IMP10",
+     "IMP11",
+     "IMP12",
+     "NA12878.chr20_chr21"
+    ],
+    "candidates": [
+     "IMP01",
+     "IMP02",
+     "IMP03",
+     "IMP04",
+     "IMP05",
+     "IMP06",
+     "IMP07",
+     "IMP08",
+     "IMP09",
+     "IMP10",
+     "IMP11",
+     "IMP12",
+     "background"
+    ]
+   },
+   "load": [
+    {
+     "label": "SAMPLE_A",
+     "is_error": false,
+     "total_records": 30980,
+     "junctions_after_dedup": 30596,
+     "records_merged_by_dedup": 384,
+     "committed": {
+      "total_records": 30980,
+      "junctions_after_dedup": 30596,
+      "records_merged_by_dedup": 384
+     },
+     "equal_to_committed": true
+    },
+    {
+     "label": "SAMPLE_B",
+     "is_error": false,
+     "total_records": 32451,
+     "junctions_after_dedup": 32041,
+     "records_merged_by_dedup": 410,
+     "committed": {
+      "total_records": 32451,
+      "junctions_after_dedup": 32041,
+      "records_merged_by_dedup": 410
+     },
+     "equal_to_committed": true
+    }
+   ],
+   "privacy_check": {
+    "message": "In dataset SAMPLE_A, how strong is the evidence?",
+    "response": {
+     "labels": [
+      "SAMPLE_A"
+     ],
+     "positions": []
+    }
+   },
+   "chat_without_permission": {
+    "error": "Not sent: this question names private data (SAMPLE_A). A cloud model would receive it. Confirm that you have permission to send it, or ask a model on this computer.",
+    "has_events": false,
+    "keys": [
+     "error",
+     "privacy"
+    ],
+    "privacy": {
+     "cloud": true,
+     "private_allowed": false,
+     "blocked": [],
+     "question_refs": {
+      "labels": [
+       "SAMPLE_A"
+      ],
+      "positions": []
+     }
+    }
+   },
+   "call_log": {
+    "calls": 2,
+    "by_tool": {
+     "load_candidate_set": 2
+    },
+    "errors": 0
+   },
+   "stopped": "by its PID (SIGTERM); port 8765 free afterwards"
+  },
+  "identifier_list_entries_found_in_the_logs_of_this_step": 0
+ }
+}

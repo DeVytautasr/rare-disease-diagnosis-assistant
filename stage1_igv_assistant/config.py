@@ -28,6 +28,13 @@ Config file (stdlib configparser, no dependency):
     [candidates]
     DEMO = /srv/data/demo.bcf
 
+    [test_data]
+    labels = DEMO
+
+Labels registered explicitly (here or on the command line) are treated by the
+interface as private data unless [test_data] lists them; autodiscovered files
+under data_dir are test data.
+
 Searched, first readable wins: $SV_CONFIG, ./sv-assistant.conf,
 ~/.config/sv-assistant/config.ini
 """
@@ -108,3 +115,12 @@ def registered(section):
     if not _CP.has_section(section):
         return {}
     return {k: _expand(v, _config_dir()) for k, v in _CP.items(section) if v}
+
+
+def test_data_labels():
+    """Labels the config file declares to be test data: [test_data] labels = A, B.
+    The interface treats every other explicitly registered label as private, so a
+    cloud model never receives it without the person's confirmation."""
+    if not _CP.has_option("test_data", "labels"):
+        return set()
+    return {x.strip() for x in _CP.get("test_data", "labels").split(",") if x.strip()}

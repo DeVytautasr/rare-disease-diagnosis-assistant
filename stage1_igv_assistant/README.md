@@ -20,6 +20,8 @@ The browser front end is the normal way in — it starts both servers in-process
 python -m stage1_igv_assistant.ui --check   # what is available, then exit
 python -m stage1_igv_assistant.ui           # http://127.0.0.1:8765
 ```
+The page is `ui_page.html`, read on every request; the previous page is kept in
+`ui.py` and served at `/classic` (and at `/` if `ui_page.html` is missing).
 `--check` prints the capability banner: which of MINIMAL / FULL (IGV) /
 COMPLETE (local model) this install can deliver, where the exclude template
 and data directory resolved from, and whether an Anthropic key is present.
@@ -36,16 +38,17 @@ python -m stage1_igv_assistant.candidate_server  # the 4 candidate-set tools
 
 ## Running the tests
 
-There are 23 test files in `tests/`, each runnable on its own:
+There are 27 test files in `tests/`, each runnable on its own:
 ```
-python stage1_igv_assistant/tests/test_bam_tools.py    # the largest; needs BAMs, and Java for the IGV assertions
-python stage1_igv_assistant/tests/test_server.py       # MCP layer, tool contract
-python stage1_igv_assistant/tests/test_vcf_tools.py    # candidate sets, dedup orientation, comparison symmetry
-python stage1_igv_assistant/tests/test_ceiling_echo.py # the attainable-ceiling echo; exit 2 = INCOMPLETE (no IMP01.bam)
-python stage1_igv_assistant/tests/test_api_leak.py     # nothing path-like reaches an external API
+python stage1_igv_assistant/tests/test_bam_tools.py       # the largest; needs BAMs, and Java for the IGV assertions
+python stage1_igv_assistant/tests/test_server.py          # MCP layer, tool contract
+python stage1_igv_assistant/tests/test_vcf_tools.py       # candidate sets, dedup orientation, comparison symmetry
+python stage1_igv_assistant/tests/test_ceiling_echo.py    # the attainable-ceiling echo; exit 2 = INCOMPLETE (no IMP01.bam)
+python stage1_igv_assistant/tests/test_api_leak.py        # nothing path-like reaches an external API
+python stage1_igv_assistant/tests/test_interface_page.py  # the page, test vs private data, the cloud privacy guard
 ```
-The remaining eighteen are focused pure-Python regression suites (no BAM, no
-IGV, each under three seconds), one per defect class found during development —
+The others are focused regression suites, one per defect class found during
+development —
 `test_partner_distribution.py`, `test_quality_gate.py`,
 `test_subthreshold_observations.py`, `test_minimum_support.py`,
 `test_contig_naming.py` and others. Each is named for the condition that

@@ -73,21 +73,37 @@ same confirmed deletion. See `stage1_igv_assistant/README.md` for tool
 details, `stage1_igv_assistant/results/` for validation write-ups, and
 `TUTORIAL.md` for a guided walkthrough (written for external reviewers).
 
-**Local front end (`stage1_igv_assistant/ui.py`).** A dependency-free browser
-interface on 127.0.0.1: the filter chain with every threshold's provenance,
-the four evidence layers at both breakends of a candidate, hand-entered
-coordinates, two-sample comparison, IGV panels, and a log of every tool call
-in the session; each layer count and the combined score links to the call that
-returned it. Two panels state what the tool cannot do:
-"What this tool cannot tell you" and "Where every number came from".
+**Local front end (`stage1_igv_assistant/ui.py`, page `ui_page.html`).** A
+dependency-free browser interface on 127.0.0.1 in three steps. *Candidates*: the
+filter chain, each threshold labelled with its provenance, the count left after
+every step, and an optional comparison that drops junctions also found in another
+sample. *Evidence*: the four layers at both ends of a junction, the combined score
+against the score reachable at that position, hand-entered positions (marked as
+such), and IGV images on request. *Ask the assistant*: below. The combined score
+and every measurement link to the tool call that returned them (the "reachable
+here" mark is worked out by the page from the scoring tiers and the measured
+values; it is not a tool return), and a call log lists every call of the session;
+"Limits" states what the tool cannot tell you. Each sample is marked *Test data*
+(autodiscovered under the data directory, or declared in the config file's
+`[test_data]`) or *Private data* (registered explicitly), and the page always opens
+on test data. *Note, 2026-10-02:* the page was rebuilt in Phase 24; the previous
+page is served at `/classic`.
 
-**Model chat panel (`stage1_igv_assistant/chat.py`).** An optional side panel
-where a model calls the same tools through the same recorder. It is a second
-consumer, never a second path to the data: it receives dataset labels rather
-than file paths, and any number in its final answer that no tool returned is
-marked on screen (its intermediate text is shown unchecked). The page lists only
-the models the local Ollama serves; the Anthropic API transport in the same
-module (`chat.run_turn_api`) is used by the benchmark harnesses.
+**Assistant (`stage1_igv_assistant/chat.py`).** A model calls the same tools
+through the same recorder. It is a second consumer, never a second path to the
+data: it receives dataset labels rather than file paths, and any number in its
+final answer that no tool returned is marked on screen (its intermediate text is
+shown unchecked). The page offers the models the local Ollama serves and, when an
+Anthropic API key is present, `claude-sonnet-5` and `claude-opus-5` (the two
+evaluated). A cloud model receives private data only on the person's explicit
+confirmation for that question: without it the model is offered the test-data
+labels alone, any call naming a private label, a set loaded from a private file,
+or a file by its path is refused before it runs, and a question that names a
+private sample or contains a position read from private data is not sent at all
+(`ui.private_refs_in_text`, `ui._private_hits`; tests:
+`tests/test_interface_page.py`). The confirmation is cleared when the question is
+sent; while it holds, the model is offered every private label, not only the ones
+the question names.
 
 **Controlled positive test.** Twelve heterozygous balanced translocations were
 implanted into real NA12878 reads at positions known in advance. In the rebuild

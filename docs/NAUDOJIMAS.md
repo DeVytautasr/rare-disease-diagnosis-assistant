@@ -53,62 +53,112 @@ apie 130 KB) po to galima skaityti šiuo įrankiu kiek nori kartų.
 
 ## Darbo eiga
 
-### 1. Įkelti kandidatų rinkinį
+Naršyklėje atverkite **http://127.0.0.1:8765**. Puslapyje trys žingsniai, matomi
+viršuje kaip skirtukai: **1 Candidates**, **2 Evidence** ir **3 Ask the assistant**.
+Viršutinėje juostoje — mėginio pasirinkimas **Sample** ir du mygtukai: **Limits**
+(ko įrankis pasakyti negali) ir **Call log** (visi šios sesijos įrankių kvietimai).
+Šalia skirtukų — būsena: kiek įrankių patikrinta paleidžiant, kiek prieinama
+vietinių ir debesijos modelių, ar rastas IGV.
 
-Viršuje pasirinkite kandidatų rinkinį iš sąrašo ir paspauskite **Load**.
-Sąraše matomos **etiketės**, ne failų keliai.
+*Pastaba, 2026-10-02:* puslapis perdarytas (Phase 24). Ankstesnis puslapis su tais
+pačiais įrankiais tebėra adresu **http://127.0.0.1:8765/classic**.
 
-### 2. Filtrų grandinė — ką pašalina kiekvienas žingsnis
+### Testiniai ir privatūs duomenys
 
-Lentelėje kiekviena eilutė — vienas filtras. Stulpeliai:
+Prie mėginio pavadinimo matomas ženkliukas **Test data** arba **Private data**.
 
-| Stulpelis | Ką reiškia |
+| Ženkliukas | Kas taip žymima |
 |---|---|
-| **step** | filtro pavadinimas |
-| **cut-off** | riba, nuo kurios jis veikia |
-| **where the cut-off came from** | iš kur ta riba paimta |
-| **still remaining** | kiek kandidatų liko **po** šio žingsnio |
-| **removed by this step** | kiek pašalino **šioje vietoje** grandinėje |
-| **this step would remove on its own** | kiek būtų pašalinęs **vienas**, be kitų |
-| **measured against** | kokio rinkinio atžvilgiu skaičiuotas ankstesnis stulpelis: tipo filtrui — visų įkeltų įrašų (`all svtypes`), vėlesniems žingsniams — pasirinkto tipo įrašų (pvz., `svtype=BND`) arba visų, jei tipas nepasirinktas |
+| **Test data** | failai, kuriuos įrankis rado pats viešų duomenų kataloge (`data_dir`), ir etiketės, kurias konfigūracijos failas skiltyje `[test_data]` paskelbė testiniais duomenimis |
+| **Private data** | visa, kas užregistruota aiškiai: komandinėje eilutėje (`--dataset`, `--candidates`) arba konfigūracijos failo skiltyse `[datasets]` ir `[candidates]` |
 
-Stulpeliai **removed by this step** ir **this step would remove on its own**
-dažnai skiriasi, ir tai svarbu. Jei filtras
-„pašalino 0“, bet „vienas būtų pašalinęs 300“, jis **nėra nenaudingas** —
-tiesiog ankstesni filtrai tuos įrašus jau buvo pašalinę. Įrankis tokius
-žingsnius pažymi atskirai, kad nepasirodytų, jog filtras nieko nedaro.
+Puslapis visada atsidaro su testiniu mėginiu. Privatus mėginys savaime
+neįkeliamas — tik jį pasirinkus. Kada privatūs duomenys gali palikti kompiuterį,
+aprašyta skyriuje „Asistentas“.
 
-Eilė turi reikšmės. Tie patys filtrai kita tvarka duoda tuos pačius galutinius
-kandidatus, bet kitokius tarpinius skaičius.
+### 1. Candidates — kandidatų sąrašas
 
-**Jei žingsnis neatliktas**, virš lentelės atsiras raudonas užrašas su
-paaiškinimu. Dažniausia priežastis — nerastas delly neįtraukiamų sričių
-šablonas. Tokiu atveju grandinė veikia, tik be to vieno žingsnio, ir apie tai
-pasako garsiai.
+Sąraše **Sample** pasirinkite mėginį. Įrankis įkelia jo kandidatų rinkinį (sąraše
+matomos **etiketės**, ne failų keliai) ir iš karto pritaiko filtrus. Pakeitus bet
+kurį filtrą, sąrašas perskaičiuojamas iškart — mygtuko spausti nereikia.
 
-### 3. Atverti kandidatą
+| Filtras | Ką daro |
+|---|---|
+| **Type** | palieka vieno tipo jungtis: translokacijas (BND), delecijas (DEL), duplikacijas (DUP), inversijas (INV) — arba visas |
+| **Caller marked PASS** | tik tas, kurias `delly` pažymėjo PASS |
+| **Read pairs at least** | mažiausias porinių skaitinių skaičius (PE) |
+| **Split reads at least** | mažiausias perskeltų skaitinių skaičius (SR) |
+| **Main chromosomes only** | abu jungties galai pagrindinėse chromosomose |
+| **Skip known problem regions** | atmeta jungtis, kurių galas patenka į delly neįtraukiamų sričių šabloną |
+| **Drop junctions also found in … within … bp** | atmeta jungtis, kurios yra ir kitame pasirinktame mėginyje (abu galai ne toliau nei nurodytas bazių skaičius) |
 
-Kandidato eilutėje paspauskite mygtuką **evidence**. Įrankis paleis keturis
-įrodymų sluoksnius abiejuose kandidato lūžio galuose.
+**How the filters narrow the list** rodo, kiek jungčių lieka po kiekvieno žingsnio.
+Prie žingsnio pažymėta, iš kur jo riba: **set by the tool** (nustatyta įrankio),
+**author's choice** (autoriaus sprendimas) arba **reference file** (iš
+referencinio failo). Dešinėje — kiek liko; po skaičiumi — kiek šis žingsnis
+pašalino grandinėje (pvz., **−11**) ir, jei skiriasi, kiek būtų pašalinęs vienas
+(pvz., **(−23 alone)**). **no change** reiškia, kad grandinėje jis nieko nepašalino.
 
-### 4. Įvesti koordinatę ranka
+Šie du skaičiai dažnai skiriasi, ir tai svarbu. Jei filtras grandinėje nieko
+nepašalino, bet vienas būtų pašalinęs 300, jis **nėra nenaudingas** — tiesiog
+ankstesni filtrai tuos įrašus jau buvo pašalinę. Eilė turi reikšmės: tie patys
+filtrai kita tvarka duoda tuos pačius galutinius kandidatus, bet kitokius
+tarpinius skaičius. Juostų ilgiai — logaritminiu masteliu.
 
-Laukeliuose įrašykite chromosomą ir poziciją ir paspauskite **Assess**.
-Koordinatė **nebūtinai turi būti iš kandidatų rinkinio** — galima tikrinti bet
-kurią vietą.
+**Jei žingsnis neatliktas**, virš juostų atsiras raudonas užrašas su paaiškinimu.
+Dažniausia priežastis — nerastas delly neįtraukiamų sričių šablonas. Tada
+grandinė veikia, tik be to vieno žingsnio, ir apie tai pasako aiškiai.
 
-Atsakyme visada matysite `position_provenance` — iš kur ta pozicija atsirado.
-Jei įvedėte ranka, ten bus parašyta, kad jos **nepatvirtino joks kandidatų
-rinkinys**. Tai apsauga nuo savęs apgaudinėjimo: radus „įrodymų“ ranka įvestoje
-vietoje, tai dar nereiškia, kad ten yra tikras lūžis.
+Žemiau — **… candidates to review**, likusios jungtys. Abu jungties galai rodomi
+genomo tvarka (**One end**, **Other end**), toliau tipas, porinių ir perskeltų
+skaitinių skaičius ir `delly` žymė. Kai pasirinktas kitas mėginys, jame rastos
+jungtys paslepiamos; pažymėjus **Also show the … found in …**, jos rodomos
+pilkai su žyme „also in …“. **Comparison details** — abiejų rinkinių palyginimo
+skaičiai: kiek jungčių yra abiejuose ir kiek tik viename. Naudinga ir tada, kai
+tas pats mėginys apdorotas skirtingais nustatymais — matyti, ką pakeitimas
+realiai pridėjo arba atėmė.
 
-### 5. Palyginti du rinkinius
+### 2. Evidence — įrodymai vienoje jungtyje
 
-Skydelyje **Compare** pasirinkite du kandidatų rinkinius ir toleranciją
-bazėmis (pvz. 500). Įrankis parodys, kiek sutampa ir kiek yra tik viename.
+Kandidato eilutėje paspauskite **Review**. Įrankis paleidžia keturis įrodymų
+sluoksnius abiejuose jungties galuose ir atidaro skirtuką **Evidence**:
 
-Naudinga, kai tas pats mėginys apdorotas skirtingais nustatymais — matyti,
-ką pakeitimas realiai pridėjo arba atėmė.
+- viršuje — jungtis (pvz., `chr20:200,000 ↔ chr21:14,100,001`), ką apie ją
+  pranešė `delly`, ir iš kurio mėginio skaitiniai;
+- schema — kur abu galai yra chromosomose;
+- po skydelį kiekvienam galui: **bendras įvertis** iš 100 su juosta, ženklas
+  **reachable here** (žr. „Kodėl subalansuota translokacija čia negauna
+  „strong““) ir lentelė — kiekvienas matavimas, jo reikšmė ir taškai;
+- **Show IGV images** — IGV paveikslėliai (žr. žemiau);
+- **Ask the assistant about this position** — pereina į 3 žingsnį su paruoštu
+  klausimu apie šią vietą.
+
+Prie bendro įverčio, prie kiekvieno matavimo ir prie kokybės eilutės yra nuoroda
+**source**. Ji atidaro tikslų įrankio kvietimą: ką įrankis gavo ir ką grąžino.
+Ženklas **reachable here** tokios nuorodos neturi: tai ne įrankio atsakymas, o
+puslapio išvestas dydis (žr. „Keturi įrodymų sluoksniai“).
+
+**Bet kurią kitą vietą** galima patikrinti dešinėje viršuje: pasirinkite, kurio
+mėginio skaitinius naudoti (**Reads from**), įrašykite vietą (pvz.,
+`chr20:33,700,000`) ir paspauskite **Check position**. Vieta **nebūtinai turi būti
+iš kandidatų rinkinio**. Tada puslapis aiškiai parašo **Typed in by hand**: jos
+nepatvirtino joks kandidatų rinkinys. Tai apsauga nuo savęs apgaudinėjimo —
+radus „įrodymų“ ranka įvestoje vietoje, tai dar nereiškia, kad ten yra tikras
+lūžis.
+
+### IGV paveikslėliai
+
+**Show IGV images** paleidžia IGV, kuris nupiešia po paveikslėlį kiekvienam
+matavimui: porinių skaitinių, nukirptų skaitinių, perskeltų skaitinių ir
+skaitymo gylio vaizdą. Paveikslėliai atsiranda per visą plotį po skydeliais;
+paspaudus paveikslėlis padidinamas. Tai trunka **kelias minutes**, nes IGV
+kiekvienam paveikslėliui iš interneto įkelia genomą ir genų takelį. Vienu metu
+piešiamas vienas rinkinys: kol jis piešiamas, kiti IGV mygtukai neaktyvūs.
+Paveikslėlius mato tik žmogus — asistentas jų nemato.
+
+### 3. Ask the assistant
+
+Žr. skyrių „Asistentas“.
 
 ---
 
@@ -125,11 +175,11 @@ Kiekvienas vertinamas atskirai nuo 0 iki 25, iš viso 0–100.
 Vertinimas: **70 ir daugiau — „strong“**, **40 ir daugiau — „moderate“**,
 daugiau nei 0 — „weak“.
 
-Prie kiekvieno sluoksnio skaičiaus ir prie bendro įverčio yra mygtukas,
-atidarantis **tikslų įrankio atsakymą**, kuris tą skaičių grąžino. Pasiekiama riba
+Prie kiekvieno sluoksnio skaičiaus ir prie bendro įverčio yra nuoroda **source**,
+atidaranti **tikslų įrankio atsakymą**, kuris tą skaičių grąžino. Pasiekiama riba
 nėra įrankio atsakymas: sąsaja ją išveda iš vertinimo pakopų ir stebėtų reikšmių
 (dalių ir nukirptų skaitinių skaičiaus), skaičiuodama tuos pačius sluoksnius kaip
-įvertis. Visi sesijos kvietimai išvardyti skiltyje **Where every number came from**.
+įvertis. Visi sesijos kvietimai — mygtuku **Call log**.
 
 ---
 
@@ -145,11 +195,16 @@ Skirtumas esminis. „weak“ reiškia: pažiūrėjome ir beveik nieko neradome.
 `QUALITY-LIMITED` reiškia: **negalėjome pažiūrėti** — ši genomo vieta tokia
 pasikartojanti, kad nežinia, ar skaitiniai apskritai iš čia.
 
-Keturi atskiri sluoksniai vis tiek rodomi. Skaitykite juos.
+Puslapyje vietoje skaičiaus rodoma **Withheld**. Keturi atskiri sluoksniai vis
+tiek rodomi. Skaitykite juos.
+
+Jei nė vieno matavimo toje vietoje padaryti nepavyko (pvz., ten nėra skaitinių),
+rodoma **No score** ir „not assessable“, o lentelė kiekvienam matavimui
+paaiškina kodėl.
 
 ---
 
-## Kodėl subalansuota translokacija niekada negaus „strong“
+## Kodėl subalansuota translokacija čia negauna „strong“
 
 Tai aritmetika, ne duomenų trūkumas.
 
@@ -163,17 +218,79 @@ Antra: jei pertvarkyta **tik viena iš dviejų** chromosomos kopijų
 kurios reikalauja aukščiausia to sluoksnio pakopa.
 
 Sudėjus: du sluoksniai iš keturių yra apriboti iš anksto, ir aukščiausia
-juosta pasidaro **nepasiekiama**.
+juosta pasidaro **nepasiekiama** — nebent gylio matavimas klaidingai duotų taškų.
 
 Įrankis tai apskaičiuoja **kiekvienai vietai atskirai** ir parodo laukuose
 `attainable_here` (didžiausias čia pasiekiamas įvertinimas) ir `strong_band`
-(nuo kiek prasideda „strong“). Jei pirmasis mažesnis už antrąjį — „strong“
-čia neįmanomas, kad ir kokie geri būtų duomenys.
+(nuo kiek prasideda „strong“). Puslapyje tai brūkšninis ženklas **reachable here**
+ant įverčio juostos. Jei pirmasis mažesnis už antrąjį — „strong“ čia
+nepasiekiamas, kad ir kokie geri būtų skaitinių duomenys.
+
+Delecijoms ir duplikacijoms šis ženklas nerodomas: jis remiasi prielaida, kad
+medžiagos nepridėta ir neatimta, o delecija ir duplikacija skaitymo gylį keičia.
+Ranka įvestai vietai jis rodomas su sąlyga „jei tai subalansuotas pertvarkymas“.
 
 *Pastaba, 2026-09-30:* nuo pataisymo 25d12bb riba skaičiuojama tik pagal tuos sluoksnius, kuriuos skaičiuoja pats įvertis (tinkami sluoksniai, atėmus neįvertinamus). Jei nurodoma mažiau nei keturi sluoksniai, atsakyme atsiranda laukas `ceiling_counted_layers`, o paaiškinimas juos įvardija. Kai skaičiuojami visi keturi, laukai tokie patys kaip anksčiau.
 
 > Subalansuotą translokaciją vertinkite pagal **keturis atskirus matavimus**,
 > o ne pagal juostą, į kurią pateko bendras skaičius.
+
+---
+
+## Asistentas
+
+Skirtukas **Ask the assistant**. Asistentas — kalbos modelis, kuris duomenis
+pasiekia **tik per tuos pačius įrankius**, kuriais naudojasi puslapis. Kiekvienas
+skaičius jo galutiniame atsakyme patikrinamas su tuo, ką tie įrankiai grąžino:
+patvirtinti skaičiai pabraukti žaliai, o skaičius, kurio negrąžino joks įrankis,
+pažymimas raudonai. Tikrinami tik skaičiai, ne žodžiai: modelis gali pavadinti
+„strong“ tai, ką įrankis įvertino „weak“. Todėl skaitykite ir įrankių rezultatus.
+
+1. **Model** — pasirinkite modelį:
+   - **On this computer (Ollama)** — vietiniai modeliai (pvz., `qwen2.5:7b`).
+     Klausimas ir duomenys kompiuterio nepalieka (išskyrus genų paiešką, žr. žemiau).
+   - **Cloud (Anthropic)** — **Claude Sonnet 5** ir **Claude Opus 5**. Rodomi tik
+     tada, kai yra API raktas. Klausimas ir kiekvienas įrankio atsakymas, kurio
+     modelis paprašo, siunčiami į Anthropic serverius; atsakymo apačioje nurodyta
+     jo kaina.
+2. **Your question** — įrašykite klausimą arba paspauskite vieną iš
+   **Suggested questions** (jie sudaromi pagal paskutinę atvertą vietą).
+3. **Ask** (arba Ctrl+Enter). Vienu metu — vienas klausimas.
+
+Atsakymo kortelėje: atsakymas; patikrinimo eilutė (kiek skaičių patikrinta arba
+kiek nepatvirtinta); kiekvienas modelio padarytas įrankio kvietimas — viena eilutė
+su santrauka, **Raw result** (visas įrankio atsakymas) ir **source** (įrašas
+kvietimų žurnale); apačioje — trukmė, modelio žingsnių skaičius ir debesijos
+modeliui kaina.
+
+### Privatūs duomenys ir debesijos modeliai
+
+Debesijos modeliui privatūs duomenys siunčiami **tik jūsų patvirtinimu ir tik
+tam vienam klausimui**:
+
+- Jei klausimas **mini privatų mėginį** arba **turi vietą, perskaitytą iš privačių
+  duomenų** (pvz., ką tik patikrintą koordinatę), po klausimu atsiranda oranžinis
+  langelis, o **Ask** neaktyvus, kol nepažymite **I have permission to send this
+  private data to Anthropic**. Išsiuntus klausimą žymė nuimama: kitam klausimui
+  leidimą reikia pažymėti iš naujo.
+- Nepažymėjus modelis privačių etikečių **net nemato**: jam pasiūlomos tik
+  testinių duomenų etiketės, o įrankio kvietimas su privačia etikete, su iš
+  privataus failo įkelto rinkinio identifikatoriumi arba su tiesiogiai nurodytu
+  failo keliu atmetamas dar prieš jį vykdant (atsakyme — **Blocked to protect
+  private data**). Serveris klausimo
+  tekstą tikrina dar kartą, todėl, net ir apėjus puslapį, toks klausimas
+  neišsiunčiamas.
+- Pažymėjus atsakyme parašoma, kas išsiųsta: **Sent to Anthropic with your
+  permission: tool results for …**. Leidimas galioja visam klausimui, ne vienam
+  mėginiui: tam klausimui modeliui pasiūlomos **visos** privačios etiketės, ne tik
+  paminėtos klausime.
+
+Siųskite privačius duomenis tik turėdami duomenų savininko leidimą. Vietiniams
+modeliams šie apribojimai netaikomi — duomenys lieka kompiuteryje.
+
+**Genų paieška** (`gene_at_locus`) siunčia chromosomą ir poziciją į Ensembl
+(`rest.ensembl.org`) — ir naudojant vietinį modelį. Tokie kvietimai pažymėti
+**uses internet**. Privačioms vietoms ją naudokite tik tada, kai tai leidžiama.
 
 ---
 

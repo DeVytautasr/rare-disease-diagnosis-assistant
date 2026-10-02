@@ -115,6 +115,8 @@ def main():
         f.write("\n[candidates]\n")
         for label in BUNDLE:
             f.write(f"{label} = {label}.bcf\n")
+        # public simulated data: shown as test data, not as private data
+        f.write("\n[test_data]\nlabels = " + ", ".join(BUNDLE) + "\n")
 
     with open(os.path.join(out, "DEMO.md"), "w") as f:
         f.write("# Demo bundle\n\nStart with:\n\n"

@@ -1,0 +1,194 @@
+{
+ "url": "http://127.0.0.1:8765/",
+ "cloud_questions_sent": true,
+ "facts": {
+  "default_sample": "IMP01",
+  "default_sample_kind": "Test data",
+  "kinds": {
+   "datasets": {
+    "NA12878.chr20_chr21": "public",
+    "IMP01": "public",
+    "IMP02": "public",
+    "IMP03": "public",
+    "IMP04": "public",
+    "IMP05": "public",
+    "IMP06": "public",
+    "IMP07": "public",
+    "IMP08": "public",
+    "IMP09": "public",
+    "IMP10": "public",
+    "IMP11": "public",
+    "IMP12": "public",
+    "PRIVTEST": "private"
+   },
+   "candidates": {
+    "IMP01": "public",
+    "IMP02": "public",
+    "IMP03": "public",
+    "IMP04": "public",
+    "IMP05": "public",
+    "IMP06": "public",
+    "IMP07": "public",
+    "IMP08": "public",
+    "IMP09": "public",
+    "IMP10": "public",
+    "IMP11": "public",
+    "IMP12": "public",
+    "background": "public",
+    "PRIVTEST": "private"
+   }
+  },
+  "loaded_at_start": [
+   "IMP01"
+  ],
+  "funnel_counts": [
+   "896",
+   "515",
+   "157",
+   "29",
+   "29",
+   "29"
+  ],
+  "candidates_title": "29 candidates to review",
+  "row": "chr20:200,000 | chr21:14,100,001 | BND | 25 | 6 | PASS | Review",
+  "evidence_title": "chr20:200,000 \u2194 chr21:14,100,001",
+  "scores": [
+   "40\nmoderate\ncombined score of 100\nsource",
+   "40\nmoderate\ncombined score of 100\nsource"
+  ],
+  "notes": [
+   "For a balanced translocation, at most 57.5 is reachable here, below the 70 where \u201cstrong\u201d begins: read depth does not change when no DNA is gained or lost, and the intact copy caps the share of discordant pairs. Only a depth error could lift the score above it.",
+   "For a balanced translocation, at most 57.5 is reachable here, below the 70 where \u201cstrong\u201d begins: read depth does not change when no DNA is gained or lost, and the intact copy caps the share of discordant pairs. Only a depth error could lift the score above it."
+  ],
+  "igv_seconds": 136,
+  "igv_images": 4,
+  "igv_failed_panels": 0,
+  "hand_title": "chr20:33,700,000",
+  "hand_score": "22.5\nweak\ncombined score of 100\nsource",
+  "local_models": [
+   "qwen2.5:7b",
+   "qwen3.5:4b"
+  ],
+  "cloud_models": [
+   "claude-sonnet-5",
+   "claude-opus-5"
+  ],
+  "local_verdict": [
+   "Malformed tool call: breakpoint_evidence_summary \u2014 arguments failed the tool's schema: 1 validation error for call[breakpoint_evidence_summary]",
+   "22 numbers checked \u2014 every one was returned by a tool in this answer. The check covers numbers only, not words such as \u201cstrong\u201d."
+  ],
+  "local_tool_calls": 7,
+  "refusal": "Not sent: this question contains a position read from private data (PRIVTEST). A cloud model would receive it. Confirm that you have permission to send it, or ask a model on this computer.",
+  "cloud_public_meta": "26.7 s \u00b7 4 model turns \u00b7 2,283 tokens written \u00b7 cost $0.059",
+  "cloud_public_lines": [
+   "1 of 26 numbers were not returned by any tool (marked in red): 0.4.",
+   "Cloud model without permission for private data: it was offered test data only."
+  ],
+  "cloud_private_lines": [
+   "4 of 39 numbers were not returned by any tool (marked in red): 11, 0.7, 0.3, 0.3.",
+   "Sent to Anthropic with your permission: tool results for PRIVTEST."
+  ],
+  "consent_ticked_after_sending": false,
+  "limits_headings": [
+   "It checks positions. It does not search for them.",
+   "On a controlled test it found 16 of 24 known breakpoints.",
+   "14 of the 16 cut-offs are judgement calls, not calibrated values.",
+   "The read-depth measurement is unreliable at this coverage.",
+   "A balanced translocation cannot score \"strong\" here unless the depth measurement errs.",
+   "\"Quality limited\" means no score was calculated."
+  ]
+ },
+ "checks": [
+  {
+   "check": "the page opens on a test-data sample",
+   "ok": true,
+   "detail": "{'default_sample': 'IMP01', 'default_sample_kind': 'Test data'}"
+  },
+  {
+   "check": "PRIVTEST (registered explicitly) is reported as private",
+   "ok": true,
+   "detail": "{'datasets': {'NA12878.chr20_chr21': 'public', 'IMP01': 'public', 'IMP02': 'public', 'IMP03': 'public', 'IMP04': 'public', 'IMP05': 'public', 'IMP06': 'public', 'IMP07': 'public', 'IMP08': 'public', 'IMP09': 'public', 'IMP10': 'public', 'IMP11': 'public', 'IMP12': 'public', 'PRIVTEST': 'private'}, '"
+  },
+  {
+   "check": "nothing private was loaded at start",
+   "ok": true,
+   "detail": "['IMP01']"
+  },
+  {
+   "check": "a candidate row containing 14,100,001 is listed",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "both ends were measured",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "while IGV draws, the other IGV button is disabled",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "IGV produced four images",
+   "ok": true,
+   "detail": "IGV images at chr20:200,000\nreads from IMP01, 134 s source\nDiscordant pairs view, chr20:198500-201500\nSoft clips view, chr20:199850-200150\nSplit reads view, chr20:198500-201500\nRead depth view, chr20:197000-203000\n\nClick an image to open it larger. The assistant never sees these pictures; only you d"
+  },
+  {
+   "check": "a private sample is marked private next to its name",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "the local model answered through tool calls",
+   "ok": true,
+   "detail": "[\"Malformed tool call: breakpoint_evidence_summary \u2014 arguments failed the tool's schema: 1 validation error for call[breakpoint_evidence_summary]\", '22 numbers checked \u2014 every one was returned by a tool in this answer. The check covers numbers only, not words such as \u201cstrong\u201d.']"
+  },
+  {
+   "check": "naming a private sample shows the permission box",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "... and the Ask button stays off until it is ticked",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "a position read from private data also needs permission",
+   "ok": true,
+   "detail": "This question contains a position read from PRIVTEST, which is private data. A cloud model would receive the question and the positions, read counts and gene names its tools return. Send them only with permission from the data owner. \nI have permission to send this private data to Anthropic"
+  },
+  {
+   "check": "posted without permission, it is refused before any model runs",
+   "ok": true,
+   "detail": "Not sent: this question contains a position read from private data (PRIVTEST). A cloud model would receive it. Confirm that you have permission to send it, or ask a model on this computer."
+  },
+  {
+   "check": "a test-data question needs no permission",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "the cloud model answered a test-data question",
+   "ok": true,
+   "detail": "['1 of 26 numbers were not returned by any tool (marked in red): 0.4.', 'Cloud model without permission for private data: it was offered test data only.']"
+  },
+  {
+   "check": "with permission, the answer says what was sent",
+   "ok": true,
+   "detail": "['4 of 39 numbers were not returned by any tool (marked in red): 11, 0.7, 0.3, 0.3.', 'Sent to Anthropic with your permission: tool results for PRIVTEST.']"
+  },
+  {
+   "check": "once the question is sent, the permission box is unticked again",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "no script error on the page",
+   "ok": true,
+   "detail": "[]"
+  }
+ ],
+ "page_errors": []
+}

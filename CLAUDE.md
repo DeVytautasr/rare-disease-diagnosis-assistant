@@ -48,7 +48,7 @@ stage folder:
 - `results/` for session reports, validation write-ups, and audits
 - `server.py` and `candidate_server.py` — the stage's two MCP entrypoints
   (11 evidence tools and 4 candidate-set tools)
-- `ui.py` — the local browser front end, which runs both servers in-process
+- `ui.py` — the local browser front end, which runs both servers in-process; the page it serves is `ui_page.html` (the previous page stays in `ui.py`, at `/classic`)
 - `chat.py` — the optional model panel (ollama or the Anthropic API)
 - `config.py` — path resolution: flag > env var > config file > default
 - `score_tiers.py` — derives the scoring tiers and band boundaries from

@@ -29,3 +29,10 @@ exclude_template = ~/reference/human.hg38.excl.tsv
 
 [candidates]
 # DEMO = /srv/demo/demo.bcf
+
+# The interface treats every label named above (or with --dataset/--candidates on
+# the command line) as PRIVATE data: marked "Private data" on the page, and never
+# sent to a cloud model without the person's confirmation for that question.
+# List here the labels that are public test data instead.
+[test_data]
+# labels = DEMO
