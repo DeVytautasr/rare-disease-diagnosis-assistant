@@ -21,6 +21,9 @@ Config file (stdlib configparser, no dependency):
     data_dir         = ~/public_data
     exclude_template = ~/reference/human.hg38.excl.tsv
     igv              = ~/IGV_2.17.4/igv.sh
+    gene_table       = ~/public_data/annotation/genes_grch38.tsv.gz
+    omim_mim2gene    = ~/public_data/annotation/mim2gene.txt
+    gene_disorders   = ~/public_data/annotation/genes_to_disease.txt
 
     [datasets]
     DEMO = /srv/data/demo.bam
@@ -43,11 +46,18 @@ import os
 
 ENV = {"data_dir": "SV_DATA_DIR",
        "exclude_template": "SV_EXCLUDE_TEMPLATE",
-       "igv": "IGV_PATH"}
+       "igv": "IGV_PATH",
+       "gene_table": "SV_GENE_TABLE",
+       "omim_mim2gene": "SV_OMIM_MIM2GENE",
+       "gene_disorders": "SV_GENE_DISORDERS"}
 
 DEFAULTS = {"data_dir": "~/public_data",
             "exclude_template": "~/reference/human.hg38.excl.tsv",
-            "igv": ""}          # empty: bam_tools' own IGV search runs
+            "igv": "",          # empty: bam_tools' own IGV search runs
+            # Phase 26, all optional (see scripts/make_gene_table.py)
+            "gene_table": "~/public_data/annotation/genes_grch38.tsv.gz",
+            "omim_mim2gene": "~/public_data/annotation/mim2gene.txt",
+            "gene_disorders": "~/public_data/annotation/genes_to_disease.txt"}
 
 CONFIG_CANDIDATES = [os.environ.get("SV_CONFIG", ""),
                      "sv-assistant.conf",

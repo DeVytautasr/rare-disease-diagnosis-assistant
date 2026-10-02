@@ -61,12 +61,15 @@ linux-64 development environment exactly, build hashes included, use
 ## Status
 
 **Stage 1 (`stage1_igv_assistant/`) — SV/breakpoint inspection module.**
-Two MCP servers exposing 15 tools: 11 evidence tools over BAM files
+Three MCP servers exposing 18 tools: 11 evidence tools over BAM files
 (`server.py` — discordant pairs, soft clips, split reads, depth, quality,
 layer applicability, gene lookup, reciprocal check, integrated summary, two
-IGV image tools) and 4 candidate-set tools (`candidate_server.py` — load a
+IGV image tools), 4 candidate-set tools (`candidate_server.py` — load a
 caller's VCF/BCF, filter it down a reported chain, open one junction, compare
-two sets). Validated on synthetic translocation data, HCC1143 (real
+two sets) and, since Phase 26, 3 review tools (`review_server.py` — the reads
+that join the two ends of one junction, a review of every candidate of a sample
+grouped into rearrangements and sorted by supporting reads, and genes from a local
+table with OMIM marks; read counts and coordinates, no score). Validated on synthetic translocation data, HCC1143 (real
 short-read, 2018 pipeline), and GIAB HG002 — cross-technology, on both real
 PacBio HiFi (long-read) and real Illumina 300x (short-read) alignments of the
 same confirmed deletion. See `stage1_igv_assistant/README.md` for tool
@@ -74,20 +77,34 @@ details, `stage1_igv_assistant/results/` for validation write-ups, and
 `TUTORIAL.md` for a guided walkthrough (written for external reviewers).
 
 **Local front end (`stage1_igv_assistant/ui.py`, page `ui_page.html`).** A
-dependency-free browser interface on 127.0.0.1 in three steps. *Candidates*: the
-filter chain, each threshold labelled with its provenance, the count left after
-every step, and an optional comparison that drops junctions also found in another
-sample. *Evidence*: the four layers at both ends of a junction, the combined score
-against the score reachable at that position, hand-entered positions (marked as
-such), and IGV images on request. *Ask the assistant*: below. The combined score
-and every measurement link to the tool call that returned them (the "reachable
-here" mark is worked out by the page from the scoring tiers and the measured
-values; it is not a tool return), and a call log lists every call of the session;
-"Limits" states what the tool cannot tell you. Each sample is marked *Test data*
+dependency-free browser interface on 127.0.0.1 in three steps, rebuilt in Phase 26
+after the supervisor's review so that a clinical geneticist sees no score.
+*Candidates*: the filter chain, each threshold labelled with its provenance and the
+count left after every step (with a plain explanation when a step removes nothing),
+and then every surviving junction reviewed at once: junctions that belong together
+are grouped into rearrangements (the two junctions of a balanced translocation, the
+two ends of a moved segment), each is measured in the reads (read pairs joining its
+two ends and reads split across a junction, both ends at mapping quality 20 or
+more), named from the bands of its breakpoints (`t(19;22)(q13.33;q12.2)`, GRCh38
+850-band ideogram), annotated with the genes at its breakpoints and their OMIM
+marks, and sorted by its supporting reads, with cautions (a centromere, reads
+pointing elsewhere, ambiguous mapping, a junction also called in another sample, a
+reciprocal junction filtered out). *Evidence*: the chromosomes before and after (the
+piece that leaves each chromosome, where it attaches, the derivative chromosomes
+with the coordinates of every piece), the genes, two boxes of the abnormal reads at
+the two ends (normal reads hidden, colour-coded by what each read says about the
+junction), the supporting reads themselves, hand-entered positions (marked as such),
+and IGV images on request. *Ask the assistant*: below. The candidate list, the
+filter chain and each panel of reads link to the tool call that returned their
+counts (*source*), and a call log lists every call of the session;
+"Limits" states what the tool cannot tell you. Genes come from a table on this
+computer (`scripts/make_gene_table.py`, from a GENCODE GTF; OMIM's `mim2gene.txt`
+and the HPO project's `genes_to_disease.txt` are optional), so no position is sent
+anywhere to name them. Each sample is marked *Test data*
 (autodiscovered under the data directory, or declared in the config file's
 `[test_data]`) or *Private data* (registered explicitly), and the page always opens
-on test data. *Note, 2026-10-02:* the page was rebuilt in Phase 24; the previous
-page is served at `/classic`.
+on test data. *Note, 2026-10-03:* the page was rebuilt in Phase 24 and again in
+Phase 26; the previous page, with the combined score, is served at `/classic`.
 
 **Assistant (`stage1_igv_assistant/chat.py`).** A model calls the same tools
 through the same recorder. It is a second consumer, never a second path to the
@@ -95,7 +112,12 @@ data: it receives dataset labels rather than file paths, and any number in its
 final answer that no tool returned is marked on screen (its intermediate text is
 shown unchecked). The page offers the models the local Ollama serves and, when an
 Anthropic API key is present, `claude-sonnet-5` and `claude-opus-5` (the two
-evaluated). A cloud model receives private data only on the person's explicit
+evaluated). Since Phase 26 the assistant is not offered the combined score
+(`breakpoint_evidence_summary`), nor the internet gene lookup once a local gene
+table is set up; asked which candidates are strongest, it is told to call
+`review_candidates` once and to report read counts, genes and cautions (`ui.hidden_from_assistant`,
+`ui.ASSISTANT_RULES`; `chat.SYSTEM_PROMPT`, which the recorded benchmark runs name,
+is unchanged). A cloud model receives private data only on the person's explicit
 confirmation for that question, and only for the private samples the question
 names or whose positions it contains (within 1 kb, in any digit grouping or in
 Mb/kb): the model is offered the test-data labels and those, any call naming

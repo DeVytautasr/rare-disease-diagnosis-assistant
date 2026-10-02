@@ -21,6 +21,15 @@ exclude_template = ~/reference/human.hg38.excl.tsv
 # (env: IGV_PATH)
 # igv = /opt/igv/igv.sh
 
+# Genes, read from files on this computer (nothing is sent anywhere to name them).
+# All optional: without them the page says genes were not looked up.
+# Build the table once from a GENCODE GTF with scripts/make_gene_table.py.
+# Defaults: ~/public_data/annotation/genes_grch38.tsv.gz, .../mim2gene.txt,
+# .../genes_to_disease.txt   (env: SV_GENE_TABLE, SV_OMIM_MIM2GENE, SV_GENE_DISORDERS)
+# gene_table = ~/public_data/annotation/genes_grch38.tsv.gz
+# omim_mim2gene = ~/public_data/annotation/mim2gene.txt
+# gene_disorders = ~/public_data/annotation/genes_to_disease.txt
+
 # Datasets and candidate sets can also be named explicitly. These win over
 # whatever autodiscovery finds under data_dir. The LABEL is all the browser
 # and the chat model ever see — never the path.

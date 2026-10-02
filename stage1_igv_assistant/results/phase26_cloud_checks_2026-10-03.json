@@ -1,0 +1,367 @@
+{
+ "what": "Phase 26 checks made in a cloud session (Claude Code on the web), public and synthetic data only",
+ "definitions": "This session runs in a cloud container: no ~/public_data, no ~/patient_data, no IGV, no Ollama, no API key, and an egress policy that refuses the hosts listed under network. It therefore ran steps 0, 1, 3 (as far as the container allows), 4, 8 and the gates of the Phase 26 prompt; steps 2, 5, 6 and 7 are left for the author's machine (not_run). Times in other records written here are the container's clock, UTC. Paths are written with ~ for the container's home.",
+ "environment": {
+  "python": "3.11.15",
+  "packages": "0.24.0 3.4.6 2.34.2",
+  "install_sh": "bash install.sh exit 0 (the venv built from requirements.txt, then ui --check)",
+  "java": "openjdk version \"21.0.11\" 2026-04-21",
+  "display": null,
+  "network": {
+   "refused_403": [
+    "ftp.ebi.ac.uk",
+    "omim.org",
+    "purl.obolibrary.org",
+    "data.broadinstitute.org",
+    "igv.org",
+    "hgdownload.soe.ucsc.edu",
+    "rest.ensembl.org",
+    "ftp-trace.ncbi.nlm.nih.gov"
+   ],
+   "reachable": [
+    "github.com (HPO release redirect, not downloaded)",
+    "raw.githubusercontent.com",
+    "pypi.org"
+   ]
+  }
+ },
+ "preconditions": {
+  "head": "42a5bfd81ec31bebcd8445278df1aabf3a49707c",
+  "origin_main": "42a5bfd81ec31bebcd8445278df1aabf3a49707c",
+  "tree_clean_before_apply": true,
+  "patch_sha256": "33431446fca88ad8834e2c1ac25906dae0ca4cef57c4d0c5475acc0f928b31e9",
+  "patch_sha256_expected": "33431446fca88ad8834e2c1ac25906dae0ca4cef57c4d0c5475acc0f928b31e9",
+  "guard_protected_before": "exit 0, ALL IDENTICAL"
+ },
+ "patch": {
+  "apply_check_exit": 0,
+  "apply_exit": 0,
+  "files": 17,
+  "added": 4580,
+  "removed": 582,
+  "guard_protected_after_apply": "exit 0, ALL IDENTICAL"
+ },
+ "fixes_on_top_of_the_patch": {
+  "Q1": {
+   "what": "ui_page.html declares LAYER_TEXT again (the four layer names), which digest() still reads",
+   "probe_before": {
+    "page": "<scratchpad>/as_patched/ui_page.html",
+    "page_errors": [
+     "LAYER_TEXT is not defined"
+    ],
+    "console_errors": [],
+    "waiting_box_class": "igv-wait",
+    "waiting_box_display": "block",
+    "answer_rendered": false,
+    "card_text": "The model is working; tool calls run as it asks for them."
+   },
+   "probe_after": {
+    "page": "<repo>/stage1_igv_assistant/ui_page.html",
+    "page_errors": [],
+    "console_errors": [],
+    "waiting_box_class": "spinwait",
+    "waiting_box_display": "flex",
+    "answer_rendered": true,
+    "card_text": "IMP01 shows 25 read pairs.\n\n1 number checked — every one was returned by a tool in this answer. The check covers numbers only, not words such as “strong”.\n2 tool calls the model made\napplicable_layers\nIMP01\nsource\n\nMeasurements that apply to this file: discordant pairs, split reads.\n\nRaw result\njunction_evidence\nIMP01\nsource\n\n25 read pairs and 6 split reads join the two ends (31 reads).\n\nRaw result\n3.2 s · 2 model turns · 100 tokens written"
+   },
+   "interface_test_on_the_as_patched_page": {
+    "passed": 92,
+    "failed": 1,
+    "failed_checks": [
+     "FAILED ✗  every constant the page's script reads is declared in it"
+    ]
+   },
+   "interface_test_on_the_committed_page": {
+    "passed": 93,
+    "failed": 0,
+    "failed_checks": []
+   }
+  },
+  "Q2": {
+   "what": "the assistant's waiting box uses class spinwait (the patch renamed igv-wait to spinwait and missed this use)",
+   "probe_before": {
+    "waiting_box_class": "igv-wait",
+    "waiting_box_display": "block"
+   },
+   "probe_after": {
+    "waiting_box_class": "spinwait",
+    "waiting_box_display": "flex"
+   }
+  }
+ },
+ "junction_review_test": {
+  "passed": 79,
+  "failed": 0,
+  "failed_checks": []
+ },
+ "gene_table_round_trip_on_a_synthetic_gtf": {
+  "what": "scripts/make_gene_table.py on a two-gene GTF written here, then gene_table.load and at()",
+  "table": [
+   "# local gene table for the breakpoint interface, built 2026-10-02",
+   "# source GTF: mini.gtf.gz sha256 ba5c859cc259033cb3e4a27de89ca7ad6535da177bfce12c07f34ae6e0074100",
+   "# columns: chrom start end strand gene_name gene_id gene_type transcript_id exon_starts exon_ends",
+   "chr9\t1000\t9000\t+\tPLUSG\tG1\tprotein_coding\tT1a\t1000,3000,8000\t1100,3200,9000",
+   "chr17\t20000\t30000\t-\tMINUSG\tG2\tprotein_coding\tT2\t20000,25000,29000\t21000,25500,30000"
+  ],
+  "lookups": [
+   "chr9 1050 [('PLUSG', 'exon 1 of 3')]",
+   "chr9 2000 [('PLUSG', 'intron 1 of 2')]",
+   "chr9 8500 [('PLUSG', 'exon 3 of 3')]",
+   "chr17 20500 [('MINUSG', 'exon 3 of 3')]",
+   "chr17 29500 [('MINUSG', 'exon 1 of 3')]",
+   "chr17 23000 [('MINUSG', 'intron 2 of 2')]",
+   "chr17 19000 []"
+  ]
+ },
+ "startup_check": [
+  "tool contract OK: 11 evidence tools + 4 bridge tools + 3 review tools",
+  "scoring tiers: derived from bam_tools source",
+  "datasets: 0   candidate files: 0",
+  "  available tier: MINIMAL",
+  "    [x] MINIMAL   filter chain, four evidence layers, hand-entered coordinates — self-test passed (5 conditions)",
+  "    [ ] FULL      IGV panels — NOT AVAILABLE: igv.sh found by the panel tool's own search: searched ~/IGV_2.17.4/igv.sh, ~/igv/igv.sh, /opt/igv/igv.sh; panels will report the failure instead of rendering",
+  "    [ ] COMPLETE  ollama not reachable; the chat panel will be unavailable",
+  "    [ ] exclude template  ~/reference/human.hg38.excl.tsv  [built-in default]  -- the mask filter step will NOT run and will say so",
+  "    [x] data directory    ~/public_data  [built-in default]",
+  "    [ ] gene table        ~/public_data/annotation/genes_grch38.tsv.gz  [built-in default]  -- optional; genes are then not named",
+  "    [ ] OMIM mim2gene     ~/public_data/annotation/mim2gene.txt  [built-in default]  -- optional",
+  "    [ ] gene disorders    ~/public_data/annotation/genes_to_disease.txt  [built-in default]  -- optional",
+  "    [ ] Anthropic key     absent (API chat unavailable; local chat unaffected)",
+  "    config file: none found (searched SV_CONFIG, ./sv-assistant.conf, ~/.config/sv-assistant/config.ini)",
+  "  http://127.0.0.1:8765",
+  "  CHECK MINIMAL [PASS] tool contract — 11 evidence + 4 bridge + 3 review tools",
+  "  CHECK MINIMAL [PASS] scoring tiers derivable from bam_tools' source",
+  "  CHECK MINIMAL [PASS] four evidence layers at a hand-entered coordinate — summary strength 'moderate'",
+  "  CHECK MINIMAL [PASS] candidate set through load and the filter chain — 2 records loaded, 2 pass filter_pass (the fixture has 2 PASS records)",
+  "  CHECK MINIMAL [PASS] every registered file exists (each BAM indexed) — 0 dataset(s), 0 candidate set(s)",
+  "  CHECK FULL    [FAIL] igv.sh found by the panel tool's own search — searched ~/IGV_2.17.4/igv.sh, ~/igv/igv.sh, /opt/igv/igv.sh",
+  "  CHECK FULL    [FAIL] a display for IGV's window — DISPLAY is not set (WSLg: export DISPLAY=:0; no display: run under xvfb-run)",
+  "  CHECK: MINIMAL tier OK — every condition above was exercised, none assumed.",
+  "  CHECK: no datasets or candidate sets found. The tool will start, but the dropdowns will be empty. Set data_dir, or register files explicitly (--dataset LABEL=PATH / --candidates LABEL=PATH, or the config file)."
+ ],
+ "suites": {
+  "record": "results/suites_2026-10-03_phase26_cloud.json",
+  "summary": {
+   "suites": 28,
+   "passed": 24,
+   "failed": 2,
+   "incomplete": 2,
+   "assertions_held": 846,
+   "assertions_failed": 1,
+   "not_run_lines": 7
+  },
+  "differs_from_phase25": {
+   "test_api_leak.py": {
+    "phase25": {
+     "exit": 0,
+     "held": 3,
+     "failed": 0
+    },
+    "here": {
+     "exit": 1,
+     "held": 0,
+     "failed": 1
+    }
+   },
+   "test_bam_tools.py": {
+    "phase25": {
+     "exit": 0,
+     "held": 241,
+     "failed": 0
+    },
+    "here": {
+     "exit": 1,
+     "held": 184,
+     "failed": 0
+    }
+   },
+   "test_ceiling_echo.py": {
+    "phase25": {
+     "exit": 0,
+     "held": 28,
+     "failed": 0
+    },
+    "here": {
+     "exit": 2,
+     "held": 8,
+     "failed": 0
+    }
+   },
+   "test_ceiling_layers.py": {
+    "phase25": {
+     "exit": 0,
+     "held": 25,
+     "failed": 0
+    },
+    "here": {
+     "exit": 2,
+     "held": 20,
+     "failed": 0
+    }
+   },
+   "test_interface_page.py": {
+    "phase25": {
+     "exit": 0,
+     "held": 90,
+     "failed": 0
+    },
+    "here": {
+     "exit": 0,
+     "held": 93,
+     "failed": 0
+    }
+   },
+   "test_junction_review.py": {
+    "phase25": null,
+    "here": {
+     "exit": 0,
+     "held": 79,
+     "failed": 0
+    }
+   }
+  },
+  "the_two_failing_suites_at_42a5bfd_in_this_container": {
+   "test_api_leak.py": {
+    "last_line": "AssertionError: no datasets registered; cannot test the real payload"
+   },
+   "test_bam_tools.py": {
+    "last_line": "ValueError: could not open alignment file `https://ftp-trace.ncbi.nlm.nih.gov/ReferenceSamples/giab/data/AshkenazimTrio/HG002_NA24385_son/NIST_HiSeq_HG002_Homogeneity-10953946/NHGRI_Illumina300X_AJtrio_novoalign_bams/HG002.GRCh38.300x.bam`"
+   }
+  }
+ },
+ "documentation": {
+  "bold_strings_in_added_lines": 47,
+  "not_labels": {
+   "Visi kandidatai įvertinami iš karto.": "Lithuanian",
+   "etiketės": "Lithuanian",
+   "gabalas, kuris išvyksta": "Lithuanian",
+   "http://127.0.0.1:8765/classic": "a URL",
+   "išskyrus bendrą balą": "Lithuanian",
+   "kelias minutes": "Lithuanian",
+   "pagal palaikančių skaitinių skaičių": "Lithuanian",
+   "prie kurios chromosomos ir kurioje vietoje jis prisijungia": "Lithuanian",
+   "schema": "Lithuanian (matches only inside 'schematic')",
+   "tarp dviejų chromosomų": "Lithuanian",
+   "tik nenormalūs skaitiniai": "Lithuanian",
+   "visus": "Lithuanian"
+  },
+  "labels_on_the_page": [
+   "After the rearrangement",
+   "Both junctions found",
+   "Breakpoints",
+   "Check position",
+   "Complex",
+   "Genes",
+   "Genes at the breakpoints",
+   "How the filters narrow the list",
+   "IGV images at …",
+   "Junction with …",
+   "List them",
+   "Main chromosomes only",
+   "Mark junctions also found in",
+   "Mark junctions also found in … within … bp",
+   "OMIM",
+   "One junction",
+   "Only those that touch a gene",
+   "Read pairs at least",
+   "Read with care",
+   "Reads for …",
+   "Rearrangement",
+   "Review",
+   "Segment moved",
+   "Skip known problem regions",
+   "Split reads at least",
+   "Supporting reads",
+   "The caller's … junctions",
+   "The reads at the two ends",
+   "Type",
+   "What it does to the chromosomes",
+   "What the caller reported",
+   "author's choice",
+   "reference file",
+   "set by the tool"
+  ],
+  "labels_built_from_parts": {
+   "(−23 alone)": "built by renderFunnel as (−N alone)"
+  },
+  "labels_missing": [],
+  "corrected": [
+   "README: 'Every count links to the tool call that returned it' -> the candidate list, the filter chain and each panel of reads link to their call",
+   "README: 'it calls review_candidates once and reports ...' -> it is told to call review_candidates once and to report ...",
+   "NAUDOJIMAS (two places): the model 'answers with one review_candidates call' -> it is told to (ui.ASSISTANT_RULES, rule 10)"
+  ]
+ },
+ "not_run": {
+  "step 2": "the GENCODE and OMIM hosts are refused (403) by this container's egress policy",
+  "step 5": "needs ~/public_data (PRIVTEST = IMP09), IGV with a display, the local model and the API key",
+  "step 6": "needs ~/public_data/sim",
+  "step 7": "needs the patient files, which stay on the author's machine"
+ },
+ "found_in_reading_not_changed": {
+  "what": "two cases noticed in reading junction_tools.scan_end, measured on an invented BAM (two pairs)",
+  "a_read_with_a_supplementary_piece_elsewhere_and_its_mate_at_the_partner": {
+   "setup": "chr1:50,000 <-> chr2:80,000, 3to5; read on chr1 at 49,800 (+) with SA on chr5, mate on chr2 at 80,100 (-)",
+   "read_pairs": 1,
+   "by_orientation": {
+    "3to5": {
+     "read_pairs": 1,
+     "split_reads": 0,
+     "fragments": 1
+    }
+   },
+   "drawn_at_end_a_as": [
+    "split_other"
+   ]
+  },
+  "b_a_deletion_whose_ends_are_800_bp_apart": {
+   "setup": "chr1:100,000 <-> chr1:100,800; one pair spanning it: + read at 99,900, - read at 100,850",
+   "expected": "one read pair, joined 3to5: the + read at the first end, the - read at the second",
+   "read_pairs": 1,
+   "by_orientation": {
+    "5to5": {
+     "read_pairs": 1,
+     "split_reads": 0,
+     "fragments": 1
+    }
+   },
+   "listed_pairs": [
+    {
+     "orientation": "5to5",
+     "a": [
+      100850,
+      "-"
+     ],
+     "b": [
+      100850,
+      "-"
+     ]
+    }
+   ]
+  }
+ },
+ "gates": {
+  "guard_protected": {
+   "exit": 0,
+   "output": "guard: 4 file(s) checked against HEAD (4 protected, also against 25d12bb): ALL IDENTICAL"
+  }
+ },
+ "code_state": {
+  "README.md": "ab9e5a09d2d6dcf9ed5ae0d9b302ea9bcace730ed90935601389160faf1f9a2e",
+  "docs/NAUDOJIMAS.md": "b37d535c564a22bb840ee2ed3685667df5ed72b355aa4cc37e87c2265bbcb94b",
+  "scripts/interface_walkthrough.py": "54829a502a16a3c5e968ed468b433597749cb0abd07070eefcdc3498fce7b4f2",
+  "scripts/make_gene_table.py": "284662afc9fe94f10642095bd2418b56168bd1fcd2ec3b0fe2a1d623d2b45260",
+  "scripts/review_ranking.py": "0ae006d9019a54e46d1d1615b82f6fb6044f0ce1cca58f82ef2e2f2756e68451",
+  "stage1_igv_assistant/chat.py": "3b624f951d435ae75760808af3ea54efa385ab783d13efda3d6164622c135029",
+  "stage1_igv_assistant/config.py": "543198523c967ee16b71e17e3fc1dc53af8a2a8f2ffe658ffaed20886ddc5d10",
+  "stage1_igv_assistant/data/grch38_cytobands.tsv": "d5fc5b6b37e1682cc5e22b494df8449de2a97ea4cfd8148fa5dead5e5b483d12",
+  "stage1_igv_assistant/review_server.py": "1500f2969d597b23b5080fe6a054a6b9c8121a3af9d47f4db19b6082156125a4",
+  "stage1_igv_assistant/tests/review_fixture.py": "6390f090f1a26bba7636d9f330cec78b44b3492290a617825be88cb5281720e8",
+  "stage1_igv_assistant/tests/test_interface_page.py": "cb7803ea12a28444e507ce5e4e73879c6ed4aa33e6588124585a780041e3a311",
+  "stage1_igv_assistant/tests/test_junction_review.py": "c661da3734d308ccce53f572231bda455cf59994b1759d0ae9ed0743b159ef01",
+  "stage1_igv_assistant/tools/gene_table.py": "809d75ab964b5bcec9e72ac9daaa9819c3c0d076c623d94d887163452eb41d94",
+  "stage1_igv_assistant/tools/junction_tools.py": "127dddb359bff18cee1af1074e10cffbecd7e5ae5c3499e4e680cae2f6a8772c",
+  "stage1_igv_assistant/ui.py": "880d4837209810cdf67452adbc7c2433470e97142b3fc01d8416900f04b68d51",
+  "stage1_igv_assistant/ui_page.html": "4a2b729901ca52453d174c5b2a46d45497dda9f48150c0ac7f9d3e746b93e4e2",
+  "sv-assistant.conf.example": "3b3afad2b968283b169a0967c669eddaad6c5c5e2e1f64bceb2b0361ef4204a7"
+ }
+}

@@ -31,10 +31,27 @@ from stage1_igv_assistant import chat as chatmod  # noqa: E402
 
 FAILURES = []
 PATH_RE = re.compile(r"(?<![\w.~:/@-])/[\w.+@%~-]+(?:/[\w.+@%~-]*)+")
-# Every route the demo dry run requires the served page to call (scripts/demo_dry_run.py).
+# Every route the demo dry run of 2026-09-29 required the served page to call
+# (scripts/demo_dry_run.py). The previous page (/classic) still calls them all.
 DRY_RUN_ROUTES = ["/api/bootstrap", "/api/load", "/api/funnel", "/api/candidate", "/api/assess",
                   "/api/call?id=", "/api/igv", "/api/chat_models", "/api/chat"]
+# The page since Phase 26 reviews every candidate at once and shows no score: it
+# calls the review routes instead of /api/candidate and /api/assess.
+PAGE_ROUTES = ["/api/bootstrap", "/api/load", "/api/funnel", "/api/review", "/api/junction", "/api/position",
+               "/api/genes", "/api/call?id=", "/api/igv", "/api/chat_models", "/api/chat"]
 EXTERNAL_RE = re.compile(r"""(?:src|href)\s*=\s*["']?(?:https?:)?//|@import|url\(\s*["']?(?:https?:)?//""", re.I)
+# Upper-case names the page's script reads (indexed, a member taken, or interpolated),
+# and the names it declares (const/let/var, a later name in the same declaration, a
+# function). JSON and URL are the browser's.
+_JS_READ = re.compile(r"\b([A-Z][A-Z0-9_]{2,})(?=\s*\[|\.\w|\})")
+_JS_DECL = re.compile(r"\b(?:const|let|var)\s+([A-Z][A-Z0-9_]{2,})\s*=|,\s*([A-Z][A-Z0-9_]{2,})\s*=(?!=)"
+                      r"|\bfunction\s+([A-Z][A-Z0-9_]{2,})\s*\(")
+_JS_GLOBALS = {"JSON", "URL", "NaN"}
+
+
+def undeclared_constants(script):
+    declared = {n for t in _JS_DECL.findall(script) for n in t if n}
+    return sorted(set(_JS_READ.findall(script)) - declared - _JS_GLOBALS)
 
 
 def check(label, condition, detail=""):
@@ -192,17 +209,31 @@ def run(S, d):
     classic = S.raw("GET", "/classic")
     check("/ serves the new page", 'id="view-cands"' in page and 'id="view-assistant"' in page)
     check("/classic serves the previous page", "local instrument" in classic and 'id="view-cands"' not in classic)
-    missing = [r for r in DRY_RUN_ROUTES if r not in page]
-    check("the new page calls every route the demo dry run requires", not missing, str(missing))
-    check("so does the previous page", not [r for r in DRY_RUN_ROUTES if r not in classic])
+    missing = [r for r in PAGE_ROUTES if r not in page]
+    check("the new page calls every route of the review view", not missing, str(missing))
+    check("the previous page calls every route the demo dry run requires", not [r for r in DRY_RUN_ROUTES if r not in classic])
+    check("the new page no longer asks for the combined score", "/api/assess" not in page)
     check("control: the route check fails on a page missing one route",
-          [r for r in DRY_RUN_ROUTES if r not in page.replace("/api/igv", "/api/xxx")] == ["/api/igv"])
+          [r for r in PAGE_ROUTES if r not in page.replace("/api/igv", "/api/xxx")] == ["/api/igv"])
     check("the new page carries no absolute path", not PATH_RE.findall(page.replace("/api/", "").replace("/img/", "")),
           str(PATH_RE.findall(page)[:3]))
+    # The page links genes to OMIM entries (<a href>, opened only when clicked); those
+    # anchors are navigation, not something the page loads, so they are set aside here.
+    loaded = re.sub(r"<a\b[^>]*>", "", page)
     check("the new page loads nothing from the network (no external script, style or font)",
-          not EXTERNAL_RE.search(page), str(EXTERNAL_RE.findall(page)[:3]))
+          not EXTERNAL_RE.search(loaded), str(EXTERNAL_RE.findall(loaded)[:3]))
     check("control: the network detector fires on an external script",
           bool(EXTERNAL_RE.search(page + '<script src="https://cdn.example/x.js"></script>')))
+    # A name the script reads but no longer declares throws only when that line runs:
+    # the page as patched in Phase 26 had dropped LAYER_TEXT, which the one-line
+    # summary of an applicable_layers call still reads, so an answer whose model had
+    # called that tool never appeared (the card kept its "working" spinner).
+    script = page.split("<script>", 1)[-1]
+    check("every constant the page's script reads is declared in it", not undeclared_constants(script),
+          str(undeclared_constants(script)))
+    check("control: ... the check fires when a declaration is missing",
+          "READ_KIND" in undeclared_constants(script.replace("const READ_KIND", "const READ_KIND_GONE"))
+          and "READ_KIND" not in undeclared_constants(script))
     ui.PAGE_FILE = os.path.join(d, "no-such-page.html")
     check("if the page file is missing, / falls back to the previous page", "local instrument" in S.raw("GET", "/"))
     ui.PAGE_FILE = os.path.join(os.path.dirname(os.path.abspath(ui.__file__)), "ui_page.html")
@@ -288,8 +319,8 @@ def run(S, d):
     del vcf_tools._SETS[disguised]          # keep the rest of the test about PUB and PRIV only
 
     n_before = len(ui.RECORDER.calls)
-    SCRIPT[:] = [("breakpoint_evidence_summary", {"dataset": "PRIV", "chromosome": "chr1", "position": 10000}),
-                 ("breakpoint_evidence_summary", {"dataset": "PUB", "chromosome": "chr1", "position": 10000}),
+    SCRIPT[:] = [("discordant_pairs", {"dataset": "PRIV", "chromosome": "chr1", "position": 10000}),
+                 ("discordant_pairs", {"dataset": "PUB", "chromosome": "chr1", "position": 10000}),
                  ("list_candidates", {"set_id": priv_set})]
     SEEN.clear()
     r = S.json("POST", "/api/chat", {"model": "claude-sonnet-5", "message": "How strong is the evidence?"})
@@ -300,7 +331,7 @@ def run(S, d):
     check("without permission the model is not even offered the private label",
           "PUB" in SEEN.get("offered", set()) and "PRIV" not in SEEN.get("offered", set()), str(SEEN.get("offered")))
     check("without permission a call naming a private dataset is blocked and never runs",
-          ("breakpoint_evidence_summary", ("PRIV",)) in blocked and not priv_runs, str(blocked))
+          ("discordant_pairs", ("PRIV",)) in blocked and not priv_runs, str(blocked))
     check("without permission a call passing a private set id is blocked and never runs",
           ("list_candidates", ("PRIV",)) in blocked and not set_runs, str(blocked))
     check("the same question's test-data call runs", len(pub_runs) >= 1)
@@ -317,8 +348,8 @@ def run(S, d):
           (r.get("privacy") or {}).get("private_allowed") is False and "PRIV" not in SEEN.get("offered", set()))
     # permission covers the private samples the question involves, and no others
     SEEN.clear()
-    SCRIPT[:] = [("breakpoint_evidence_summary", {"dataset": "PRIV", "chromosome": "chr1", "position": 10000}),
-                 ("breakpoint_evidence_summary", {"dataset": "PRIV2", "chromosome": "chr1", "position": 10000})]
+    SCRIPT[:] = [("discordant_pairs", {"dataset": "PRIV", "chromosome": "chr1", "position": 10000}),
+                 ("discordant_pairs", {"dataset": "PRIV2", "chromosome": "chr1", "position": 10000})]
     r = S.json("POST", "/api/chat", {"model": "claude-sonnet-5", "allow_private_cloud": True,
                                      "message": "In dataset PRIV, how strong is the evidence?"})
     runs_on = lambda lbl: [c for c in ui.RECORDER.calls[n_before:]
@@ -328,7 +359,7 @@ def run(S, d):
           "PRIV" in SEEN.get("offered", set()) and "PRIV2" not in SEEN.get("offered", set()), str(SEEN.get("offered")))
     check("... its call runs", len(runs_on("PRIV")) >= 1)
     check("... a call on another private sample is blocked and never runs",
-          ("breakpoint_evidence_summary", ("PRIV2",)) in blocked and not runs_on("PRIV2"), str(blocked))
+          ("discordant_pairs", ("PRIV2",)) in blocked and not runs_on("PRIV2"), str(blocked))
     check("... and the answer records what the permission covered",
           (r.get("privacy") or {}).get("permitted") == ["PRIV"], str(r.get("privacy")))
     n_before = len(ui.RECORDER.calls)
@@ -337,10 +368,10 @@ def run(S, d):
                                      "message": "How strong is the evidence?"})
     blocked = {(x["tool"], tuple(x["labels"])) for x in (r.get("privacy") or {}).get("blocked", [])}
     check("permission given for a question that involves no private sample opens none",
-          "PRIV" not in SEEN.get("offered", set()) and ("breakpoint_evidence_summary", ("PRIV",)) in blocked
+          "PRIV" not in SEEN.get("offered", set()) and ("discordant_pairs", ("PRIV",)) in blocked
           and not runs_on("PRIV"), str(blocked))
-    SCRIPT[:] = [("breakpoint_evidence_summary", {"dataset": "PRIV", "chromosome": "chr1", "position": 10000}),
-                 ("breakpoint_evidence_summary", {"dataset": "PUB", "chromosome": "chr1", "position": 10000}),
+    SCRIPT[:] = [("discordant_pairs", {"dataset": "PRIV", "chromosome": "chr1", "position": 10000}),
+                 ("discordant_pairs", {"dataset": "PUB", "chromosome": "chr1", "position": 10000}),
                  ("list_candidates", {"set_id": priv_set})]
 
     n_before = len(ui.RECORDER.calls)
@@ -359,7 +390,7 @@ def run(S, d):
           and bool(ui._private_hits({"bam_paths": [ui.DATASETS["PRIV"]]})))
     check("... and so does a candidate file named by its path", bool(ui._private_hits({"path": ui.CANDIDATE_FILES["PRIV"]})))
     n_before = len(ui.RECORDER.calls)
-    SCRIPT[:] = [("breakpoint_evidence_summary", {"bam_path": ui.DATASETS["PRIV"], "chromosome": "chr1", "position": 10000}),
+    SCRIPT[:] = [("discordant_pairs", {"bam_path": ui.DATASETS["PRIV"], "chromosome": "chr1", "position": 10000}),
                  ("load_candidate_set", {"path": ui.CANDIDATE_FILES["PRIV"], "label": "mine"})]
     r = S.json("POST", "/api/chat", {"model": "claude-sonnet-5", "message": "How strong is the evidence?"})
     ran = [c for c in ui.RECORDER.calls[n_before:]
@@ -369,7 +400,7 @@ def run(S, d):
           f"blocked={(r.get('privacy') or {}).get('blocked')} ran={len(ran)}")
 
     # (ii) an unknown label: the error must not tell the cloud model which private labels exist
-    SCRIPT[:] = [("breakpoint_evidence_summary", {"dataset": "NOPE", "chromosome": "chr1", "position": 10000}),
+    SCRIPT[:] = [("discordant_pairs", {"dataset": "NOPE", "chromosome": "chr1", "position": 10000}),
                  ("load_candidate_set", {"candidates": "NOPE", "label": "x"})]
     r = S.json("POST", "/api/chat", {"model": "claude-sonnet-5", "message": "How strong is the evidence?"})
     told = json.dumps([e.get("result") for e in r.get("events", [])])
@@ -439,13 +470,13 @@ def run(S, d):
     # a file named by its path is refused for every model, not only for a cloud one
     print("\nfile paths")
     n_before = len(ui.RECORDER.calls)
-    SCRIPT[:] = [("breakpoint_evidence_summary", {"bam_path": ui.DATASETS["PUB"], "chromosome": "chr1", "position": 10000})]
+    SCRIPT[:] = [("discordant_pairs", {"bam_path": ui.DATASETS["PUB"], "chromosome": "chr1", "position": 10000})]
     r = S.json("POST", "/api/chat", {"model": "qwen2.5:7b", "message": "How strong is the evidence?"})
     ev = (r.get("events") or [{}])[0]
     check("a model on this computer that names a file by its path is refused, and nothing runs",
           ev.get("rejected") and "file path is not accepted" in json.dumps(ev.get("result"))
           and len(ui.RECORDER.calls) == n_before, str(ev)[:200])
-    SCRIPT[:] = [("breakpoint_evidence_summary", {"dataset": "PUB", "chromosome": "chr1", "position": 10000})]
+    SCRIPT[:] = [("discordant_pairs", {"dataset": "PUB", "chromosome": "chr1", "position": 10000})]
     r = S.json("POST", "/api/chat", {"model": "qwen2.5:7b", "message": "How strong is the evidence?"})
     check("control: the same call by label runs", len(ui.RECORDER.calls) > n_before)
     # mask_path is a path argument too: the schemas offer exclude_masked in its place,

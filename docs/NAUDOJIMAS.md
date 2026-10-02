@@ -80,7 +80,7 @@ pozicijų net negauna). Taip privataus mėginio pozicijos nepamatomos atsitiktin
 pvz., sąraše **Sample** paspaudus rodyklės klavišą. Kada privatūs duomenys gali
 palikti kompiuterį, aprašyta skyriuje „Asistentas“.
 
-Viena išimtis — palyginimas su kitu mėginiu (**Drop junctions also found in**).
+Viena išimtis — palyginimas su kitu mėginiu (**Mark junctions also found in**).
 Jam serveris sudaro abiejų mėginių filtruotus sąrašus; puslapis ir tada gauna tik
 skaičius, bet tie du kvietimai su pozicijomis lieka žurnale **Call log**. Be to,
 jei palyginimui pasirinktas privatus mėginys, kito mėginio eilutės su žyme
@@ -95,94 +95,131 @@ bandymo su tikrais duomenimis.
 ### 1. Candidates — kandidatų sąrašas
 
 Sąraše **Sample** pasirinkite mėginį. Įrankis įkelia jo kandidatų rinkinį (sąraše
-matomos **etiketės**, ne failų keliai) ir iš karto pritaiko filtrus. Pakeitus bet
-kurį filtrą, sąrašas perskaičiuojamas iškart — mygtuko spausti nereikia.
+matomos **etiketės**, ne failų keliai) ir iš karto pritaiko filtrus. Pagal
+nutylėjimą rodomos jungtys **tarp dviejų chromosomų** (BND). Pakeitus bet kurį
+filtrą, sąrašas perskaičiuojamas iškart — mygtuko spausti nereikia.
 
 | Filtras | Ką daro |
 |---|---|
-| **Type** | palieka vieno tipo jungtis: translokacijas (BND), delecijas (DEL), duplikacijas (DUP), inversijas (INV) — arba visas |
+| **Type** | palieka vieno tipo jungtis: tarp dviejų chromosomų (BND), delecijas (DEL), duplikacijas (DUP), inversijas (INV) — arba visas |
 | **Caller marked PASS** | tik tas, kurias `delly` pažymėjo PASS |
-| **Read pairs at least** | mažiausias porinių skaitinių skaičius (PE) |
-| **Split reads at least** | mažiausias perskeltų skaitinių skaičius (SR) |
+| **Read pairs at least** | mažiausias porinių skaitinių skaičius (PE), kurį pranešė `delly` |
+| **Split reads at least** | mažiausias perskeltų skaitinių skaičius (SR), kurį pranešė `delly` |
 | **Main chromosomes only** | abu jungties galai pagrindinėse chromosomose |
 | **Skip known problem regions** | atmeta jungtis, kurių galas patenka į delly neįtraukiamų sričių šabloną |
-| **Drop junctions also found in … within … bp** | atmeta jungtis, kurios yra ir kitame pasirinktame mėginyje (abu galai ne toliau nei nurodytas bazių skaičius) |
+| **Mark junctions also found in … within … bp** | pažymi jungtis, kurios yra ir kitame mėginyje (abu galai ne toliau nei nurodyta) |
+| **Only those that touch a gene** | palieka tik persitvarkymus, kurių lūžis yra gene arba perkeltame segmente yra genas (reikia genų lentelės) |
 
-**How the filters narrow the list** rodo, kiek jungčių lieka po kiekvieno žingsnio.
-Prie žingsnio pažymėta, iš kur jo riba: **set by the tool** (nustatyta įrankio),
-**author's choice** (autoriaus sprendimas) arba **reference file** (iš
-referencinio failo). Dešinėje — kiek liko; po skaičiumi — kiek šis žingsnis
-pašalino grandinėje (pvz., **−11**) ir, jei skiriasi, kiek būtų pašalinęs vienas
-(pvz., **(−23 alone)**). **no change** reiškia, kad grandinėje jis nieko nepašalino.
+**Visi kandidatai įvertinami iš karto.** Įrankis sujungia jungtis, kurios priklauso
+tam pačiam persitvarkymui (pvz., abi subalansuotos translokacijos jungtys), kiekvienam
+suskaičiuoja palaikančius skaitinius tiesiai iš BAM failo, įvardija genus lūžių
+vietose ir surikiuoja sąrašą **pagal palaikančių skaitinių skaičių**. Balų nėra.
 
-Šie du skaičiai dažnai skiriasi, ir tai svarbu. Jei filtras grandinėje nieko
-nepašalino, bet vienas būtų pašalinęs 300, jis **nėra nenaudingas** — tiesiog
-ankstesni filtrai tuos įrašus jau buvo pašalinę. Eilė turi reikšmės: tie patys
-filtrai kita tvarka duoda tuos pačius galutinius kandidatus, bet kitokius
-tarpinius skaičius. Juostų ilgiai — logaritminiu masteliu.
+Lentelės stulpeliai:
 
-**Jei žingsnis neatliktas**, virš juostų atsiras raudonas užrašas su paaiškinimu.
-Dažniausia priežastis — nerastas delly neįtraukiamų sričių šablonas. Tada
-grandinė veikia, tik be to vieno žingsnio, ir apie tai pasako aiškiai.
+| Stulpelis | Kas jame |
+|---|---|
+| **Rearrangement** | pavadinimas ISCN principu, pvz., `t(19;22)(q13.33;q12.2)` (juostos apskaičiuotos iš koordinačių pagal GRCh38), ir pobūdis: **Both junctions found** (rastos abi subalansuotos translokacijos jungtys), **One junction**, **Segment moved** (perkeltas segmentas), **Complex** |
+| **Breakpoints** | lūžių koordinatės abiejose chromosomose |
+| **Genes at the breakpoints** | genai lūžių vietose (kuris intronas ar egzonas), **OMIM** žymė, jei genas susijęs su liga; jei geno nėra — artimiausias |
+| **Supporting reads** | kiek skirtingų skaitinių palaiko persitvarkymą: porinių skaitinių, kurių vienas galas prie vieno lūžio, kitas — prie kito, ir perskeltų skaitinių, kurių dalys prie abiejų lūžių; abu galai patikimai nusėdę (MAPQ ≥ 20) |
+| **Read with care** | perspėjimai: lūžis centromeroje ar heterochromatine, daug skaitinių rodo į kitas vietas, daug dviprasmiškai nusėdusių skaitinių, jungtis yra ir kitame mėginyje, abipusė jungtis faile yra, bet atmesta filtrų |
 
-Žemiau — **… candidates to review**, likusios jungtys. Abu jungties galai rodomi
-genomo tvarka (**One end**, **Other end**), toliau tipas, porinių ir perskeltų
-skaitinių skaičius ir `delly` žymė. Kai pasirinktas kitas mėginys, jame rastos
-jungtys paslepiamos; pažymėjus **Also show the … found in …**, jos rodomos
-pilkai su žyme „also in …“. **Comparison details** — abiejų rinkinių palyginimo
-skaičiai: kiek jungčių yra abiejuose ir kiek tik viename. Naudinga ir tada, kai
-tas pats mėginys apdorotas skirtingais nustatymais — matyti, ką pakeitimas
-realiai pridėjo arba atėmė.
+Eilutę paspaudus (arba **Review**) atidaromas 2 žingsnis. Po lentele —
+**The caller's … junctions**: tos pačios jungtys taip, kaip jas pranešė `delly`.
 
-### 2. Evidence — įrodymai vienoje jungtyje
+**How the filters narrow the list** (po sąrašu) rodo, kiek jungčių lieka po
+kiekvieno žingsnio, iš kur kiekvieno žingsnio riba (**set by the tool**,
+**author's choice**, **reference file**) ir kiek jis pašalino grandinėje ir vienas
+(**(−23 alone)**). Kai **Main chromosomes only** ar **Skip known problem regions**
+nieko nepašalina, puslapis žodžiais paaiškina kodėl: faile tokių jungčių nėra arba
+jas jau pašalino ankstesni žingsniai. `delly`, paleistas su tuo pačiu neįtraukiamų
+sričių šablonu, tokias jungtis praleidžia pats.
 
-Kandidato eilutėje paspauskite **Review**. Įrankis paleidžia keturis įrodymų
-sluoksnius abiejuose jungties galuose ir atidaro skirtuką **Evidence**:
+### 2. Evidence — vienas persitvarkymas
 
-- viršuje — jungtis (pvz., `chr20:200,000 ↔ chr21:14,100,001`), ką apie ją
-  pranešė `delly`, ir iš kurio mėginio skaitiniai;
-- schema — kur abu galai yra chromosomose;
-- po skydelį kiekvienam galui: **bendras įvertis** iš 100 su juosta, ženklas
-  **reachable here** (žr. „Kodėl subalansuota translokacija čia negauna
-  „strong““) ir lentelė — kiekvienas matavimas, jo reikšmė ir taškai;
-- **Show IGV images** — IGV paveikslėliai (žr. žemiau);
-- **Ask the assistant about this position** — pereina į 3 žingsnį su paruoštu
-  klausimu apie šią vietą.
+Svarbiausia dalis — **schema** (**What it does to the chromosomes**):
 
-Prie bendro įverčio, prie kiekvieno matavimo ir prie kokybės eilutės yra nuoroda
-**source**. Ji atidaro tikslų įrankio kvietimą: ką įrankis gavo ir ką grąžino.
-Ženklas **reachable here** tokios nuorodos neturi: tai ne įrankio atsakymas, o
-puslapio išvestas dydis (žr. „Keturi įrodymų sluoksniai“).
+- viršuje — abi chromosomos su juostomis ir centromera, lūžio vieta (koordinatė,
+  juosta, genas);
+- spalvotu kontūru pažymėtas **gabalas, kuris išvyksta** iš kiekvienos chromosomos,
+  o rodyklė rodo, **prie kurios chromosomos ir kurioje vietoje jis prisijungia**;
+- apačioje (**After the rearrangement**) — chromosomos, kurias sukuria kiekviena
+  jungtis (pvz., `der(19)`), su kiekvieno gabalo pradžios ir pabaigos
+  koordinatėmis.
+
+Toliau:
+
+- **Genes** — genai kiekviename lūžyje (egzonas ar intronas pagal kanoninį
+  transkriptą, grandinė, OMIM numeriai su nuorodomis), genai tarp dviejų gretimų
+  jungčių ir kiek genų (ir kiek su liga susijusių) yra išvykstančiame gabale;
+  **List them** juos išvardija. Genai skaitomi iš lentelės šiame kompiuteryje —
+  pozicijos niekur nesiunčiamos.
+- **The reads at the two ends** — dvi dėžutės (kaip du IGV langai): kairėje
+  viena chromosoma, dešinėje kita. Rodomi **tik nenormalūs skaitiniai**; normalūs
+  paslėpti (jų skaičius parašytas). Spalva rodo, ką skaitinys sako apie jungtį:
+  viena spalva — skaitiniai, jungiantys abu galus taip, kaip viena jungtis, kita —
+  kaip kita jungtis; pilki — mate kitoje chromosomoje; geltoni — mate nenusėdęs;
+  žali — neteisinga porų orientacija; raudoni — per didelis atstumas tarp porų;
+  tuščiaviduriai (balti) — dviprasmiškai nusėdę (MAPQ < 20), jie nupiešti, bet
+  neskaičiuojami. Punktyrinė linija — lūžis; viršuje genai. Užvedus pelę ant
+  skaitinio matyti jo vardas, vieta, CIGAR ir kur jo kita dalis.
+- **Reads for …** — patys skaitiniai lentelėmis (vardas, pozicija, grandinė,
+  CIGAR, kokybė abiejuose galuose).
+- **What the caller reported** — `delly` įrašai ir jų PE/SR palyginti su čia
+  suskaičiuotais skaitiniais.
+- **IGV images at …** — IGV paveikslėliai (žr. žemiau); nebūtini.
 
 **Bet kurią kitą vietą** galima patikrinti dešinėje viršuje: pasirinkite, kurio
 mėginio skaitinius naudoti (**Reads from**), įrašykite vietą (pvz.,
-`chr20:33,700,000`) ir paspauskite **Check position**. Vieta **nebūtinai turi būti
-iš kandidatų rinkinio**. Tada puslapis aiškiai parašo **Typed in by hand**: jos
-nepatvirtino joks kandidatų rinkinys. Tai apsauga nuo savęs apgaudinėjimo —
-radus „įrodymų“ ranka įvestoje vietoje, tai dar nereiškia, kad ten yra tikras
-lūžis.
+`chr20:33,700,000`) ir paspauskite **Check position**. Puslapis parodo, į kurias
+chromosomas rodo tos vietos skaitiniai, kur jie nukirpti ir kokie genai ten yra.
+Perskelti skaitiniai duoda tikslias partnerio pozicijas: mygtukas **Junction with …**
+atidaro tą vietą kaip jungtį su abiem galais. Puslapis aiškiai parašo **Typed in by
+hand**: jos nepatvirtino joks kandidatų rinkinys.
+
+### Genų lentelė (vieną kartą)
+
+Genai rodomi, kai sukurta vietinė genų lentelė:
+
+```bash
+mkdir -p ~/public_data/annotation && cd ~/public_data/annotation
+wget https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_46/gencode.v46.basic.annotation.gtf.gz
+python3 ~/rare-disease-diagnosis-assistant/scripts/make_gene_table.py gencode.v46.basic.annotation.gtf.gz genes_grch38.tsv.gz
+wget https://omim.org/static/omim/data/mim2gene.txt                         # nebūtina: OMIM genų numeriai
+wget -O genes_to_disease.txt https://purl.obolibrary.org/obo/hp/hpoa/genes_to_disease.txt   # nebūtina: genas → liga
+```
+
+Numatytosios vietos: `~/public_data/annotation/genes_grch38.tsv.gz`,
+`mim2gene.txt`, `genes_to_disease.txt` (arba konfigūracijos failo `[paths]`
+raktai `gene_table`, `omim_mim2gene`, `gene_disorders`). Paleidimo eilutėse
+matyti, ar lentelė rasta. Be lentelės įrankis veikia, tik genų neįvardija.
 
 ### IGV paveikslėliai
 
-**Show IGV images** paleidžia IGV, kuris nupiešia po paveikslėlį kiekvienam
-matavimui: porinių skaitinių, nukirptų skaitinių, perskeltų skaitinių ir
-skaitymo gylio vaizdą. Paveikslėliai atsiranda per visą plotį po skydeliais;
-paspaudus paveikslėlis padidinamas. Tai trunka **kelias minutes**, nes IGV
-kiekvienam paveikslėliui iš interneto įkelia genomą ir genų takelį. Vienu metu
-piešiamas vienas rinkinys: kol jis piešiamas, kiti IGV mygtukai neaktyvūs.
-Paveikslėlius mato tik žmogus — asistentas jų nemato.
-
-Privatiems duomenims prie IGV paveikslėlių parašyta, kad IGV prašo
-`igv.org` tos srities referencinės sekos: srities koordinatės palieka kompiuterį,
-skaitiniai — ne.
+**IGV images at …** paleidžia IGV, kuris nupiešia po paveikslėlį kiekvienam
+matavimui. Tai trunka **kelias minutes**. IGV rodo **visus** skaitinius, ir
+normalius; aukščiau esančios dvi dėžutės rodo tik nenormalius. Paveikslėlius mato
+tik žmogus — asistentas jų nemato. Privatiems duomenims IGV prašo `igv.org` tos
+srities referencinės sekos: srities koordinatės palieka kompiuterį, skaitiniai —
+ne.
 
 ### 3. Ask the assistant
 
-Žr. skyrių „Asistentas“.
+Žr. skyrių „Asistentas“. Į klausimą „Which rearrangements in SAMPLE have the most
+read support, and which genes do they break?“ asistentui nurodyta atsakyti vienu
+įrankio kvietimu (`review_candidates`), kuris įvertina visus kandidatus.
+
+*Pastaba, 2026-10-03 (Phase 26):* po susitikimo su vadove balų sistema iš puslapio
+pašalinta; skyriai apie balus žemiau aprašo ankstesnį puslapį
+(**http://127.0.0.1:8765/classic**).
 
 ---
 
 ## Keturi įrodymų sluoksniai
+
+*Šis ir du kiti skyriai su balais aprašo ankstesnį puslapį (`/classic`). Naujame
+puslapyje balų nėra.*
 
 | Sluoksnis | Ką skaičiuoja | Ką reiškia |
 |---|---|---|
@@ -263,12 +300,20 @@ Skirtukas **Ask the assistant**. Asistentas — kalbos modelis, kuris duomenis
 pasiekia **tik per tuos pačius įrankius**, kuriais naudojasi puslapis. Kiekvienas
 skaičius jo galutiniame atsakyme patikrinamas su tuo, ką tie įrankiai grąžino:
 patvirtinti skaičiai pabraukti žaliai, o skaičius, kurio negrąžino joks įrankis,
-pažymimas raudonai. Tikrinami tik skaičiai, ne žodžiai: modelis gali pavadinti
-„strong“ tai, ką įrankis įvertino „weak“. Todėl skaitykite ir įrankių rezultatus.
+pažymimas raudonai. Tikrinami tik skaičiai, ne žodžiai: tokius žodžius kaip
+„stipriausias“ modelis renkasi pats. Todėl skaitykite ir įrankių rezultatus.
+
+Asistentui siūlomi tie patys įrankiai kaip puslapiui, **išskyrus bendrą balą**
+(`breakpoint_evidence_summary`): įrodymus jis aprašo skaitinių skaičiais. Į klausimą
+„kurie kandidatai stipriausi“ jam nurodyta atsakyti vienu kvietimu `review_candidates`, kuris
+įvertina visus kandidatus ir grąžina juos surikiuotus. Genus jis įvardija įrankiu
+`genes_near`, kuris skaito vietinę genų lentelę; kai lentelė sukurta, internetinė
+genų paieška (Ensembl) jam nebesiūloma.
 
 1. **Model** — pasirinkite modelį:
    - **On this computer (Ollama)** — vietiniai modeliai (pvz., `qwen2.5:7b`).
-     Klausimas ir duomenys kompiuterio nepalieka (išskyrus genų paiešką, žr. žemiau).
+     Klausimas ir duomenys kompiuterio nepalieka (išskyrus IGV ir, jei genų lentelė
+     nesukurta, internetinę genų paiešką).
    - **Cloud (Anthropic)** — **Claude Sonnet 5** ir **Claude Opus 5**. Rodomi tik
      tada, kai yra API raktas. Klausimas ir kiekvienas įrankio atsakymas, kurio
      modelis paprašo, siunčiami į Anthropic serverius; atsakymo apačioje nurodyta

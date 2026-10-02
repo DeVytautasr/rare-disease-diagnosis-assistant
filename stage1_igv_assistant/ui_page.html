@@ -9,12 +9,14 @@
   --ink:#1E1A2E; --muted:#67627A; --faint:#9A95AB;
   --paper:#F7F6FB; --surface:#FFFFFF; --line:#DCD8E6; --line-strong:#C6C0D6;
   --giemsa:#5A3E9B; --giemsa-deep:#3E2A73; --giemsa-soft:#EDE8F7;
-  --zone-weak:#F1EDF8; --zone-mod:#E2D9F2; --zone-strong:#CFC1EA;
   --amber:#A4510B; --amber-soft:#FDF1E4;
   --cloud:#1F6FB2; --cloud-soft:#E8F1FA;
   --ok:#2C7A55; --ok-soft:#E7F4EC;
   --alert:#B3261E; --alert-soft:#FCEBEA;
   --held:#6B5B2E; --held-soft:#F6F1E1;
+  /* the two chromosomes of a rearrangement, and the joins the reads support */
+  --chr-a:#6B4FB3; --chr-a-soft:#E6E0F5; --chr-b:#C2701A; --chr-b-soft:#F8E6D2;
+  --join-1:#0F766E; --join-2:#BE185D; --join-x:#C2410C;
   --head:"Bahnschrift","DIN Alternate","Barlow Semi Condensed","DejaVu Sans Condensed","Segoe UI Semibold","Segoe UI",system-ui,sans-serif;
   --body:"Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,"Helvetica Neue","Liberation Sans",Arial,sans-serif;
   --mono:"Cascadia Mono",Consolas,"DejaVu Sans Mono",monospace;
@@ -25,7 +27,8 @@ html{background:var(--paper)}
 body{margin:0;color:var(--ink);background:var(--paper);font:15px/1.5 var(--body);-webkit-font-smoothing:antialiased}
 button,input,select,textarea{font:inherit;color:inherit}
 :focus-visible{outline:3px solid #8E74D6;outline-offset:2px;border-radius:6px}
-.num,.coord,h1,h2,h3,.gauge-score,.funnel-count{font-family:var(--head);font-variant-numeric:tabular-nums}
+.num,.coord,h1,h2,h3,.funnel-count,.bignum{font-family:var(--head);font-variant-numeric:tabular-nums}
+a{color:var(--giemsa)}
 
 /* ── header ─────────────────────────────────────────── */
 .top{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
@@ -59,6 +62,7 @@ textarea{width:100%;resize:vertical;min-height:112px}
 .btn:disabled{opacity:.45;cursor:not-allowed}
 .check{display:inline-flex;align-items:center;gap:7px;cursor:pointer}
 .check input{width:16px;height:16px;accent-color:var(--giemsa)}
+.check.off{opacity:.55;cursor:not-allowed}
 .pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 11px;font-size:13px;
   border:1px solid var(--line);background:var(--surface);color:var(--muted);white-space:nowrap}
 .pill.private{background:var(--amber-soft);border-color:#F0CFA8;color:var(--amber);font-weight:600}
@@ -78,17 +82,17 @@ textarea{width:100%;resize:vertical;min-height:112px}
   border:1.5px solid currentColor;font-size:13px}
 .steps button[aria-selected=true]{color:var(--giemsa-deep);border-bottom-color:var(--giemsa)}
 .steps button[aria-selected=true] .n{background:var(--giemsa);border-color:var(--giemsa);color:#fff}
-.steps button:disabled{opacity:.4;cursor:default}
 main{max-width:1360px;margin:0 auto;padding:22px 24px 80px}
 .view{display:none} .view.on{display:block}
-.lede{color:var(--muted);margin:2px 0 18px;max-width:78ch}
+.lede{color:var(--muted);margin:2px 0 18px;max-width:80ch}
 h2{font-size:24px;font-weight:600;margin:0 0 4px;line-height:1.2}
 h3{font-size:18px;font-weight:600;margin:0 0 10px}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px 20px;margin-bottom:18px}
-.panel.tight{padding:14px 16px}
 .row{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
 .muted{color:var(--muted)} .small{font-size:13px}
 .empty{color:var(--muted);padding:28px 4px}
+.sec-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+.sec-head h3{margin:0}
 
 /* ── filters + funnel ───────────────────────────────── */
 .filters{display:flex;flex-direction:column;gap:12px}
@@ -98,7 +102,7 @@ h3{font-size:18px;font-weight:600;margin:0 0 10px}
 .funnel{display:grid;grid-template-columns:minmax(250px,360px) 1fr auto;gap:6px 18px;align-items:center;margin-top:6px}
 .funnel .step{font-size:14.5px}
 .funnel .step .why{display:block;color:var(--muted);font-size:12.5px;line-height:1.35}
-.bar{height:14px;border-radius:999px;background:var(--zone-weak);position:relative;overflow:hidden}
+.bar{height:14px;border-radius:999px;background:#F1EDF8;position:relative;overflow:hidden}
 .bar>i{position:absolute;inset:0 auto 0 0;border-radius:999px;background:var(--giemsa);opacity:.82}
 .funnel .last .bar>i{opacity:1;background:var(--giemsa-deep)}
 .funnel-count{font-size:19px;font-weight:600;min-width:92px;text-align:right}
@@ -107,91 +111,104 @@ h3{font-size:18px;font-weight:600;margin:0 0 10px}
 .prov.tool{color:#2C5F4A;border-color:#B9DCCB;background:#EEF7F2}
 .prov.author{color:var(--amber);border-color:#F0CFA8;background:var(--amber-soft)}
 .prov.ref{color:#3A3F8F;border-color:#CCCFF0;background:#F1F2FB}
-.funnel-note{color:var(--muted);font-size:12.5px;margin-top:10px}
+.funnel-note{color:var(--muted);font-size:12.5px;margin-top:10px;max-width:110ch}
+.funnel-why{font-size:13.5px;margin-top:12px;padding:10px 12px;border-radius:8px;background:#F3F0FA;border:1px solid #DCD2F1;max-width:110ch}
 
 /* ── tables ─────────────────────────────────────────── */
 table{border-collapse:collapse;width:100%}
 .table-wrap{overflow-x:auto;max-width:100%}
-th{font:600 13px/1.3 var(--body);color:var(--muted);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line-strong)}
-td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
-tr.cand{cursor:pointer}
-tr.cand:hover td{background:#FAF8FE}
+th{font:600 13px/1.3 var(--body);color:var(--muted);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line-strong);vertical-align:bottom}
+td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+tr.cand,tr.rearr{cursor:pointer}
+tr.cand:hover td,tr.rearr:hover td{background:#FAF8FE}
 tr.recurrent td{color:var(--faint)}
-td.coord{font-size:15.5px;white-space:nowrap}
+td.coord{font-size:15px;white-space:nowrap}
 td.n{text-align:right;font-family:var(--head);font-variant-numeric:tabular-nums;font-size:15.5px}
-.tag{display:inline-block;font-size:12px;border-radius:5px;padding:1px 7px;background:var(--giemsa-soft);color:var(--giemsa-deep)}
+.tag{display:inline-block;font-size:12px;border-radius:5px;padding:1px 7px;background:var(--giemsa-soft);color:var(--giemsa-deep);white-space:nowrap}
 .tag.grey{background:#EFEDF3;color:var(--muted)}
+.tag.both{background:#E3F2EC;color:#1D5A3E}
+.tag.omim{background:#FBE7EF;color:#8A1C46;font-weight:600}
+.reveal{background:var(--amber-soft);border:1px solid #F0CFA8;border-radius:10px;padding:14px 16px;display:flex;
+  gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.reveal p{margin:0;max-width:70ch}
+
+/* the review table */
+.rtable td{padding:11px 10px}
+.rtable .rank{font-family:var(--head);color:var(--faint);font-size:15px;width:34px}
+.rtable .name{font:600 16px/1.25 var(--head)}
+.rtable .name small{display:block;margin-top:4px;font:12.5px/1.3 var(--body)}
+.lines>div{white-space:nowrap;line-height:1.45}
+.lines .coord{font-size:14.5px}
+.genes-cell>div{line-height:1.45;max-width:30ch}
+.genes-cell .none{color:var(--faint)}
+.bignum{font-size:24px;font-weight:600;line-height:1}
+.reads-cell{text-align:right;white-space:nowrap}
+.reads-cell small{display:block;color:var(--muted);font-size:12.5px;margin-top:4px}
+.reads-cell.zero .bignum{color:var(--faint)}
+.caut{font-size:12.5px;color:var(--amber);max-width:34ch}
+.caut b{font-weight:600}
+.spinwait{display:flex;gap:12px;align-items:center;background:#F3F0FA;border:1px solid #DCD2F1;border-radius:8px;padding:12px 14px}
+.spin{width:20px;height:20px;border-radius:50%;border:3px solid #D5CAEE;border-top-color:var(--giemsa);animation:spin 1s linear infinite;flex:none}
+@keyframes spin{to{transform:rotate(360deg)}}
 
 /* ── evidence ───────────────────────────────────────── */
-.ev-top{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:20px;margin-bottom:14px}
-.ev-title{font-size:28px;font-weight:600;margin:0;line-height:1.15}
+.ev-top{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:20px;margin-bottom:10px}
+.ev-title{font-size:30px;font-weight:600;margin:0;line-height:1.15}
+.ev-title .sub{display:block;font:600 17px/1.3 var(--head);color:var(--muted);margin-top:4px}
 .checkpos{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);
   border-radius:10px;padding:10px 12px}
 .checkpos input{width:190px}
+.summary-line{font-size:17px;line-height:1.5;margin:6px 0 14px;max-width:90ch}
+.summary-line b{font-family:var(--head);font-size:19px}
+.cautions{background:var(--amber-soft);border:1px solid #F0CFA8;border-radius:10px;padding:12px 16px;margin:0 0 16px}
+.cautions b{display:block;margin-bottom:4px;color:var(--amber)}
+.cautions ul{margin:0;padding-left:20px}
 .banner{border-radius:10px;padding:11px 16px;margin:4px 0 16px;border:1px solid}
-.banner.cand{background:#F3F0FA;border-color:#DCD2F1}
 .banner.hand{background:var(--amber-soft);border-color:#F0CFA8}
 .banner b{display:block}
-.diagram-wrap{margin:0 0 16px}
-.diagram{display:block;max-width:100%;height:auto}
-.diagram-wrap figcaption{font-size:12px;color:var(--faint);text-align:right;margin-top:2px}
-.breakends{display:grid;grid-template-columns:repeat(auto-fit,minmax(520px,1fr));gap:18px}
-.breakends.single{grid-template-columns:minmax(0,920px)}
-.be-head .coord{font-size:22px}
-.be-head .role{display:block;color:var(--muted);font:13px/1.3 var(--body);margin-top:2px}
-.be{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px 20px}
-.be-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
-.be-head h3{margin:0;font-size:20px}
-.gauge{margin:16px 0 8px}
-.gauge-line{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
-.gauge-score{font-size:46px;font-weight:600;line-height:1}
-.gauge-band{font:600 20px/1 var(--head);color:var(--giemsa-deep)}
-.gauge-band.none,.gauge-band.weak{color:var(--muted)}
-.track{position:relative;height:18px;border-radius:999px;margin:30px 0 26px;background:
-  linear-gradient(90deg,var(--zone-weak) 0 40%,var(--zone-mod) 40% 70%,var(--zone-strong) 70% 100%)}
-.track .fill{position:absolute;left:0;top:0;bottom:0;border-radius:999px;width:0;
-  background:repeating-linear-gradient(90deg,var(--giemsa) 0 14px,var(--giemsa-deep) 14px 19px);transition:width .9s cubic-bezier(.2,.7,.2,1)}
-.track .mark{position:absolute;top:-8px;bottom:-8px;width:0;border-left:2px dashed var(--ink)}
-.track .mark span{position:absolute;bottom:100%;transform:translateX(-50%);white-space:nowrap;font-size:12.5px;color:var(--ink);padding-bottom:2px}
-.track .tick{position:absolute;top:100%;transform:translateX(-50%);font-size:12px;color:var(--muted);padding-top:4px;white-space:nowrap}
-.track.held{background:repeating-linear-gradient(135deg,#EFE8D2 0 8px,#E3D9B9 8px 16px)}
-.gauge-note{font-size:13.5px;color:var(--muted);max-width:72ch}
-.withheld{background:var(--held-soft);border:1px solid #E5D8AE;border-radius:10px;padding:12px 14px;margin:14px 0}
-.ledger{table-layout:fixed}
-.ledger td{padding:10px 8px}
-.ledger col.c1{width:37%} .ledger col.c2{width:31%} .ledger col.c3{width:22%} .ledger col.c4{width:10%}
-.ledger .what{display:block;color:var(--muted);font-size:12.5px;line-height:1.3}
-.ledger .val{font-family:var(--head);font-size:17px;font-variant-numeric:tabular-nums;white-space:nowrap}
-.ledger .val small{font-family:var(--body);font-size:12.5px;color:var(--muted);margin-left:4px}
-.ledger .detail{display:block;color:var(--muted);font-size:12.5px}
-.pts{display:flex;align-items:center;gap:7px;white-space:nowrap}
-.pts .bar{height:8px;flex:1;min-width:40px}
-.pts b{font-family:var(--head);font-size:15px;text-align:right}
-tr.na td{color:var(--faint)}
-tr.ql td:first-child{border-left:3px solid #C9B67C}
-.quality{font-size:13px;color:var(--muted);margin:10px 0 0}
+.schematic{margin:0}
+.schematic svg{display:block;max-width:100%;height:auto}
+.schematic figcaption{font-size:12.5px;color:var(--muted);margin-top:6px}
+.key{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:8px}
+.key span{display:inline-flex;align-items:center;gap:6px}
+.key i{display:inline-block;width:18px;height:10px;border-radius:3px;border:1.5px solid}
+.gtable td{font-size:14px}
+.gtable .gname{font-weight:600}
+.gtable .where{color:var(--muted)}
+.readboxes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.readbox{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:#FCFBFE;min-width:0}
+.readbox h4{margin:0;font:600 16px/1.3 var(--head)}
+.readbox .what{font-size:13px;color:var(--muted);margin:2px 0 6px;line-height:1.4}
+.readbox svg{display:block;width:100%;height:auto}
+.readbox .foot{font-size:12.5px;color:var(--muted);margin-top:6px}
+.legend{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:13px;margin:12px 0 0}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{display:inline-block;width:22px;height:9px;border-radius:2px}
+.legend i.hollow{background:#fff!important;border:1.5px solid #8C8798}
+.readlist td{font:12.5px/1.35 var(--mono);white-space:nowrap;padding:6px 8px}
+.readlist th{font-size:12.5px;padding:6px 8px}
+.readlist td.nm{max-width:260px;overflow:hidden;text-overflow:ellipsis}
 details{margin-top:12px}
 details summary{cursor:pointer;color:var(--giemsa);font-weight:600;font-size:14px}
 details .inner{margin-top:10px;font-size:13.5px}
-.be-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.be-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
 .err{background:var(--alert-soft);border:1px solid #F2C2BE;color:#7A1A14;border-radius:8px;padding:10px 12px;white-space:pre-wrap}
 .note{background:#F3F0FA;border:1px solid #DCD2F1;border-radius:8px;padding:10px 12px}
+.netnote{font-size:13px;color:var(--amber);margin-top:8px}
+.callers td{font-size:14px}
+.partners td{font-size:14px}
 
 /* ── igv ────────────────────────────────────────────── */
-.igv-area{margin-top:18px}
+.igv-area{margin-top:6px}
 .igv-block{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 20px;margin-bottom:18px;scroll-margin-top:150px}
 .igv-block .igv-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:4px}
 .igv-block h3{margin:0;font-size:19px}
-.igv-state{font-size:13px;color:var(--muted);margin-top:10px}
-.igv-wait{display:flex;gap:12px;align-items:center;background:#F3F0FA;border:1px solid #DCD2F1;border-radius:8px;padding:12px 14px}
-.spin{width:20px;height:20px;border-radius:50%;border:3px solid #D5CAEE;border-top-color:var(--giemsa);animation:spin 1s linear infinite;flex:none}
-@keyframes spin{to{transform:rotate(360deg)}}
-.igv-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:10px}
+.igv-grid{display:grid;grid-template-columns:1fr;gap:12px;margin-top:10px}
 .igv-grid figure{margin:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff}
 .igv-grid img{display:block;width:100%;height:auto;cursor:zoom-in}
 .igv-grid figcaption{font-size:12.5px;color:var(--muted);padding:7px 10px;border-top:1px solid var(--line)}
 .igv-grid figcaption b{color:var(--ink);font-weight:600}
-.igv-grid .failed{display:grid;place-items:center;min-height:160px;padding:14px;color:#7A1A14;background:var(--alert-soft);font-size:13px;text-align:center}
+.igv-grid .failed{display:grid;place-items:center;min-height:120px;padding:14px;color:#7A1A14;background:var(--alert-soft);font-size:13px;text-align:center}
 
 /* ── assistant ──────────────────────────────────────── */
 .asst{display:grid;grid-template-columns:minmax(330px,420px) 1fr;gap:22px;align-items:start}
@@ -221,10 +238,6 @@ details .inner{margin-top:10px;font-size:13.5px}
 .answer table{width:auto;margin:4px 0 12px;font-size:14.5px}
 .answer td,.answer th{padding:5px 10px;border-bottom:1px solid var(--line)}
 .answer hr{border:0;border-top:1px solid var(--line);margin:12px 0}
-.reveal{background:var(--amber-soft);border:1px solid #F0CFA8;border-radius:10px;padding:14px 16px;display:flex;
-  gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap}
-.reveal p{margin:0;max-width:70ch}
-.netnote{font-size:13px;color:var(--amber);margin-top:8px}
 .answer .vnum{border-bottom:2px solid #9ACDB2}
 .answer .unsup{background:#FBD5D2;border-bottom:2px solid var(--alert);font-weight:700;padding:0 2px;border-radius:3px}
 .verdict{display:block;border-radius:8px;padding:10px 12px;font-size:14px;margin-bottom:10px}
@@ -265,17 +278,20 @@ details .inner{margin-top:10px;font-size:13.5px}
 .lightbox img{max-width:100%;height:auto;display:block}
 .closer{border:0;background:none;font-size:26px;line-height:1;cursor:pointer;color:var(--muted);padding:0 4px}
 @media (max-width:1100px){.asst{grid-template-columns:1fr}.asst-side{position:static;max-height:none}.ev-top{grid-template-columns:1fr}}
+@media (max-width:900px){.readboxes{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:640px){.top-inner{padding:10px 14px;gap:12px}.steps,main{padding-left:14px;padding-right:14px}
   .steps button{padding:10px 10px 12px;font-size:15px}
   .funnel{grid-template-columns:1fr auto;grid-auto-flow:row dense}.funnel .bar{grid-column:1 / -1}.funnel .funnel-count{grid-column:2}
-  .breakends,.breakends.single{grid-template-columns:minmax(0,1fr)}
-  .igv-grid{grid-template-columns:1fr}.sample select{min-width:0}.filters .field{flex-wrap:wrap}
-  .ledger colgroup,.ledger thead{display:none}
-  .ledger,.ledger tbody{display:block}
-  .ledger tr{display:grid;grid-template-columns:1fr auto;gap:4px 12px;padding:10px 0;border-bottom:1px solid var(--line)}
-  .ledger td{display:block;border:0;padding:0}
-  .ledger td:nth-child(1){grid-column:1 / -1}.ledger td:nth-child(4){grid-column:2;grid-row:2;align-self:center}
-  .checkpos input{width:100%}.ev-title{font-size:23px}.brand{min-width:0}.brand h1{font-size:19px}.btn.quiet{white-space:normal;text-align:left}}
+  .sample select{min-width:0}.filters .field{flex-wrap:wrap}
+  .checkpos input{width:100%}.ev-title{font-size:24px}.brand{min-width:0}.brand h1{font-size:19px}.btn.quiet{white-space:normal;text-align:left}
+  .rtable thead{display:none}.rtable,.rtable tbody{display:block}
+  .rtable tr{display:grid;grid-template-columns:26px minmax(0,1fr) auto;gap:6px 10px;padding:12px 0;border-bottom:1px solid var(--line);
+    grid-template-areas:"rank name reads" ". lines lines" ". genes genes" ". caut caut" "act act act"}
+  .rtable td{display:block;border:0;padding:0}
+  .rtable td.rank{grid-area:rank}.rtable td.nm-cell{grid-area:name}.rtable td.lines{grid-area:lines}.rtable td.genes-cell{grid-area:genes}
+  .rtable td.reads-cell{grid-area:reads}.rtable td.caut-cell{grid-area:caut}.rtable td.act{grid-area:act;text-align:left!important}
+  .lines>div{white-space:normal}
+  .be-actions .btn{white-space:normal;text-align:left}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -284,10 +300,10 @@ details .inner{margin-top:10px;font-size:13.5px}
   <div class="top-inner">
     <div class="brand">
       <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true">
-        <rect x="4" y="6" width="9" height="22" rx="4.5" fill="#E2D9F2" stroke="#5A3E9B" stroke-width="1.5"/>
-        <rect x="21" y="6" width="9" height="22" rx="4.5" fill="#E2D9F2" stroke="#5A3E9B" stroke-width="1.5"/>
-        <rect x="4.75" y="11" width="7.5" height="3" fill="#5A3E9B"/><rect x="21.75" y="20" width="7.5" height="3" fill="#5A3E9B"/>
-        <path d="M12.5 12.5 C17 12.5 17 21.5 21.5 21.5" fill="none" stroke="#A4510B" stroke-width="2"/>
+        <rect x="4" y="6" width="9" height="22" rx="4.5" fill="#E6E0F5" stroke="#6B4FB3" stroke-width="1.5"/>
+        <rect x="21" y="6" width="9" height="22" rx="4.5" fill="#F8E6D2" stroke="#C2701A" stroke-width="1.5"/>
+        <rect x="4.75" y="11" width="7.5" height="3" fill="#6B4FB3"/><rect x="21.75" y="20" width="7.5" height="3" fill="#C2701A"/>
+        <path d="M12.5 12.5 C17 12.5 17 21.5 21.5 21.5" fill="none" stroke="#1E1A2E" stroke-width="1.6"/>
       </svg>
       <div><h1>Breakpoint Evidence</h1><small>Read-level checks for structural-variant breakpoints</small></div>
     </div>
@@ -315,15 +331,16 @@ details .inner{margin-top:10px;font-size:13.5px}
 <main>
   <!-- 1 · candidates ------------------------------------------------------------------ -->
   <section class="view on" id="view-cands" role="tabpanel" aria-labelledby="tab-cands">
-    <div id="cands-head"><h2>Candidate breakpoints</h2>
-      <p class="lede">Choose a sample at the top. Its candidate list comes from the structural-variant caller, which has
-        already scanned the whole genome; the filters below narrow it to the junctions worth reviewing.</p></div>
+    <div id="cands-head"><h2>Candidate rearrangements</h2>
+      <p class="lede">Choose a sample at the top. Its candidates come from the structural-variant caller, which has
+        already scanned the whole genome. The filters narrow them; the tool then joins up the junctions that belong
+        together and counts the reads behind each.</p></div>
     <div class="panel" id="filters-panel">
       <div class="filters"><div class="frow">
         <label class="field"><span>Type</span>
           <select id="f-type">
             <option value="">Any type</option>
-            <option value="BND">Translocation (BND)</option>
+            <option value="BND" selected>Between two chromosomes (BND)</option>
             <option value="DEL">Deletion (DEL)</option>
             <option value="DUP">Duplication (DUP)</option>
             <option value="INV">Inversion (INV)</option>
@@ -334,33 +351,32 @@ details .inner{margin-top:10px;font-size:13.5px}
         </div><div class="frow">
         <label class="check"><input type="checkbox" id="f-prim" checked> Main chromosomes only</label>
         <label class="check"><input type="checkbox" id="f-mask" checked> Skip known problem regions</label>
-        <label class="field"><span>Drop junctions also found in</span>
-          <select id="f-rec"><option value="">No other sample (keep all)</option></select>
+        <label class="field"><span>Mark junctions also found in</span>
+          <select id="f-rec"><option value="">No other sample</option></select>
           <span>within</span><input type="number" id="f-tol" value="500" min="0"><span>bp</span></label>
+        <label class="check" id="f-gene-wrap"><input type="checkbox" id="f-gene"> Only those that touch a gene</label>
         <label class="field" id="reads-from-wrap" hidden><span>Reads from</span><select id="f-reads"></select></label>
       </div></div>
+    </div>
+    <div class="panel" id="cands-panel" hidden>
+      <div class="sec-head"><h3 id="cands-title">Candidates</h3><span class="small muted" id="cands-sub"></span></div>
+      <div id="cands"></div>
+      <details id="raw-details" hidden><summary id="raw-summary">The caller's junctions</summary><div class="inner" id="raw-inner"></div></details>
     </div>
     <div class="panel" id="funnel-panel" hidden>
       <h3>How the filters narrow the list</h3>
       <div id="setinfo" class="muted small"></div>
       <div class="funnel" id="funnel"></div>
+      <div id="funnel-why"></div>
       <div class="funnel-note">Bar lengths use a logarithmic scale. “Alone” is what a step would remove by itself; when it is
         larger than what the step removed in the chain, earlier steps had already taken those records out.</div>
-    </div>
-    <div class="panel" id="cands-panel" hidden>
-      <div class="row" style="justify-content:space-between;margin-bottom:6px">
-        <h3 id="cands-title" style="margin:0">Candidates</h3>
-        <label class="check small" id="show-rec-wrap" hidden><input type="checkbox" id="show-rec"> <span id="show-rec-label"></span></label>
-      </div>
-      <div id="cands"></div>
-      <details id="cmp-details" hidden><summary>Comparison details</summary><div class="inner" id="cmp-inner"></div></details>
     </div>
   </section>
 
   <!-- 2 · evidence -------------------------------------------------------------------- -->
   <section class="view" id="view-evidence" role="tabpanel" aria-labelledby="tab-evidence">
     <div class="ev-top">
-      <div id="ev-head"><h2>Evidence</h2><p class="lede">Open a candidate in step 1, or check any position with the box on the right.</p></div>
+      <div id="ev-head"><h2>Evidence</h2><p class="lede">Open a rearrangement in step 1, or check any position with the box on the right.</p></div>
       <form class="checkpos" id="checkpos" autocomplete="off">
         <label for="cp-ds" class="muted small">Reads from</label>
         <select id="cp-ds"></select>
@@ -368,16 +384,16 @@ details .inner{margin-top:10px;font-size:13.5px}
         <button class="btn primary" type="submit">Check position</button>
       </form>
     </div>
-    <div id="ev"><div class="empty">Nothing is open yet. In step 1, press Review on a candidate; or type a position such
+    <div id="ev"><div class="empty">Nothing is open yet. In step 1, press Review on a rearrangement; or type a position such
       as chr20:200,000 in the box above and press Check position.</div></div>
   </section>
 
   <!-- 3 · assistant ------------------------------------------------------------------- -->
   <section class="view" id="view-assistant" role="tabpanel" aria-labelledby="tab-assistant">
     <h2>Ask the assistant</h2>
-    <p class="lede">The assistant reaches the data only through the same tools this page uses. Every number in its final
-      answer is checked against what those tools returned; a number no tool returned is marked in red.
-      It can misjudge words such as “strong”, so read the tool results, not only the prose.</p>
+    <p class="lede">The assistant reaches the data only through the same tools this page uses, and it reports read
+      counts and genes, not a score. Every number in its final answer is checked against what those tools returned; a
+      number no tool returned is marked in red. Words such as “strongest” are its own; read the tool results too.</p>
     <div class="asst">
       <div class="asst-side panel">
         <label class="field-label" for="model">Model</label>
@@ -415,44 +431,66 @@ details .inner{margin-top:10px;font-size:13.5px}
     <button class="closer" type="button" data-close aria-label="Close">×</button></div>
   <div id="modal-body"></div>
 </div>
-
 <script>
 "use strict";
 // ── state and helpers ─────────────────────────────────────────────────────────
-const S = {boot:null, models:null, sample:null, setId:null, setInfo:null, funnel:null, compare:null,
-           revealed:new Set(), seq:0, fseq:0,
-           cand:null, evidence:[], ctx:null, asked:0};
+const S = {boot:null, models:null, sample:null, setId:null, setInfo:null, funnel:null, compare:null, review:null,
+           revealed:new Set(), seq:0, fseq:0, rseq:0, evGen:0, event:null, evj:[], hand:null, ctx:null, asked:0,
+           igvTargets:[]};
 const $ = id => document.getElementById(id);
 const post = (u,b) => fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}).then(r=>r.json());
 const get = u => fetch(u).then(r=>r.json());
 const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt = n => n==null ? '—' : (typeof n==='number' ? n.toLocaleString('en-US') : esc(n));
 const coord = (c,p) => `${esc(c)}:${Number(p).toLocaleString('en-US')}`;
+const span = (c,s,e) => s===e || e==null ? coord(c,s) : `${coord(c,s)}–${Number(e).toLocaleString('en-US')}`;
 const pct = f => f==null ? '—' : (f*100).toFixed(1)+'%';
+const plural = (n, one, many) => `${fmt(n)} ${n===1?one:(many||one+'s')}`;
+const bp = n => n>=1e6 ? (n/1e6).toFixed(n>=1e7?0:1)+' Mb' : n>=1e3 ? (n/1e3).toFixed(n>=1e4?0:1)+' kb' : fmt(n)+' bp';
 const src = (id,label) => id ? `<button type="button" class="src" data-call="${id}" title="Open the tool call that returned this">${esc(label||('call '+id))}</button>` : '';
 const GRCH38 = {chr1:248956422,chr2:242193529,chr3:198295559,chr4:190214555,chr5:181538259,chr6:170805979,
   chr7:159345973,chr8:145138636,chr9:138394717,chr10:133797422,chr11:135086622,chr12:133275309,chr13:114364328,
   chr14:107043718,chr15:101991189,chr16:90338345,chr17:83257441,chr18:80373285,chr19:58617616,chr20:64444167,
   chr21:46709983,chr22:50818468,chrX:156040895,chrY:57227415};
-// The caller's tools store a junction with the higher locus first (their canonical
-// form for de-duplication). People read a junction in genome order, so the page
-// shows the lower locus first; the coordinates themselves are untouched.
 const CHR_ORDER = Object.keys(GRCH38);
-const chrRank = c => { const k = /^chr/i.test(c) ? 'chr'+String(c).slice(3) : 'chr'+c;
-                       const i = CHR_ORDER.indexOf(k.replace(/^chrm(t)?$/i,'chrM')); return i<0 ? 99 : i; };
+const chrKey = c => /^chr/i.test(c) ? 'chr'+String(c).slice(3) : 'chr'+c;
+const chrRank = c => { const i = CHR_ORDER.indexOf(chrKey(c)); return i<0 ? 99 : i; };
 const before = (a,b) => chrRank(a.chromosome)-chrRank(b.chromosome) || String(a.chromosome).localeCompare(String(b.chromosome))
                         || a.position-b.position;
 const inGenomeOrder = (a,b) => before(a,b) <= 0 ? [a,b] : [b,a];
 const TYPE_NAMES = {BND:'Translocation',DEL:'Deletion',DUP:'Duplication',INV:'Inversion',INS:'Insertion'};
-const TYPE_ARTICLE = {BND:'a translocation',DEL:'a deletion',DUP:'a duplication',INV:'an inversion',INS:'an insertion'};
+const TYPE_PLURAL = {BND:'translocation junctions',DEL:'deletions',DUP:'duplications',INV:'inversions',INS:'insertions'};
+const KIND_NAMES = {translocation:'Translocation',deletion:'Deletion',duplication:'Duplication',inversion:'Inversion',
+                    insertion:'Insertion',rearrangement:'Rearrangement'};
+// the four measurements, named in the one-line summary of an applicable_layers call
+const LAYER_TEXT = {discordant_pairs:['Discordant pairs'], soft_clipped_reads:['Soft-clipped reads'],
+                    split_reads:['Split reads'], read_depth:['Read depth']};
+const kindOf = (kind,label) => ((S.boot&&S.boot.kinds&&S.boot.kinds[kind])||{})[label]||'private';
 const kindPill = (kind,label) => kindOf(kind,label)==='public'
   ? '<span class="pill public small">Test data</span>' : '<span class="pill private small">Private data</span>';
-const LAYER_TEXT = {
-  discordant_pairs:['Discordant pairs','read pairs whose mate maps to another chromosome'],
-  soft_clipped_reads:['Soft-clipped reads','reads cut off at the same base'],
-  split_reads:['Split reads','reads aligned in two pieces, the second piece elsewhere'],
-  read_depth:['Read depth','coverage dip around the position']};
-const kindOf = (kind,label) => ((S.boot&&S.boot.kinds&&S.boot.kinds[kind])||{})[label]||'private';
+const num = c => String(c).replace(/^chr/i,'');
+// colours: the two chromosomes of a rearrangement, the joins the reads support
+const CHR_COL = ['#6B4FB3', '#C2701A'], CHR_SOFT = ['#E6E0F5', '#F8E6D2'];
+const JOIN_COL = ['#0F766E', '#BE185D', '#7C3AED', '#0369A1', '#4D7C0F'], JOIN_UNCALLED = '#C2410C';
+const BAND_FILL = {gneg:'#FFFFFF', gpos25:'#DEDAE6', gpos50:'#BDB7C9', gpos75:'#9A93AA', gpos100:'#6E6880',
+                   acen:'#D9A3A0', gvar:'#E3EAF2', stalk:'#B4BECB'};
+const READ_KIND = {
+  pair_related:     {col:'#7FB8B4', label:'pair joining the other junction of this rearrangement'},
+  pair_other_chrom: {col:'#64748B', label:'mate on another chromosome'},
+  split_other:      {col:'#A3AEC0', label:'split read, other piece elsewhere'},
+  mate_unmapped:    {col:'#CA8A04', label:'mate not mapped'},
+  pair_orientation: {col:'#16A34A', label:'pair in the wrong orientation'},
+  pair_insert_size: {col:'#DC2626', label:'pair too far apart'},
+  pair_alt_contig:  {col:'#B8B2A9', label:'mate on an alternative contig'},
+  clipped:          {col:'#CFCAD8', label:'clipped, no other piece'},
+  ambiguous:        {col:'#FFFFFF', label:'placed equally well elsewhere'}};
+const PATTERN_TEXT = {'both junctions':'Both junctions found', 'one junction':'One junction', 'segment':'Segment moved',
+                      'two junctions, same direction':'Two calls, same direction', 'within one chromosome':''};
+const patternLabel = ev => ev.pattern==='within one chromosome' ? (KIND_NAMES[ev.kind]||ev.kind)
+  : /^complex/.test(ev.pattern) ? ev.pattern.replace(/^complex \((\d+) junctions\)$/, 'Complex, $1 junctions')
+  : (PATTERN_TEXT[ev.pattern] || ev.pattern);
+const evName = ev => ev.iscn || (KIND_NAMES[ev.kind]||'Rearrangement') + (ev.chromosomes.length===2 ? ` between ${ev.chromosomes.join(' and ')}` : ` on ${ev.chromosomes[0]}`);
+const OMIM_URL = 'https:' + '//omim.org/entry/';
 
 // ── navigation ────────────────────────────────────────────────────────────────
 function show(view){
@@ -466,8 +504,7 @@ for(const b of document.querySelectorAll('.steps button')) b.addEventListener('c
 // ── boot ──────────────────────────────────────────────────────────────────────
 async function boot(){
   S.boot = await get('/api/bootstrap');
-  const B = S.boot, kinds = B.kinds||{datasets:{},candidates:{}};
-  // a "sample" is a candidate list, a read file, or both under one label
+  const B = S.boot;
   const labels = [...new Set([...B.candidate_files, ...B.datasets])].sort();
   const groups = {public:[], private:[]};
   for(const l of labels){
@@ -481,8 +518,12 @@ async function boot(){
   const dsOpt = l => `<option value="${esc(l)}">${esc(l)}</option>`;
   $('cp-ds').innerHTML = B.datasets.map(dsOpt).join('');
   $('f-reads').innerHTML = B.datasets.map(dsOpt).join('');
+  const genesOn = !!(B.genes && B.genes.available);
+  $('f-gene').disabled = !genesOn;
+  $('f-gene-wrap').classList.toggle('off', !genesOn);
+  $('f-gene-wrap').title = genesOn ? 'Keep only rearrangements with a breakpoint inside a gene, or a moved segment holding one'
+                                   : 'No gene table is set up on this computer, so genes are not known';
   renderStatus();
-  // Open on test data. A private sample is never loaded until someone chooses it.
   const first = B.candidate_files.find(l => kindOf('candidates',l)==='public');
   if(first){ $('sample').value = first; await chooseSample(first); }
   else {
@@ -495,11 +536,13 @@ async function boot(){
   }
 }
 function renderStatus(){
-  const B = S.boot||{}, cap = B.capabilities||{}, M = S.models;
+  const B = S.boot||{}, cap = B.capabilities||{}, M = S.models, tc = B.tool_counts||{};
   const local = M ? (M.models||[]).length : null;
   const cloud = M ? (M.cloud_models||[]).length : null;
+  const g = B.genes||{};
   $('status').innerHTML = [
-    `<span class="pill" title="Tools verified at startup"><span class="dot on"></span>${(B.tool_counts?B.tool_counts.evidence+B.tool_counts.bridge:'?')} tools checked</span>`,
+    `<span class="pill" title="Tools verified at startup"><span class="dot on"></span>${(tc.evidence||0)+(tc.bridge||0)+(tc.review||0)||'?'} tools checked</span>`,
+    `<span class="pill" title="${esc(g.available ? 'Genes are read from a table on this computer'+(g.disease_marks?', with OMIM marks':'') : (g.reason||''))}"><span class="dot ${g.available?'on':''}"></span>${g.available?'Genes'+(g.disease_marks?' and OMIM':''):'Genes: not set up'}</span>`,
     `<span class="pill" title="${M&&M.why?esc(M.why):'Models served by Ollama on this computer'}"><span class="dot ${local?'on':''}"></span>${local==null?'Local models…':local?'Local models: '+local:'Local models: off'}</span>`,
     `<span class="pill" title="Claude models through the Anthropic API"><span class="dot ${cloud?'cloud':''}"></span>${cloud==null?'Cloud…':cloud?'Cloud models: '+cloud:'Cloud: no key'}</span>`,
     `<span class="pill" title="${esc(cap.igv_detail||'')}"><span class="dot ${cap.igv_ready?'on':''}"></span>IGV ${cap.igv_ready?'ready':'not found'}</span>`
@@ -509,25 +552,29 @@ $('sample').addEventListener('change', e => chooseSample(e.target.value));
 
 async function chooseSample(label){
   const seq = ++S.seq;
-  S.sample = label; S.setId = null; S.funnel = null; S.compare = null;
+  S.sample = label; S.setId = null; S.funnel = null; S.compare = null; S.review = null;
   const B = S.boot, isCand = B.candidate_files.includes(label), hasReads = B.datasets.includes(label);
   const kind = isCand ? kindOf('candidates',label) : kindOf('datasets',label);
   $('sampleKind').className = 'pill ' + (kind==='public'?'public':'private');
   $('sampleKind').textContent = kind==='public' ? 'Test data' : 'Private data';
   $('sampleKind').title = kind==='public' ? 'Found in the public test-data folder'
     : 'Registered explicitly, so treated as confidential: it is never sent to a cloud model without your confirmation';
-  // reads used for evidence: same label if there is one, otherwise ask
   $('reads-from-wrap').hidden = hasReads || !isCand;
   if(hasReads){ $('f-reads').value = label; $('cp-ds').value = label; }
-  // recurrence choices: every other candidate list
-  $('f-rec').innerHTML = '<option value="">No other sample (keep all)</option>' +
+  else {
+    // a list without reads of its own: offer test data first, never a private file by default
+    const pub = B.datasets.find(l => kindOf('datasets', l) === 'public');
+    if(pub){ $('f-reads').value = pub; }
+  }
+  $('f-rec').innerHTML = '<option value="">No other sample</option>' +
     B.candidate_files.filter(l=>l!==label).map(l=>`<option value="${esc(l)}">${esc(l)}</option>`).join('');
-  $('cands-head').innerHTML = `<h2>Candidate breakpoints in ${esc(label)}</h2>
-    <p class="lede">This list comes from the structural-variant caller, which has already scanned the whole genome.
-    The filters narrow it to the junctions worth reviewing; open one to see the read evidence.</p>`;
+  $('cands-head').innerHTML = `<h2>Candidate rearrangements in ${esc(label)}</h2>
+    <p class="lede">The caller has already scanned the whole genome; the filters narrow its list. The tool then joins up
+    the junctions that belong together, counts in the reads the pairs and split reads behind each, and names the genes
+    at the breakpoints. The list is sorted by those reads. No score is used.</p>`;
   if(!isCand){
-    $('funnel-panel').hidden = true; $('cands-panel').hidden = false;
-    $('cands-title').textContent = 'No candidate list for this sample';
+    $('funnel-panel').hidden = true; $('cands-panel').hidden = false; $('raw-details').hidden = true;
+    $('cands-title').textContent = 'No candidate list for this sample'; $('cands-sub').textContent = '';
     $('cands').innerHTML = `<div class="empty">${esc(label)} has reads but no caller output. Use step 2 to check a position in it.</div>`;
     return;
   }
@@ -542,11 +589,11 @@ async function chooseSample(label){
   await runFilters();
 }
 
-// ── 1 · filters, funnel, candidates ───────────────────────────────────────────
-for(const id of ['f-type','f-pass','f-pe','f-sr','f-prim','f-mask','f-rec','f-tol']){
+// ── 1 · filters, funnel, rearrangements ───────────────────────────────────────
+for(const id of ['f-type','f-pass','f-pe','f-sr','f-prim','f-mask','f-rec','f-tol','f-reads']){
   $(id).addEventListener('change', () => runFilters());
 }
-$('show-rec').addEventListener('change', renderCandidates);
+$('f-gene').addEventListener('change', () => renderCandidates());
 function filterBody(){
   return {svtype:$('f-type').value||null, filter_pass:$('f-pass').checked,
           min_pe:$('f-pe').value===''?null:$('f-pe').value, min_sr:$('f-sr').value===''?null:$('f-sr').value,
@@ -559,6 +606,7 @@ function filterBody(){
 // recorded like every other. The page itself asks the comparison for no examples.
 const isPrivateSample = () => S.sample && kindOf('candidates', S.sample) !== 'public';
 const listHidden = () => isPrivateSample() && !S.revealed.has(S.sample);
+function readsLabel(){ return S.boot.datasets.includes(S.sample) ? S.sample : ($('f-reads').value || null); }
 async function runFilters(){
   if(!S.setId) return;
   const seq = ++S.fseq, sample = S.sample;
@@ -571,7 +619,7 @@ async function runFilters(){
     return;
   }
   S.funnel = {...r.result, call:r.call, mask:r.mask};
-  S.compare = null;
+  S.compare = null; S.review = null;
   const other = $('f-rec').value;
   if(other){
     const c = await post('/api/compare',{label_a:S.sample,label_b:other,tolerance_bp:$('f-tol').value||null,...body,examples:false});
@@ -579,6 +627,19 @@ async function runFilters(){
     S.compare = c.error ? {error:c.error} : c;
   }
   renderFunnel(); renderCandidates();
+  if(!listHidden() && readsLabel() && S.funnel.total_matching > 0) await runReview(seq);
+}
+async function runReview(fseq){
+  const seq = ++S.rseq, sample = S.sample, reads = readsLabel();
+  const n = S.funnel.total_matching;
+  $('cands').innerHTML = `<div class="spinwait"><div class="spin"></div><div>Counting the reads behind each of the
+    ${plural(n,'junction')} in ${esc(reads)} and joining up those that belong together…</div></div>`;
+  const r = await post('/api/review',{candidates_label:sample, reads_label:reads, ...filterBody(),
+                                      other_label:$('f-rec').value||null, tolerance_bp:$('f-tol').value||null});
+  if(seq !== S.rseq || fseq !== S.fseq || sample !== S.sample) return;
+  S.review = r.error || !r.result || r.result.error ? {error:(r.error || (r.result&&r.result.error) || 'no result'), call:r.call}
+                                                     : {...r.result, call:r.call, reads};
+  renderCandidates();
 }
 const STEP_NAMES = {
   svtype: v => `Type: ${TYPE_NAMES[v]||v}${v&&TYPE_NAMES[v]?' ('+v+')':''}`,
@@ -614,8 +675,7 @@ function renderFunnel(){
   }
   const max = Math.max(1, ...rows.map(r=>r.n||0));
   const w = n => n ? Math.max(2, 100*Math.log10(n+1)/Math.log10(max+1)) : 0;
-  const removedText = r => (r.removed ? `−${fmt(r.removed)}` : 'no change')
-    + (r.alone!=null ? ` (−${fmt(r.alone)} alone)` : '');
+  const removedText = r => (r.removed ? `−${fmt(r.removed)}` : 'no change') + (r.alone!=null ? ` (−${fmt(r.alone)} alone)` : '');
   $('funnel').innerHTML = maskNote + rows.map((r,i)=>`
     <div class="step${i===rows.length-1?' last':''}">${esc(r.name)}${r.prov?provTag(r.prov):''}${
       r.why||r.call?`<span class="why">${esc(r.why||'')} ${r.call?src(r.call,'source'):''}</span>`:''}</div>
@@ -623,82 +683,637 @@ function renderFunnel(){
     <div class="funnel-count">${r.err?'<span class="small" style="color:var(--alert)">failed</span>':fmt(r.n)}
       ${r.removed!=null?`<span class="removed">${removedText(r)}</span>`:''}</div>`).join('')
     + `<div class="small muted" style="grid-column:1/-1;margin-top:4px">Counts after each filter come from one recorded call. ${src(F.call,'source')}</div>`;
+  $('funnel-why').innerHTML = funnelWhy(F);
 }
+// Two steps often change nothing, and the meeting asked whether they work. They do;
+// say in words what the counts show about this file.
+function funnelWhy(F){
+  const st = F.filters_applied||[];
+  const prim = st.find(s=>s.filter==='primary_only'), mask = st.find(s=>s.filter==='exclude_masked');
+  const quiet = [prim, mask].filter(s => s && s.removed_cumulatively_here===0);
+  if(!quiet.length) return '';
+  const typ = st.find(s=>s.filter==='svtype');
+  const size = (quiet[0].unfiltered_set_size), what = typ ? (TYPE_PLURAL[typ.value]||'junctions of this type') : 'junctions';
+  const parts = [];
+  if(prim && prim.removed_cumulatively_here===0)
+    parts.push(prim.would_remove_from_unfiltered_set===0 ? 'none involves a contig other than the main chromosomes'
+      : `${plural(prim.would_remove_from_unfiltered_set,'involves','involve')} another contig, all removed by earlier steps`);
+  if(mask && mask.removed_cumulatively_here===0)
+    parts.push(mask.would_remove_from_unfiltered_set===0 ? 'none touches a listed problem region'
+      : `${fmt(mask.would_remove_from_unfiltered_set)} ${mask.would_remove_from_unfiltered_set===1?'touches':'touch'} a listed problem region, already removed by earlier steps`);
+  const names = quiet.map(s=>s.filter==='primary_only'?'“Main chromosomes only”':'“Skip known problem regions”').join(' and ');
+  return `<div class="funnel-why"><b>${names} ${quiet.length>1?'remove':'removes'} nothing here, and the counts say why.</b>
+    Of the ${fmt(size)} ${esc(what)} in this file, ${parts.join(', and ')}. A caller run with an exclude list
+    leaves such junctions out itself, so these steps only matter for files made without one.</div>`;
+}
+
+// ── the list: rearrangements, strongest first ─────────────────────────────────
 function renderCandidates(){
-  const F = S.funnel; $('cands-panel').hidden = false;
-  let list = (F.candidates||[]).slice();
-  const C = S.compare && !S.compare.error ? S.compare.survivor_effect : null;
-  const recurrent = new Set(C ? (C.a.recurrent_ids||[]) : []);
-  $('show-rec-wrap').hidden = !C || !recurrent.size;
-  if(C) $('show-rec-label').textContent = `Also show the ${recurrent.size} found in ${C.b.label}`;
-  const showRec = $('show-rec').checked;
-  const visible = list.filter(c => !recurrent.has(c.candidate_id) || showRec);
-  visible.sort((a,b)=>(recurrent.has(a.candidate_id)-recurrent.has(b.candidate_id)) || (b.pe||0)-(a.pe||0) || (b.sr||0)-(a.sr||0));
-  const n = C ? C.a.unique : F.total_matching, hidden = listHidden();
-  $('cands-title').textContent = `${fmt(n)} candidate${n===1?'':'s'} to review`
-    + (!hidden && F.returned < F.total_matching ? ` (showing ${fmt(F.returned)})` : '');
+  const F = S.funnel; if(!F) return;
+  $('cands-panel').hidden = false;
+  const hidden = listHidden(), n = F.total_matching;
+  $('raw-details').hidden = true;
   if(hidden){
-    $('show-rec-wrap').hidden = true;
+    $('cands-title').textContent = `${plural(n,'junction')} to review`; $('cands-sub').textContent = '';
     $('cands').innerHTML = `<div class="reveal"><p><b>${esc(S.sample)} is private data, so its list is hidden until you ask
       for it.</b> The counts above are totals only; they show no position.</p>
-      <button class="btn primary" type="button" id="reveal">Show the ${fmt(n)} candidate${n===1?'':'s'}</button></div>`;
+      <button class="btn primary" type="button" id="reveal">Show the ${plural(n,'candidate')}</button></div>`;
     $('reveal').addEventListener('click', ()=>{ S.revealed.add(S.sample); runFilters(); });
-  } else if(!visible.length){
-    $('cands').innerHTML = '<div class="empty">No candidates pass these filters. Loosen a filter above.</div>';
-  } else {
-    const ends = c => inGenomeOrder({chromosome:c.chrom1,position:c.pos1},{chromosome:c.chrom2,position:c.pos2});
-    $('cands').innerHTML = `<div class="table-wrap"><table><thead><tr><th>One end</th><th>Other end</th><th>Type</th>
-      <th style="text-align:right">Read pairs</th><th style="text-align:right">Split reads</th><th>Caller</th><th></th></tr></thead><tbody>`
-      + visible.map(c=>{ const [x,y] = ends(c); return `<tr class="cand${recurrent.has(c.candidate_id)?' recurrent':''}" data-cid="${esc(c.candidate_id)}">
-          <td class="coord">${coord(x.chromosome,x.position)}</td><td class="coord">${coord(y.chromosome,y.position)}</td>
-          <td><span class="tag" title="${esc(TYPE_NAMES[c.svtype]||c.svtype)}">${esc(c.svtype)}</span>
-            ${recurrent.has(c.candidate_id)?`<span class="tag grey">also in ${esc(C.b.label)}</span>`:''}</td>
-          <td class="n">${fmt(c.pe)}</td><td class="n">${fmt(c.sr)}</td><td class="small muted">${esc(c.filter)}</td>
-          <td style="text-align:right"><button class="btn quiet" type="button" data-open="${esc(c.candidate_id)}">Review</button></td></tr>`;}).join('')
-      + '</tbody></table></div>';
+    return;
   }
-  const d = $('cmp-details');
-  if(S.compare && !S.compare.error){
-    const c = S.compare.compare;
-    d.hidden = false;
-    $('cmp-inner').innerHTML = `<div class="table-wrap"><table><thead><tr><th>Sample</th><th style="text-align:right">Junctions in the file</th>
-      <th style="text-align:right">Also in the other</th><th style="text-align:right">Only here</th></tr></thead><tbody>
-      <tr><td>${esc(c.label_a)}</td><td class="n">${fmt(c.total_in_a)}</td><td class="n">${fmt(c.matched_in_a)}</td><td class="n">${fmt(c.unmatched_in_a)}</td></tr>
-      <tr><td>${esc(c.label_b)}</td><td class="n">${fmt(c.total_in_b)}</td><td class="n">${fmt(c.matched_in_b)}</td><td class="n">${fmt(c.unmatched_in_b)}</td></tr>
-      </tbody></table></div><p class="small muted">${esc(c.note||'')} ${src(S.compare.compare_call,'source')}</p>
-      <p class="small muted">After the filters: ${esc(S.compare.survivor_effect.a.label)} keeps ${fmt(S.compare.survivor_effect.a.survivors)},
-      of which ${fmt(S.compare.survivor_effect.a.recurrent)} also appear in ${esc(S.compare.survivor_effect.b.label)};
-      ${esc(S.compare.survivor_effect.b.label)} keeps ${fmt(S.compare.survivor_effect.b.survivors)},
-      of which ${fmt(S.compare.survivor_effect.b.recurrent)} also appear in ${esc(S.compare.survivor_effect.a.label)}.</p>`;
-  } else d.hidden = true;
+  if(!n){
+    $('cands-title').textContent = 'Nothing passes these filters'; $('cands-sub').textContent = '';
+    $('cands').innerHTML = '<div class="empty">No junction passes these filters. Loosen a filter above.</div>';
+    return;
+  }
+  renderRaw();
+  if(!readsLabel()){
+    $('cands-title').textContent = `${plural(n,'junction')} from the caller`;
+    $('cands-sub').textContent = 'Choose “Reads from” to count the reads behind them.';
+    $('cands').innerHTML = rawTable(); $('raw-details').hidden = true; return;
+  }
+  const R = S.review;
+  if(!R) return;                                         // the review is on its way
+  if(R.error){
+    $('cands').innerHTML = `<div class="err">The rearrangements could not be measured.\n${esc(R.error)}</div>`;
+    return;
+  }
+  const geneOnly = $('f-gene').checked && !$('f-gene').disabled;
+  const hasGene = ev => (ev.genes||[]).some(g => (g.in||[]).length) || (ev.segment && ev.segment.genes && ev.segment.genes.count);
+  let list = R.rearrangements.slice();
+  if(geneOnly) list = list.filter(hasGene);
+  const other = $('f-rec').value;
+  $('cands-title').textContent = `${plural(R.rearrangements_found,'rearrangement')} from ${plural(R.junctions_reviewed,'junction')}, most read support first`;
+  $('cands-sub').innerHTML = `${geneOnly?`showing the ${fmt(list.length)} that touch a gene; `:''}reads from ${esc(R.reads)} ${src(R.call,'source')}`;
+  if(!list.length){
+    $('cands').innerHTML = '<div class="empty">None of them touches a gene. Clear “Only those that touch a gene”.</div>';
+    return;
+  }
+  const notes = [];
+  if(R.truncated) notes.push(`Only the first ${fmt(R.junctions_reviewed)} of the ${fmt(R.junctions_passing_filters)} junctions were measured; tighten the filters to see the rest.`);
+  if(!(S.boot.genes||{}).available) notes.push('Genes are not named: no gene table is set up on this computer.');
+  if(other) notes.push(`Rearrangements also called in ${esc(other)} carry a caution: an artefact or a common variant is likely.`);
+  $('cands').innerHTML = (notes.length?`<p class="small muted" style="margin:0 0 8px">${notes.join(' ')}</p>`:'')
+    + `<div class="table-wrap"><table class="rtable"><thead><tr><th>#</th><th>Rearrangement</th><th>Breakpoints</th>
+       <th>Genes at the breakpoints</th><th style="text-align:right">Supporting reads</th><th>Read with care</th><th></th></tr></thead><tbody>`
+    + list.map(ev => rearrRow(ev)).join('') + '</tbody></table></div>';
+}
+function geneWords(g){
+  if(!g) return '<span class="none">not looked up</span>';
+  const inn = g.in||[];
+  if(inn.length) return inn.slice(0,2).map(x => `<b>${esc(x.name)}</b>${x.where?` <span class="muted small">${esc(shortWhere(x.where))}</span>`:''}${omimTag(x)}`).join(', ')
+    + (inn.length>2?` <span class="muted small">+${inn.length-2}</span>`:'');
+  const nb = g.nearest||{}, near = [nb.left, nb.right].filter(Boolean).sort((a,b)=>a.distance_bp-b.distance_bp)[0];
+  return `<span class="none">no gene</span>${near?` <span class="muted small">(nearest ${esc(near.name)}, ${bp(near.distance_bp)})</span>`:''}`;
+}
+const shortWhere = w => String(w).replace(/^(exon|intron) (\d+) of (\d+)$/, '$1 $2/$3').replace('inside the gene, outside its main transcript','outside main transcript');
+const omimTag = g => (g && (g.disorders || g.omim_phenotype)) ? ' <span class="tag omim" title="Linked to a disorder (OMIM/HPO)">OMIM</span>' : '';
+function rearrRow(ev){
+  const bps = ev.breakpoints, genes = ev.genes || bps.map(()=>null), s = ev.support||{};
+  const recurrent = (ev.junctions||[]).some(j=>j.recurrent);
+  const c = ev.cautions||[];
+  return `<tr class="rearr${recurrent?' recurrent':''}" data-rank="${ev.rank}">
+    <td class="rank">${ev.rank}</td>
+    <td class="nm-cell"><div class="name">${esc(evName(ev))}</div><small><span class="tag${ev.pattern==='both junctions'?' both':''}">${esc(patternLabel(ev))}</span></small></td>
+    <td class="lines">${bps.map(b=>`<div class="coord">${span(b.chromosome,b.start,b.end)}</div>`).join('')}</td>
+    <td class="genes-cell">${bps.map((b,i)=>`<div>${(S.boot.genes||{}).available?geneWords(genes[i]):'<span class="none">—</span>'}</div>`).join('')}${
+      ev.segment && ev.kind==='translocation' && ev.segment.genes && ev.segment.genes.count ? `<div class="small">segment holds ${ev.segment.genes.genes.slice(0,2).map(x=>`<b>${esc(x.name)}</b>${omimTag(x)}`).join(', ')}${ev.segment.genes.count>2?` +${ev.segment.genes.count-2}`:''}</div>` : ''}</td>
+    <td class="reads-cell${s.fragments?'':' zero'}"><span class="bignum">${fmt(s.fragments)}</span><small>${fmt(s.read_pairs)} pairs, ${fmt(s.split_reads)} split</small></td>
+    <td class="caut-cell">${c.length?`<div class="caut" title="${esc(c.join('\n'))}"><b>${plural(c.length,'caution')}</b>: ${esc(c[0])}</div>`:''}</td>
+    <td class="act" style="text-align:right"><button class="btn quiet" type="button" data-open-event="${ev.rank}">Review</button></td></tr>`;
+}
+function rawTable(){
+  const F = S.funnel, list = F.candidates||[];
+  const ends = c => inGenomeOrder({chromosome:c.chrom1,position:c.pos1},{chromosome:c.chrom2,position:c.pos2});
+  return `<div class="table-wrap"><table><thead><tr><th>One end</th><th>Other end</th><th>Type</th>
+    <th style="text-align:right">Read pairs</th><th style="text-align:right">Split reads</th><th>Caller</th></tr></thead><tbody>`
+    + list.slice().sort((a,b)=>(b.pe||0)-(a.pe||0)||(b.sr||0)-(a.sr||0)).map(c=>{ const [x,y] = ends(c); return `<tr class="cand-raw">
+        <td class="coord">${coord(x.chromosome,x.position)}</td><td class="coord">${coord(y.chromosome,y.position)}</td>
+        <td><span class="tag">${esc(c.svtype)}</span></td><td class="n">${fmt(c.pe)}</td><td class="n">${fmt(c.sr)}</td>
+        <td class="small muted">${esc(c.caller_id||'')} ${esc(c.filter)}</td></tr>`;}).join('')
+    + `</tbody></table></div><p class="small muted">The caller's own counts. ${src(F.call,'source')}</p>`;
+}
+function renderRaw(){
+  const F = S.funnel;
+  if(!(F.candidates||[]).length || !readsLabel()) return;
+  $('raw-details').hidden = false;
+  $('raw-summary').textContent = `The caller's ${plural(F.total_matching,'junction')}, as it reported them`;
+  $('raw-inner').innerHTML = rawTable();
 }
 $('cands').addEventListener('click', e => {
-  const b = e.target.closest('[data-open]'), tr = e.target.closest('tr[data-cid]');
-  const cid = b ? b.dataset.open : (tr ? tr.dataset.cid : null);
-  if(cid) openCandidate(cid);
+  const b = e.target.closest('[data-open-event]'), tr = e.target.closest('tr[data-rank]');
+  const rank = b ? +b.dataset.openEvent : (tr ? +tr.dataset.rank : null);
+  if(rank) openEvent(rank);
 });
 
-// ── 2 · evidence ──────────────────────────────────────────────────────────────
-function readsLabel(){ return S.boot.datasets.includes(S.sample) ? S.sample : $('f-reads').value; }
-async function openCandidate(cid){
+// ── 2 · one rearrangement ─────────────────────────────────────────────────────
+async function openEvent(rank){
+  const ev = (S.review.rearrangements||[]).find(x => x.rank===rank);
+  if(!ev) return;
   show('evidence');
-  const reads = readsLabel();
-  $('ev').innerHTML = `<div class="igv-wait"><div class="spin"></div><div>Measuring both ends of the junction in ${esc(reads)}…</div></div>`;
-  const r = await post('/api/candidate',{set_id:S.setId,candidate_id:cid});
-  const c = r.result;
-  if(!c || c.error){ $('ev').innerHTML = `<div class="err">The candidate could not be opened.\n${esc(c?c.error:'no result')}</div>`; return; }
-  const ends = inGenomeOrder(c.breakend_1, c.breakend_2);
-  const out = [];
-  for(const be of ends)
-    out.push(await post('/api/assess',{bam_label:reads,chromosome:be.chromosome,position:be.position}));
-  S.cand = {...c, ends, call:r.call, reads}; S.evidence = out;
-  S.ctx = {sample:reads, cand:S.cand, positions:out.filter(e=>!e.error).map(e=>({chr:e.chromosome,pos:e.position}))};
-  renderEvidence();
+  const gen = ++S.evGen, reads = S.review.reads;
+  S.event = {...ev, reads, hand:false}; S.evj = []; S.hand = null;
+  S.ctx = {sample:reads, ends:ev.breakpoints.map(b=>({chr:b.chromosome, pos:b.start}))};
+  renderEvent(true);
+  for(const J of ev.junctions){
+    // the other breakpoints of this rearrangement: a mate there belongs to it, not elsewhere
+    const also = ev.junctions.filter(K => K !== J).flatMap(K => [`${K.a.chromosome}:${K.a.position}`, `${K.b.chromosome}:${K.b.position}`]);
+    const r = await post('/api/junction',{reads_label:reads, chromosome_1:J.a.chromosome, position_1:J.a.position,
+                                          chromosome_2:J.b.chromosome, position_2:J.b.position, orientation:J.orientation||null,
+                                          also_at:also});
+    if(gen !== S.evGen) return;
+    S.evj.push(r);
+  }
+  renderEvent(false);
 }
+function joinsOf(E){
+  // one colour per called junction, in the order the rearrangement lists them
+  const n = (E.junctions||[]).length, sg = E.pattern==='segment' ? E.segment : null;
+  return (E.junctions||[]).map((J,i)=>{
+    let name = (J.join && J.join.name) || (n===1 ? 'the junction' : `junction ${i+1}`);
+    if(sg){ const p = chrKey(J.a.chromosome)===chrKey(sg.chromosome) ? J.a.position : J.b.position;
+            name = Math.abs(p - sg.start) <= Math.abs(p - sg.end) ? "the segment's start" : "the segment's end"; }
+    return {orientation:J.orientation, color:JOIN_COL[i % JOIN_COL.length], name, J};
+  });
+}
+function summarySentence(E){
+  const s = E.support||{}, n = (E.junctions||[]).length;
+  if(!s.fragments) return 'No read in this file supports it with both ends mapped unambiguously (mapping quality 20 or more).';
+  const where = n>1 ? 'the junctions' : 'the junction';
+  return `<b>${fmt(s.fragments)}</b> ${s.fragments===1?'read supports':'reads support'} it: ${plural(s.read_pairs,'read pair')}
+    ${s.read_pairs===1?'joins':'join'} the two ends and ${plural(s.split_reads,'read')} ${s.split_reads===1?'is':'are'} split across ${where}.`;
+}
+function describe(E){
+  const [a,b] = E.chromosomes, bp = E.breakpoints;
+  if(E.hand) return `Junction typed in by hand between ${esc(a)} and ${esc(b||a)}.`;
+  if(E.kind!=='translocation'){
+    const sg = E.segment;
+    return `${esc(KIND_NAMES[E.kind]||E.kind)} of ${span(sg.chromosome,sg.start,sg.end)} (${bp_(sg.length)}).`;
+  }
+  if(E.pattern==='both junctions') return `Translocation between chromosome ${esc(num(a))} and chromosome ${esc(num(b))}. Both junctions were found, as in a balanced translocation.`;
+  if(E.pattern==='one junction') return `Junction between chromosome ${esc(num(a))} and chromosome ${esc(num(b))}. Only one of the two junctions a reciprocal translocation makes was among the candidates.`;
+  if(E.pattern==='segment'){ const sg = E.segment, other = sg.chromosome===a ? b : a, at = bp.find(x=>x.chromosome===other);
+    return `A segment of ${esc(sg.chromosome)} (${span(sg.chromosome,sg.start,sg.end)}, ${bp_(sg.length)}) is joined into ${esc(other)} at ${fmt(at.start)}.`; }
+  return `${esc(patternLabel(E))} between chromosome ${esc(num(a))} and chromosome ${esc(num(b))}.`;
+}
+const bp_ = n => bp(n);
+function renderEvent(waiting){
+  const E = S.event, gen = S.evGen;
+  $('ev-head').innerHTML = `<h2 class="ev-title">${esc(evName(E))}<span class="sub">${E.breakpoints.map(b=>span(b.chromosome,b.start,b.end)).join(' ↔ ')}</span></h2>
+    <p class="lede" style="margin-bottom:0">${describe(E)} Reads from ${esc(E.reads)} ${kindPill('datasets',E.reads)}</p>`;
+  const c = E.cautions||[];
+  const parts = [];
+  parts.push(`<p class="summary-line">${summarySentence(E)}</p>`);
+  if(E.hand) parts.push(`<div class="banner hand"><b>Typed in by hand</b>The caller did not propose this junction; the reads below are the only evidence for it.</div>`);
+  if(c.length) parts.push(`<div class="cautions"><b>Read with care</b><ul>${c.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`);
+  parts.push(`<div class="panel"><div class="sec-head"><h3>What it does to the chromosomes</h3></div>${schematic(E)}</div>`);
+  parts.push(`<div class="panel"><div class="sec-head"><h3>Genes</h3>${(S.boot.genes||{}).available?'<span class="small muted">from the gene table on this computer</span>':''}</div>${genesSection(E)}</div>`);
+  parts.push(`<div class="panel" id="reads-panel"><div class="sec-head"><h3>The reads at the two ends</h3></div>${
+    waiting ? `<div class="spinwait"><div class="spin"></div><div>Reading both ends in ${esc(E.reads)}…</div></div>` : readsSection(E)}</div>`);
+  parts.push(callerSection(E));
+  S.igvTargets = E.breakpoints.map(b=>({bam_label:E.reads, chromosome:b.chromosome, position:b.start}));
+  parts.push(`<div class="be-actions">
+      <button class="btn" type="button" data-ask-event>Ask the assistant about this rearrangement</button>
+      ${S.igvTargets.map((t,i)=>`<button class="btn quiet" type="button" data-igv="${i}">IGV images at ${coord(t.chromosome,t.position)}</button>`).join('')}
+    </div>${kindOf('datasets', E.reads) === 'public' ? '' : `<div class="netnote">Private data: IGV images ask igv.org for the
+      region's reference sequence. Everything else on this page, genes included, is worked out on this computer.</div>`}
+    <div class="igv-area" id="igv-area"></div>`);
+  $('ev').innerHTML = parts.join('');
+  syncIgvButtons();
+}
+
+// ── the schematic: the chromosomes before, and the chromosomes the joins make ──
+const lenOf = c => { const b = (S.boot.bands||{})[chrKey(c)]; return b && b.length ? b[b.length-1][1] : (GRCH38[chrKey(c)]||0); };
+const bandName = (c, p) => { for(const b of ((S.boot.bands||{})[chrKey(c)]||[])) if(b[0] < p && p <= b[1]) return b[2]; return null; };
+const FONT = 'font-family="Bahnschrift,DIN Alternate,Barlow Semi Condensed,DejaVu Sans Condensed,Segoe UI,sans-serif"';
+let CLIP = 0;
+function rrPath(x, y, w, h, roundL, roundR){
+  const r = h/2, L = roundL ? Math.min(r, w/2) : 0, R = roundR ? Math.min(r, w/2) : 0;
+  return `M${(x+L).toFixed(2)} ${y} H${(x+w-R).toFixed(2)} ` + (R ? `A${R} ${R} 0 0 1 ${(x+w-R).toFixed(2)} ${y+h} ` : `V${y+h} `)
+    + `H${(x+L).toFixed(2)} ` + (L ? `A${L} ${L} 0 0 1 ${(x+L).toFixed(2)} ${y} ` : `V${y} `) + 'Z';
+}
+// One stretch [s, e] of chromosome c, drawn with its bands into x .. x+w (mirrored when reversed).
+function ideoPiece(c, s, e, x, w, y, h, opt={}){
+  const L = lenOf(c), id = 'cp'+(++CLIP), rev = !!opt.rev;
+  const leftTel = rev ? e>=L : s<=1, rightTel = rev ? s<=1 : e>=L;
+  const path = rrPath(x, y-h/2, Math.max(w,1), h, leftTel, rightTel);
+  const sc = w / Math.max(1, e - s + 1);
+  let g = `<clipPath id="${id}"><path d="${path}"/></clipPath><g clip-path="url(#${id})"><rect x="${x}" y="${y-h/2}" width="${Math.max(w,1)}" height="${h}" fill="#fff"/>`;
+  for(const [b0,b1,,stain] of ((S.boot.bands||{})[chrKey(c)]||[])){
+    if(b1 < s || b0 >= e) continue;
+    const a0 = Math.max(b0+1, s), a1 = Math.min(b1, e);
+    let x0 = x + (a0 - s)*sc, x1 = x + (a1 - s + 1)*sc;
+    if(rev){ const t = x0; x0 = 2*x + w - x1; x1 = 2*x + w - t; }
+    g += `<rect x="${x0.toFixed(2)}" y="${y-h/2}" width="${Math.max(0.6,x1-x0).toFixed(2)}" height="${h}" fill="${BAND_FILL[stain]||'#fff'}"/>`;
+  }
+  return g + `</g><path d="${path}" fill="none" stroke="${opt.stroke||'#5A3E9B'}" stroke-width="${opt.sw||1.6}"/>`;
+}
+function geneLabel(E, b){
+  if(!E.genes) return '';
+  const g = E.genes.find(x => x.chromosome===b.chromosome && x.start===b.start);
+  if(!g || !(g.in||[]).length) return '';
+  return (g.in||[]).slice(0,2).map(x=>x.name).join(', ');
+}
+// The chromosomes each join makes, as pieces read from one telomere to the other.
+function derivativesOf(E){
+  const out = [], joins = joinsOf(E);
+  if(E.kind==='translocation' && E.pattern==='segment' && E.segment){
+    const sg = E.segment, N = E.chromosomes.find(c=>c!==sg.chromosome), p = E.breakpoints.find(b=>b.chromosome===N).start;
+    const rev = (E.junctions||[]).some(J => J.orientation==='3to3' || J.orientation==='5to5');
+    out.push({label:`der(${num(N)})`, pieces:[{chromosome:N,start:1,end:p},
+               {chromosome:sg.chromosome,start:sg.start,end:sg.end,reversed:rev,enlarge:true},{chromosome:N,start:p+1,end:lenOf(N)}],
+              colors:[joins[0]&&joins[0].color, joins[1]&&joins[1].color],
+              note:`Whether the segment also stays on ${sg.chromosome} (a copy) or left it cannot be told from the junctions alone.`});
+    return out;
+  }
+  if(E.kind!=='translocation'){
+    const sg = E.segment, c = sg.chromosome, L = lenOf(c), j0 = joins[0] && joins[0].color;
+    const lab = `${c} after`;
+    if(E.kind==='deletion') out.push({label:lab, pieces:[{chromosome:c,start:1,end:sg.start},{chromosome:c,start:sg.end,end:L}], colors:[j0],
+                note:`The segment ${fmt(sg.start)}–${fmt(sg.end)} (${bp(sg.length)}) is missing from this copy of ${c}.`});
+    else if(E.kind==='duplication') out.push({label:lab, pieces:[{chromosome:c,start:1,end:sg.end},{chromosome:c,start:sg.start,end:sg.end,enlarge:true},{chromosome:c,start:sg.end+1,end:L}], colors:[j0, j0],
+                note:`The segment ${fmt(sg.start)}–${fmt(sg.end)} (${bp(sg.length)}) appears twice, side by side.`});
+    else if(E.kind==='inversion') out.push({label:lab, pieces:[{chromosome:c,start:1,end:sg.start},
+                {chromosome:c,start:sg.start,end:sg.end,reversed:true,enlarge:true},{chromosome:c,start:sg.end,end:L}], colors:[j0, j0],
+                note:`The segment ${fmt(sg.start)}–${fmt(sg.end)} (${bp(sg.length)}) is turned around.`});
+    return out;
+  }
+  for(const j of joins.slice(0,3)){
+    const d = j.J.join;
+    if(!d || !(d.pieces||[]).length) continue;
+    out.push({label:d.name || 'joined', pieces:d.pieces, colors:[j.color], centromeres:d.centromeres, moved:d.moved,
+              receiving:d.receiving});
+  }
+  return out;
+}
+function schematic(E){
+  const W = Math.max(600, Math.round(($('ev').clientWidth||1100) - 44));
+  const padL = 104, padR = 28, H = 18;
+  const chrs = E.chromosomes, col = {};
+  chrs.forEach((c,i)=>{ col[chrKey(c)] = CHR_COL[i] || '#555'; });
+  const ders = derivativesOf(E);
+  const lens = chrs.map(lenOf), dl = ders.map(d => d.pieces.reduce((a,p)=>a+p.end-p.start+1,0));
+  const maxL = Math.max(1, ...lens, ...dl), sc = (W - padL - padR)/maxL, X = p => padL + (p-1)*sc;
+  const two = chrs.length===2;
+  const rowY = {}; rowY[chrKey(chrs[0])] = 62; if(two) rowY[chrKey(chrs[1])] = 176;
+  let svg = '', marks = '', defs = '';
+  const arrowId = colr => { const id = 'ah'+colr.slice(1); if(!defs.includes(id)) defs += `<marker id="${id}" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="${colr}"/></marker>`; return id; };
+  // 1. the chromosomes as they are in the reference
+  chrs.forEach((c,i)=>{
+    const y = rowY[chrKey(c)], L = lenOf(c);
+    svg += `<text x="${padL-14}" y="${y+5}" text-anchor="end" ${FONT} font-size="16" font-weight="600" fill="${col[chrKey(c)]}">${esc(c)}</text>`
+         + ideoPiece(c, 1, L, padL, L*sc, y, H, {stroke:col[chrKey(c)]});
+  });
+  // 2. what leaves each chromosome, and where it goes
+  const overlay = (c, s, e, colr) => { const y = rowY[chrKey(c)];
+    const w = Math.max(7,(e-s+1)*sc), x = Math.min(X(s), W-padR-w);
+    return `<path d="${rrPath(x, y-H/2-3, w, H+6, s<=1, e>=lenOf(c))}" fill="${colr}" fill-opacity=".16" stroke="${colr}" stroke-width="2.4"/>`; };
+  const arrow = (sx, sy, ex, ey, colr, label) => {
+    const id = arrowId(colr), my = (sy+ey)/2;
+    // the label sits by the arrow's start, beside the piece it names, so two arrows' labels never meet
+    const ly = sy + (ey-sy)*0.3 + 4, right = ex >= sx;
+    return `<path d="M${sx.toFixed(1)} ${sy} C ${sx.toFixed(1)} ${my}, ${ex.toFixed(1)} ${my}, ${ex.toFixed(1)} ${ey}" fill="none" stroke="${colr}" stroke-width="2.4" marker-end="url(#${id})"/>`
+      + (label ? `<text x="${sx + (right?8:-8)}" y="${ly}" text-anchor="${right?'start':'end'}" ${FONT} font-size="12.5" fill="${colr}" paint-order="stroke" stroke="#fff" stroke-width="4">${esc(label)}</text>` : ''); };
+  if(E.kind==='translocation' && E.pattern==='segment' && E.segment){
+    const sg = E.segment, N = chrs.find(c=>c!==sg.chromosome), p = E.breakpoints.find(b=>b.chromosome===N).start;
+    marks += overlay(sg.chromosome, sg.start, sg.end, col[chrKey(sg.chromosome)]);
+    const sy = rowY[chrKey(sg.chromosome)], ey = rowY[chrKey(N)], down = ey > sy;
+    marks += arrow(X((sg.start+sg.end)/2), sy + (down?H/2+4:-H/2-4), X(p), ey + (down?-H/2-5:H/2+5), col[chrKey(sg.chromosome)], `${bp(sg.length)} segment to ${N}`);
+  } else if(E.kind!=='translocation' && E.segment){
+    const sg = E.segment;
+    marks += overlay(sg.chromosome, sg.start, sg.end, JOIN_COL[0]);
+  } else {
+    for(const d of ders){
+      if(!d.moved || !d.receiving) continue;
+      const m = d.moved, r = d.receiving, colr = col[chrKey(m.chromosome)];
+      if(!(chrKey(m.chromosome) in rowY) || !(chrKey(r.chromosome) in rowY)) continue;
+      marks += overlay(m.chromosome, m.start, m.end, colr);
+      const sy = rowY[chrKey(m.chromosome)], ey = rowY[chrKey(r.chromosome)], down = ey > sy;
+      const at = r.part==='left' ? r.end : r.start;
+      marks += arrow(X((m.start+m.end)/2), sy + (down?H/2+5:-H/2-5), X(at), ey + (down?-H/2-6:H/2+6), colr, `to ${r.chromosome}`);
+    }
+    if(!ders.some(d=>d.moved) && two){        // no join could be drawn: link the breakpoints
+      const [a,b] = E.breakpoints;
+      marks += arrow(X(a.start), rowY[chrKey(a.chromosome)]+H/2+5, X(b.start), rowY[chrKey(b.chromosome)]-H/2-6, '#1E1A2E', '');
+    }
+  }
+  // 3. the breakpoints, labelled outside the pair of chromosomes
+  E.breakpoints.forEach(b=>{
+    const y = rowY[chrKey(b.chromosome)], x0 = X(b.start), x1 = X(b.end), above = !two || chrKey(b.chromosome)===chrKey(chrs[0]);
+    const lx = Math.min(Math.max((x0+x1)/2, padL+70), W-padR-70);
+    const band = b.band || bandName(b.chromosome, b.start), genes = geneLabel(E, b);
+    marks += `<line x1="${x0}" x2="${x0}" y1="${y-H/2-7}" y2="${y+H/2+7}" stroke="#1E1A2E" stroke-width="2.2"/>`
+      + (x1-x0>2 ? `<line x1="${x1}" x2="${x1}" y1="${y-H/2-7}" y2="${y+H/2+7}" stroke="#1E1A2E" stroke-width="2.2"/>` : '')
+      + `<text x="${lx}" y="${above ? y-H/2-26 : y+H/2+24}" text-anchor="middle" ${FONT} font-size="14" font-weight="600" fill="#1E1A2E">${b.start===b.end?fmt(b.start):fmt(b.start)+'–'+fmt(b.end)}</text>`
+      + `<text x="${lx}" y="${above ? y-H/2-10 : y+H/2+40}" text-anchor="middle" ${FONT} font-size="13" fill="#67627A">${esc([band?num(b.chromosome)+band:null, genes?'in '+genes:null].filter(Boolean).join(', '))}</text>`;
+  });
+  let y = (two ? rowY[chrKey(chrs[1])] + 92 : rowY[chrKey(chrs[0])] + 64);
+  // 4. after the rearrangement
+  let tail = '';
+  if(ders.length){
+    tail += `<line x1="${padL}" x2="${W-padR}" y1="${y-26}" y2="${y-26}" stroke="#DCD8E6"/>`
+      + `<text x="${padL}" y="${y-8}" ${FONT} font-size="13.5" fill="#67627A">After the rearrangement${E.kind==='translocation'&&E.pattern!=='segment'?' (one chromosome per junction found)':''}</text>`;
+    y += 26;
+    ders.forEach((d,k)=>{
+      let x = padL, labels = [];
+      tail += `<text x="${padL-14}" y="${y+5}" text-anchor="end" ${FONT} font-size="15" font-weight="600" fill="#1E1A2E">${esc(d.label)}</text>`;
+      // a piece too small to see at this scale is drawn at a readable width, and the
+      // others give up that width, so the bar keeps its length
+      const natural = d.pieces.map(p => (p.end-p.start+1)*sc), MINW = 44;
+      const extra = d.pieces.reduce((a,p,i)=>a + (p.enlarge ? Math.max(0, MINW-natural[i]) : 0), 0);
+      const rest = d.pieces.reduce((a,p,i)=>a + (p.enlarge ? 0 : natural[i]), 0);
+      const widths = d.pieces.map((p,i)=> p.enlarge ? Math.max(MINW, natural[i]) : natural[i]*(rest ? (rest-extra)/rest : 1));
+      d.pieces.forEach((p,i)=>{
+        const w = widths[i], colr = col[chrKey(p.chromosome)] || '#555';
+        tail += ideoPiece(p.chromosome, p.start, p.end, x, w, y, H, {stroke:colr, rev:p.reversed});
+        labels.push({x, w, colr, text:`${p.chromosome}:${fmt(p.start)}–${fmt(p.end)}${p.reversed?' reversed':''}${p.enlarge&&natural[i]<MINW?' (enlarged)':''}`});
+        if(i>0){ const jc = (d.colors||[])[i-1] || (d.colors||[])[0] || '#1E1A2E';
+          tail += `<line x1="${x}" x2="${x}" y1="${y-H/2-6}" y2="${y+H/2+6}" stroke="${jc}" stroke-width="3.2"/>`; }
+        x += w;
+      });
+      // piece labels under the bar, pushed right when they would overlap
+      let last = -1e9;
+      for(const l of labels){
+        const tw = l.text.length*6.6, lx = Math.max(l.x + 2, last + 10);
+        tail += `<text x="${Math.min(lx, W-padR-tw)}" y="${y+H/2+17}" ${FONT} font-size="12.5" fill="${l.colr}">${esc(l.text)}</text>`;
+        last = Math.min(lx, W-padR-tw) + tw;
+      }
+      if(d.centromeres===0 || d.centromeres===2)
+        tail += `<text x="${padL}" y="${y+H/2+33}" ${FONT} font-size="12.5" fill="#A4510B">${d.centromeres===0
+          ? 'Neither piece carries a centromere: a chromosome like this would be lost, so the call or its orientation may be wrong.'
+          : 'Both pieces carry a centromere: a chromosome like this is unstable, so the call or its orientation may be wrong.'}</text>`;
+      y += (d.centromeres===0 || d.centromeres===2) ? 74 : 60;
+    });
+  }
+  const Hh = y - 10;
+  const key = `<div class="key">${chrs.map((c,i)=>`<span><i style="background:${CHR_SOFT[i]};border-color:${CHR_COL[i]}"></i>${esc(c)}</span>`).join('')}
+    <span><i style="background:#D9A3A0;border-color:#B07B78"></i>centromere</span>
+    ${ders.length?`<span><i style="background:${JOIN_COL[0]};border-color:${JOIN_COL[0]};width:4px"></i>a junction (its colour is used for its reads below)</span>`:''}</div>`;
+  const notes = ders.filter(d=>d.note).map(d=>`<p class="small muted" style="margin:6px 0 0">${esc(d.note)}</p>`).join('');
+  return `<figure class="schematic"><svg width="${W}" height="${Hh}" viewBox="0 0 ${W} ${Hh}" role="img"
+    aria-label="The chromosomes before and after the rearrangement"><defs>${defs}</defs>${svg}${marks}${tail}</svg>
+    <figcaption>Coloured outline: the piece that leaves each chromosome; the arrow shows where it attaches. Bands and lengths
+    are those of GRCh38.</figcaption>${key}${notes}</figure>`;
+}
+
+// ── genes ─────────────────────────────────────────────────────────────────────
+const omimLinks = g => {
+  const out = [];
+  if(g.omim_gene) out.push(`<a href="${OMIM_URL}${encodeURIComponent(g.omim_gene)}" target="_blank" rel="noopener">OMIM ${esc(g.omim_gene)}</a>`);
+  for(const d of (g.disorders||[]).slice(0,6)){
+    const m = /^OMIM:(\d+)$/.exec(d);
+    out.push(m ? `<a href="${OMIM_URL}${m[1]}" target="_blank" rel="noopener">${esc(d)}</a>` : esc(d));
+  }
+  if((g.disorder_count||0) > 6) out.push(`+${g.disorder_count-6} more`);
+  return out.join(', ');
+};
+function geneRow(g, extra){
+  return `<tr><td class="gname">${esc(g.name)}${omimTag(g)}</td><td class="where">${esc(g.where||extra||'')}</td>
+    <td class="small muted">${esc(g.type||'')}, ${esc(g.strand||'')} strand</td><td class="small">${omimLinks(g)||'<span class="muted">—</span>'}</td></tr>`;
+}
+function genesSection(E){
+  if(!(S.boot.genes||{}).available)
+    return `<p class="muted small" style="margin:0">Genes are not named: no gene table is set up on this computer
+      (scripts/make_gene_table.py builds one from a GENCODE file; the OMIM and HPO files are optional).</p>`;
+  const rows = [];
+  E.breakpoints.forEach((b,i)=>{
+    const g = (E.genes||[]).find(x => x.chromosome===b.chromosome && x.start===b.start) || {};
+    const head = `<tr><th colspan="4" style="padding-top:14px">${span(b.chromosome,b.start,b.end)}${b.band?` <span class="muted">(${esc(num(b.chromosome)+b.band)})</span>`:''}</th></tr>`;
+    let body;
+    if((g.in||[]).length) body = g.in.map(x=>geneRow(x)).join('');
+    else {
+      const nb = g.nearest||{};
+      const near = ['left','right'].filter(k=>nb[k]).map(k=>`${esc(nb[k].name)}${omimTag(nb[k])} ${bp(nb[k].distance_bp)} to the ${k}`);
+      body = `<tr><td colspan="4" class="muted">No gene at this breakpoint.${near.length?' Nearest: '+near.join('; ')+'.':' No gene within 1 Mb.'}</td></tr>`;
+    }
+    const btw = g.between, broken = new Set((g.in||[]).map(x=>x.name));
+    const extra = btw && E.pattern!=='segment' ? btw.genes.filter(x=>!broken.has(x.name)) : [];
+    if(extra.length) body += `<tr><td colspan="4" class="small">The ${bp(b.end-b.start+1)} between the two junctions here, which may be lost or
+      doubled, also overlap ${extra.map(x=>esc(x.name)+omimTag(x)).join(', ')}.</td></tr>`;
+    rows.push(head + body);
+  });
+  let html = `<div class="table-wrap"><table class="gtable"><tbody>${rows.join('')}</tbody></table></div>`;
+  const pieces = [];
+  if(E.segment && E.segment.genes){
+    const sg = E.segment, gg = sg.genes;
+    pieces.push({c:sg.chromosome, s:sg.start, e:sg.end, what:`The segment ${span(sg.chromosome,sg.start,sg.end)}`, n:gg});
+  }
+  for(const J of (E.pattern==='segment' ? [] : (E.junctions||[]))){
+    const m = J.join && J.join.moved;
+    if(m && m.genes) pieces.push({c:m.chromosome, s:m.start, e:m.end,
+      what:`The piece ${span(m.chromosome,m.start,m.end)} that moves to ${esc(J.join.receiving.chromosome)}`, n:m.genes});
+  }
+  if(pieces.length) html += `<div style="margin-top:12px">${pieces.map((p,k)=>`<p style="margin:6px 0">${p.what} (${bp(p.e-p.s+1)}) carries
+      ${plural(p.n.count,'gene')}${p.n.count?`, ${fmt(p.n.protein_coding)} protein-coding, <b>${fmt(p.n.with_disorder)} linked to a disorder</b>`:''}.
+      ${p.n.count?`<button class="btn quiet" type="button" data-piece-genes="${k}">List them</button>`:''}</p><div id="piece-genes-${k}"></div>`).join('')}
+      <p class="small muted">In a balanced rearrangement the genes on a piece that moves stay whole; the genes broken at the
+      breakpoints, and genes close to them, are the ones whose working can change.</p></div>`;
+  S.pieceGenes = pieces;
+  return html;
+}
+async function listPieceGenes(k){
+  const p = S.pieceGenes[k], box = $('piece-genes-'+k);
+  box.innerHTML = '<div class="spinwait"><div class="spin"></div><div>Reading the gene table…</div></div>';
+  const r = await post('/api/genes',{chromosome:p.c, start:p.s, end:p.e});
+  const g = (r.result||{}).genes;
+  if(!g){ box.innerHTML = `<div class="err">${esc((r.result||{}).error||'No answer.')}</div>`; return; }
+  const list = g.genes.slice().sort((a,b)=>(!!b.disorders-!!a.disorders)||(a.type!=='protein_coding')-(b.type!=='protein_coding'));
+  box.innerHTML = `<div class="table-wrap"><table class="gtable"><tbody>${list.map(x=>geneRow(x, `${fmt(x.start)}–${fmt(x.end)}`)).join('')}</tbody></table></div>
+    <p class="small muted">${g.truncated?`The first ${fmt(g.genes.length)} of ${fmt(g.count)}; `:''}disorder genes first. ${src(r.call,'source')}</p>`;
+}
+$('ev').addEventListener('click', e => {
+  const pg = e.target.closest('[data-piece-genes]'); if(pg) return listPieceGenes(+pg.dataset.pieceGenes);
+  const b = e.target.closest('[data-igv]'); if(b) return runIGV(+b.dataset.igv);
+  const j = e.target.closest('[data-jump]'); if(j){ const t = $(j.dataset.jump); if(t) t.scrollIntoView({behavior:'smooth'}); return; }
+  const a = e.target.closest('[data-ask-event]'); if(a) return askAboutEvent();
+  const oj = e.target.closest('[data-open-junction]'); if(oj) return openTyped(JSON.parse(oj.dataset.openJunction));
+  const img = e.target.closest('img[data-full]');
+  if(img) openModal(img.alt, `<div class="lightbox"><img src="${esc(img.dataset.full)}" alt="${esc(img.alt)}"></div>`);
+});
+
+// ── the reads at the two ends ─────────────────────────────────────────────────
+function readsSection(E){
+  const res = S.evj.map(r => r && r.result).filter(x => x && !x.error);
+  const errs = S.evj.filter(r => !r || r.error || !r.result || r.result.error);
+  if(!res.length) return `<div class="err">The reads could not be read.\n${esc((errs[0]&&((errs[0].result&&errs[0].result.error)||errs[0].error))||'no answer')}</div>`;
+  const joins = joinsOf(E);
+  // one pair of boxes when every junction's ends lie inside the first one's windows
+  const first = res[0], within = (w, p) => p >= w.start && p <= w.end;
+  const together = (E.junctions||[]).every(J => within(first.view.a.window, J.a.position) && within(first.view.b.window, J.b.position));
+  const sets = together ? [{r:first, calls:S.evj.map(x=>x.call)}] : res.map((r,i)=>({r, calls:[S.evj[i].call]}));
+  const half = Math.max(320, Math.floor((($('ev').clientWidth||1100) - 90)/2));
+  let html = `<p class="small muted" style="margin:0 0 10px">Only abnormal reads are drawn, as IGV would show them with every
+    normal read hidden. Colour says what each read tells about the junction; a hollow read is placed equally well elsewhere
+    (mapping quality below 20) and is not counted. The dashed line is the breakpoint.</p>`;
+  for(const st of sets){
+    const r = st.r, A = r.view.a, B = r.view.b;
+    html += `<div class="readboxes">${readBox(E, r, 'a', half, joins)}${readBox(E, r, 'b', half, joins)}</div>`;
+    html += legend(r, joins) + `<p class="foot small muted">${fmt(A.normal_reads_hidden+B.normal_reads_hidden)} normal reads hidden.
+      ${st.calls.map(c=>src(c,'source')).join(' ')}</p>`;
+  }
+  html += readTables(E, res, joins);
+  return html;
+}
+function endStory(E, chrom, pos){
+  // what happens at this end, in words: which piece leaves, which arrives
+  const lines = [];
+  if(E.pattern==='segment' && E.segment){
+    const sg = E.segment;
+    if(chrKey(sg.chromosome)===chrKey(chrom))
+      return `The segment ${fmt(sg.start)}–${fmt(sg.end)} (${bp(sg.length)}) ${Math.abs(pos-sg.start) <= Math.abs(pos-sg.end) ? 'starts' : 'ends'} here.`;
+    return `${esc(chrom)} receives the segment ${esc(sg.chromosome)}:${fmt(sg.start)}–${fmt(sg.end)} here.`;
+  }
+  for(const J of (E.junctions||[])){
+    const d = J.join; if(!d || !d.moved || !d.receiving) continue;
+    if(chrKey(d.moved.chromosome)===chrKey(chrom)) lines.push(`its piece ${fmt(d.moved.start)}–${fmt(d.moved.end)} leaves for ${esc(d.receiving.chromosome)}`);
+    if(chrKey(d.receiving.chromosome)===chrKey(chrom)) lines.push(`${esc(d.moved.chromosome)}'s piece ${fmt(d.moved.start)}–${fmt(d.moved.end)} attaches here`);
+  }
+  return lines.length ? `${esc(chrom)} breaks here: ${lines.join('; ')}.` : '';
+}
+function readBox(E, r, end, W, joins){
+  const V = r.view[end], info = r[end==='a'?'end_a':'end_b'], c = info.chromosome;
+  const w0 = V.window.start, w1 = V.window.end, padL = 4, padR = 4, inner = W - padL - padR;
+  const sx = p => padL + (p - w0) * inner / (w1 - w0 + 1);
+  const marks = new Set((E.junctions||[]).map(J => (chrKey(J.a.chromosome)===chrKey(c) ? J.a.position : J.b.position)).filter(p => p>=w0 && p<=w1));
+  if(!marks.size) marks.add(info.position);
+  let y = 30, svg = '';
+  // ruler
+  const step = (w1-w0) > 3000 ? 1000 : 500;
+  svg += `<line x1="${padL}" x2="${W-padR}" y1="18" y2="18" stroke="#C6C0D6"/>`;
+  for(let t = Math.ceil(w0/step)*step; t <= w1; t += step) svg += `<line x1="${sx(t)}" x2="${sx(t)}" y1="14" y2="22" stroke="#C6C0D6"/>`;
+  svg += `<text x="${padL}" y="11" ${FONT} font-size="11.5" fill="#67627A">${fmt(w0)}</text><text x="${W-padR}" y="11" text-anchor="end" ${FONT} font-size="11.5" fill="#67627A">${fmt(w1)}</text>`;
+  // genes in the window
+  const genes = V.genes||[];
+  if(genes.length){
+    y = 36;
+    genes.slice(0,3).forEach((g,i)=>{
+      const gy = y + i*20, x0 = sx(Math.max(g.start,w0)), x1 = sx(Math.min(g.end,w1));
+      svg += `<line x1="${x0}" x2="${x1}" y1="${gy}" y2="${gy}" stroke="#3E2A73" stroke-width="1.6"/>`;
+      for(const [es,ee] of (g.exons||[])) svg += `<rect x="${sx(Math.max(es,w0))}" y="${gy-5}" width="${Math.max(1.5,sx(Math.min(ee,w1))-sx(Math.max(es,w0)))}" height="10" fill="#3E2A73"/>`;
+      for(let ax = x0+18; ax < x1-8; ax += 70) svg += `<path d="M${ax} ${gy-3} l${g.strand==='-'?-4:4} 3 l${g.strand==='-'?4:-4} 3" fill="none" stroke="#3E2A73" stroke-width="1.2"/>`;
+      svg += `<text x="${Math.min(Math.max(x0+3, padL+2), W-padR-90)}" y="${gy-8}" ${FONT} font-size="12" font-weight="600" fill="#3E2A73">${esc(g.name)}${g.disorders||g.omim_phenotype?' (OMIM)':''}</text>`;
+    });
+    y += Math.min(3,genes.length)*20 + 4;
+  } else {
+    svg += `<text x="${padL}" y="40" ${FONT} font-size="12" fill="#9A95AB">${(S.boot.genes||{}).available?'no gene in this window':'genes not looked up'}</text>`;
+    y = 50;
+  }
+  // reads, packed into rows
+  const rowsEnd = [], placed = [];
+  const reads = (V.reads||[]).slice().sort((p,q)=>(p.start-(p.clip_left||0))-(q.start-(q.clip_left||0)));
+  for(const rd of reads){
+    const x0 = sx(rd.start - (rd.clip_left||0)), x1 = sx(rd.end + (rd.clip_right||0));
+    let row = rowsEnd.findIndex(e => e + 3 < x0);
+    if(row < 0){ row = rowsEnd.length; rowsEnd.push(0); }
+    rowsEnd[row] = x1; placed.push({rd, row});
+  }
+  const RH = 9, MAXR = 64, top = y + 6;
+  let notDrawn = 0;
+  for(const {rd, row} of placed){
+    if(row >= MAXR){ notDrawn++; continue; }
+    const ry = top + row*RH, a = sx(rd.start), b = Math.max(sx(rd.end), a+1.5);
+    const jn = (rd.kind==='pair_partner'||rd.kind==='split_partner'||rd.kind==='pair_related') ? joins.find(j=>j.orientation===rd.orientation) : null;
+    const colr = jn ? jn.color : (rd.kind==='pair_partner'||rd.kind==='split_partner') ? JOIN_UNCALLED : (READ_KIND[rd.kind]||{}).col || '#999';
+    const hollow = rd.low_mapq || rd.kind==='ambiguous';
+    const fill = hollow ? '#FFFFFF' : colr, stroke = hollow ? (rd.kind==='ambiguous' ? '#8C8798' : colr) : 'none';
+    const tip = rd.strand==='+' ? `M${b} ${ry} l3 3.5 l-3 3.5 z` : `M${a} ${ry} l-3 3.5 l3 3.5 z`;
+    const p = rd.partner;
+    const title = `${rd.name}\n${jn ? 'joins '+(p?p.chromosome:'')+' as '+jn.name+' does' : (rd.kind==='pair_partner'||rd.kind==='split_partner') ? 'joins the partner in a way no called junction explains' : (READ_KIND[rd.kind]||{}).label||rd.kind}`
+      + `\n${c}:${rd.start.toLocaleString('en-US')}-${rd.end.toLocaleString('en-US')} (${rd.strand}) ${rd.cigar} MAPQ ${rd.mapq}`
+      + (p ? `\nother end: ${p.chromosome}:${Number(p.start).toLocaleString('en-US')}${p.strand?' ('+p.strand+')':''}` : '');
+    svg += `<g><title>${esc(title)}</title>`
+      + (rd.clip_left ? `<rect x="${sx(rd.start-rd.clip_left)}" y="${ry+2.5}" width="${Math.max(1,a-sx(rd.start-rd.clip_left))}" height="2" fill="${colr}" opacity=".55"/>` : '')
+      + (rd.clip_right ? `<rect x="${b}" y="${ry+2.5}" width="${Math.max(1,sx(rd.end+rd.clip_right)-b)}" height="2" fill="${colr}" opacity=".55"/>` : '')
+      + `<rect x="${a}" y="${ry}" width="${b-a}" height="7" fill="${fill}" stroke="${stroke}" stroke-width="${hollow?1.1:0}"/>`
+      + `<path d="${tip}" fill="${hollow?'#FFFFFF':colr}" stroke="${hollow?stroke:'none'}" stroke-width="${hollow?0.9:0}"/></g>`;
+  }
+  const rowsUsed = Math.min(rowsEnd.length, MAXR);
+  const bottom = top + Math.max(1,rowsUsed)*RH + 8;
+  let lines = '';
+  // breakpoints closer than a label's width share one label
+  const ms = [...marks].sort((p,q)=>p-q), groups = [];
+  for(const m of ms){ const g = groups[groups.length-1]; if(g && sx(m) - sx(g[g.length-1]) < 74) g.push(m); else groups.push([m]); }
+  for(const g of groups){
+    for(const m of g) lines += `<line x1="${sx(m)}" x2="${sx(m)}" y1="14" y2="${bottom}" stroke="#1E1A2E" stroke-width="1.4" stroke-dasharray="4 3"/>`;
+    const cx = (sx(g[0]) + sx(g[g.length-1]))/2, txt = g.length>1 ? `${fmt(g[0])}–${fmt(g[g.length-1])}` : fmt(g[0]);
+    lines += `<text x="${Math.min(Math.max(cx, padL+50), W-padR-50)}" y="${bottom+13}" text-anchor="middle" ${FONT} font-size="12" font-weight="600" fill="#1E1A2E">${txt}</text>`;
+  }
+  const Hh = bottom + 18;
+  const empty = !placed.length ? `<text x="${W/2}" y="${top+14}" text-anchor="middle" ${FONT} font-size="13" fill="#9A95AB">no abnormal read here</text>` : '';
+  return `<div class="readbox"><h4>${esc(c)} around ${fmt(info.position)}${info.band?` <span class="muted" style="font-weight:400">(${esc(num(c)+info.band)})</span>`:''}</h4>
+    <div class="what">${endStory(E, c, info.position)}${info.clipped_reads?` ${plural(info.clipped_reads,'read')} ${info.clipped_reads===1?'is':'are'} cut at exactly ${fmt(info.clipped_at)}.`:''}</div>
+    <svg width="${W}" height="${Hh}" viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Abnormal reads around ${esc(c)}:${fmt(info.position)}">${svg}${lines}${empty}</svg>
+    ${notDrawn||V.truncated?`<div class="foot">${notDrawn?`${fmt(notDrawn)} more reads did not fit. `:''}${V.truncated?'Only part of the abnormal reads in this window is drawn; every read that joins the two ends is.':''}</div>`:''}</div>`;
+}
+function legend(r, joins){
+  const kinds = {};
+  for(const e of ['a','b']) for(const [k,v] of Object.entries(r.view[e].abnormal_by_kind||{})) kinds[k] = (kinds[k]||0) + v;
+  const items = [];
+  const byO = r.by_orientation||{};
+  const shown = joins.filter(j => (byO[j.orientation]||{}).fragments || joins.length===1);
+  for(const j of shown){ const n = (byO[j.orientation]||{}).fragments||0;
+    items.push(`<span><i style="background:${j.color}"></i>${j.name==='the junction'?'joins the two ends as the junction does':'joins the two ends as '+esc(j.name)+' does'} (${fmt(n)} counted)</span>`); }
+  const called = new Set(joins.map(j=>j.orientation));
+  const COMP = {'3to5':'5to3','5to3':'3to5','3to3':'5to5','5to5':'3to3'};
+  const unc = Object.entries(byO).filter(([o])=>!called.has(o)).reduce((a,[,v])=>a+v.fragments,0);
+  const recip = Object.keys(byO).some(o => !called.has(o) && joins.some(j => COMP[j.orientation]===o));
+  if(unc) items.push(`<span><i style="background:${JOIN_UNCALLED}"></i>${recip?'joins the two ends the reciprocal way, which the caller did not report':'joins the two ends in a way no called junction explains'} (${fmt(unc)})</span>`);
+  for(const [k,st] of Object.entries(READ_KIND)){
+    if(!kinds[k]) continue;
+    items.push(`<span><i class="${k==='ambiguous'?'hollow':''}" style="background:${st.col}"></i>${esc(st.label)} (${fmt(kinds[k])})</span>`);
+  }
+  return `<div class="legend">${items.join('')}</div>`;
+}
+function readTables(E, res, joins){
+  const pairs = new Map(), split = new Map();
+  for(const r of res){
+    for(const p of ((r.reads||{}).pairs||[])) pairs.set(p.name+'|'+p.orientation, p);
+    for(const s of ((r.reads||{}).split||[])) split.set(s.name+'|'+s.orientation, s);
+  }
+  const groups = joins.map(j => ({name:j.name, color:j.color, o:j.orientation}));
+  const known = new Set(groups.map(g=>g.o));
+  const others = [...new Set([...pairs.values(), ...split.values()].map(x=>x.orientation).filter(o=>!known.has(o)))];
+  const COMP = {'3to5':'5to3','5to3':'3to5','3to3':'5to5','5to5':'3to3'};
+  for(const o of others) groups.push({name: joins.some(j=>COMP[j.orientation]===o) ? 'the reciprocal join, not reported by the caller'
+                                                                               : 'a join no called junction explains ('+o+')', color:JOIN_UNCALLED, o});
+  const [ca, cb] = [E.junctions[0].a.chromosome, E.junctions[0].b.chromosome];
+  const cell = x => x ? `${fmt(x.start)} ${esc(x.strand||'')} ${esc(x.cigar||'')} q${x.mapq==null?'?':x.mapq}` : '—';
+  let html = '';
+  for(const g of groups){
+    const P = [...pairs.values()].filter(x=>x.orientation===g.o), Sp = [...split.values()].filter(x=>x.orientation===g.o);
+    if(!P.length && !Sp.length) continue;
+    html += `<details><summary><span style="color:${g.color}">■</span> Reads for ${esc(g.name)}: ${plural(P.length,'read pair')}, ${plural(Sp.length,'split read')}</summary><div class="inner">`
+      + (P.length?`<div class="table-wrap"><table class="readlist"><thead><tr><th>Read pair</th><th>Read on ${esc(ca)}: position, strand, CIGAR, quality</th><th>Mate on ${esc(cb)}</th></tr></thead><tbody>`
+        + P.map(x=>`<tr><td class="nm" title="${esc(x.name)}">${esc(x.name)}</td><td>${cell(x.a)}</td><td>${cell(x.b)}</td></tr>`).join('') + '</tbody></table></div>' : '')
+      + (Sp.length?`<div class="table-wrap" style="margin-top:8px"><table class="readlist"><thead><tr><th>Split read</th><th>Piece on ${esc(ca)}</th><th>Piece on ${esc(cb)}</th></tr></thead><tbody>`
+        + Sp.map(x=>`<tr><td class="nm" title="${esc(x.name)}">${esc(x.name)}</td><td>${cell(x.a)}</td><td>${cell(x.b)}</td></tr>`).join('') + '</tbody></table></div>' : '')
+      + `</div></details>`;
+  }
+  const trunc = res.some(r => (r.reads||{}).truncated);
+  return html ? `<div style="margin-top:10px">${html}${trunc?'<p class="small muted">Lists stop at 100 reads per kind; the counts do not.</p>':''}</div>` : '';
+}
+function callerSection(E){
+  if(E.hand) return '';
+  const rows = (E.junctions||[]).map((J,i)=>`<tr><td><span style="color:${JOIN_COL[i%JOIN_COL.length]}">■</span> ${esc(J.caller_id||J.candidate_id)}</td>
+      <td class="coord">${coord(J.a.chromosome,J.a.position)} ↔ ${coord(J.b.chromosome,J.b.position)}</td><td>${esc(J.orientation||'—')}</td>
+      <td>${esc(J.filter)}</td><td class="n">${fmt(J.pe)}</td><td class="n">${fmt(J.sr)}</td><td class="n">${J.support?fmt(J.support.fragments):'—'}</td>
+      <td>${J.recurrent?'<span class="tag grey">also in the other sample</span>':''}</td></tr>`).join('');
+  const partner = E.partner_in_file ? `<p class="small" style="margin:8px 0 0">The reciprocal junction is in the caller's file but did not pass the filters:
+    ${esc(E.partner_in_file.caller_id||E.partner_in_file.candidate_id)}, ${coord(E.partner_in_file.a.chromosome,E.partner_in_file.a.position)} ↔
+    ${coord(E.partner_in_file.b.chromosome,E.partner_in_file.b.position)}, ${esc(E.partner_in_file.filter)}, read pairs ${fmt(E.partner_in_file.pe)}, split reads ${fmt(E.partner_in_file.sr)}.</p>` : '';
+  return `<details class="panel" style="margin-top:0"><summary>What the caller reported (${plural((E.junctions||[]).length,'junction')})</summary><div class="inner">
+    <div class="table-wrap"><table class="callers"><thead><tr><th>Record</th><th>Junction</th><th>Join</th><th>Filter</th>
+    <th style="text-align:right">Read pairs (caller)</th><th style="text-align:right">Split reads (caller)</th><th style="text-align:right">Reads counted here</th><th></th></tr></thead>
+    <tbody>${rows}</tbody></table></div>${partner}
+    <p class="small muted">The caller's counts and the counts here differ in method: the caller counts during its own search; here both
+    reads must lie within ${fmt(1000)} bp of the junction with mapping quality 20 or more. ${src(S.review&&S.review.call,'source')}</p></div></details>`;
+}
+
+// ── a position typed in by hand ───────────────────────────────────────────────
 function parsePos(t){
   const m = String(t).trim().replace(/\s/g,'').match(/^(chr)?([0-9]{1,2}|X|Y|M|MT)[:\-]([0-9][0-9,\.]*)$/i);
   if(!m) return null;
-  return {chr:(m[1]?'chr':'chr')+m[2].toUpperCase().replace('MT','M'), pos:parseInt(m[3].replace(/[,\.]/g,''),10)};
+  return {chr:'chr'+m[2].toUpperCase().replace('MT','M'), pos:parseInt(m[3].replace(/[,\.]/g,''),10)};
 }
 $('checkpos').addEventListener('submit', async e => {
   e.preventDefault();
@@ -706,209 +1321,91 @@ $('checkpos').addEventListener('submit', async e => {
   if(!p){ $('cp-pos').setCustomValidity('Write a position like chr20:33,700,000'); $('cp-pos').reportValidity();
           $('cp-pos').setCustomValidity(''); return; }
   show('evidence');
-  $('ev').innerHTML = `<div class="igv-wait"><div class="spin"></div><div>Measuring ${coord(p.chr,p.pos)} in ${esc(ds)}…</div></div>`;
-  const r = await post('/api/assess',{bam_label:ds,chromosome:p.chr,position:p.pos});
-  S.cand = null; S.evidence = [r]; S.handReads = ds;
-  S.ctx = {sample:ds, cand:null, positions:r.error?[]:[{chr:r.chromosome,pos:r.position}]};
-  renderEvidence();
+  const gen = ++S.evGen;
+  S.event = null; S.evj = [];
+  $('ev-head').innerHTML = `<h2 class="ev-title">${coord(p.chr,p.pos)}</h2><p class="lede">Checked by hand. Reads from ${esc(ds)} ${kindPill('datasets',ds)}</p>`;
+  $('ev').innerHTML = `<div class="spinwait"><div class="spin"></div><div>Reading ${coord(p.chr,p.pos)} in ${esc(ds)}…</div></div>`;
+  const r = await post('/api/position',{reads_label:ds, chromosome:p.chr, position:p.pos});
+  if(gen !== S.evGen) return;
+  S.hand = r; S.ctx = {sample:ds, ends:r.error?[]:[{chr:r.chromosome,pos:r.position}]};
+  renderPosition(r, ds);
 });
-function diagram(E){
-  const ends = E.filter(x=>!x.error);
-  if(!ends.length) return '';
-  // Drawn at the width it is shown at, so the lettering stays at its true size.
-  const W = Math.max(320, Math.round(($('ev').clientWidth || 1000))), padL = 64, padR = 24, barW = W-padL-padR;
-  const two = ends.length===2 && ends[0].chromosome!==ends[1].chromosome;
-  const rows = two ? 2 : 1, rowH = 58, top = 30, H = top + rowH*(rows-1) + 34;
-  const maxLen = Math.max(...ends.map(e=>GRCH38[e.chromosome]||0));
-  if(!maxLen) return '';
-  const font = 'font-family="Bahnschrift,DIN Alternate,Barlow Semi Condensed,DejaVu Sans Condensed,Segoe UI,sans-serif"';
-  let svg = `<svg class="diagram" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img"
-    aria-label="Where the ${ends.length>1?'two ends lie':'position lies'} on the chromosome${two?'s':''}">`;
-  const chroms = two ? [ends[0].chromosome, ends[1].chromosome] : [ends[0].chromosome];
-  chroms.forEach((c,i)=>{
-    const L = GRCH38[c]||maxLen, y = top + i*rowH;
-    svg += `<text x="${padL-12}" y="${y+5}" text-anchor="end" ${font} font-size="15" fill="#1E1A2E">${esc(c)}</text>
-      <rect x="${padL}" y="${y-8}" width="${barW*L/maxLen}" height="16" rx="8" fill="#E2D9F2" stroke="#5A3E9B" stroke-width="1.2"/>`;
-  });
-  const pts = ends.map(e=>{ const row = two ? chroms.indexOf(e.chromosome) : 0;
-    return {x: padL + barW*e.position/maxLen, y: top + row*rowH, row, e}; });
-  if(two){
-    const [a,b] = pts;
-    svg += `<path d="M${a.x} ${a.y+7} C ${a.x} ${(a.y+b.y)/2}, ${b.x} ${(a.y+b.y)/2}, ${b.x} ${b.y-7}" fill="none" stroke="#A4510B" stroke-width="2.2"/>`;
+function renderPosition(r, ds){
+  if(r.error){
+    $('ev').innerHTML = `<div class="err">This position could not be read.\n${esc(r.error)}${r.contigs_in_header_sample?'\n\nChromosome names in this file include: '+esc(r.contigs_in_header_sample.join(', ')):''}</div><div class="meta">${src(r.call,'source')}</div>`;
+    return;
   }
-  pts.forEach((p,i)=>{
-    // labels sit on the outer side of each bar so the connecting curve never crosses them
-    const above = two ? p.row===0 : (pts.length===2 && i===0);
-    const lx = Math.min(Math.max(p.x, padL+44), padL+barW-44);
-    svg += `<circle cx="${p.x}" cy="${p.y}" r="6.5" fill="#5A3E9B" stroke="#fff" stroke-width="2"/>
-      <text x="${lx}" y="${above ? p.y-14 : p.y+26}" text-anchor="middle" ${font} font-size="13.5" fill="#3E2A73">${Number(p.e.position).toLocaleString('en-US')}</text>`;
-  });
-  svg += `</svg>`;
-  return `<figure class="diagram-wrap">${svg}<figcaption>Bar lengths are GRCh38 chromosome sizes.</figcaption></figure>`;
-}
-function renderEvidence(){
-  const E = S.evidence, c = S.cand;
-  S.evGen = (S.evGen||0) + 1;
-  let head;
-  if(c){
-    const [a,b] = c.ends;
-    head = `<h2 class="ev-title">${coord(a.chromosome,a.position)} <span style="color:var(--amber)">↔</span> ${coord(b.chromosome,b.position)}</h2>
-      <p class="lede">${esc(TYPE_NAMES[c.svtype]||c.svtype)} (${esc(c.svtype)}), ${fmt(c.pe)} read pairs and ${fmt(c.sr)} split reads
-      according to the caller. Reads from ${esc(c.reads)} ${kindPill('datasets',c.reads)} ${src(c.call,'source')}</p>`;
-  } else {
-    const e = E[0]||{}, ds = e.bam_label||S.handReads||$('cp-ds').value;
-    head = `<h2 class="ev-title">${e.chromosome?coord(e.chromosome,e.position):'Position'}</h2>
-      <p class="lede">Checked by hand. Reads from ${esc(ds)} ${kindPill('datasets',ds)}</p>`;
-  }
-  $('ev-head').innerHTML = head;
-  const okE = E.filter(x=>!x.error);
-  let prov = '';
-  if(okE.length){
-    const pp = okE[0].position_provenance||{};
-    prov = pp.source==='candidate_set'
-      ? `<div class="banner cand"><b>From the caller's candidate list</b>${c&&c.caller_id?`Caller record ${esc(c.caller_id)}, `:''}candidate ${esc(pp.candidate_id)} in ${esc(pp.set_label)}.</div>`
-      : `<div class="banner hand"><b>Typed in by hand</b>The caller did not propose this position, so nothing here corroborates that it is a real junction; the evidence below stands on its own.</div>`;
-  }
-  $('ev').innerHTML = prov + diagram(E)
-    + `<div class="breakends${E.length===1?' single':''}">${E.map((x,i)=>breakendPanel(x,i)).join('')}</div>`
-    + `<div class="igv-area" id="igv-area"></div>`;
+  const D = r.discordant||{}, Sp = r.split||{}, C = r.clipped||{}, G = (r.genes||{}).result||{};
+  const chroms = new Set([...Object.keys(D.partners||{}), ...Object.keys(Sp.partners||{})]);
+  const rows = [...chroms].map(c=>({c, p:(D.partners||{})[c]||0, s:(Sp.partners||{})[c]||0})).sort((a,b)=>(b.p+b.s)-(a.p+a.s)).slice(0,8);
+  const ex = (Sp.examples||[]).map(t => { const m = /^(.+):(\d+)$/.exec(t); return m ? {chr:m[1], pos:+m[2]} : null; }).filter(Boolean);
+  let genes = '';
+  if(G.error) genes = `<p class="muted small">Genes not named: ${esc(G.error)}</p>`;
+  else if((G.genes_at_position||[]).length) genes = `<p>In ${G.genes_at_position.map(g=>`<b>${esc(g.name)}</b> (${esc(g.where||'')})${omimTag(g)}`).join(', ')}.</p>`;
+  else if(G.nearest){ const nb = G.nearest; genes = `<p>No gene at this position.${['left','right'].filter(k=>nb[k]).map(k=>` ${esc(nb[k].name)}${omimTag(nb[k])} lies ${bp(nb[k].distance_bp)} to the ${k}.`).join('')}</p>`; }
+  const band = G.band ? ` (${esc(num(r.chromosome)+G.band)})` : '';
+  $('ev-head').innerHTML = `<h2 class="ev-title">${coord(r.chromosome,r.position)}${band}</h2><p class="lede">Checked by hand. Reads from ${esc(ds)} ${kindPill('datasets',ds)}</p>`;
+  S.igvTargets = [{bam_label:ds, chromosome:r.chromosome, position:r.position}];
+  $('ev').innerHTML = `<div class="banner hand"><b>Typed in by hand</b>The caller did not propose this position, so nothing here corroborates that it is a real breakpoint; the reads below stand on their own.</div>
+    <div class="panel"><div class="sec-head"><h3>Where the reads here point</h3><span class="small muted">within ${fmt(D.window_bp)} bp, mapping quality 20 or more</span></div>
+    ${rows.length?`<div class="table-wrap"><table class="partners"><thead><tr><th>Other chromosome</th><th style="text-align:right">Read pairs with the mate there</th><th style="text-align:right">Split reads with a piece there</th></tr></thead><tbody>
+      ${rows.map(x=>`<tr><td>${esc(x.c)}</td><td class="n">${fmt(x.p)}</td><td class="n">${fmt(x.s)}</td></tr>`).join('')}</tbody></table></div>`
+      : '<p class="muted">No read here has its mate or a piece on another chromosome.</p>'}
+    ${ex.length?`<p style="margin-top:10px">Split reads give exact partner positions. Open one as a junction to see both ends:</p>
+      <div class="row">${ex.map(x=>`<button class="btn" type="button" data-open-junction='${esc(JSON.stringify({reads:ds, a:{chr:r.chromosome,pos:r.position}, b:x}))}'>Junction with ${coord(x.chr,x.pos)}</button>`).join('')}</div>`:''}
+    <p class="small" style="margin-top:12px">${C.at!=null?`${plural(C.at_count,'read')} ${C.at_count===1?'is':'are'} cut at exactly ${fmt(C.at)}. `:'No pile of clipped reads here. '}
+      Ambiguously mapped reads within ±500 bp: ${pct(r.low_mapq_fraction)}.
+      ${src(D.call,'pairs')} ${src(Sp.call,'split reads')} ${src(C.call,'clipped reads')} ${src(r.stats_call,'quality')}</p></div>
+    <div class="panel"><div class="sec-head"><h3>Genes</h3>${src((r.genes||{}).call,'source')}</div>${genes}</div>
+    <div class="be-actions"><button class="btn" type="button" data-ask-event>Ask the assistant about this position</button>
+      <button class="btn quiet" type="button" data-igv="0">IGV images at ${coord(r.chromosome,r.position)}</button></div>
+    ${kindOf('datasets', ds) === 'public' ? '' : `<div class="netnote">Private data: IGV images ask igv.org for the region's reference sequence. Everything else here is worked out on this computer.</div>`}
+    <div class="igv-area" id="igv-area"></div>`;
   syncIgvButtons();
-  requestAnimationFrame(()=>{ for(const f of document.querySelectorAll('.track .fill')) f.style.width = f.dataset.w+'%'; });
 }
-function band(score,bands){
-  if(score==null) return '';
-  for(const b of (bands||[])){ if(b.op==='>='?score>=b.threshold:score>b.threshold) return b.strength; }
-  return 'none';
+// A junction typed in by hand (from a split read's partner): measured like a caller's.
+async function openTyped(x){
+  const gen = ++S.evGen;
+  const [a, b] = inGenomeOrder({chromosome:x.a.chr, position:x.a.pos}, {chromosome:x.b.chr, position:x.b.pos});
+  $('ev').innerHTML = `<div class="spinwait"><div class="spin"></div><div>Reading both ends in ${esc(x.reads)}…</div></div>`;
+  const r = await post('/api/junction',{reads_label:x.reads, chromosome_1:a.chromosome, position_1:a.position,
+                                        chromosome_2:b.chromosome, position_2:b.position});
+  if(gen !== S.evGen) return;
+  const res = r.result || {};
+  if(r.error || res.error){ $('ev').innerHTML = `<div class="err">${esc(r.error||res.error)}</div>`; return; }
+  // every join the reads support with at least 3 reads (the strongest one in any case)
+  const ors = Object.entries(res.by_orientation||{}).sort((p,q)=>q[1].fragments-p[1].fragments)
+                    .filter(([,v],i) => i===0 || v.fragments >= 3);
+  const mk = ([o, sup]) => ({candidate_id:null, caller_id:'typed in', orientation:o, a:{chromosome:a.chromosome, position:a.position},
+             b:{chromosome:b.chromosome, position:b.position}, join:res.joins ? res.joins[o] : null, support:sup});
+  const Js = ors.length ? ors.map(mk) : [mk([null, {read_pairs:0, split_reads:0, fragments:0}])];
+  const tot = Js.reduce((acc,J)=>({read_pairs:acc.read_pairs+J.support.read_pairs, split_reads:acc.split_reads+J.support.split_reads,
+                                   fragments:acc.fragments+J.support.fragments}), {read_pairs:0, split_reads:0, fragments:0});
+  const inter = chrKey(a.chromosome)!==chrKey(b.chromosome);
+  const genes = res.genes ? [{chromosome:a.chromosome, start:a.position, ...(res.genes.end_1||{})},
+                             {chromosome:b.chromosome, start:b.position, ...(res.genes.end_2||{})}] : null;
+  S.event = {hand:true, reads:x.reads, kind:inter?'translocation':'rearrangement', pattern:Js.length>1?'both junctions':'one junction',
+             chromosomes:inter?[a.chromosome,b.chromosome]:[a.chromosome], junctions:Js, genes,
+             breakpoints:[{chromosome:a.chromosome,start:a.position,end:a.position,band:res.end_a.band},
+                          {chromosome:b.chromosome,start:b.position,end:b.position,band:res.end_b.band}],
+             support: tot, cautions:[res.end_a.region_note, res.end_b.region_note].filter(Boolean).map(n=>`breakpoint ${n}: repeats here often produce false junctions`),
+             iscn: inter && res.end_a.band && res.end_b.band ? `t(${num(a.chromosome)};${num(b.chromosome)})(${res.end_a.band};${res.end_b.band})` : null};
+  if(!inter){ S.event.segment = {chromosome:a.chromosome, start:a.position, end:b.position, length:b.position-a.position+1}; S.event.kind = 'rearrangement'; }
+  S.evj = [r];
+  S.ctx = {sample:x.reads, ends:[{chr:a.chromosome,pos:a.position},{chr:b.chromosome,pos:b.position}]};
+  renderEvent(false);
 }
-function breakendPanel(E,i){
-  const n = S.evidence.length;
-  const role = S.cand ? (n===2 ? (i===0 ? 'one end of the junction' : 'the other end of the junction') : 'one end of the junction')
-                      : 'position typed in by hand';
-  if(E.error){
-    return `<div class="be"><div class="be-head"><h3>${E.chromosome?`<span class="coord">${coord(E.chromosome,E.position)}</span>`:'This position'}
-      <span class="role">${role}</span></h3></div>
-      <div class="err" style="margin-top:12px">This position could not be measured.\n${esc(E.error)}${E.hint?'\n\n'+esc(E.hint):''}${
-      E.contigs_in_header_sample?'\n\nChromosome names in this file include: '+esc(E.contigs_in_header_sample.join(', ')):''}</div>
-      <div class="meta">${src(E.call,'source')}</div></div>`;
-  }
-  const Sm = E.summary||{}, C = E.ceiling||{};
-  const held = Sm.evidence_strength==='QUALITY-LIMITED';
-  const bands = C.bands||[], strong = C.strong_band, moderate = (bands.find(b=>b.strength==='moderate')||{}).threshold;
-  // The "reachable here" figure assumes a balanced rearrangement (no DNA gained or lost).
-  // A deletion or duplication changes read depth by definition, so the mark would mislead there.
-  const svt = S.cand ? S.cand.svtype : null, unbalanced = svt==='DEL' || svt==='DUP';
-  let gauge;
-  if(E.summary_error){
-    gauge = `<div class="err">The combined score could not be calculated.\n${esc(E.summary_error)}</div>`;
-  } else if(held){
-    gauge = `<div class="gauge"><div class="gauge-line"><span class="gauge-score" style="color:var(--held)">Withheld</span>
-        ${src(Sm.call,'source')}</div>
-      <div class="track held" aria-hidden="true"></div>
-      <div class="withheld"><b>Score withheld — too many ambiguously mapped reads.</b> This means the position could not be
-        scored, not that it scored low. Read the four measurements below.</div></div>`;
-  } else if(Sm.evidence_score==null){
-    gauge = `<div class="gauge"><div class="gauge-line"><span class="gauge-score" style="font-size:30px;color:var(--muted)">No score</span>
-        <span class="gauge-band none">${esc(String(Sm.evidence_strength||'not assessable').toLowerCase())}</span> ${src(Sm.call,'source')}</div>
-      <div class="track" aria-hidden="true"></div>
-      <div class="gauge-note">None of the measurements could be made at this position, so there is nothing to combine. The table below says why for each one.</div></div>`;
-  } else {
-    const s = Sm.evidence_score, reach = unbalanced ? null : C.attainable_here;
-    const marks = (reach!=null ? `<div class="mark" style="left:${reach}%"><span>reachable here ${fmt(reach)}</span></div>` : '')
-      + (moderate!=null ? `<div class="tick" style="left:${moderate}%">moderate ${fmt(moderate)}</div>` : '')
-      + (strong!=null ? `<div class="tick" style="left:${strong}%">strong ${fmt(strong)}</div>` : '');
-    let note = '';
-    if(unbalanced){
-      note = `The “reachable here” mark is not shown: it assumes a balanced rearrangement, and ${TYPE_ARTICLE[svt]} changes read depth.`;
-    } else if(reach!=null && strong!=null){
-      const lead = S.cand && (svt==='BND' || svt==='INV') ? `For a balanced ${svt==='INV'?'inversion':'translocation'}, at most`
-                                                       : `If this is a balanced rearrangement, at most`;
-      note = reach < strong
-        ? `${lead} ${fmt(reach)} is reachable here, below the ${fmt(strong)} where “strong” begins: read depth does not change `
-          + `when no DNA is gained or lost, and the intact copy caps the share of discordant pairs. Only a depth error could lift the score above it.`
-        : `This position could reach “strong” (${fmt(strong)}) if the read-based measurements were stronger.`;
-    }
-    gauge = `<div class="gauge"><div class="gauge-line"><span class="gauge-score">${fmt(s)}</span>
-        <span class="gauge-band ${esc(Sm.evidence_strength)}">${esc(Sm.evidence_strength)}</span>
-        <span class="muted small">combined score of 100</span> ${src(Sm.call,'source')}</div>
-      <div class="track" aria-label="score ${fmt(s)} of 100"><div class="fill" data-w="${Math.max(0,Math.min(100,s||0))}"></div>${marks}</div>
-      <div class="gauge-note">${esc(note)}</div></div>`;
-  }
-  const comp = Sm.components||{};
-  const maxPts = layer => ((C.per_layer||{})[layer]||{}).max_score || 25;
-  const rows = (E.layers||[]).map(L=>{
-    const [name, what] = LAYER_TEXT[L.key]||[L.label,''];
-    if(L.error) return `<tr><td><b>${esc(name)}</b><span class="what">${esc(what)}</span></td>
-      <td colspan="2"><span style="color:var(--alert)">returned an error: ${esc(L.error)}</span></td><td>${src(L.call,'source')}</td></tr>`;
-    const na = L.assessable===false, ql = L.quality_limited===true;
-    let val, detail = '';
-    if(L.key==='discordant_pairs'){ val = `${fmt(L.count)}<small>${L.fraction!=null?pct(L.fraction)+' of pairs':''}</small>`;
-      if(L.partners && Object.keys(L.partners).length) detail = 'mates on ' + Object.entries(L.partners).map(([k,v])=>`${esc(k)} (${fmt(v)})`).join(', '); }
-    else if(L.key==='soft_clipped_reads'){ val = `${fmt(L.count)}<small>${L.max_clips!=null?fmt(L.max_clips)+' at one base':''}</small>`;
-      if(L.consensus!=null) detail = `clipped at ${Number(L.consensus).toLocaleString('en-US')}`; }
-    else if(L.key==='split_reads'){ val = `${fmt(L.count)}<small>${L.fraction!=null?pct(L.fraction)+' of reads':''}</small>`;
-      if(L.partners && Object.keys(L.partners).length) detail = 'second piece on ' + Object.entries(L.partners).map(([k,v])=>`${esc(k)} (${fmt(v)})`).join(', '); }
-    else { val = `${L.fraction==null?'—':Number(L.fraction).toFixed(2)}<small>lowest ÷ mean depth</small>`;
-      detail = `lowest ${fmt(L.count)}, mean ${fmt(L.mean_depth)}${L.dip_at_focus?'; dip at the position':''}`; }
-    if(na) detail = 'not assessable' + (L.reason?': '+esc(L.reason):'');
-    if(ql) detail = 'withheld — quality limited' + (detail?'; '+detail:'');
-    const pts = comp[L.key], mx = maxPts(L.key);
-    const ptsCell = (pts==null||held) ? `<span class="muted small">${held?'withheld':'—'}</span>`
-      : `<div class="pts"><div class="bar"><i style="width:${100*pts/mx}%"></i></div><b>${fmt(pts)}</b><span class="muted small">of ${fmt(mx)}</span></div>`;
-    return `<tr class="${na?'na':''}${ql?' ql':''}"><td><b>${esc(name)}</b><span class="what">${esc(what)}</span></td>
-      <td><span class="val">${val}</span>${detail?`<span class="detail">${detail}</span>`:''}</td>
-      <td>${ptsCell}</td><td>${src(L.call,'source')}</td></tr>`;
-  }).join('');
-  const W = Sm.low_mapq_window;
-  const quality = Sm.low_mapq_fraction==null ? 'Ambiguously mapped reads: not measured.'
-    : `Ambiguously mapped reads (mapping quality below 20): ${pct(Sm.low_mapq_fraction)} within ±${W?fmt(W.half_width_bp):'?'} bp. `
-      + `Above 40% the combined score is withheld.`;
-  const per = C.per_layer||{};
-  const ceilRows = Object.keys(per).map(k=>{ const p = per[k];
-    return `<tr><td>${esc((LAYER_TEXT[k]||[k])[0])}</td><td class="n">${p.observed==null?'—':fmt(p.observed)}</td>
-      <td class="n">${p.score_now==null?'—':fmt(p.score_now)}</td><td class="n">${fmt(p.max_score)}</td>
-      <td class="small muted">${p.next_tier?('next band needs '+esc(p.next_tier.op)+' '+fmt(p.next_tier.threshold)+' for '+fmt(p.next_tier.score)):'at its top band'}</td></tr>`;}).join('');
-  const ceilDetails = C.derivable ? `<details><summary>How “reachable here” is worked out</summary><div class="inner">
-      <div class="table-wrap"><table><thead><tr><th>Measurement</th><th style="text-align:right">Measured</th><th style="text-align:right">Points now</th>
-      <th style="text-align:right">Best possible</th><th></th></tr></thead><tbody>${ceilRows}</tbody></table></div>
-      <p class="small">${esc(C.attainable_basis||'')}.</p>
-      <p class="small muted">Highest if depth contributes nothing: ${fmt(C.max_with_flat_depth)} · highest if all four were maximal:
-        ${fmt(C.max_all_layers)}. ${esc(C.note||'')}</p></div></details>`
-    : `<p class="small muted">The reachable score could not be derived: ${esc(C.reason||'the scoring rules could not be read')}. No figure is shown rather than a stale one.</p>`;
-  return `<div class="be" id="be-${i}">
-    <div class="be-head"><h3><span class="coord">${coord(E.chromosome,E.position)}</span><span class="role">${role}</span></h3></div>
-    ${gauge}
-    <table class="ledger"><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="c4"></colgroup>
-      <thead><tr><th>Measurement</th><th>Value</th><th>Points</th><th></th></tr></thead><tbody>${rows}</tbody></table>
-    <p class="quality">${quality} ${src(E.stats&&E.stats.call,'source')}</p>
-    ${ceilDetails}
-    <div class="be-actions">
-      <button class="btn" type="button" data-igv="${i}">Show IGV images</button>
-      <button class="btn quiet" type="button" data-ask="${i}">Ask the assistant about this position</button>
-    </div>
-    ${kindOf('datasets', E.bam_label) === 'public' ? '' : `<div class="netnote">Private data: IGV images ask igv.org for this
-      region's reference sequence, and a gene lookup sends the position to Ensembl. No reads leave this computer.</div>`}
-    <div class="igv-state" id="igv-state-${i}" hidden></div></div>`;
-}
-$('ev').addEventListener('click', e => {
-  const b = e.target.closest('[data-igv]'); if(b) return runIGV(+b.dataset.igv);
-  const j = e.target.closest('[data-jump]'); if(j){ const t = $(j.dataset.jump); if(t) t.scrollIntoView({behavior:'smooth'}); return; }
-  const a = e.target.closest('[data-ask]');
-  if(a){ const E = S.evidence[+a.dataset.ask]; askAbout(E); }
-  const img = e.target.closest('img[data-full]');
-  if(img) openModal(img.alt, `<div class="lightbox"><img src="${esc(img.dataset.full)}" alt="${esc(img.alt)}"></div>`);
-});
+
+// ── IGV (optional, slow) ──────────────────────────────────────────────────────
 const PANEL_TEXT = {discordant_pairs:'Discordant pairs view', soft_clipped_reads:'Soft clips view',
                     split_reads:'Split reads view', read_depth:'Read depth view'};
-// IGV runs one at a time: each run starts its own IGV process, and two at once
-// would compete for the same genome download and preferences.
 function syncIgvButtons(){
   for(const b of document.querySelectorAll('[data-igv]')){
     b.disabled = !!S.igvBusy;
-    b.title = S.igvBusy ? 'IGV is already drawing; wait for it to finish' : '';
+    b.title = S.igvBusy ? 'IGV is already drawing; wait for it to finish' : 'IGV draws one image per measurement around this end. It takes a few minutes.';
   }
 }
 function igvBlock(i){
-  // one full-width block per position, kept in the same order as the panels above
   let blk = $('igvb-'+i);
   if(!blk){
     blk = document.createElement('section'); blk.className = 'igv-block'; blk.id = 'igvb-'+i;
@@ -917,35 +1414,30 @@ function igvBlock(i){
   }
   return blk;
 }
-// IGV fetches the reference sequence of the region it draws from igv.org, so for
-// private data the region's coordinates leave the computer (the reads never do).
-const igvNetNote = E => kindOf('datasets', E.bam_label) === 'public' ? ''
-  : `<div class="netnote">${esc(E.bam_label)} is private data. IGV asks igv.org for the reference sequence of this
+const igvNetNote = t => kindOf('datasets', t.bam_label) === 'public' ? ''
+  : `<div class="netnote">${esc(t.bam_label)} is private data. IGV asks igv.org for the reference sequence of this
      region, so its coordinates leave this computer; no reads do.</div>`;
 async function runIGV(i){
   if(S.igvBusy) return;
-  const E = S.evidence[i], gen = S.evGen, t0 = Date.now();
-  const where = coord(E.chromosome,E.position);
+  const t = S.igvTargets[i]; if(!t) return;
+  const gen = S.evGen, t0 = Date.now(), where = coord(t.chromosome,t.position);
   S.igvBusy = true; syncIgvButtons();
-  const blk = igvBlock(i), state = $('igv-state-'+i);
-  blk.innerHTML = `<div class="igv-head"><h3>IGV images at ${where}</h3><span class="muted small">reads from ${esc(E.bam_label)}</span></div>
-    <div class="igv-wait"><div class="spin"></div><div><b>IGV is drawing one image per measurement.</b>
-    This usually takes a few minutes because IGV loads the genome for every image. You can keep reading or ask the assistant meanwhile.
-    <span class="muted" id="igv-t-${i}"></span></div></div>${igvNetNote(E)}`;
-  state.hidden = false; state.innerHTML = `IGV is drawing. <button type="button" class="src" data-jump="igvb-${i}">Go to the images</button>`;
+  const blk = igvBlock(i);
+  blk.innerHTML = `<div class="igv-head"><h3>IGV images at ${where}</h3><span class="muted small">reads from ${esc(t.bam_label)}</span></div>
+    <div class="spinwait"><div class="spin"></div><div><b>IGV is drawing one image per measurement.</b>
+    This usually takes a few minutes because IGV loads the genome for every image. <span class="muted" id="igv-t-${i}"></span></div></div>${igvNetNote(t)}`;
   blk.scrollIntoView({behavior:'smooth', block:'start'});
   const timer = setInterval(()=>{ const el = $('igv-t-'+i); if(el) el.textContent = ` ${Math.round((Date.now()-t0)/1000)} s`; }, 1000);
   let r;
-  try { r = await post('/api/igv',{bam_label:E.bam_label,chromosome:E.chromosome,position:E.position}); }
+  try { r = await post('/api/igv',{bam_label:t.bam_label,chromosome:t.chromosome,position:t.position}); }
   catch(err){ r = {error:String(err), image_refs:[]}; }
   finally { clearInterval(timer); S.igvBusy = false; syncIgvButtons(); }
-  if(gen !== S.evGen) return;          // the person opened something else meanwhile; the call log keeps the result
+  if(gen !== S.evGen) return;
   const secs = Math.round((Date.now()-t0)/1000);
-  const head = `<div class="igv-head"><h3>IGV images at ${where}</h3><span class="muted small">reads from ${esc(E.bam_label)},
-    ${secs} s ${src(r.call,'source')}</span></div>${igvNetNote(E)}`;
+  const head = `<div class="igv-head"><h3>IGV images at ${where}</h3><span class="muted small">reads from ${esc(t.bam_label)},
+    ${secs} s ${src(r.call,'source')}</span></div>${igvNetNote(t)}`;
   if(r.error && !(r.image_refs||[]).length){
     blk.innerHTML = head + `<div class="err"><b>No IGV image was produced.</b>\n${esc(r.error)}${r.hint?'\n\n'+esc(r.hint):''}</div>`;
-    state.innerHTML = `No IGV image was produced. <button type="button" class="src" data-jump="igvb-${i}">See why</button>`;
     return;
   }
   const panels = (r.result&&r.result.panels)||{}, errs = r.panel_errors||{};
@@ -953,21 +1445,12 @@ async function runIGV(i){
   const figs = Object.keys(panels).map(k=>{
     const p = panels[k]||{}, ref = p.image_ref, cap = `<b>${esc(PANEL_TEXT[k]||k)}</b>, ${esc(p.region||'')}`;
     if(ref && refs.has(ref)) return `<figure><img src="/img/${encodeURIComponent(ref)}" data-full="/img/${encodeURIComponent(ref)}" alt="${esc(PANEL_TEXT[k]||k)} ${esc(p.region||'')}"><figcaption>${cap}</figcaption></figure>`;
-    const why = (errs[k]&&errs[k].error) || p.error || 'no image';
+    const why = (errs[k]&&errs[k].error) || p.error || (p.skipped ? 'skipped, ' + (p.reason||'no reason given') : 'no image');
     return `<figure><div class="failed">This image was not produced: ${esc(why)}</div><figcaption>${cap}</figcaption></figure>`;
   });
-  const n = (r.image_refs||[]).length;
-  blk.innerHTML = head
-    + `<div class="igv-grid">${figs.join('') || (r.image_refs||[]).map(ref=>`<figure><img src="/img/${encodeURIComponent(ref)}" data-full="/img/${encodeURIComponent(ref)}" alt="IGV image"></figure>`).join('')}</div>
-    <p class="small muted">Click an image to open it larger. The assistant never sees these pictures; only you do.</p>`;
-  state.innerHTML = `${n} IGV image${n===1?'':'s'} ready. <button type="button" class="src" data-jump="igvb-${i}">Go to the images</button>`;
-  // once the pictures have their height, bring them into view if the person is still looking at this block
-  Promise.all([...blk.querySelectorAll('img')].map(im => im.decode().catch(()=>{}))).then(()=>{
-    const rc = blk.getBoundingClientRect();
-    if(gen === S.evGen && rc.top < innerHeight && rc.bottom > 0) blk.scrollIntoView({behavior:'smooth', block:'start'});
-  });
+  blk.innerHTML = head + `<div class="igv-grid">${figs.join('')}</div>
+    <p class="small muted">Click an image to open it larger. IGV shows every read here, normal ones included; the drawing above shows only the abnormal ones.</p>`;
 }
-
 // ── 3 · assistant ─────────────────────────────────────────────────────────────
 async function loadModels(){
   S.models = await get('/api/chat_models');
@@ -984,7 +1467,7 @@ function renderModelNote(){
   let t;
   if(!m) t = M.why ? `No model can answer: ${esc(M.why)}` : 'No model can answer: no local model is running and there is no cloud key.';
   else if(isCloud(m)) t = 'Runs on Anthropic’s servers. Your question and every tool result it asks for are sent there.';
-  else t = 'Runs on this computer. Only gene lookups (Ensembl) and IGV downloads use the internet.';
+  else t = 'Runs on this computer. Only IGV images use the internet' + ((S.boot.genes||{}).available ? '; genes are read from a table here.' : '.');
   $('model-note').innerHTML = t + (M.n_tools?` <span class="muted">It may use ${fmt(M.n_tools)} tools.</span>`:'');
 }
 function privateLabelsIn(text){
@@ -1043,18 +1526,23 @@ $('model').addEventListener('change', ()=>{ renderModelNote(); renderPrivacy(); 
 $('question').addEventListener('input', renderPrivacy);
 function suggestions(){
   const out = [], X = S.ctx, sample = (X&&X.sample) || S.sample || 'IMP01';
-  const p = X && X.positions && X.positions[0];
-  if(p){
-    out.push(`In dataset ${sample}, how strong is the evidence for a breakpoint at ${p.chr}:${p.pos}? Give the evidence score and its band, and say whether this position could reach the strong band.`);
-    if(X.positions[1]) out.push(`In dataset ${sample}, is there a reciprocal breakpoint between ${p.chr}:${p.pos} and ${X.positions[1].chr}:${X.positions[1].pos}?`);
-    out.push(`Which gene, if any, lies at ${p.chr}:${p.pos}?`);
-  } else {
-    out.push(`In dataset ${sample}, how strong is the evidence for a breakpoint at chr20:200000? Give the evidence score and its band, and say whether this position could reach the strong band.`);
-  }
   // a private sample's list is offered as a question only once the person has chosen to see it
-  if(S.boot && S.boot.candidate_files.includes(sample)
-     && (kindOf('candidates', sample) === 'public' || S.revealed.has(sample)))
-    out.push(`Load the candidate set ${sample} and list the translocations that pass the default filters.`);
+  const listVisible = S.boot && S.boot.candidate_files.includes(sample)
+     && (kindOf('candidates', sample) === 'public' || S.revealed.has(sample));
+  if(listVisible) out.push(`Which rearrangements in ${sample} have the most read support, and which genes do they break?`);
+  const ends = (X && X.ends) || [];
+  if(ends.length >= 2){
+    const [a, b] = ends;
+    out.push(`In dataset ${sample}, how many read pairs and split reads join ${a.chr}:${a.pos} and ${b.chr}:${b.pos}?`);
+    out.push(`Which genes lie at ${a.chr}:${a.pos} and at ${b.chr}:${b.pos}, and is any of them linked to a disorder?`);
+  } else if(ends.length === 1){
+    const a = ends[0];
+    out.push(`In dataset ${sample}, where do the reads at ${a.chr}:${a.pos} point?`);
+    out.push(`Which genes lie at ${a.chr}:${a.pos}?`);
+  } else {
+    out.push(`In dataset ${sample}, how many read pairs and split reads join chr20:200000 and chr21:14100001?`);
+  }
+  if(listVisible) out.push(`Load the candidate set ${sample} and list the translocations that pass the default filters.`);
   return out;
 }
 function renderSuggestions(){
@@ -1062,10 +1550,11 @@ function renderSuggestions(){
 }
 $('suggest').addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return;
   $('question').value = b.textContent; renderPrivacy(); $('question').focus(); });
-function askAbout(E){
-  S.ctx = {sample:E.bam_label, cand:S.cand, positions:[{chr:E.chromosome,pos:E.position}]};
+function askAboutEvent(){
   show('assistant');
-  $('question').value = suggestions()[0]; renderPrivacy();
+  const q = suggestions();
+  $('question').value = (S.ctx && S.ctx.ends && S.ctx.ends.length) ? q.find(x => /join|point/.test(x)) || q[0] : q[0];
+  renderPrivacy();
 }
 function markNumbers(text, details){
   let out = esc(text||'');
@@ -1136,7 +1625,7 @@ $('askform').addEventListener('submit', async e => {
   const mname = $('model').selectedOptions[0] ? $('model').selectedOptions[0].textContent : model;
   card.innerHTML = `<div class="q"><p>${esc(q)}</p><span class="pill ${isCloud(model)?'cloud':''}"
       title="${isCloud(model)?'Runs on Anthropic’s servers':'Runs on this computer'}">${esc(mname)}, ${isCloud(model)?'cloud':'this computer'}</span></div>
-    <div class="a"><div class="igv-wait"><div class="spin"></div><div>The model is working; tool calls run as it asks for them.
+    <div class="a"><div class="spinwait"><div class="spin"></div><div>The model is working; tool calls run as it asks for them.
     <span class="muted" id="qt-${id}"></span></div></div></div>`;
   feed.prepend(card);
   const timer = setInterval(()=>{ const el = $('qt-'+id); if(el) el.textContent = ` ${Math.round((Date.now()-t0)/1000)} s`; }, 1000);
@@ -1159,7 +1648,9 @@ function argText(p){
   const out = [];
   const ds = p.dataset || (p.datasets && p.datasets.join(', ')) || p.candidates || p.label;
   if(ds) out.push(esc(ds));
-  if(p.chromosome && p.position!=null) out.push(coord(p.chromosome,p.position));
+  if(p.chromosome_1 && p.position_1!=null) out.push(`${coord(p.chromosome_1,p.position_1)} with ${coord(p.chromosome_2,p.position_2)}`);
+  if(p.other_candidates) out.push('compared with ' + esc(p.other_candidates));
+  if(p.chromosome && p.position!=null) out.push(coord(p.chromosome,p.position) + (p.end!=null?`–${fmt(p.end)}`:''));
   else if(p.chromosome && p.start!=null) out.push(`${esc(p.chromosome)}:${fmt(p.start)}–${fmt(p.end)}`);
   if(p.primary_chromosome) out.push(`${coord(p.primary_chromosome,p.primary_position)} with ${coord(p.partner_chromosome,p.partner_position)}`);
   if(p.window_bp) out.push(`±${fmt(p.window_bp)} bp`);
@@ -1175,11 +1666,6 @@ function digest(name, x){
   if('error' in x) return 'Returned an error: ' + esc(x.error);
   const partners = m => Object.entries(m||{}).map(([k,v])=>`${esc(k)} (${fmt(v)})`).join(', ');
   switch(name){
-    case 'breakpoint_evidence_summary': {
-      let s = `Score ${fmt(x.evidence_score)} of 100, rated ${esc(x.evidence_strength)}; signal in ${esc(x.signal_layers)} measurements`;
-      if(x.attainable_here!=null) s += `; at most ${fmt(x.attainable_here)} reachable for a balanced event`;
-      return s + '.';
-    }
     case 'applicable_layers':
       return `Measurements that apply to this file: ${(x.applicable_layers||[]).map(k=>esc((LAYER_TEXT[k]||[k])[0].toLowerCase())).join(', ')}.`;
     case 'discordant_pairs':
@@ -1194,6 +1680,18 @@ function digest(name, x){
     }
     case 'bam_stats_at_locus':
       return `${fmt(x.total_reads)} reads, mean depth ${fmt(x.mean_depth)}, ${pct(x.low_mapq_fraction)} ambiguously mapped.`;
+    case 'review_candidates': {
+      const row = (x.summary_rows||[])[0];
+      return `${fmt(x.rearrangements_found)} rearrangements from ${fmt(x.junctions_reviewed)} junctions, sorted by read support`
+        + (row ? `; first: ${esc(row.replace(/^1\. /,'').slice(0,160))}${row.length>160?'…':''}` : '') + '.';
+    }
+    case 'junction_evidence':
+      return `${plural(x.read_pairs,'read pair')} and ${plural(x.split_reads,'split read')} join the two ends (${plural(x.fragments,'read')}).`;
+    case 'genes_near': {
+      if(x.genes) return `${plural(x.genes.count,'gene')} in the segment, ${fmt(x.genes.with_disorder)} linked to a disorder.`;
+      const g = x.genes_at_position||[];
+      return g.length ? `In ${g.map(y=>esc(y.name)+(y.where?' ('+esc(y.where)+')':'')).join(', ')}.` : 'No gene at this position.';
+    }
     case 'gene_at_locus':
       return x.is_intergenic ? 'No annotated gene at this position.'
         : `Overlaps ${(x.genes||[]).map(g=>`${esc(g.gene_name||g.gene_id)} (${esc(g.biotype)})`).join(', ')}.`;
@@ -1252,7 +1750,7 @@ function renderAnswer(r, model){
     else
       h += `<div class="verdict cloud">Cloud model without permission for private data: it was offered test data only.</div>`;
   }
-  const NET = new Set(['gene_at_locus','igv_screenshot','evidence_panel']);
+  const NET = new Set(['gene_at_locus','igv_screenshot','evidence_panel']);   // genes_near reads a local table
   if(tools.length){
     h += `<details${tools.length<=6?' open':''}><summary>${tools.length} tool call${tools.length===1?'':'s'} the model made</summary><div class="calls">`
       + tools.map(t=>{
@@ -1286,8 +1784,8 @@ document.addEventListener('keydown', e => { if(e.key==='Escape') closeAll(); });
 async function showCalls(){
   const r = await get('/api/calls');
   $('drawer-title').textContent = 'Call log';
-  $('drawer-sub').textContent = `Every measurement and score on this page came from one of these ${r.calls.length} tool calls. `
-    + `“Reachable here” is worked out from them; chromosome lengths in the diagram are GRCh38's.`;
+  $('drawer-sub').textContent = `Every read count, gene and coordinate on this page came from one of these ${r.calls.length} tool calls. `
+    + `Bands and chromosome lengths in the drawings are GRCh38's.`;
   $('drawer-body').innerHTML = r.calls.length ? `<table><thead><tr><th>#</th><th>Tool</th><th style="text-align:right">ms</th><th></th></tr></thead><tbody>`
     + r.calls.slice().reverse().map(c=>`<tr><td class="n">${c.id}</td><td>${esc(c.tool)}${c.is_error?' <span style="color:var(--alert)">error</span>':''}
       <div class="muted small">${esc(c.server)}</div></td><td class="n">${fmt(c.ms)}</td>
@@ -1307,7 +1805,7 @@ async function showCall(id){
 }
 $('btnLog').addEventListener('click', showCalls);
 $('btnLimits').addEventListener('click', ()=>{
-  const L = S.boot.limits;
+  const L = S.boot.review_limits || S.boot.limits;
   openModal(L.title, L.items.map(i=>`<div class="limit"><h3>${esc(i.h)}</h3><p>${esc(i.b)}</p></div>`).join('')
     + `<p class="small muted" style="margin-top:12px">Figures read from ${esc(L.source)}.</p>`);
 });

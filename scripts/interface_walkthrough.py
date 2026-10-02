@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """Click through the interface page in a real browser and record what it shows.
 
+Phase 26: the page reviews every candidate at once (rearrangements sorted by the
+reads that support them), shows no score, draws the rearrangement and the
+abnormal reads at both ends, and names genes from the local table.
+
 PUBLIC DATA ONLY. The private path is exercised with a PUBLIC file registered under
 an explicit label (explicit registration is what makes a sample private), so the
 consent gate, the refusal and the "sent with permission" line can all be tested
@@ -82,6 +86,7 @@ async def main(a):
         print("1. candidates", flush=True)
         await pg.goto(a.url)
         await pg.wait_for_selector("#funnel .funnel-count", timeout=120000)
+        await pg.wait_for_selector("tr.rearr, #cands .err", timeout=300000)
         await pg.wait_for_timeout(800)
         facts["default_sample"] = await pg.input_value("#sample")
         facts["default_sample_kind"] = await pg.inner_text("#sampleKind")
@@ -96,20 +101,36 @@ async def main(a):
         check("nothing private was loaded at start", a.private_label not in loaded, loaded)
         facts["funnel_counts"] = [t.strip().split("\n")[0] for t in await pg.locator("#funnel .funnel-count").all_inner_texts()]
         facts["candidates_title"] = await pg.inner_text("#cands-title")
+        facts["rearrangement_rows"] = await pg.locator("tr.rearr").count()
+        facts["first_rows"] = [" | ".join(t.split()) for t in (await pg.locator("tr.rearr").all_inner_texts())[:5]]
+        facts["funnel_explanation"] = await pg.inner_text("#funnel-why")
+        check("every candidate was reviewed: rearrangements are listed, most read support first",
+              facts["rearrangement_rows"] > 0, facts["candidates_title"])
+        view = (await pg.inner_text("#view-cands")).lower()
+        check("the candidate list shows no score", not any(w in view for w in ("score of", "combined score", "moderate 40")),
+              [w for w in ("score of", "combined score", "moderate 40") if w in view])
         await shot(pg, "candidates", full=True)
 
         # 2. one junction's evidence
         print("2. evidence", flush=True)
-        row = pg.locator("tr.cand", has_text=a.junction_text).first
-        check(f"a candidate row containing {a.junction_text} is listed", await row.count() == 1)
-        facts["row"] = (await row.inner_text()).replace("\t", " | ")
+        row = pg.locator("tr.rearr", has_text=a.junction_text).first
+        check(f"a rearrangement containing {a.junction_text} is listed", await row.count() == 1)
+        facts["row"] = " | ".join((await row.inner_text()).split())
         await row.locator("button", has_text="Review").click()
-        await pg.wait_for_selector(".be .gauge", timeout=120000)
+        await pg.wait_for_selector(".readbox svg, #reads-panel .err", timeout=300000)
         await pg.wait_for_timeout(1500)
         facts["evidence_title"] = await pg.inner_text(".ev-title")
-        facts["scores"] = await pg.locator(".be .gauge-line").all_inner_texts()
-        facts["notes"] = await pg.locator(".be .gauge-note").all_inner_texts()
-        check("both ends were measured", await pg.locator(".be .gauge").count() == 2)
+        facts["summary_line"] = await pg.inner_text(".summary-line")
+        facts["cautions"] = await pg.locator(".cautions li").all_inner_texts()
+        facts["genes"] = " ".join((await pg.inner_text(".gtable") if await pg.locator(".gtable").count()
+                                   else await pg.locator(".panel", has_text="Genes").first.inner_text()).split())[:600]
+        facts["read_box_heads"] = await pg.locator(".readbox h4").all_inner_texts()
+        facts["legend"] = await pg.locator(".legend").first.inner_text() if await pg.locator(".legend").count() else None
+        check("the rearrangement is drawn: the chromosomes before and after", await pg.locator(".schematic svg").count() == 1)
+        check("the abnormal reads at both ends are drawn", await pg.locator(".readbox svg").count() >= 2)
+        ev = (await pg.inner_text("#view-evidence")).lower()
+        check("the evidence view shows no score", not any(w in ev for w in ("score", "reachable here", "moderate 40", "strong 70")),
+              [w for w in ("score", "reachable here", "moderate 40", "strong 70") if w in ev])
         await shot(pg, "evidence", full=True)
 
         # 3. IGV, one run at a time
@@ -135,17 +156,19 @@ async def main(a):
         await pg.select_option("#cp-ds", a.hand_dataset)
         await pg.fill("#cp-pos", a.hand_position)
         await pg.click("#checkpos button")
-        await pg.wait_for_selector(".banner.hand", timeout=120000)
+        await pg.wait_for_selector(".banner.hand, #ev .err", timeout=120000)
         await pg.wait_for_timeout(1000)
         facts["hand_title"] = await pg.inner_text(".ev-title")
-        facts["hand_score"] = await pg.locator(".be .gauge-line").first.inner_text()
+        facts["hand_partners"] = " ".join((await pg.inner_text("#ev")).split())[:500]
+        check("a position typed in by hand says where its reads point, without a score",
+              "Where the reads here point" in await pg.inner_text("#ev") and "score" not in (await pg.inner_text("#ev")).lower())
         await shot(pg, "hand_entry", full=True)
         # the same position in the private-labelled copy, so it becomes a private position
         await pg.select_option("#cp-ds", a.private_label)
         await pg.fill("#cp-pos", a.private_position)
         await pg.click("#checkpos button")
         await pg.wait_for_function("lbl => document.querySelector('#ev-head').innerText.includes(lbl) && "
-                                   "document.querySelector('.be .gauge')", arg=a.private_label, timeout=120000)
+                                   "document.querySelector('.banner.hand, #ev .err')", arg=a.private_label, timeout=120000)
         await pg.wait_for_timeout(800)
         check("a private sample is marked private next to its name",
               "Private data" in await pg.inner_text("#ev-head"))
@@ -158,15 +181,18 @@ async def main(a):
         facts["local_models"], facts["cloud_models"] = models.get("models"), models.get("cloud_models")
         if a.local_model in (models.get("models") or []):
             await pg.select_option("#model", a.local_model)
-            await pg.fill("#question", f"In dataset {facts['default_sample']}, how strong is the evidence for a breakpoint "
-                                       f"at {facts['evidence_title'].split(' ')[0].replace(',', '')}? Give the evidence "
-                                       f"score and its band, and say whether this position could reach the strong band.")
+            await pg.fill("#question", f"Which rearrangements in {facts['default_sample']} have the most read support, "
+                                       f"and which genes do they break?")
             await pg.click("#askbtn")
-            await pg.wait_for_selector(".qa .answer, .qa .err", timeout=900000)
+            await pg.wait_for_selector(".qa .answer, .qa .err, .qa .verdict", timeout=900000)
             await pg.wait_for_timeout(800)
             facts["local_verdict"] = (await pg.locator(".qa .verdict").all_inner_texts())[:3]
             facts["local_tool_calls"] = await pg.locator(".qa .call").count()
+            facts["local_tool_names"] = await pg.locator(".qa .call .name").all_inner_texts()
+            facts["local_answer"] = (await pg.locator(".qa .answer").first.inner_text())[:800] if await pg.locator(".qa .answer").count() else None
             check("the local model answered through tool calls", facts["local_tool_calls"] >= 1, facts["local_verdict"])
+            check("... and reviewed every candidate in one call", "review_candidates" in facts["local_tool_names"],
+                  facts["local_tool_names"])
             await shot(pg, "assistant_local")
         else:
             check(f"local model {a.local_model} is available", False, models.get("why"))
@@ -175,7 +201,7 @@ async def main(a):
         print("6. permission gate", flush=True)
         if "claude-sonnet-5" in (models.get("cloud_models") or []):
             await pg.select_option("#model", "claude-sonnet-5")
-            await pg.fill("#question", f"In dataset {a.private_label}, how strong is the evidence at {a.private_position}?")
+            await pg.fill("#question", f"In dataset {a.private_label}, where do the reads at {a.private_position} point?")
             await pg.dispatch_event("#question", "input")
             await pg.wait_for_timeout(900)
             check("naming a private sample shows the permission box", await pg.locator("#consent").count() == 1)
@@ -191,7 +217,8 @@ async def main(a):
             facts["refusal"] = (r.get("error") or "")[:200]
             check("posted without permission, it is refused before any model runs",
                   facts["refusal"].startswith("Not sent") and not r.get("events"), facts["refusal"])
-            await pg.fill("#question", f"In dataset {facts['default_sample']}, how strong is the evidence at chr20:200000?")
+            await pg.fill("#question", f"Which rearrangements in {facts['default_sample']} have the most read support, "
+                                       f"and which genes do they break?")
             await pg.dispatch_event("#question", "input")
             await pg.wait_for_timeout(900)
             check("a test-data question needs no permission",
@@ -213,7 +240,7 @@ async def main(a):
                   facts["cloud_public_lines"])
             await shot(pg, "assistant_cloud")
             n = await pg.locator(".qa .meta").count()
-            await pg.fill("#question", f"In dataset {a.private_label}, how strong is the evidence at {a.private_position}?")
+            await pg.fill("#question", f"In dataset {a.private_label}, where do the reads at {a.private_position} point?")
             await pg.dispatch_event("#question", "input")
             await pg.wait_for_timeout(900)
             await pg.check("#consent")
@@ -243,9 +270,11 @@ async def main(a):
         await pg.wait_for_timeout(600)
         facts["private_hidden_title"] = await pg.inner_text("#cands-title")
         check("choosing a private sample shows its counts but no candidate row",
-              await pg.locator("tr.cand").count() == 0 and await pg.locator("#funnel .funnel-count").count() > 0)
+              await pg.locator("tr.cand, tr.rearr").count() == 0 and await pg.locator("#funnel .funnel-count").count() > 0)
         calls = (await api(pg, "GET", "/api/calls")).get("calls", [])[n_calls:]
         lists = [c for c in calls if c["tool"] == "list_candidates"]
+        check("... and the private sample is not reviewed before it is shown",
+              not [c for c in calls if c["tool"] == "review_candidates"], [c["tool"] for c in calls])
         check("... and asks the server for counts only (no position reaches the page or the call log)",
               bool(lists) and all((c.get("params") or {}).get("offset", 0) >= 2 ** 31 - 1 for c in lists),
               [(c.get("params") or {}).get("offset") for c in lists])
@@ -262,15 +291,15 @@ async def main(a):
             "button": await pg.inner_text("#reveal") if await pg.locator("#reveal").count() else None,
             "last_funnel_row": " ".join((await pg.locator("#funnel .step").last.inner_text()).split())}
         check("with a comparison chosen the list stays hidden, and the page is sent no position",
-              await pg.locator("tr.cand").count() == 0 and await pg.locator("#reveal").count() == 1
+              await pg.locator("tr.cand, tr.rearr").count() == 0 and await pg.locator("#reveal").count() == 1
               and '"survivor_effect"' in held and '"pos1"' not in held, held[:300])
         await pg.select_option("#f-rec", "")
         await pg.wait_for_function("!document.querySelector('#funnel').innerText.includes('Not found in')", timeout=120000)
         await pg.wait_for_timeout(600)
         await pg.click("#reveal")
-        await pg.wait_for_selector("tr.cand", timeout=120000)
+        await pg.wait_for_selector("tr.rearr, #cands .err", timeout=300000)
         await pg.wait_for_timeout(600)
-        check("Show the candidates reveals the list", await pg.locator("tr.cand").count() > 0)
+        check("Show the candidates reveals the list, reviewed", await pg.locator("tr.rearr").count() > 0)
 
         # 9. how an answer is drawn: the page's own function on a text written here (no model)
         print("9. answer rendering", flush=True)

@@ -33,6 +33,7 @@ _PATH_PARAMS = {
     "bam_path":   ("dataset", "dataset"),
     "bam_paths":  ("dataset", "datasets"),
     "path":       ("candidates", "candidates"),
+    "other_path": ("candidates", "other_candidates"),    # review_candidates' comparison sample
 }
 
 
@@ -180,6 +181,12 @@ def resolve_args(name, args, datasets, candidate_files, mask_path):
         if lbl not in candidate_files:
             return None, f"unknown candidates label {lbl!r}; registered: {sorted(candidate_files)}"
         a["path"] = candidate_files[lbl]
+    if "other_candidates" in a:
+        lbl = a.pop("other_candidates")
+        if lbl is not None:
+            if lbl not in candidate_files:
+                return None, f"unknown candidates label {lbl!r}; registered: {sorted(candidate_files)}"
+            a["other_path"] = candidate_files[lbl]
     if a.pop("exclude_masked", False):
         a["mask_path"] = mask_path
     return a, None
@@ -298,10 +305,76 @@ def verify_numbers(prose, results, tolerance=0.011):
 _BULKY = ("discordant_pairs", "soft_clips", "split_reads", "depth_profile", "locus_stats")
 
 
+def _gene_brief(g):
+    """One line per gene for the model: name, where, OMIM marks."""
+    if not isinstance(g, dict):
+        return g
+    w = g.get("name", "?")
+    if g.get("where"):
+        w += f" ({g['where']})"
+    if g.get("distance_bp") is not None:
+        w += f", {g['distance_bp']:,} bp away"
+    if g.get("omim_gene"):
+        w += f", OMIM gene {g['omim_gene']}"
+    if g.get("disorders"):
+        w += ", disorders " + ", ".join(g["disorders"][:4])
+    return w
+
+
+def _genes_brief(x):
+    if not isinstance(x, dict):
+        return x
+    out = {}
+    if x.get("in") is not None:
+        out["in"] = [_gene_brief(g) for g in x["in"][:6]]
+    if x.get("nearest"):
+        out["nearest"] = {k: _gene_brief(v) for k, v in x["nearest"].items()}
+    return out
+
+
 def shrink_for_model(name, result, budget=2600):
     if not isinstance(result, dict):
         return result
     out = dict(result)
+    # Phase 26 tools: the model gets the counts, genes and one line per
+    # rearrangement; the read lists and the drawing data stay with the page.
+    if name == "review_candidates" and "summary_rows" in out:
+        rows = out.get("summary_rows") or []
+        compact = {k: out.get(k) for k in ("total_in_set", "junctions_passing_filters", "junctions_reviewed",
+                                           "rearrangements_found", "truncated", "recurrence", "note")}
+        compact["filters_applied"] = [{k: f.get(k) for k in ("filter", "value", "provenance",
+                                                              "surviving_after_this_step")}
+                                      for f in out.get("filters_applied") or []]
+        compact["summary_rows"] = [r[:480] for r in rows[:20]]
+        if len(rows) > 20:
+            compact["more"] = f"{len(rows) - 20} more rearrangements, each with less read support"
+        compact["genes_looked_up"] = bool((out.get("gene_table") or {}).get("available"))
+        return compact
+    if name == "junction_evidence" and "read_pairs" in out:
+        c = {k: out.get(k) for k in ("read_pairs", "split_reads", "fragments", "by_orientation",
+                                     "pairs_with_one_read_below_min_mapq", "supporting_this_join")}
+        for e in ("end_a", "end_b"):
+            x = out.get(e) or {}
+            c[e] = {k: x.get(k) for k in ("chromosome", "position", "band", "region_note", "clipped_at",
+                                          "clipped_reads", "pairs_to_other_places", "other_places",
+                                          "low_mapq_fraction")}
+        g = out.get("genes")
+        if g:
+            c["genes"] = {k: _genes_brief(v) for k, v in g.items()}
+        j = out.get("join")
+        if j and j.get("pieces"):
+            c["join"] = {"name": j.get("name"),
+                         "pieces": [f"{p['chromosome']}:{p['start']:,}-{p['end']:,}" + (" reversed" if p["reversed"] else "")
+                                    for p in j["pieces"]],
+                         "moved": (f"{j['moved']['chromosome']}:{j['moved']['start']:,}-{j['moved']['end']:,}"
+                                   if j.get("moved") else None)}
+        c["note"] = out.get("note")
+        return c
+    if name == "genes_near" and isinstance(out.get("genes"), dict):
+        g = dict(out["genes"])
+        g["genes"] = [_gene_brief(x) for x in (g.get("genes") or [])[:25]]
+        out["genes"] = g
+        return out
     if name == "breakpoint_evidence_summary":
         for k in _BULKY:
             if isinstance(out.get(k), dict):

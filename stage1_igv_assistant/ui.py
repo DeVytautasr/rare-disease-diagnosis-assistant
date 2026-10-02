@@ -39,8 +39,10 @@ from urllib.parse import urlparse, parse_qs
 
 from stage1_igv_assistant import server as evidence_server
 from stage1_igv_assistant import candidate_server
+from stage1_igv_assistant import review_server
 from stage1_igv_assistant.tools import bam_tools
 from stage1_igv_assistant.tools import vcf_tools
+from stage1_igv_assistant.tools import gene_table
 from stage1_igv_assistant import chat as chatmod
 from stage1_igv_assistant import config as CFG
 from stage1_igv_assistant.score_tiers import (
@@ -56,6 +58,22 @@ EXPECTED_EVIDENCE_TOOLS = {
 EXPECTED_BRIDGE_TOOLS = {
     "load_candidate_set", "list_candidates", "get_candidate", "compare_candidate_sets",
 }
+# Phase 26: the geneticist's view (review_server.py). Read counts, coordinates and
+# genes; no score.
+EXPECTED_REVIEW_TOOLS = {"junction_evidence", "review_candidates", "genes_near"}
+# Tools the assistant is not offered in this interface. The supervisor's review
+# (2 October 2026) asked that a geneticist never be shown the combined score, and
+# the assistant's answers are read by the geneticist too, so the scoring tool is
+# left out; its four layers stay (they are read counts). gene_at_locus asks
+# Ensembl over the internet; once a local gene table is set up, genes_near
+# answers the same question on this computer, so it is left out too.
+# The MCP servers themselves are unchanged: the benchmark harness and /classic
+# still have every tool.
+HIDDEN_FROM_ASSISTANT = {"breakpoint_evidence_summary"}
+
+
+def hidden_from_assistant():
+    return HIDDEN_FROM_ASSISTANT | ({"gene_at_locus"} if gene_table.table() is not None else set())
 
 
 # ── startup contract ────────────────────────────────────────────────────────
@@ -67,7 +85,11 @@ def assert_tool_contract():
         return {t.name for t in await mcp.list_tools()}
     ev = asyncio.run(_names(evidence_server.mcp))
     br = asyncio.run(_names(candidate_server.mcp))
+    rv = asyncio.run(_names(review_server.mcp))
     problems = []
+    if rv != EXPECTED_REVIEW_TOOLS:
+        problems.append(f"review server: missing={sorted(EXPECTED_REVIEW_TOOLS-rv)} "
+                        f"unexpected={sorted(rv-EXPECTED_REVIEW_TOOLS)}")
     if ev != EXPECTED_EVIDENCE_TOOLS:
         problems.append(f"evidence server: missing={sorted(EXPECTED_EVIDENCE_TOOLS-ev)} "
                         f"unexpected={sorted(ev-EXPECTED_EVIDENCE_TOOLS)}")
@@ -76,7 +98,7 @@ def assert_tool_contract():
                         f"unexpected={sorted(br-EXPECTED_BRIDGE_TOOLS)}")
     if problems:
         raise SystemExit("REFUSING TO START — tool surface drift:\n  " + "\n  ".join(problems))
-    return len(ev), len(br)
+    return len(ev), len(br), len(rv)
 
 
 # ── the only path to a tool ─────────────────────────────────────────────────
@@ -85,7 +107,8 @@ class ToolRecorder:
         self.calls = []
 
     def call(self, which, tool, params):
-        mcp = evidence_server.mcp if which == "evidence" else candidate_server.mcp
+        mcp = {"evidence": evidence_server.mcp, "bridge": candidate_server.mcp,
+               "review": review_server.mcp}[which]
         t0 = time.time()
         err = None
         try:
@@ -470,6 +493,73 @@ def build_limits():
     }
 
 
+def build_review_limits():
+    """The limits of the geneticist's view (Phase 26): read counts, grouping, genes.
+    The score-related items of build_limits() describe the previous page (/classic)."""
+    t = controlled_test_figures()
+    from stage1_igv_assistant.tools import junction_tools as jt
+    g = gene_table.status()
+    return {
+        "title": "What this tool cannot tell you",
+        "source": "results/synthetic_control_2026-09/analysis_2026-09-25 and tools/junction_tools.py",
+        "items": [
+            {"h": "It checks what the caller proposed. It does not search the genome.",
+             "b": "Every rearrangement here was assembled from the junctions the variant caller reported, "
+                  "or from a position typed in by hand. A breakpoint the caller missed is not looked for. "
+                  "The one exception: for a lone junction, the reads are also counted for its reciprocal "
+                  "join, and the page says when they support it."
+                  + (f" In a controlled test with known breakpoints the caller found {t['junctions']}."
+                     if t.get("available") else "")},
+            {"h": "A read count is evidence, not proof.",
+             "b": f"A read counts when it lies within {jt.WINDOW_BP:,} bp of a breakpoint and both of its "
+                  f"ends map unambiguously (mapping quality {jt.MIN_MAPQ} or more). Inside repeats, reads from "
+                  "elsewhere can still land on both ends; that is why the cautions (a centromere, reads "
+                  "pointing to other places, ambiguous mapping, a junction also called in another sample) "
+                  "are shown with every count. Reads below the quality floor are drawn hollow and not counted."},
+            {"h": "Which junctions belong together is a rule of thumb.",
+             "b": f"Two junctions joining the same two chromosomes are one rearrangement when their ends lie "
+                  f"within {jt.GROUP_NEAR_BP:,} bp on both chromosomes (the two junctions of a balanced "
+                  f"translocation), or within {jt.GROUP_NEAR_BP:,} bp on one and up to "
+                  f"{jt.SEGMENT_MAX_BP // 1_000_000} Mb apart on the other (the two ends of a moved segment). "
+                  "Both distances are the author's choice."},
+            {"h": "Genes come from a local table; a gene listed is not a diagnosis.",
+             "b": ("Genes are read from the gene table on this computer, and exon and intron numbers refer "
+                   "to each gene's canonical transcript. OMIM marks say a gene is linked to a disorder, not "
+                   "that this rearrangement causes it. Nothing is sent over the internet to name them."
+                   if g.get("available") else
+                   "No gene table is set up, so genes are not named. scripts/make_gene_table.py builds one "
+                   "from a GENCODE file; the OMIM and HPO files are optional.")},
+            {"h": "Bands and the t(…)(…) name are worked out from coordinates.",
+             "b": "The band of each breakpoint is read from the GRCh38 850-band ideogram, so the notation is "
+                  "a guide for comparing with a karyotype, not a karyotype result."},
+            {"h": "Coverage is not used here.",
+             "b": "A balanced rearrangement gains or loses no DNA, so read depth says little about it; at "
+                  "routine coverage the depth measurement also flags many ordinary positions. The previous "
+                  "page (/classic) still shows it."},
+        ],
+    }
+
+
+# The assistant in this interface: the rules every model gets (chat.SYSTEM_PROMPT),
+# plus three for the geneticist's view. Passed as the system prompt of each turn;
+# chat.SYSTEM_PROMPT itself is unchanged, because the recorded benchmark runs
+# name its hash.
+ASSISTANT_RULES = (
+    "9. There is no evidence score in this interface. Describe the evidence for a junction as read "
+    "counts: read pairs that join the two ends, reads split across the junction, reads cut at the "
+    "same base.\n"
+    "10. To say which candidates are strongest, call review_candidates ONCE with the sample's "
+    "candidates and dataset labels. It measures every candidate and returns them sorted by the reads "
+    "that support them (summary_rows). Report the strongest with their read counts, the genes they "
+    "break (with OMIM marks when present) and their cautions.\n"
+    "11. Name genes only from genes_near or from genes a tool returned; that lookup runs on this "
+    "computer.\n")
+
+
+def assistant_prompt():
+    return chatmod.SYSTEM_PROMPT + ASSISTANT_RULES
+
+
 _CHAT_TOOLS = {}
 _CHAT_WHERE = None
 
@@ -485,18 +575,19 @@ def _chat_tools(trim=False, public_only=False, permitted=()):
     executor's guard (_private_hits) is the second line."""
     global _CHAT_WHERE
     permitted = tuple(sorted(permitted or ()))
-    key = (trim, public_only, permitted)
+    hidden = tuple(sorted(hidden_from_assistant()))
+    key = (trim, public_only, permitted, hidden)
     if key not in _CHAT_TOOLS:
         async def _all():
             return {"evidence": await evidence_server.mcp.list_tools(),
-                    "bridge": await candidate_server.mcp.list_tools()}
-        mcp_tools = asyncio.run(_all())
+                    "bridge": await candidate_server.mcp.list_tools(),
+                    "review": await review_server.mcp.list_tools()}
+        mcp_tools = {k: [t for t in v if t.name not in hidden] for k, v in asyncio.run(_all()).items()}
         ds, cf = DATASETS, CANDIDATE_FILES
         if public_only:
             ds, cf = _visible("datasets", permitted), _visible("candidates", permitted)
         _CHAT_TOOLS[key], where = chatmod.build_tools(mcp_tools, ds, cf, trim=trim)
-        if _CHAT_WHERE is None:
-            _CHAT_WHERE = where
+        _CHAT_WHERE = where
     return _CHAT_TOOLS[key], _CHAT_WHERE
 
 
@@ -523,9 +614,10 @@ def _private_hits(args):
     for lbl in ([a.get("dataset")] + (ds if isinstance(ds, list) else [ds])):
         if isinstance(lbl, str) and lbl in DATASETS and lbl not in PUBLIC_LABELS["datasets"]:
             hits.add(lbl)
-    lbl = a.get("candidates")
-    if isinstance(lbl, str) and lbl in CANDIDATE_FILES and lbl not in PUBLIC_LABELS["candidates"]:
-        hits.add(lbl)
+    for key in ("candidates", "other_candidates"):
+        lbl = a.get(key)
+        if isinstance(lbl, str) and lbl in CANDIDATE_FILES and lbl not in PUBLIC_LABELS["candidates"]:
+            hits.add(lbl)
     # The schemas offer labels only (chat._PATH_PARAMS), but resolve_args passes a
     # path argument through untouched. A file named by its path would therefore
     # reach the tool without any label to check, so it always counts as private.
@@ -677,6 +769,10 @@ def _chat_exec(name, args, public_only=False, permitted=()):
     mask_path, which the schemas replace by exclude_masked: the tool would open
     whatever file the model named as its mask."""
     _, where = _chat_tools()
+    if name in hidden_from_assistant() or name not in where:
+        return None, (f"{name} is not offered in this interface; describe the evidence with the read "
+                      f"counts the other tools return (junction_evidence, review_candidates), and name "
+                      f"genes with genes_near")
     if any((args or {}).get(k) is not None for k in (*chatmod._PATH_PARAMS, "mask_path")):
         return None, ("a file path is not accepted; name the data by its label (the "
                       "dataset, datasets or candidates parameter), and ask for the "
@@ -729,9 +825,14 @@ def _api(path, body):
             "capabilities": {"igv_ready": bool(full.get("ok")), "igv_detail": full.get("detail"),
                              "api_key": bool(API_KEY)},
             "tiers": TIERS, "tier_error": TIER_ERROR, "limits": build_limits(),
+            "review_limits": build_review_limits(),
+            "bands": _bands_for_page(),
             "hand_entry_note": hand_entry_note(),
             "tool_counts": {"evidence": len(EXPECTED_EVIDENCE_TOOLS),
-                            "bridge": len(EXPECTED_BRIDGE_TOOLS)},
+                            "bridge": len(EXPECTED_BRIDGE_TOOLS),
+                            "review": len(EXPECTED_REVIEW_TOOLS)},
+            "genes": gene_table.status(),
+            "exclude_regions": bool(MASK_STATUS["found"]),
         }
     if path == "/api/load":
         lbl = body["candidates_label"]
@@ -765,6 +866,78 @@ def _api(path, body):
     if path == "/api/assess":
         return assess(body["bam_label"], body["chromosome"], int(body["position"]),
                       split_min_mapq=body.get("split_min_mapq"))
+    if path == "/api/review":
+        # Phase 26: every candidate that passes the page's filters, grouped into
+        # rearrangements, each measured from the reads, sorted by their support.
+        lbl, reads = body.get("candidates_label"), body.get("reads_label")
+        if lbl not in CANDIDATE_FILES or reads not in DATASETS:
+            return {"error": "choose a sample that has both a candidate list and reads"}
+        p = {"path": CANDIDATE_FILES[lbl], "bam_path": DATASETS[reads],
+             "svtype": body.get("svtype") or None, "filter_pass": bool(body.get("filter_pass")),
+             "primary_only": bool(body.get("primary_only")), "exclude_masked": bool(body.get("use_mask"))}
+        for k in ("min_pe", "min_sr"):
+            v = body.get(k)
+            p[k] = int(v) if v not in (None, "", "null") else None
+        other = body.get("other_label")
+        if other:
+            if other not in CANDIDATE_FILES:
+                return {"error": f"unknown sample {other!r}"}
+            p["other_path"] = CANDIDATE_FILES[other]
+            if body.get("tolerance_bp"):
+                p["recurrence_tolerance_bp"] = int(body["tolerance_bp"])
+        r = RECORDER.call("review", "review_candidates", p)
+        return {"call": r["id"], "result": r["result"], "is_error": r["is_error"],
+                "mask": _mask_state(bool(body.get("use_mask")))}
+    if path == "/api/junction":
+        reads = body.get("reads_label")
+        if reads not in DATASETS:
+            return {"error": "choose a read file"}
+        p = {"bam_path": DATASETS[reads], "chromosome_1": body["chromosome_1"],
+             "position_1": int(body["position_1"]), "chromosome_2": body["chromosome_2"],
+             "position_2": int(body["position_2"]), "list_reads": True, "include_view": True}
+        if body.get("orientation"):
+            p["orientation"] = body["orientation"]
+        if body.get("also_at"):
+            p["also_at"] = [str(x) for x in body["also_at"]][:20]
+        r = RECORDER.call("review", "junction_evidence", p)
+        return {"call": r["id"], "result": r["result"], "is_error": r["is_error"]}
+    if path == "/api/position":
+        # A position typed in by hand: where its reads point, and genes. Read counts
+        # only; the combined score is not computed for this page.
+        reads = body.get("reads_label")
+        if reads not in DATASETS:
+            return {"error": "choose a read file"}
+        bam, chrom, pos = DATASETS[reads], body["chromosome"], int(body["position"])
+        stats = RECORDER.call("evidence", "bam_stats_at_locus",
+                              {"bam_path": bam, "chromosome": chrom, "start": max(0, pos - 500), "end": pos + 500})
+        se = tool_error(stats)
+        if se:
+            return {"error": se["error"], "call": stats["id"], "chromosome": chrom, "position": pos,
+                    "contigs_in_header_sample": se.get("contigs_in_header_sample")}
+        disc = RECORDER.call("evidence", "discordant_pairs",
+                             {"bam_path": bam, "chromosome": chrom, "position": pos, "window_bp": 1000})
+        clip = RECORDER.call("evidence", "soft_clipped_reads", {"bam_path": bam, "chromosome": chrom, "position": pos})
+        split = RECORDER.call("evidence", "split_reads",
+                              {"bam_path": bam, "chromosome": chrom, "position": pos, "window_bp": 1000, "min_mapq": 20})
+        genes = RECORDER.call("review", "genes_near", {"chromosome": chrom, "position": pos})
+        d, c, sp, st = (disc["result"] or {}, clip["result"] or {}, split["result"] or {}, stats["result"] or {})
+        return {"chromosome": chrom, "position": pos, "reads_label": reads,
+                "low_mapq_fraction": st.get("low_mapq_fraction"), "stats_call": stats["id"],
+                "discordant": {"count": d.get("discordant_pairs"), "partners": d.get("mate_chromosomes"),
+                               "window_bp": d.get("window_bp"), "error": d.get("error"), "call": disc["id"]},
+                "clipped": {"count": c.get("soft_clipped_reads"), "at": c.get("consensus_clip_position"),
+                            "at_count": c.get("max_clips_at_position"), "error": c.get("error"), "call": clip["id"]},
+                "split": {"count": sp.get("split_reads"), "partners": sp.get("partner_chromosomes"),
+                          "examples": sp.get("example_partner_loci"), "window_bp": sp.get("window_bp"),
+                          "error": sp.get("error"), "call": split["id"]},
+                "genes": {"result": genes["result"], "call": genes["id"]}}
+    if path == "/api/genes":
+        # genes in a segment, for the piece of a chromosome a rearrangement moved
+        p = {"chromosome": body["chromosome"], "position": int(body["start"])}
+        if body.get("end"):
+            p["end"] = int(body["end"])
+        r = RECORDER.call("review", "genes_near", p)
+        return {"call": r["id"], "result": r["result"], "is_error": r["is_error"]}
     if path == "/api/igv":
         bam = DATASETS[body["bam_label"]]
         pos = int(body["position"])
@@ -937,7 +1110,7 @@ def _api(path, body):
             r = chatmod.run_turn_api(
                 model, body.get("message", ""), tools, set(where),
                 guarded_exec, max_iters=int(body.get("max_iters", 40)),
-                max_tokens=int(body.get("max_tokens", 16000)),
+                system=assistant_prompt(), max_tokens=int(body.get("max_tokens", 16000)),
                 effort=body.get("effort", "high"),
                 thinking=bool(body.get("thinking", True)),
                 api_key=API_KEY)
@@ -947,7 +1120,7 @@ def _api(path, body):
         r = chatmod.run_turn(
             model, body.get("message", ""), tools, set(where),
             _chat_exec, num_ctx=int(body.get("num_ctx", 32768)),
-            max_iters=int(body.get("max_iters", 8)),
+            max_iters=int(body.get("max_iters", 8)), system=assistant_prompt(),
             think=chatmod.normalise_think(body.get("think", False)))
         return r
     if path == "/api/privacy_check":
@@ -962,6 +1135,13 @@ def _api(path, body):
         c = next((x for x in RECORDER.calls if x["id"] == cid), None)
         return c or {"error": "no such call"}
     return {"error": f"unknown endpoint {path}"}
+
+
+def _bands_for_page():
+    """The GRCh38 ideogram for the diagram: {chrom: [[start0, end, band, stain], ...]}."""
+    from stage1_igv_assistant.tools import junction_tools as jt
+    return {"chr" + c if (c.isdigit() or c in ("X", "Y")) else c: [list(b) for b in v]
+            for c, v in jt.bands().items()}
 
 
 def _refs(result):
@@ -1576,6 +1756,12 @@ boot(); loadModels();
 # config, and its absence is REPORTED in the funnel and in the startup banner.
 MASK_STATUS = CFG.status("exclude_template", kind="file")
 MASK_PATH = MASK_STATUS["path"] or ""
+# Phase 26: genes from a table on this computer (scripts/make_gene_table.py), and
+# the optional OMIM / HPO files that mark disorder genes. All optional: without
+# them the page says that genes were not looked up.
+GENE_TABLE_STATUS = CFG.status("gene_table", kind="file")
+OMIM_STATUS = CFG.status("omim_mim2gene", kind="file")
+DISORDER_STATUS = CFG.status("gene_disorders", kind="file")
 
 
 def _mask_state(requested):
@@ -1842,8 +2028,8 @@ def verify_minimal():
     global RECORDER
     out = []
     try:
-        ne, nb = assert_tool_contract()
-        out.append(("tool contract", True, f"{ne} evidence + {nb} bridge tools"))
+        ne, nb, nr = assert_tool_contract()
+        out.append(("tool contract", True, f"{ne} evidence + {nb} bridge + {nr} review tools"))
     except SystemExit as e:
         out.append(("tool contract", False, str(e)))
     out.append(("scoring tiers derivable from bam_tools' source",
@@ -1933,6 +2119,7 @@ def capability_report(minimal):
                                 if models else "ollama not reachable; the chat panel will be unavailable")},
         "exclude_template": MASK_STATUS,
         "data_dir": DATA_DIR_STATUS,
+        "gene_table": GENE_TABLE_STATUS, "omim_mim2gene": OMIM_STATUS, "gene_disorders": DISORDER_STATUS,
         "api_key": bool(API_KEY),
     }
 
@@ -1956,6 +2143,12 @@ def print_banner(cap, port):
     d = cap["data_dir"]
     print(f"    [{'x' if d['found'] else ' '}] data directory    "
           f"{d['path'] or '(not configured)'}  [{d['source']}]", flush=True)
+    for key, title in (("gene_table", "gene table      "), ("omim_mim2gene", "OMIM mim2gene   "),
+                       ("gene_disorders", "gene disorders  ")):
+        g = cap.get(key) or {}
+        print(f"    [{'x' if g.get('found') else ' '}] {title}  {g.get('path') or '(not configured)'}  "
+              f"[{g.get('source')}]" + ("" if g.get("found") else "  -- optional; genes are then not named"
+                                         if key == "gene_table" else "  -- optional"), flush=True)
     print(f"    [{'x' if cap['api_key'] else ' '}] Anthropic key     "
           f"{'present' if cap['api_key'] else 'absent (API chat unavailable; local chat unaffected)'}",
           flush=True)
@@ -1988,7 +2181,7 @@ def main():
     if igv_cfg and not os.environ.get("IGV_PATH"):
         os.environ["IGV_PATH"] = igv_cfg
 
-    ne, nb = assert_tool_contract()
+    ne, nb, nr = assert_tool_contract()
     if not a.no_autodiscover:
         discover_public()
     for spec, target, kind in ((a.dataset, DATASETS, "datasets"),
@@ -2006,7 +2199,9 @@ def main():
     except TierDerivationError as e:
         TIERS, BANDS, TIER_ERROR = None, None, str(e)
 
-    print(f"tool contract OK: {ne} evidence tools + {nb} bridge tools", flush=True)
+    review_server.configure(mask_path=MASK_PATH or None, gene_table=GENE_TABLE_STATUS["path"],
+                            mim2gene=OMIM_STATUS["path"], gene_disorders=DISORDER_STATUS["path"])
+    print(f"tool contract OK: {ne} evidence tools + {nb} bridge tools + {nr} review tools", flush=True)
     print(f"scoring tiers: {'derived from bam_tools source' if TIERS else 'NOT DERIVABLE — ' + str(TIER_ERROR)}", flush=True)
     print(f"datasets: {len(DATASETS)}   candidate files: {len(CANDIDATE_FILES)}", flush=True)
     cap = capability_report(verify_minimal())

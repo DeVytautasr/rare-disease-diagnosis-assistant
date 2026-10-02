@@ -1,0 +1,197 @@
+{
+ "what": "every suite once",
+ "definitions": "Run every suite in stage1_igv_assistant/tests/ once, with the test census's instrumentation (scripts/test_census.py: an assertion is one evaluation of a suite's check() or assert statement), and write OUT (a JSON record). run_suites.py OUT_JSON Recorded per suite: exit status (0 passed, 1 failed, 2 incomplete), assertions held and failed, and the lines beginning NOT RUN or SKIPPED. The environment is the caller's (for the IGV checks: Java on PATH, DISPLAY set).",
+ "started": "2026-10-02T21:30:46",
+ "java_on_path": true,
+ "display": null,
+ "suites": {
+  "test_alt_contig_pairs.py": {
+   "exit": 0,
+   "assertions_held": 20,
+   "assertions_failed": 0,
+   "not_run": []
+  },
+  "test_api_leak.py": {
+   "exit": 1,
+   "assertions_held": 0,
+   "assertions_failed": 1,
+   "not_run": []
+  },
+  "test_bam_tools.py": {
+   "exit": 1,
+   "assertions_held": 184,
+   "assertions_failed": 0,
+   "not_run": [
+    "NOT RUN \u2014 Ensembl did not answer (ProxyError); the annotation logic is still covered offline by TEST 7b",
+    "NOT RUN \u2014 IGV not installed on this machine \u2014 an optional dependency is missing, so the real-screenshot check did not run",
+    "NOT RUN \u2014 IGV not installed on this machine \u2014 an optional dependency is missing, so the real 4-panel generation check did not run"
+   ]
+  },
+  "test_browser_path_rule.py": {
+   "exit": 0,
+   "assertions_held": 7,
+   "assertions_failed": 0,
+   "not_run": []
+  },
+  "test_ceiling_echo.py": {
+   "exit": 2,
+   "assertions_held": 8,
+   "assertions_failed": 0,
+   "not_run": [
+    "NOT RUN 1. fields present on a real call: IMP01.bam not present \u2014 no real call could be made",
+    "NOT RUN 3. purely additive: needs section 1's real call, which did not run",
+    "SKIPPED 2. the band boundary is derived, not a literal: returned strong_band == derived strong_band (needs section 1's real call)"
+   ]
+  },
+  "test_ceiling_layers.py": {
+   "exit": 2,
+   "assertions_held": 20,
+   "assertions_failed": 0,
+   "not_run": [
+    "NOT RUN: ~/public_data/sim/bams/IMP01.bam is absent"
+   ]
+  },
+  "test_checks_can_fail.py": {
+   "exit": 0,
+   "assertions_held": 18,
+   "assertions_failed": 0,
+   "not_run": []
+  },
+  "test_contig_bounds.py": {
+   "exit": 0,
+   "assertions_held": 15,
+   "assertions_failed": 0,
+   "not_run": []
+  },
+  "test_contig_naming.py": {
+   "exit": 0,
+   "assertions_held": 24,
+   "assertions_failed": 0,
+   "not_run": []
+  },
+  "test_decoy_partners.py": {
+   "exit": 0,
+   "assertions_held": 17,
+   "assertions_failed": 0,
+   "not_run": []
+  },
+  "test_depth_geometry.py": {
+   "exit": 0,
+   "assertions_held": 16,
+   "assertions_failed": 0,
+   "not_run": []
+  },
+  "test_depth_units.py": {
+   "exit": 0,
+   "assertions_held": 6,
+   "assertions_failed": 0,
+   "not_run": []
+  },
+  "test_gate_window_display.py": {
+   "exit": 0,
+   "assertions_held": 14,
+   "assertions_failed": 0,
+   "not_run": []
+  },
+  "test_gene_annotation_note.py": {
+   "exit": 0,
+   "assertions_held": 12,
+   "assertions_failed": 0,
+   "not_run": []
+  },
+  "test_interface_page.py": {
+   "exit": 0,
+   "assertions_held": 93,
+   "assertions_failed": 0,
+   "not_run": []
+  },
+  "test_junction_review.py": {
+   "exit": 0,
+   "assertions_held": 79,
+   "assertions_failed": 0,
+   "not_run": []
+  },
+  "test_minimum_support.py": {
+   "exit": 0,
+   "assertions_held": 14,
+   "assertions_failed": 0,
+   "not_run": []
+  },
+  "test_parameter_domain.py": {
+   "exit": 0,
+   "assertions_held": 33,
+   "assertions_failed": 0,
+   "not_run": []
+  },
+  "test_partner_distribution.py": {
+   "exit": 0,
+   "assertions_held": 22,
+   "assertions_failed": 0,
+   "not_run": []
+  },
+  "test_prose_coordinates.py": {
+   "exit": 0,
+   "assertions_held": 11,
+   "assertions_failed": 0,
+   "not_run": []
+  },
+  "test_quality_gate.py": {
+   "exit": 0,
+   "assertions_held": 29,
+   "assertions_failed": 0,
+   "not_run": []
+  },
+  "test_reciprocal_verdict.py": {
+   "exit": 0,
+   "assertions_held": 24,
+   "assertions_failed": 0,
+   "not_run": []
+  },
+  "test_sa_mapq_strand.py": {
+   "exit": 0,
+   "assertions_held": 17,
+   "assertions_failed": 0,
+   "not_run": []
+  },
+  "test_server.py": {
+   "exit": 0,
+   "assertions_held": 3,
+   "assertions_failed": 0,
+   "not_run": []
+  },
+  "test_split_partner_units.py": {
+   "exit": 0,
+   "assertions_held": 11,
+   "assertions_failed": 0,
+   "not_run": []
+  },
+  "test_subthreshold_observations.py": {
+   "exit": 0,
+   "assertions_held": 35,
+   "assertions_failed": 0,
+   "not_run": []
+  },
+  "test_tier_source_shape.py": {
+   "exit": 0,
+   "assertions_held": 15,
+   "assertions_failed": 0,
+   "not_run": []
+  },
+  "test_vcf_tools.py": {
+   "exit": 0,
+   "assertions_held": 99,
+   "assertions_failed": 0,
+   "not_run": []
+  }
+ },
+ "summary": {
+  "suites": 28,
+  "passed": 24,
+  "failed": 2,
+  "incomplete": 2,
+  "assertions_held": 846,
+  "assertions_failed": 1,
+  "not_run_lines": 7
+ },
+ "finished": "2026-10-02T21:31:53"
+}
