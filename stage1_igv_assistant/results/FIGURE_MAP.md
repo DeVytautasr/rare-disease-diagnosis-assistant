@@ -1030,10 +1030,12 @@ no `~/public_data`, no `~/patient_data`, no IGV, no local model and no API key, 
 egress policy refuses the GENCODE, OMIM and HPO hosts: steps 0, 1, 3 (as far as the container
 allows), 4 and 8 of the task were done there, and steps 2, 5, 6 and 7 are left for the
 author's machine ("not run here" below). `PC26c` = `results/phase26_cloud_checks_2026-10-03.json`,
-`SU26c` = `results/suites_2026-10-03_phase26_cloud.json` (both written in that container; their
-times are its clock, UTC), `SU25` = `results/suites_2026-10-02_phase25.json`, `PR` =
-`results/patient_rerun_2026-09.json`. `PC26c` `code_state` gives the sha256 of the files every
-check ran on; they are the files committed with this section.
+`SU26c` = `results/suites_2026-10-03_phase26_cloud.json`, `PC26c2` =
+`results/phase26_cloud_fixes_2026-10-03.json`, `SU26c2` = `results/suites_2026-10-03_phase26_cloud_2.json`
+(all four written in that container; their times are its clock, UTC), `SU25` =
+`results/suites_2026-10-02_phase25.json`, `PR` = `results/patient_rerun_2026-09.json`. `PC26c`
+`code_state` gives the sha256 of the files every check of the first commit (`06018a1`) ran on;
+`PC26c2` `code_state` those of the two files changed after it (Q3, Q4).
 
 The patch: `phase26_review.patch`, sha256 33431446…928b31e9, made against `42a5bfd`; 17 files,
 +4,580 −582; no protected file and nothing under `docs/thesis/`. Preconditions held: clean
@@ -1044,8 +1046,8 @@ after; the whole diff was read (`PC26c` `preconditions`, `patch`).
 | # | Claim | Evidence | Status |
 |---|---|---|---|
 | P1 | the annotation files and the gene table | not run here: `ftp.ebi.ac.uk`, `omim.org` and `purl.obolibrary.org` are refused (403) by the container's egress policy (`PC26c` `environment.network`). Checked instead on a two-gene GTF written there (`PC26c` `gene_table_round_trip_on_a_synthetic_gtf`): `scripts/make_gene_table.py` keeps the transcript tagged `Ensembl_canonical` over a longer untagged one and names its GTF by file name only, with its sha256; with that table `gene_table` gives, on the + strand, exon 1 of 3 at the lowest exon and intron 1 of 2 after it, and on the − strand exon 3 of 3 at the lowest exon, exon 1 of 3 at the highest and intron 2 of 2 between the lower two; a position outside both genes gives none | open: the three files' URL, size, sha256 and date, the table's gene and protein-coding counts and the TP53, BCR and ABL1 spot checks, on the author's machine |
-| P2 | fixes made in step 1 | two, each first shown failing on the as-patched page (P.2) | fixed |
-| P3 | the tests and the suites | `tests/test_junction_review.py` 79 of 79. `tests/test_interface_page.py` as patched: 91 of 91; with the 2 checks added in P.2, 92 pass and 1 fails on the as-patched page, and 93 of 93 pass on the committed files (`PC26c` `fixes_on_top_of_the_patch.Q1`). Every suite with the census in the container (`SU26c`): 28 suites, 24 passed, 2 failed, 2 incomplete; 846 assertions held, 1 failed, 7 NOT RUN lines. Against `SU25`, 22 suites are identical (exit, held, failed); `test_interface_page.py` 90 → 93 and the new `test_junction_review.py` (79) are this phase's; the other four are the container's: `test_api_leak.py` (no sample registered: "no datasets registered; cannot test the real payload"), `test_bam_tools.py` (Ensembl refused and no IGV, then a `ValueError` opening the public GIAB BAM from a refused host; 184 held and none failed before it), `test_ceiling_echo.py` and `test_ceiling_layers.py` (no `IMP01.bam`: incomplete). The first two fail the same way on `42a5bfd` in the container (`PC26c` `suites`) | pass for every suite the container can run. Expected on the author's machine: 28 suites, all passed, 931 assertions (the task's 929 and the 2 checks of P.2); the census there is open |
+| P2 | fixes made on top of the patch | four, each first shown failing (P.2): two on the page in step 1 (Q1, Q2), and two in `tools/junction_tools.py` after the first commit, at the author's request (Q3, Q4) | fixed |
+| P3 | the tests and the suites | `tests/test_junction_review.py` 79 of 79. `tests/test_interface_page.py` as patched: 91 of 91; with the 2 checks added in P.2, 92 pass and 1 fails on the as-patched page, and 93 of 93 pass on the committed files (`PC26c` `fixes_on_top_of_the_patch.Q1`). Every suite with the census in the container (`SU26c`): 28 suites, 24 passed, 2 failed, 2 incomplete; 846 assertions held, 1 failed, 7 NOT RUN lines. Against `SU25`, 22 suites are identical (exit, held, failed); `test_interface_page.py` 90 → 93 and the new `test_junction_review.py` (79) are this phase's; the other four are the container's: `test_api_leak.py` (no sample registered: "no datasets registered; cannot test the real payload"), `test_bam_tools.py` (Ensembl refused and no IGV, then a `ValueError` opening the public GIAB BAM from a refused host; 184 held and none failed before it), `test_ceiling_echo.py` and `test_ceiling_layers.py` (no `IMP01.bam`: incomplete). The first two fail the same way on `42a5bfd` in the container (`PC26c` `suites`). After Q3 and Q4 (`PC26c2`; `SU26c2`): `tests/test_junction_review.py` 84 of 84, every other suite as in `SU26c` (851 assertions held) | pass for every suite the container can run. Expected on the author's machine: 28 suites, all passed, 936 assertions (the task's 929, the 2 checks of Q1 and the 5 of Q3 and Q4); the census there is open |
 | P4 | the click-through | not run here: it needs `~/public_data` (PRIVTEST is IMP09's files), IGV with a display, the local model and the API key | open |
 | P5 | where the implants rank | not run here: it needs `~/public_data/sim`. Checked: `scripts/review_ranking.py` reads `synthetic_control_2026-09/implants_ground_truth.json` as committed (12 implants; `id`, `class`, `breakpoints.chr20`, `breakpoints.chr21`) | open |
 | P6 | the patient samples, counts only | not run here: the patient files stay on the author's machine. **The cloud session had no patient file: no patient coordinate, band, gene name, read name or caller id was printed or recorded there, and no patient data reached any API from it** | open |
@@ -1056,12 +1058,15 @@ after; the whole diff was read (`PC26c` `preconditions`, `patch`).
 
 ### P.2 Fixes made on top of the patch
 
-Each was first shown failing on the as-patched page; neither changes a label or the layout.
+Each was first shown failing: Q1 and Q2 on the as-patched page, Q3 on the code of the first commit
+(`06018a1`) and Q4 with Q3 alone. None changes a label or the layout.
 
 | # | Fix | Why | Where |
 |---|---|---|---|
 | Q1 | `ui_page.html` declares `LAYER_TEXT` again (the four layer names) | `digest()`, the one-line summary of each tool call under an answer, still reads `LAYER_TEXT` for an `applicable_layers` call, and the rewritten page no longer declared it. In strict mode that throws, so an answer whose model had called `applicable_layers` was never drawn: the card kept its "The model is working" spinner. Shown in headless Chromium with every route stubbed (`PC26c` `Q1.probe_before`: page error "LAYER_TEXT is not defined", no answer; `probe_after`: the answer, and "Measurements that apply to this file: discordant pairs, split reads.") | `ui_page.html`, beside `KIND_NAMES`; `tests/test_interface_page.py`, "every constant the page's script reads is declared in it" and its control |
 | Q2 | the assistant's waiting box uses the class `spinwait` | the patch renamed the class `igv-wait` to `spinwait`, with the same rule, and missed this one use, so the box was drawn unstyled (`PC26c` `Q2`: `display` `block` before, `flex` after) | `ui_page.html`, the waiting card of the question form |
+| Q3 | within one chromosome, each end of a junction keeps only the read of a pair, or the piece of a split read, that lies nearer to itself | with both ends on one chromosome and less than two windows (2 kb) apart, both reads of a pair lie in both windows, and each end kept whichever read came last: one pair across an 800 bp deletion was counted as joining 5to5 with the same read at both ends, where it joins 3to5 (`PC26c` `found_in_reading_not_changed`, `PC26c2` `Q3`: 3 of the 4 new checks fail on `06018a1`; after the fix one pair and one split read, both 3to5, a different read at each end). Translocations are unchanged: the rule applies only when both ends lie on one chromosome, and every check of sections 1–7 holds as before | `tools/junction_tools.py` (`_nearer_here`, `scan_end`); `tests/test_junction_review.py` section 8, 4 checks |
+| Q4 | a read whose pair joins the two ends is drawn as a joining read, even when it also has a supplementary piece elsewhere | a read was drawn by the first thing it showed, so such a read was counted in `read_pairs` but drawn as "split read, other piece elsewhere", among the reads that are thinned when there are many, against "every read that joins the two ends is drawn" (`PC26c2` `Q4`: the new check fails with Q3 alone; after the fix it is drawn as `pair_partner`, 3to5) | `tools/junction_tools.py` (`scan_end`); `tests/test_junction_review.py` section 8, 1 check |
 
 ### P.9 Open items
 
@@ -1074,23 +1079,20 @@ Each was first shown failing on the as-patched page; neither changes a label or 
 3. The order is a read count, not a probability: it has not been calibrated against true and
    false junctions.
 4. The privacy items left open in O.4 (1–7) are not addressed by this patch.
-5. Found in reading `tools/junction_tools.py`, measured on an invented BAM and not changed
-   (`PC26c` `found_in_reading_not_changed`): (a) a read is drawn by its first kind, so a read
-   whose supplementary piece lies elsewhere but whose mate is at the partner end is counted in
-   `read_pairs` and drawn as "split read, other piece elsewhere"; (b) for an event within one
-   chromosome whose ends lie closer than about 2 kb, both reads of a pair fall in both windows
-   and the later read overwrites the earlier: one pair spanning an 800 bp deletion was reported
-   as joining 5to5, with the same read at both ends, where it joins 3to5. Translocations, the
-   page's default, cannot meet (b); a deletion, duplication or inversion chosen under **Type**
-   can. A fix changes which reads count for which end, so it is left for the author.
+5. The two cases found in reading `tools/junction_tools.py` and recorded unchanged in the first
+   commit (`PC26c` `found_in_reading_not_changed`) were fixed after it at the author's request:
+   Q3 and Q4. Q3 changes which reads count for which end within one chromosome, so the review's
+   figures for deletions, duplications and inversions shorter than about 2 kb are not those of
+   the first commit; no translocation figure changes.
 6. Statements elsewhere that this phase makes outdated, not changed (outside step 8's two
    files): `CLAUDE.md` ("the stage's two MCP entrypoints", "runs both servers in-process");
    `stage1_igv_assistant/README.md` ("both servers", "Either MCP server", "27 test files", 28
    now; no `review_server.py`, `junction_tools.py` or `gene_table.py`); `TUTORIAL.md`
    ("Fifteen tools across two MCP servers").
-7. Steps 2, 5, 6 and 7 and the census of record (`suites_2026-10-03_phase26.json`) are open. The
-   commit of this part went to the branch `claude/task-264xvi`, not to `main`, and its identifier
-   gate ran without the identifier list (G1): run the gate with the list before it is merged.
+7. Steps 2, 5, 6 and 7 and the census of record (`suites_2026-10-03_phase26.json`) are open. This
+   part's two commits are on the branch `claude/task-264xvi` (pull request #1), not on `main`, and
+   their identifier gate ran without the identifier list (G1, G4): run the gate with the list
+   before the pull request is merged.
 
 ### P.10 Gates of this part
 
@@ -1099,3 +1101,4 @@ Each was first shown failing on the as-patched page; neither changes a label or 
 | G1 | `scripts/identifier_gate.py`: `--self-test`, then `--staged` on the 20 files of this commit | self-test PASS; staged: nothing fired, INCOMPLETE (exit 2). The identifier list is built from `~/patient_data/SAMPLE_MAP.md`, and neither it nor the API key file is in the container, so the ID-list rule did not run and the key rule ran on known secret formats only. `--base 42a5bfd` runs after the commit, before the push |
 | G2 | `scripts/guard_protected.py` (base 25d12bb): before the patch, after it, and on the staged tree | exit 0, all identical, each time |
 | G3 | what is staged: nothing under `~/public_data/annotation/`, no log, no `.venv`, nothing under `docs/thesis/` | none of them |
+| G4 | the same three gates on the second commit (Q3, Q4 and this update): `--staged`, then `--base 42a5bfd` before the push; the guard | as G1–G3: nothing fired, INCOMPLETE without the list; the guard exit 0 |

@@ -1,0 +1,146 @@
+{
+ "what": "Phase 26, two fixes to tools/junction_tools.py made in the cloud session after the first commit (06018a1), at the author's request",
+ "definitions": "Q3: within one chromosome, each end keeps only the read (pair) or piece (split read) nearer to itself (junction_tools._nearer_here). Q4: a read whose pair joins the two ends is drawn as a joining read even when it also has a supplementary piece elsewhere. Translocations are unchanged by Q3: the rule applies only when both ends lie on one chromosome. Each was first shown failing: the checks of tests/test_junction_review.py section 8 were run on the code of 06018a1 (before Q3) and with Q3 alone (before Q4). Times in the census record are the container's clock, UTC.",
+ "Q3": {
+  "test_before": {
+   "passed": 80,
+   "failed": 3,
+   "failed_checks": [
+    "[FAIL] a deletion whose ends lie 800 bp apart: its pair and its split read count once each, joined 3to5  -- {\"3to5\": {\"read_pairs\": 0, \"split_reads\": 1, \"fragments\": 1}, \"5to5\": {\"read_pairs\": 1, \"split_reads\": 0, \"fragments\": 1}}",
+    "[FAIL] ... each end lists its own read: the + read at the first end, the - read at the second  -- {\"name\": \"sd_pair\", \"orientation\": \"5to5\", \"a\": {\"start\": 100000850, \"end\": 100000999, \"strand\": \"-\", \"cigar\": \"150M\", \"mapq\": 60, \"chromosome\": \"chr7\", \"side\": \"5\"}, \"b\": {\"start\": 100000850, \"end\":",
+    "[FAIL] ... and every joining read drawn at either end carries that join  -- {'3to5', '5to3'}"
+   ]
+  },
+  "probe_before": {
+   "setup": "chr1:100,000 <-> chr1:100,800; one pair spanning it: + read at 99,900, - read at 100,850",
+   "expected": "one read pair, joined 3to5: the + read at the first end, the - read at the second",
+   "read_pairs": 1,
+   "by_orientation": {
+    "5to5": {
+     "read_pairs": 1,
+     "split_reads": 0,
+     "fragments": 1
+    }
+   },
+   "listed_pairs": [
+    {
+     "orientation": "5to5",
+     "a": [
+      100850,
+      "-"
+     ],
+     "b": [
+      100850,
+      "-"
+     ]
+    }
+   ]
+  },
+  "probe_after": {
+   "read_pairs": 1,
+   "by_orientation": {
+    "3to5": {
+     "read_pairs": 1,
+     "split_reads": 0,
+     "fragments": 1
+    }
+   },
+   "listed_pairs": [
+    {
+     "orientation": "3to5",
+     "a": [
+      99900,
+      "+"
+     ],
+     "b": [
+      100850,
+      "-"
+     ]
+    }
+   ]
+  }
+ },
+ "Q4": {
+  "test_before": {
+   "passed": 83,
+   "failed": 1,
+   "failed_checks": [
+    "[FAIL] a joining pair whose read also has a piece elsewhere is counted, and drawn as joining the two ends  -- 1 [('split_other', '3to5')]"
+   ]
+  },
+  "probe_before": {
+   "setup": "chr1:50,000 <-> chr2:80,000, 3to5; read on chr1 at 49,800 (+) with SA on chr5, mate on chr2 at 80,100 (-)",
+   "read_pairs": 1,
+   "by_orientation": {
+    "3to5": {
+     "read_pairs": 1,
+     "split_reads": 0,
+     "fragments": 1
+    }
+   },
+   "drawn_at_end_a_as": [
+    "split_other"
+   ]
+  },
+  "probe_after": {
+   "read_pairs": 1,
+   "by_orientation": {
+    "3to5": {
+     "read_pairs": 1,
+     "split_reads": 0,
+     "fragments": 1
+    }
+   },
+   "drawn_at_end_a_as": [
+    "pair_partner"
+   ]
+  }
+ },
+ "tests_after": {
+  "test_junction_review.py": {
+   "passed": 84,
+   "failed": 0,
+   "failed_checks": []
+  },
+  "test_interface_page.py": {
+   "passed": 93,
+   "failed": 0
+  }
+ },
+ "suites": {
+  "record": "results/suites_2026-10-03_phase26_cloud_2.json",
+  "summary": {
+   "suites": 28,
+   "passed": 24,
+   "failed": 2,
+   "incomplete": 2,
+   "assertions_held": 851,
+   "assertions_failed": 1,
+   "not_run_lines": 7
+  },
+  "differs_from_the_first_census": {
+   "test_junction_review.py": {
+    "first": {
+     "exit": 0,
+     "held": 79,
+     "failed": 0
+    },
+    "now": {
+     "exit": 0,
+     "held": 84,
+     "failed": 0
+    }
+   }
+  }
+ },
+ "gates": {
+  "guard_protected": {
+   "exit": 0,
+   "output": "guard: 4 file(s) checked against HEAD (4 protected, also against 25d12bb): ALL IDENTICAL"
+  }
+ },
+ "code_state": {
+  "stage1_igv_assistant/tests/test_junction_review.py": "f0bcb7fd235775d07ad6a6633c1fc4b168e66bff68e4768083cd9d82465a6e97",
+  "stage1_igv_assistant/tools/junction_tools.py": "a2291803313218d174adc6ee81b56b3a1c53511fabc49d8257280ecc149bb4a7"
+ }
+}

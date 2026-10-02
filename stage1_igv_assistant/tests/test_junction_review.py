@@ -17,6 +17,8 @@ import os
 import sys
 import tempfile
 
+import pysam
+
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 
 from stage1_igv_assistant.tests import review_fixture as F  # noqa: E402
@@ -349,6 +351,57 @@ def run(d):
         ui.CANDIDATE_FILES.clear(); ui.CANDIDATE_FILES.update(saved[1])
         ui.PUBLIC_LABELS.update(saved[2])
         ui._CHAT_TOOLS.clear()
+
+    # ── 8. an event within one chromosome, its ends closer than the windows ──
+    # Found when the Phase 26 patch was applied (FIGURE_MAP P.2, Q3): with both
+    # ends on one chromosome and less than two windows apart, both reads of a pair
+    # lie in both windows, and each end kept whichever read came last, so a pair
+    # across an 800 bp deletion was reported as joining 5to5 with the same read at
+    # both ends. Each end must keep the read (or split piece) nearer to itself.
+    print("\nends closer than the two windows")
+    small = os.path.join(d, "small_event.bam")
+    h = pysam.AlignmentHeader.from_dict({"HD": {"VN": "1.6", "SO": "coordinate"},
+                                         "SQ": [{"SN": c, "LN": n} for c, n in F.LEN.items()]})
+    out = []
+    # a deletion joining the left part of chr7 at 100,000,000 to its right part at
+    # 100,000,800: one pair across it, and one read split at the two ends
+    F._pair(h, out, "sd_pair", "chr7", 99_999_800, False, "chr7", 100_000_850, True)
+    F._split_left_right(h, out, "sd_split", "chr7", 100_000_000, "chr7", 100_000_800, 70)
+    # the same pair across a 10 kb deletion, whose windows do not overlap
+    F._pair(h, out, "ld_pair", "chr7", 119_999_800, False, "chr7", 120_010_050, True)
+    # a pair joining chr16:50,000,000 to chr22:45,500,000 (3to5) whose chr16 read also
+    # has a supplementary piece on chr1, away from both ends
+    out.append(F._seg(h, "sa_pair", "chr16", 49_999_800, [(0, 150)], F.P | F.R1F | F.MREV, "chr22", 45_500_100,
+                      0, 60, {"MQ": 60, "SA": "chr1,5000000,+,60S90M,60,0;"}))
+    out.append(F._seg(h, "sa_pair", "chr22", 45_500_100, [(0, 150)], F.P | F.R2F | F.REV, "chr16", 49_999_800,
+                      0, 60, {"MQ": 60}))
+    out.sort(key=lambda r: (r.reference_id, r.reference_start))
+    with pysam.AlignmentFile(small, "wb", header=h) as fh:
+        for r in out:
+            fh.write(r)
+    pysam.index(small)
+    sd = jt.junction_support(small, "chr7", 100_000_000, "chr7", 100_000_800, view=True)
+    check("a deletion whose ends lie 800 bp apart: its pair and its split read count once each, joined 3to5",
+          sd.get("by_orientation") == {"3to5": {"read_pairs": 1, "split_reads": 1, "fragments": 2}},
+          json.dumps(sd.get("by_orientation")))
+    lp = ((sd.get("reads") or {}).get("pairs") or [{}])[0]
+    check("... each end lists its own read: the + read at the first end, the - read at the second",
+          ((lp.get("a") or {}).get("start"), (lp.get("a") or {}).get("strand"),
+           (lp.get("b") or {}).get("start"), (lp.get("b") or {}).get("strand")) == (99_999_800, "+", 100_000_850, "-"),
+          json.dumps(lp)[:200])
+    drawn = {x["orientation"] for e in "ab" for x in sd["view"][e]["reads"] if x["kind"] in ("pair_partner", "split_partner")}
+    check("... and every joining read drawn at either end carries that join", drawn == {"3to5"}, str(drawn))
+    ld = jt.junction_support(small, "chr7", 120_000_000, "chr7", 120_010_000)
+    check("a deletion whose ends lie 10 kb apart is counted as before: one pair, joined 3to5",
+          ld.get("by_orientation") == {"3to5": {"read_pairs": 1, "split_reads": 0, "fragments": 1}},
+          json.dumps(ld.get("by_orientation")))
+    # Found with Q3 (FIGURE_MAP P.2, Q4): a read was drawn by the first thing it showed,
+    # so a joining pair whose read also had a supplementary piece elsewhere was counted
+    # but drawn as "split read, other piece elsewhere", among the reads that are thinned.
+    sa = jt.junction_support(small, "chr16", 50_000_000, "chr22", 45_500_000, orientation="3to5", view=True)
+    sa_drawn = [(x["kind"], x["orientation"]) for x in sa["view"]["a"]["reads"] if x["name"] == "sa_pair"]
+    check("a joining pair whose read also has a piece elsewhere is counted, and drawn as joining the two ends",
+          sa.get("read_pairs") == 1 and sa_drawn == [("pair_partner", "3to5")], f"{sa.get('read_pairs')} {sa_drawn}")
 
 
 def main():

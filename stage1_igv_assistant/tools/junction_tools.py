@@ -203,6 +203,14 @@ def _side_of_piece(start1, end1, breakpoint):
     return "3" if abs(end1 - breakpoint) <= abs(start1 - breakpoint) else "5"
 
 
+def _nearer_here(here, other, pos, partner_pos):
+    """Within one chromosome, whether a read (or piece) at `here` lies nearer this
+    end than its mate (or other piece) at `other` does, each measured against both
+    ends. When the two ends lie less than two windows apart, both reads of a pair
+    fall in both windows; each end keeps the one nearer to itself."""
+    return abs(here - pos) - abs(here - partner_pos) < abs(other - pos) - abs(other - partner_pos)
+
+
 def _parse_sa(tag):
     out = []
     for entry in str(tag or "").rstrip(";").split(";"):
@@ -235,6 +243,8 @@ def scan_end(bam, chrom, pos, partner_chrom, partner_pos, window_bp=WINDOW_BP,
                               window_bp of the partner end
       split   {name: record}  alignments (MAPQ >= min) with a supplementary piece
                               (SA, MAPQ >= min) within window_bp of the partner end
+                              (within one chromosome, both only for the read or
+                              piece nearer this end: see _nearer_here)
       view    [record]        every abnormal read in the window, for drawing
       clips, elsewhere, counts
     """
@@ -280,8 +290,12 @@ def scan_end(bam, chrom, pos, partner_chrom, partner_pos, window_bp=WINDOW_BP,
                 kinds.append("split_partner")
                 partner = {"chromosome": display_chrom(e["chrom"]), "start": e["pos"], "end": e_end,
                            "strand": e["strand"], "cigar": e["cigar"], "mapq": e["mapq"]}
-                sides = (_side_of_piece(rec["start"], rec["end"], pos), _side_of_piece(e["pos"], e_end, partner_pos))
-                if not low and e["mapq"] >= min_mapq and r.query_name not in split:
+                mine = not intra or _nearer_here((rec["start"] + rec["end"]) // 2, (e["pos"] + e_end) // 2,
+                                                 pos, partner_pos)
+                sides = ((_side_of_piece(rec["start"], rec["end"], pos), _side_of_piece(e["pos"], e_end, partner_pos))
+                         if mine else
+                         (_side_of_piece(e["pos"], e_end, pos), _side_of_piece(rec["start"], rec["end"], partner_pos)))
+                if mine and not low and e["mapq"] >= min_mapq and r.query_name not in split:
                     split[r.query_name] = {"here": {**rec, "side": sides[0]}, "there": {**partner, "side": sides[1]}}
                 break
         if sa and not kinds:
@@ -301,14 +315,24 @@ def scan_end(bam, chrom, pos, partner_chrom, partner_pos, window_bp=WINDOW_BP,
                 if mate_n == there_n and abs(mpos - partner_pos) <= window_bp and (
                         not intra or not r.is_proper_pair):
                     kinds.append("pair_partner")
+                    if kinds[0] == "split_other":
+                        # its supplementary piece lies elsewhere, but its pair joins the two
+                        # ends and is counted: it is drawn as a joining read
+                        kinds.insert(0, kinds.pop())
+                        partner = None
                     partner = partner or mate
-                    sides = sides or ("3" if not r.is_reverse else "5", "3" if not r.mate_is_reverse else "5")
-                    if not low:
-                        pairs[r.query_name] = {"here": {**rec, "side": "3" if not r.is_reverse else "5"},
-                                               "there": {**mate, "side": "3" if not r.mate_is_reverse else "5",
+                    side_r, side_m = ("3" if not r.is_reverse else "5"), ("3" if not r.mate_is_reverse else "5")
+                    mine = not intra or _nearer_here(rec["start"], mpos, pos, partner_pos)
+                    sides = sides or ((side_r, side_m) if mine else (side_m, side_r))
+                    if mine and not low:
+                        pairs[r.query_name] = {"here": {**rec, "side": side_r},
+                                               "there": {**mate, "side": side_m,
                                                          "mapq": r.get_tag("MQ") if r.has_tag("MQ") else None}}
                 elif mate_n != here_n and any(mate_n == rc and abs(mpos - rp) <= window_bp for rc, rp in related):
                     kinds.append("pair_related")
+                    if kinds[0] == "split_other":
+                        kinds.insert(0, kinds.pop())
+                        partner = None
                     partner = partner or mate
                     sides = sides or ("3" if not r.is_reverse else "5", "3" if not r.mate_is_reverse else "5")
                 elif _bt._primary_contig(r.next_reference_name) != _bt._primary_contig(resolved) \
