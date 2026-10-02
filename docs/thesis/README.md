@@ -6,10 +6,10 @@ This directory contains:
 - archive_2026-08/ — the superseded August chapter (below).
 
 ## Current version
-- Rimas_MSc_Thesis.docx — the full thesis draft of 30 September 2026 (v3), 62
+- Rimas_MSc_Thesis.docx — the full thesis draft of 2 October 2026 (v4), 62
   references numbered by order of first citation. Its numeric claims (Methods
   through both summaries) are mapped in stage1_igv_assistant/results/FIGURE_MAP.md:
-  section E maps the draft of 26–27 September, and sections H, K, L and M the
+  section E maps the draft of 26–27 September, and sections H, K, L, M and O the
   changes in each draft since; sections K and L also check its references and
   citations.
 

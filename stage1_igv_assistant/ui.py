@@ -22,6 +22,7 @@ Design rules this file enforces mechanically, not by convention:
 """
 import argparse
 import asyncio
+import bisect
 import glob
 import json
 import os
@@ -473,16 +474,18 @@ _CHAT_TOOLS = {}
 _CHAT_WHERE = None
 
 
-def _chat_tools(trim=False, public_only=False):
+def _chat_tools(trim=False, public_only=False, permitted=()):
     """Schemas generated from list_tools() on BOTH servers, never hand-written.
     `trim` shortens descriptions on the MODEL path only; the MCP descriptions
     themselves are untouched, because benchmark/mcp_client.py forwards them to
     models too and six recorded run sets depend on the current text.
-    `public_only` builds the label enums from the public labels alone: a cloud
-    model without the person's confirmation is not even told a private label
-    exists. The executor's guard (_private_hits) is the second line."""
+    `public_only` builds the label enums from the public labels alone, plus the
+    private labels in `permitted` (those the person confirmed for this question):
+    a cloud model is not even told that any other private label exists. The
+    executor's guard (_private_hits) is the second line."""
     global _CHAT_WHERE
-    key = (trim, public_only)
+    permitted = tuple(sorted(permitted or ()))
+    key = (trim, public_only, permitted)
     if key not in _CHAT_TOOLS:
         async def _all():
             return {"evidence": await evidence_server.mcp.list_tools(),
@@ -490,12 +493,18 @@ def _chat_tools(trim=False, public_only=False):
         mcp_tools = asyncio.run(_all())
         ds, cf = DATASETS, CANDIDATE_FILES
         if public_only:
-            ds = {k: v for k, v in DATASETS.items() if k in PUBLIC_LABELS["datasets"]}
-            cf = {k: v for k, v in CANDIDATE_FILES.items() if k in PUBLIC_LABELS["candidates"]}
+            ds, cf = _visible("datasets", permitted), _visible("candidates", permitted)
         _CHAT_TOOLS[key], where = chatmod.build_tools(mcp_tools, ds, cf, trim=trim)
         if _CHAT_WHERE is None:
             _CHAT_WHERE = where
     return _CHAT_TOOLS[key], _CHAT_WHERE
+
+
+def _visible(kind, permitted=()):
+    """The labels a cloud model may use: test data, and the private labels the
+    person confirmed for this question."""
+    table = DATASETS if kind == "datasets" else CANDIDATE_FILES
+    return {k: v for k, v in table.items() if k in PUBLIC_LABELS[kind] or k in permitted}
 
 
 def label_kind(kind, label):
@@ -528,9 +537,19 @@ def _private_hits(args):
             s = vcf_tools._SETS.get(sid)
             # A set loaded from a private file is private whatever it was labelled:
             # the model chooses the label, so a public-looking one proves nothing.
+            # It is named by the registered label of its file, so that permission
+            # given for that sample covers it, whatever label the model chose.
             if s and _set_is_private(s):
-                hits.add(s.get("label") or sid)
+                hits.update(_set_names(s))
     return sorted(h for h in hits if h)
+
+
+def _set_names(s):
+    """The private registered labels whose candidate file this set was loaded
+    from; failing that, the label it was loaded under."""
+    owners = sorted(l for l, f in CANDIDATE_FILES.items()
+                    if os.path.abspath(f) == s.get("path") and l not in PUBLIC_LABELS["candidates"])
+    return owners or [s.get("label") or "an unnamed candidate set"]
 
 
 def _set_is_private(s):
@@ -555,8 +574,17 @@ def _set_is_private(s):
 # session has read from private data: the junctions of every private candidate
 # set, and every position in a call made on a private read file (its inputs and
 # what it returned, such as the base where clipped reads are cut).
-_NUM_RE = re.compile(r"(?<![\w.,])\d{1,3}(?:,\d{3})+(?![\w,])|(?<![\w.,])\d{4,}(?![\w,])")
+# Integers written with any common digit grouping (33,700,000 / 33 700 000 /
+# 33.700.000 / 33'700'000 / thin or no-break spaces), and decimal positions with a
+# unit (33.7 Mb, 33,7 Mb, 412 kb). A position counts as private if it lies within
+# NEAR_BP of one read from private data; a position given in Mb or kb, if any
+# private position lies inside the interval its rounding covers (at least NEAR_BP
+# either side).
+_SEP = "[,.' \u00a0\u2009\u202f\u2019_]"
+_NUM_RE = re.compile(r"(?<![\w.,])\d{1,3}(?:" + _SEP + r"\d{3})+(?![\w]|[,.]\d)|(?<![\w.,])\d{4,}(?![\w]|[,.]\d)")
+_UNIT_RE = re.compile(r"(?<![\w.,])(\d+(?:[.,]\d+)?)\s*(mbp|mb|kbp|kb)\b", re.I)
 _LOCUS_RE = re.compile(r"\b(?:chr)?[0-9XYM]{1,2}:(\d[\d,]*)")
+NEAR_BP = 1000
 
 
 def _private_positions():
@@ -569,9 +597,10 @@ def _private_positions():
 
     for sid, s in list(vcf_tools._SETS.items()):
         if _set_is_private(s):
+            name = _set_names(s)[0]
             for j in s.get("junctions", ()):
-                add(j.pos1, s.get("label") or sid)
-                add(j.pos2, s.get("label") or sid)
+                add(j.pos1, name)
+                add(j.pos2, name)
     private_paths = {p: l for l, p in DATASETS.items() if l not in PUBLIC_LABELS["datasets"]}
 
     def walk(x, label):
@@ -606,27 +635,55 @@ def private_refs_in_text(text):
             if lbl not in PUBLIC_LABELS[kind] and re.search(
                     r"(?<![A-Za-z0-9_.])" + re.escape(lbl) + r"(?![A-Za-z0-9_]|\.[A-Za-z0-9_])", text):
                 labels.add(lbl)
-    nums = {int(m.group(0).replace(",", "")) for m in _NUM_RE.finditer(text)}
+    # (written, low, high): the span of genome each number in the question names
+    spans = []
+    for m in _NUM_RE.finditer(text):
+        n = int(re.sub(r"\D", "", m.group(0)))
+        spans.append((m.group(0), n - NEAR_BP, n + NEAR_BP))
+    for m in _UNIT_RE.finditer(text):
+        num, unit = m.group(1).replace(",", "."), m.group(2).lower()
+        scale = 1_000_000 if unit.startswith("m") else 1_000
+        decimals = len(num.split(".")[1]) if "." in num else 0
+        half = max(scale * 10 ** -decimals / 2, NEAR_BP)
+        centre = float(num) * scale
+        spans.append((m.group(0), int(centre - half), int(centre + half)))
     positions = []
-    if nums:
+    if spans:
         known = _private_positions()
-        positions = [{"position": n, "labels": sorted(known[n])} for n in sorted(nums) if n in known]
+        ordered = sorted(known)
+        for written, lo, hi in spans:
+            i = bisect.bisect_left(ordered, lo)
+            hits = set()
+            while i < len(ordered) and ordered[i] <= hi:
+                hits |= known[ordered[i]]
+                i += 1
+            if hits:
+                positions.append({"written": written, "labels": sorted(hits)})
     return {"labels": sorted(labels), "positions": positions}
 
 
-def _chat_exec(name, args, public_only=False):
+def _chat_exec(name, args, public_only=False, permitted=()):
     """The model's only route to a tool: label -> path, then ToolRecorder.
     The result is scrubbed BEFORE the model sees it, not only before the
     browser does -- applicable_layers echoes bam_path, and the model must not
     receive a filesystem path it could then repeat in its prose.
-    `public_only` resolves labels against the test-data labels alone: the error
-    for an unknown label lists the registered labels, and a cloud model without
-    the person's confirmation must not learn from it which private ones exist."""
+    `public_only` resolves labels against the test-data labels and the private
+    labels in `permitted` alone: the error for an unknown label lists the
+    registered labels, and a cloud model must not learn from it which other
+    private ones exist.
+    A file named by its path is refused for every model: the schemas offer
+    labels only, but resolve_args passes a path argument through untouched, so
+    without this a model could reach any file it could name. That includes
+    mask_path, which the schemas replace by exclude_masked: the tool would open
+    whatever file the model named as its mask."""
     _, where = _chat_tools()
+    if any((args or {}).get(k) is not None for k in (*chatmod._PATH_PARAMS, "mask_path")):
+        return None, ("a file path is not accepted; name the data by its label (the "
+                      "dataset, datasets or candidates parameter), and ask for the "
+                      "caller's exclude regions with exclude_masked")
     ds, cf = DATASETS, CANDIDATE_FILES
     if public_only:
-        ds = {k: v for k, v in DATASETS.items() if k in PUBLIC_LABELS["datasets"]}
-        cf = {k: v for k, v in CANDIDATE_FILES.items() if k in PUBLIC_LABELS["candidates"]}
+        ds, cf = _visible("datasets", permitted), _visible("candidates", permitted)
     resolved, err = chatmod.resolve_args(name, args, ds, cf, MASK_PATH)
     if err:
         return None, err
@@ -692,6 +749,12 @@ def _api(path, body):
         mask = _mask_state(bool(body.get("use_mask")))
         if mask["applied"]:
             p["mask_path"] = MASK_PATH
+        if body.get("counts_only") is True:
+            # Counts without a single junction: the page asks this for a private
+            # sample until the person chooses to see its list, so no position of it
+            # reaches the page or the call log before then. An offset past the end
+            # returns an empty page with every count intact.
+            p["limit"], p["offset"] = 1, 2 ** 31 - 1
         r = RECORDER.call("bridge", "list_candidates", p)
         return {"call": r["id"], "result": r["result"], "is_error": r["is_error"],
                 "mask": mask}
@@ -792,6 +855,12 @@ def _api(path, body):
         fb = RECORDER.call("bridge", "list_candidates", {"set_id": sb, **filt})
         m_a = {p["candidate_id_a"] for p in cres.get("matched_pairs", [])}
         m_b = {p["candidate_id_b"] for p in cres.get("matched_pairs", [])}
+        # The previous page lists up to ten example junctions per sample. The new
+        # page marks each survivor by its id instead and asks for no examples, so
+        # this reply sends it no position of a private sample whose list it has not
+        # been asked to show. (The two list_candidates calls above are recorded
+        # like every other call: the call log does hold both filtered lists.)
+        examples = body.get("examples") is not False
         out = {}
         for tag, fr, matched, lbl in (("a", fa, m_a, la), ("b", fb, m_b, lb)):
             fe = tool_error(fr)
@@ -808,7 +877,7 @@ def _api(path, body):
                     {"chrom1": c["chrom1"], "pos1": c["pos1"], "chrom2": c["chrom2"],
                      "pos2": c["pos2"], "orientation": c["orientation"],
                      "svtype": c["svtype"], "pe": c["pe"], "sr": c["sr"]}
-                    for c in uniq[:10]],
+                    for c in (uniq[:10] if examples else [])],
                 # The page marks each survivor instead of listing ten examples:
                 # the ids of the recurrent ones, and every unique one with its id
                 # so it can be opened. Same tool results, nothing recomputed.
@@ -839,30 +908,32 @@ def _api(path, body):
             # public labels alone, and any call that still names a private label
             # (or a set id loaded from one) is refused before it runs.
             allow = body.get("allow_private_cloud") is True
-            if not allow:
-                tools, where = _chat_tools(trim=bool(body.get("trim", False)), public_only=True)
-                # The question itself goes to the cloud, so it is checked first.
-                refs = private_refs_in_text(body.get("message", ""))
-                if refs["labels"] or refs["positions"]:
-                    named = sorted(set(refs["labels"]) | {l for p in refs["positions"] for l in p["labels"]})
-                    return {"error": ("Not sent: this question "
-                                      + ("names " if refs["labels"] else "contains a position read from ")
-                                      + "private data (" + ", ".join(named) + "). A cloud model would receive it. "
-                                      "Confirm that you have permission to send it, or ask a model on this computer."),
-                            "privacy": {"cloud": True, "private_allowed": False, "blocked": [],
-                                        "question_refs": refs}}
+            # The question itself goes to the cloud, so it is checked first. The
+            # private samples it names, or whose positions it contains, are the ones
+            # the permission box listed; permission covers those and no others.
+            refs = private_refs_in_text(body.get("message", ""))
+            involved = sorted(set(refs["labels"]) | {l for p in refs["positions"] for l in p["labels"]})
+            if involved and not allow:
+                return {"error": ("Not sent: this question "
+                                  + ("names " if refs["labels"] else "contains a position read from ")
+                                  + "private data (" + ", ".join(involved) + "). A cloud model would receive it. "
+                                  "Confirm that you have permission to send it, or ask a model on this computer."),
+                        "privacy": {"cloud": True, "private_allowed": False, "permitted": [],
+                                    "blocked": [], "question_refs": refs}}
+            permitted = involved if allow else []
+            tools, where = _chat_tools(trim=bool(body.get("trim", False)), public_only=True,
+                                       permitted=permitted)
             blocked = []
 
             def guarded_exec(name, args):
-                if not allow:
-                    hits = _private_hits(args)
-                    if hits:
-                        blocked.append({"tool": name, "labels": hits})
-                        return None, (f"blocked by the privacy setting: {', '.join(hits)} "
-                                      f"{'is' if len(hits) == 1 else 'are'} private data, and sending "
-                                      f"private data to a cloud model was not confirmed for this "
-                                      f"question. No tool was run.")
-                return _chat_exec(name, args, public_only=not allow)
+                hits = [h for h in _private_hits(args) if h not in permitted]
+                if hits:
+                    blocked.append({"tool": name, "labels": hits})
+                    return None, (f"blocked by the privacy setting: {', '.join(hits)} "
+                                  f"{'is' if len(hits) == 1 else 'are'} private data, and sending "
+                                  f"{'it' if len(hits) == 1 else 'them'} to a cloud model was not confirmed "
+                                  f"for this question. No tool was run.")
+                return _chat_exec(name, args, public_only=True, permitted=permitted)
             r = chatmod.run_turn_api(
                 model, body.get("message", ""), tools, set(where),
                 guarded_exec, max_iters=int(body.get("max_iters", 40)),
@@ -870,7 +941,8 @@ def _api(path, body):
                 effort=body.get("effort", "high"),
                 thinking=bool(body.get("thinking", True)),
                 api_key=API_KEY)
-            r["privacy"] = {"cloud": True, "private_allowed": allow, "blocked": blocked}
+            r["privacy"] = {"cloud": True, "private_allowed": allow, "permitted": permitted,
+                            "blocked": blocked}
             return r
         r = chatmod.run_turn(
             model, body.get("message", ""), tools, set(where),

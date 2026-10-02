@@ -1,0 +1,995 @@
+{
+ "what": "Phase 25: the checks behind FIGURE_MAP section O. Public data only, except the patient check, which is aggregate only.",
+ "definitions": "check: one evaluation of check() in tests/test_interface_page.py or in scripts/interface_walkthrough.py. as patched: HEAD 88996f6 with phase25_interface.patch applied and nothing else. PRIVTEST: the PUBLIC files of implant IMP09 registered under an explicit label, which is what makes a sample private. PUB, PRIV, PRIV2: the synthetic fixture of tests/test_interface_page.py. Logs: ~/public_data/sim/logs/phase25_2026-10-02/ (not in the repository).",
+ "patch": {
+  "file": "phase25_interface.patch",
+  "sha256": "10b1715ff33a496216f98820c2264993adde84381059a7c6c257d22dc4e36d7b",
+  "made_against": "88996f6",
+  "files": 6,
+  "insertions": 358,
+  "deletions": 102,
+  "preconditions": {
+   "tree_clean": true,
+   "HEAD": "88996f6",
+   "origin_main_local_ref": "88996f6",
+   "origin_main_on_github": "88996f6",
+   "guard_protected_exit": 0,
+   "three_sha256_as_stated": true
+  },
+  "git_apply_check_exit": 0,
+  "git_apply_exit": 0,
+  "whole_diff_read": true,
+  "protected_files_touched": 0,
+  "docs_thesis_touched_by_the_patch": 0
+ },
+ "code_state": {
+  "before_the_patch": {
+   "README.md": "8c85e74c54a404172cc7c7f9d7fd8f5e97e635756791410eeb719be85694a5cc",
+   "docs/NAUDOJIMAS.md": "3f9f4953591747720dd33030e673111525c200b68a7d0aca2ec9a7be9be0b91c",
+   "scripts/interface_walkthrough.py": "2351f2e1475abb7be4bebc30f18d4737539fdfa2dc36a6bcb302d49bf3dd0626",
+   "stage1_igv_assistant/tests/test_interface_page.py": "97a1c5b5512d5c481127566031019808bae3e9f432ff70bc97e90646217ff3f0",
+   "stage1_igv_assistant/ui.py": "940c341bf2f8bb6ad2e9fae6cb675a6ece2cfc061a3424a56d8c7fb3504d48c8",
+   "stage1_igv_assistant/ui_page.html": "41a269de99459fa71a856c1ce14d4740d80b1bdd73df54025ad3a6659caef067"
+  },
+  "as_patched": {
+   "README.md": "d9cab8e627b48e3c006a983d69e8d49b57b1ca114a41da3114c88ecfddb4096c",
+   "docs/NAUDOJIMAS.md": "7b98dc3fc23e751fb18346e3975c1ba9df8a23bc4b54aaaad916c650cfe25854",
+   "scripts/interface_walkthrough.py": "7b43c987f3d37b484205cc5418e7bc4bbf20a6eecec520bc299817d6d8c4e098",
+   "stage1_igv_assistant/tests/test_interface_page.py": "0137932f9ebe8a2f6ef3b3e0dbf3117f724b2fcd7043e75975dc122006d611b0",
+   "stage1_igv_assistant/ui.py": "a42685e062768525895b96785025895ea38a578d1bba79383917fd0dcb1fed6f",
+   "stage1_igv_assistant/ui_page.html": "119135fb6042b24869ffd9a238259bf2655d11e463bf861b017df32d9f72f379"
+  },
+  "committed": {
+   "README.md": "c04a8835be963eb9e7833255abdf0a41095e7c4fb54006940abe9af3ffa90c1a",
+   "docs/NAUDOJIMAS.md": "74d889edddd3baacdf5bd4d263c6a0833ab174de399e42b2c94e4afdba20ade8",
+   "docs/thesis/README.md": "f0b4273fd1dd6db8eba0a35c1464f6966cf03640ffed2c4948744ecb7a32ed98",
+   "scripts/interface_walkthrough.py": "9b5d9df0db620556793d47576b676b9a42774af7ab75dc06c34c5701e97472ce",
+   "stage1_igv_assistant/tests/test_interface_page.py": "a8d81866c4b925b18d7bb3ebb4b1ebc0797fe46128956b580ccd010ffb099e5e",
+   "stage1_igv_assistant/ui.py": "e00e079f82c25b8c1c3625d706f33a8ee83a135a0a6d7da786372a4ddb556ab4",
+   "stage1_igv_assistant/ui_page.html": "98eb8b93c8a5ed431dbf8c6037c1e17f16dd8a17dbb1582c9e60666f1651f17b"
+  },
+  "on_top_of_the_patch": "ui.py +13 -4, ui_page.html +11 -5, tests/test_interface_page.py +40 -2, interface_walkthrough.py +34 -1, README.md +11 -3, docs/NAUDOJIMAS.md +22 -8 (lines)",
+  "note": "ui.py, ui_page.html and the walkthrough script were last changed before the recorded click-through, the dry run and the patient check ran (file times 17:40-17:41; the click-through started 17:52). The test's two fixture file names were changed afterwards (P6); the interface test ('final') and every suite (the committed suites record) were run again on the committed files"
+ },
+ "interface_test": {
+  "command": "python3 stage1_igv_assistant/tests/test_interface_page.py, with the project environment's python3 first on PATH (the system python3 has no pysam)",
+  "as_patched": {
+   "checks": 82,
+   "passed": 82,
+   "failed": 0,
+   "failed_checks": []
+  },
+  "with_the_8_added_checks_before_the_fixes": {
+   "checks": 90,
+   "passed": 86,
+   "failed": 4,
+   "failed_checks": [
+    "a model on this computer that names a mask file by its path is refused, and nothing runs",
+    "a model in the cloud that names a mask file by its path is refused, and nothing runs",
+    "asked for no examples, the reply carries no position of either sample",
+    "the new page asks the comparison for no examples"
+   ]
+  },
+  "after_the_fixes": {
+   "checks": 90,
+   "passed": 90,
+   "failed": 0,
+   "failed_checks": []
+  },
+  "final": {
+   "checks": 90,
+   "passed": 90,
+   "failed": 0,
+   "failed_checks": []
+  }
+ },
+ "suites": {
+  "record": "suites_2026-10-02_phase25.json",
+  "summary": {
+   "suites": 27,
+   "passed": 27,
+   "failed": 0,
+   "incomplete": 0,
+   "assertions_held": 849,
+   "assertions_failed": 0,
+   "not_run_lines": 0
+  },
+  "previous_record": "suites_2026-10-02.json",
+  "previous_summary": {
+   "suites": 27,
+   "passed": 27,
+   "failed": 0,
+   "incomplete": 0,
+   "assertions_held": 822,
+   "assertions_failed": 0,
+   "not_run_lines": 0
+  },
+  "suites_whose_record_differs": {
+   "test_interface_page.py": {
+    "before": {
+     "exit": 0,
+     "assertions_held": 63,
+     "assertions_failed": 0,
+     "not_run": []
+    },
+    "now": {
+     "exit": 0,
+     "assertions_held": 90,
+     "assertions_failed": 0,
+     "not_run": []
+    }
+   }
+  },
+  "status_changes": [],
+  "started": "2026-10-02T18:26:44",
+  "finished": "2026-10-02T18:33:27",
+  "first_run": {
+   "when": "17:45:38-17:52:02, before P6",
+   "summary": {
+    "suites": 27,
+    "passed": 27,
+    "failed": 0,
+    "incomplete": 0,
+    "assertions_held": 849,
+    "assertions_failed": 0,
+    "not_run_lines": 0
+   },
+   "kept": "with the logs, not committed"
+  }
+ },
+ "fixes_on_top_of_the_patch": [
+  {
+   "id": "P1",
+   "fix": "a mask file named by its path (mask_path) is refused for every model, like every other path argument",
+   "why": "chat._PATH_PARAMS holds bam_path, bam_paths and path only; mask_path went through resolve_args to the tool, which opened whatever file the model named",
+   "where": "ui.py _chat_exec",
+   "checks": "test_interface_page.py, 'file paths': 2 checks failed before, 3 pass after"
+  },
+  {
+   "id": "P2",
+   "fix": "the comparison's reply to the new page carries no example position (the page asks with examples:false)",
+   "why": "with a comparison chosen while a private list was hidden, the reply listed up to ten example junctions per sample with their positions",
+   "where": "ui.py /api/compare, ui_page.html runFilters",
+   "checks": "test_interface_page.py, 'comparison examples': 2 of 5 failed before, 5 pass after; the walkthrough's added check in step 8"
+  },
+  {
+   "id": "P3",
+   "fix": "a numbered list keeps the numbers the model wrote (<li value>)",
+   "why": "a blank line or a nested bullet ends the <ol>, and each new <ol> started again at 1: a list written 1. 2. 3. was shown as 1. 1. 1.",
+   "where": "ui_page.html renderMarkdown",
+   "checks": "the walkthrough's added check in step 9; probe 3 before and after"
+  },
+  {
+   "id": "P4",
+   "fix": "the 39 inside &#39; (an escaped apostrophe) is not marked as a number",
+   "why": "with 39 among an answer's checked numbers every apostrophe was shown as &#39; (inherited from the Phase 24 page; the patch rewrote this line)",
+   "where": "ui_page.html markNumbers",
+   "checks": "the walkthrough's added check in step 9; probe 3 before and after"
+  },
+  {
+   "id": "P5",
+   "fix": "three checks added to scripts/interface_walkthrough.py: a comparison chosen while the list is hidden (as the demonstration does); a numbered list; the apostrophe and HTML written by the model",
+   "why": "the page fixes above can only be checked in a browser",
+   "where": "interface_walkthrough.py steps 8 and 9",
+   "checks": "24 = the 21 of the patch + 3"
+  },
+  {
+   "id": "P6",
+   "fix": "the test's second private fixture is written to privb.bam and privb.vcf (the label stays PRIV2)",
+   "why": "the patch named the two files after the label in lower case, its digit included; a sample-file name holding a digit has the shape of an identifier and the identifier gate refused the staged test (rule ID-sample, exit 1), and then this record and FIGURE_MAP while they quoted the old names",
+   "where": "tests/test_interface_page.py, two lines",
+   "checks": "the staged gate: exit 1 before, exit 0 after; the interface test 90 of 90 and every suite run again"
+  }
+ ],
+ "scratch_probes": {
+  "how": "PRIVTEST (public) on a probe interface with ANTHROPIC_BASE_URL on a closed port; the synthetic fixture in-process with the test's scripted model; a browser with /api/chat answered by a stub. No API request, no patient file.",
+  "1_hidden_list_and_comparison_as_patched": [
+   "kinds PRIVTEST: private private",
+   "",
+   "1. /api/load PRIVTEST: keys ['caller_convention', 'convention_evidence', 'counts_by_filter', 'counts_by_svtype', 'junctions_after_dedup', 'junctions_before_dedup', 'label', 'malformed_records_skipped', 'note', 'records_merged_by_dedup', 'set_id', 'thresholds_applied', 'total_records', 'unpaired_mate_records']",
+   "   positions in the response: {}",
+   "",
+   "2. /api/funnel counts_only: keys ['candidates', 'filters_applied', 'label', 'limit', 'note', 'offset', 'returned', 'set_id', 'total_in_set', 'total_matching', 'truncated']",
+   "   candidates: [] | returned: 0 | total_matching: 27 | offset: 2147483647 | limit: 1 | truncated: False",
+   "   positions in the response: {}",
+   "",
+   "3. call log after choosing the hidden sample (id, tool, params, candidates in result, positions in result):",
+   "   (1, 'load_candidate_set', {'label': 'PRIVTEST'}, 0, 0)",
+   "   (2, 'list_candidates', {'limit': 1, 'offset': 2147483647}, 0, 0)",
+   "",
+   "4. /api/compare label_a=PRIVTEST (hidden) label_b=IMP01: top keys ['compare', 'compare_call', 'load_calls', 'mask', 'survivor_effect']",
+   "   positions in the response by path: {'/survivor_effect/b/unique_examples[]/pos1': 2, '/survivor_effect/b/unique_examples[]/pos2': 2}",
+   "   survivor_effect.a: {'label': 'PRIVTEST', 'survivors': 27, 'recurrent': 27, 'unique': 0, 'unique_examples': '0 items', 'recurrent_ids': '27 items', 'unique_ids': '0 items', 'call': 6}",
+   "   call log added by the comparison:",
+   "   (3, 'load_candidate_set', {'label': 'PRIVTEST'}, 0, 0)",
+   "   (4, 'load_candidate_set', {'label': 'IMP01'}, 0, 0)",
+   "   (5, 'compare_candidate_sets', {'set_a': 'CSET_991a59c5', 'set_b': 'CSET_253c82fe'}, 0, 0)",
+   "   (6, 'list_candidates', {'limit': 20000}, 27, 54)",
+   "   (7, 'list_candidates', {'limit': 20000}, 29, 58)",
+   "",
+   "5. /api/compare label_a=IMP01 (test data) label_b=PRIVTEST (hidden): positions in the response by path: {'/survivor_effect/a/unique_examples[]/pos1': 2, '/survivor_effect/a/unique_examples[]/pos2': 2}",
+   "   survivor_effect.a (IMP01): {'label': 'IMP01', 'survivors': 29, 'recurrent': 27, 'unique': 2, 'unique_examples': '2 items', 'recurrent_ids': '27 items', 'unique_ids': '2 items', 'call': 11}",
+   "   survivor_effect.b (PRIVTEST): {'label': 'PRIVTEST', 'survivors': 27, 'recurrent': 27, 'unique': 0, 'unique_examples': '0 items', 'recurrent_ids': '27 items', 'unique_ids': '0 items', 'call': 12}",
+   "   call log added:",
+   "   (8, 'load_candidate_set', {'label': 'IMP01'}, 0, 0)",
+   "   (9, 'load_candidate_set', {'label': 'PRIVTEST'}, 0, 0)",
+   "   (10, 'compare_candidate_sets', {'set_a': 'CSET_253c82fe', 'set_b': 'CSET_991a59c5'}, 0, 0)",
+   "   (11, 'list_candidates', {'limit': 20000}, 29, 58)",
+   "   (12, 'list_candidates', {'limit': 20000}, 27, 54)"
+  ],
+  "2_question_check": {
+   "set": "PRIVTEST candidate set: 894 junctions, 894 listed (public IMP09 data)",
+   "positions": "distinct private positions: 1694; smallest 61,316, largest 64,271,667",
+   "flagged": [
+    "FLAGGED   plain                              '9517621'  -> ['9517621']",
+    "FLAGGED   commas                             '9,517,621'  -> ['9,517,621']",
+    "FLAGGED   spaces                             '9 517 621'  -> ['9 517 621']",
+    "FLAGGED   dots                               '9.517.621'  -> ['9.517.621']",
+    "FLAGGED   apostrophes                        \"9'517'621\"  -> [\"9'517'621\"]",
+    "FLAGGED   typographic apostrophe             '9’517’621'  -> ['9’517’621']",
+    "FLAGGED   no-break spaces                    '9\\xa0517\\xa0621'  -> ['9\\xa0517\\xa0621']",
+    "FLAGGED   thin spaces                        '9\\u2009517\\u2009621'  -> ['9\\u2009517\\u2009621']",
+    "FLAGGED   narrow no-break                    '9\\u202f517\\u202f621'  -> ['9\\u202f517\\u202f621']",
+    "FLAGGED   underscores                        '9_517_621'  -> ['9_517_621']",
+    "FLAGGED   P+999                              '9518620'  -> ['9518620']",
+    "FLAGGED   P-999                              '9516622'  -> ['9516622']",
+    "FLAGGED   locus                              'chr20:9517621'  -> ['9517621']",
+    "FLAGGED   locus range                        'chr20:9517421-9517821'  -> ['9517421', '9517821']",
+    "FLAGGED   end of sentence                    '9517621.'  -> ['9517621']",
+    "FLAGGED   comma after                        '9,517,621, and'  -> ['9,517,621']",
+    "FLAGGED   in brackets                        '(9517621)'  -> ['9517621']",
+    "FLAGGED   question mark                      '9517621?'  -> ['9517621']",
+    "FLAGGED   with bp                            '9517621 bp'  -> ['9517621']",
+    "FLAGGED   Mb 1 decimal                       '9.5 Mb'  -> ['9.5 Mb']",
+    "FLAGGED   Mb 2 decimals                      '9.52 Mb'  -> ['9.52 Mb']",
+    "FLAGGED   Mb 3 decimals                      '9.518 Mb'  -> ['9.518 Mb']",
+    "FLAGGED   Mb decimal comma                   '9,52 Mb'  -> ['9,52 Mb']",
+    "FLAGGED   Mb glued                           '9.52Mb'  -> ['9.52Mb']",
+    "FLAGGED   Mbp                                '9.52 Mbp'  -> ['9.52 Mbp']",
+    "FLAGGED   kb integer                         '9518 kb'  -> ['9518 kb']",
+    "FLAGGED   kb 1 decimal                       '9517.6 kb'  -> ['9517.6 kb']"
+   ],
+   "not_flagged": [
+    "not flagged  glued bp                           '9517621bp'  -> []",
+    "not flagged  glued letters before               'pos9517621'  -> []",
+    "not flagged  M only                             '9.52M'  -> []",
+    "not flagged  megabases                          '9.52 megabases'  -> []",
+    "not flagged  kb with English thousands comma    '9,518 kb'  -> []",
+    "not flagged  kb with space grouping             '9 518 kb'  -> []",
+    "not flagged  kb 1 decimal, thousands comma      '9,517.6 kb'  -> []",
+    "not flagged  k only                             '9518k'  -> []",
+    "not flagged  scientific                         '9.518e+06'  -> []",
+    "not flagged  scientific 6 digits                '9.517621e+06'  -> []",
+    "not flagged  split by a word                    '9 million 517,621'  -> []",
+    "not flagged  digits spaced singly               '9 5 1 7 6 2 1'  -> []",
+    "not flagged  far integer            '11875050' -> []",
+    "not flagged  far, commas            '11,875,050' -> []",
+    "not flagged  far Mb 2 decimals      '11.88 Mb' -> []",
+    "not flagged  three digits           '500 bp' -> []",
+    "not flagged  a decimal              '0.75' -> []",
+    "not flagged  a year                 '2026' -> []",
+    "not flagged  a percentage           '36.4%' -> []"
+   ],
+   "unrelated_numbers": [
+    "random integers 10,000..64,444,167 written as chr1:<n> (another chromosome): 16 of 400 flagged by the server (4.0%); expected from the positions alone: 16 of 400",
+    "same expectation over 2000 draws: 3.0%"
+   ],
+   "note": "the check was not changed after this probe; it compares the number alone, not the chromosome"
+  },
+  "3_browser_as_patched": [
+   "A. renderMarkdown",
+   "  loose numbered list (blank line between items), as written 1./2./3. -> shown: ['1. First point', '1. Second point', '1. Third point']",
+   "  list that starts at 3 -> shown: ['1. third', '2. fourth']",
+   "  numbered list with nested bullets -> shown: ['1. one', '1. two'] | tags: ['li', 'ol', 'ul']",
+   "  tight list 1-3 -> shown: ['1. one', '2. two', '3. three']",
+   "  HTML in the model's text -> tags created: ['b', 'code', 'div', 'p', 'table', 'tbody', 'td', 'th', 'tr'] | scripts ran: [None, None]",
+   "  apostrophe with the number 39 -> \"<p>it&#<span class=\\\"vnum\\\" title=\\\"Returned by a tool in this answer\\\">39</span>;s <span class=\\\"vnum\\\" title=\\\"Returned by a tool in this answer\\\">39</span> reads and it&#<span class=\\\"vnum\\\" title=\\\"Returned by a tool in this answer\\\">39</span>;s fine</p>\"",
+   "  number marking -> \"<p>Depth <span class=\\\"vnum\\\" title=\\\"Returned by a tool in this answer\\\">36.7</span>x, score <span class=\\\"vnum\\\" title=\\\"Returned by a tool in this answer\\\">40</span>. Ratio <span class=\\\"unsup\\\" title=\\\"No tool call returned this number\\\">0.4</span>, and <span class=\\\"unsup\\\" title=\\\"No tool call returned this number\\\">1.5</span> vs <span class=\\\"vnum\\\" title=\\\"Returned by a tool in this answer\\\">1</span>.</p>\"",
+   "  headings, table, code, rule, bullets -> tags: ['b', 'div', 'hr', 'i', 'li', 'p', 'pre', 'table', 'tbody', 'td', 'th', 'tr', 'ul']",
+   "B. private sample chosen with the keyboard",
+   "  sample: PRIVTEST | badge: Private data | rows: 0 | title: 27 candidates to review",
+   "  reveal box: PRIVTEST is private data, so its list is hidden until you ask for it. The counts above are totals only; they show no position.  Show the 27 candidates",
+   "  PRIVTEST positions printed anywhere on the page: 0 of 1694",
+   "  suggested questions while hidden: ['In dataset PRIVTEST, how strong is the evidence for a breakp']",
+   "C. comparison chosen while the list is hidden",
+   "  rows: 0 | title: 0 candidates to review | reveal: Show the 0 candidates",
+   "  funnel last row: Not found in IMP01author's choice both ends within 500 bp count as the same junction source -> 0 −27",
+   "  PRIVTEST positions printed on the page: 0",
+   "  positions held by the page in S.compare (pos1 occurrences): 2",
+   "  calls added: [('list_candidates', {'limit': 1, 'offset': 2147483647}), ('load_candidate_set', {}), ('load_candidate_set', {}), ('compare_candidate_sets', {}), ('list_candidates', {'limit': 20000}), ('list_candidates', {'limit': 20000})]",
+   "D. test-data sample, comparison = the private sample whose list is hidden",
+   "  f-rec: PRIVTEST | title: 2 candidates to review | rows: 2 | checkbox: Also show the 27 found in PRIVTEST",
+   "  after ticking it: rows 29 | rows tagged 'also in PRIVTEST': 27",
+   "E. evidence panel for private reads"
+  ],
+  "3_browser_after_the_fixes": [
+   "A. renderMarkdown",
+   "  loose numbered list (blank line between items), as written 1./2./3. -> shown: ['1. First point', '2. Second point', '3. Third point']",
+   "  list that starts at 3 -> shown: ['3. third', '4. fourth']",
+   "  numbered list with nested bullets -> shown: ['1. one', '2. two'] | tags: ['li', 'ol', 'ul']",
+   "  tight list 1-3 -> shown: ['1. one', '2. two', '3. three']",
+   "  HTML in the model's text -> tags created: ['b', 'code', 'div', 'p', 'table', 'tbody', 'td', 'th', 'tr'] | scripts ran: [None, None]",
+   "  apostrophe with the number 39 -> \"<p>it&#39;s <span class=\\\"vnum\\\" title=\\\"Returned by a tool in this answer\\\">39</span> reads and it&#39;s fine</p>\"",
+   "     as text: \"it's 39 reads and it's fine\"",
+   "  number marking -> \"<p>Depth <span class=\\\"vnum\\\" title=\\\"Returned by a tool in this answer\\\">36.7</span>x, score <span class=\\\"vnum\\\" title=\\\"Returned by a tool in this answer\\\">40</span>. Ratio <span class=\\\"unsup\\\" title=\\\"No tool call returned this number\\\">0.4</span>, and <span class=\\\"unsup\\\" title=\\\"No tool call returned this number\\\">1.5</span> vs <span class=\\\"vnum\\\" title=\\\"Returned by a tool in this answer\\\">1</span>.</p>\"",
+   "  headings, table, code, rule, bullets -> tags: ['b', 'div', 'hr', 'i', 'li', 'p', 'pre', 'table', 'tbody', 'td', 'th', 'tr', 'ul']",
+   "",
+   "B. private sample chosen with the keyboard",
+   "  sample: PRIVTEST | badge: Private data | rows: 0 | title: 27 candidates to review",
+   "  reveal box: PRIVTEST is private data, so its list is hidden until you ask for it. The counts above are totals only; they show no position.  Show the 27 candidates",
+   "  PRIVTEST positions printed anywhere on the page: 0 of 1694",
+   "  suggested questions while hidden: ['In dataset PRIVTEST, how strong is the evidence for a breakp']",
+   "",
+   "C. comparison chosen while the list is hidden",
+   "  rows: 0 | title: 0 candidates to review | reveal: Show the 0 candidates",
+   "  funnel last row: Not found in IMP01author's choice both ends within 500 bp count as the same junction source -> 0 −27",
+   "  PRIVTEST positions printed on the page: 0",
+   "  positions held by the page in S.compare (pos1 occurrences): 0",
+   "  calls added: [('list_candidates', {'limit': 1, 'offset': 2147483647}), ('load_candidate_set', {}), ('load_candidate_set', {}), ('compare_candidate_sets', {}), ('list_candidates', {'limit': 20000}), ('list_candidates', {'limit': 20000})]",
+   "",
+   "D. test-data sample, comparison = the private sample whose list is hidden",
+   "  f-rec: PRIVTEST | title: 2 candidates to review | rows: 2 | checkbox: Also show the 27 found in PRIVTEST",
+   "  after ticking it: rows 29 | rows tagged 'also in PRIVTEST': 27",
+   "",
+   "E. evidence panel for private reads",
+   "  note under the buttons: [\"Private data: IGV images ask igv.org for this region's reference sequence, and a gene lookup sends the position to Ensembl. No reads leave this computer.\"]",
+   "  igvNetNote() text: PRIVTEST is private data. IGV asks igv.org for the reference sequence of this region, so its coordinates leave this computer; no reads do.",
+   "  igvNetNote() for test data: \"\"",
+   "  same position in test data IMP09: notes 0",
+   "",
+   "page errors: []"
+  ],
+  "3b_private_notes_and_wording": [
+   "E. evidence panel for private reads (PRIVTEST = public IMP09)",
+   "  note under the buttons: [\"Private data: IGV images ask igv.org for this region's reference sequence, and a gene lookup sends the position to Ensembl. No reads leave this computer.\"]",
+   "  igvNetNote() text: PRIVTEST is private data. IGV asks igv.org for the reference sequence of this region, so its coordinates leave this computer; no reads do.",
+   "  igvNetNote() for test data: \"\"",
+   "  same position in test data IMP09: notes 0",
+   "  call log subtitle: Every measurement and score on this page came from one of these 139 tool calls. “Reachable here” is worked out from them; chromosome lengths in the diagram are GRCh38's.",
+   "  layer wording: {\"discordant_pairs\":[\"Discordant pairs\",\"read pairs whose mate maps to another chromosome\"],\"soft_clipped_reads\":[\"Soft-clipped reads\",\"reads cut off at the same base\"],\"split_reads\":[\"Split reads\",\"reads aligned in two pieces, the second piece elsewhere\"],\"read_depth\":[\"Read depth\",\"coverage dip around the position\"]}",
+   "page errors: []"
+  ],
+  "4_in_process_as_patched": [
+   "a. mask_path named by the model (a path argument outside chat._PATH_PARAMS)",
+   "   qwen2.5:7b: rejected=False | tool ran=1 | mask_path reached the tool=True | result={\"error\": \"invalid literal for int() with base 10: 'POS'\", \"error_type\": \"mask_access\"} | blocked=None",
+   "   claude-sonnet-5: rejected=False | tool ran=1 | mask_path reached the tool=True | result={\"error\": \"invalid literal for int() with base 10: 'POS'\", \"error_type\": \"mask_access\"} | blocked=[]",
+   "",
+   "b. the chromosome is not part of the position check",
+   "   'Which gene lies at chr1:33,000?' -> {'labels': [], 'positions': [{'written': '33,000', 'labels': ['PRIV']}]}",
+   "   'Which gene lies at chr2:33,000?' -> {'labels': [], 'positions': [{'written': '33,000', 'labels': ['PRIV']}]}",
+   "   'Which gene lies at chrX:33,400?' -> {'labels': [], 'positions': [{'written': '33,400', 'labels': ['PRIV']}]}",
+   "   'There were 33,000 reads.' -> {'labels': [], 'positions': [{'written': '33,000', 'labels': ['PRIV']}]}",
+   "",
+   "c. a question that names PRIV and holds a position near PRIV2",
+   "   permitted: ['PRIV', 'PRIV2'] | offered: ['PRIV', 'PRIV2', 'PUB']",
+   "",
+   "d. with permission for PRIV: the model loads PRIV's list under its own label, then lists it",
+   "   load_candidate_set {'candidates': 'PRIV', 'label': 'my_set'} -> ran | total_matching=None records=3",
+   "   list_candidates {'set_id': 'CSET_acae0241'} -> ran | total_matching=3 records=None",
+   "   load_candidate_set {'candidates': 'PRIV2', 'label': 'other'} -> rejected | blocked by the privacy setting: PRIV2 is private data, and sending it to a cloud model was not confirmed for this question. No tool was run.",
+   "   list_candidates {'set_id': 'CSET_78b8d1c3'} -> rejected | blocked by the privacy setting: PRIV2 is private data, and sending it to a cloud model was not confirmed for this question. No tool was run.",
+   "   blocked: [{'tool': 'load_candidate_set', 'labels': ['PRIV2']}, {'tool': 'list_candidates', 'labels': ['PRIV2']}] | permitted: ['PRIV']",
+   "",
+   "e. /api/compare for the private sample (as the page asks it while the list is hidden)",
+   "   survivor_effect.a: unique = 2 | unique_examples: [{'chrom1': 'chr1', 'pos1': 26000, 'chrom2': 'chr1', 'pos2': 25000, 'orientation': None, 'svtype': 'DEL', 'pe': None, 'sr': None}, {'chrom1': 'chr1', 'pos1': 34000, 'chrom2': 'chr1', 'pos2': 33000, 'orientation': None, 'svtype': 'DEL', 'pe': None, 'sr': None}]",
+   "   positions of PRIV in the reply: 4 x pos1",
+   "",
+   "============================================================",
+   "ALL INTERFACE PAGE TESTS PASSED"
+  ],
+  "4_in_process_after_the_fixes_mask_path": [
+   "a. mask_path named by the model (a path argument outside chat._PATH_PARAMS)",
+   "   qwen2.5:7b: rejected=True | tool ran=0 | mask_path reached the tool=False | result={\"error\": \"a file path is not accepted; name the data by its label (the dataset, datasets or candidates parameter), and ask for the caller's exclude r | blocked=None",
+   "   claude-sonnet-5: rejected=True | tool ran=0 | mask_path reached the tool=False | result={\"error\": \"a file path is not accepted; name the data by its label (the dataset, datasets or candidates parameter), and ask for the caller's exclude r | blocked=[]"
+  ],
+  "5_overtaken_replies": [
+   "before the overtaken reply arrived: {'sample': 'IMP03', 'head': 'Candidate breakpoints in IMP03', 'setId': 'CSET_6e182fa2', 'rows': 29}",
+   "after it arrived:                   {'sample': 'IMP03', 'head': 'Candidate breakpoints in IMP03', 'setId': 'CSET_6e182fa2', 'rows': 29}",
+   "the late reply changed nothing: True | reply was held: True",
+   "filter: title with the newer value: '29 candidates to review' | after the overtaken reply arrived: '29 candidates to review' | unchanged: True | held: True",
+   "page errors: []"
+  ],
+  "6_answer_lines_with_a_stubbed_reply": [
+   "models offered: ['qwen2.5:7b', 'qwen3.5:4b', 'claude-sonnet-5', 'claude-opus-5']",
+   "",
+   "case 1: permission given, private results sent",
+   "   consent box text:   line: 1 of 9 numbers were not returned by any tool (marked in red): 99.9.",
+   "   line: Sent to Anthropic with your permission: tool results for PRIVTEST. The permission covered PRIVTEST only.",
+   "   meta: 12.3 s · 3 model turns · 812 tokens written · cost $0.041",
+   "   tags in the answer: ['b', 'code', 'div', 'i', 'li', 'ol', 'p', 'span', 'table', 'tbody', 'td', 'th', 'tr', 'ul']",
+   "   numbered items as shown: ['1. Discordant pairs: 7.5', '2. Soft-clipped reads: 0', '3. Read depth: 15']",
+   "   marked as returned by a tool: ['22.5', '7.5', '0', '15', '7.5', '15', '36.4', '22.5']",
+   "   marked as not returned: ['99.9']",
+   "   apostrophe kept: True",
+   "",
+   "case 2: permission given, but only test data used",
+   "   line: 1 of 9 numbers were not returned by any tool (marked in red): 99.9.",
+   "   line: Permission covered PRIVTEST, but this answer used test data only.",
+   "   meta: 12.3 s · 3 model turns · 812 tokens written · cost $0.041",
+   "",
+   "case 3: permission ticked, question involves no private sample",
+   "   line: 1 of 9 numbers were not returned by any tool (marked in red): 99.9.",
+   "   line: Blocked to protect private data: breakpoint_evidence_summary (PRIVTEST). No data from this call left the computer.",
+   "   line: The question involves no private sample, so the permission opened none; the model was offered test data only.",
+   "   meta: 12.3 s · 3 model turns · 812 tokens written · cost $0.041",
+   "",
+   "case 4: no permission",
+   "   line: 1 of 9 numbers were not returned by any tool (marked in red): 99.9.",
+   "   line: Cloud model without permission for private data: it was offered test data only.",
+   "   meta: 12.3 s · 3 model turns · 812 tokens written · cost $0.041",
+   "",
+   "bodies posted to /api/chat (allow_private_cloud): [('In dataset PRIVTEST, how stron', True), ('In dataset PRIVTEST, how stron', True), ('In dataset IMP01, how strong i', False), ('In dataset IMP01, how strong i', False)]",
+   "consent box: PRIVTEST is private data. A cloud model would receive the question and the positions, read counts and gene names its tools return for this sample (and for no other private sample). Send them only with permission from the data owner. I have permission to send this private data to Anthropic",
+   "page errors: []"
+  ],
+  "7_provenance": [
+   "private candidate opened by the person: chr1 26000 chr1 25000",
+   "error: None | blocked: [] | permitted: []",
+   "   bam_stats_at_locus {'dataset': 'PUB', 'chromosome': 'chr1', 'start': 24000, 'end': 27000} -> position_provenance: {\"source\": \"candidate_set\", \"candidate_id\": \"CAND_2cb985feae59\", \"set_id\": \"CSET_0522835c\", \"set_label\": \"PRIV\", \"note\": \"This position was returned by get_candidate in this session and originates from the SV caller's output.\"}",
+   "   breakpoint_evidence_summary {'dataset': 'PUB', 'chromosome': 'chr1', 'position': 25000} -> position_provenance: {\"source\": \"candidate_set\", \"candidate_id\": \"CAND_2cb985feae59\", \"set_id\": \"CSET_0522835c\", \"set_label\": \"PRIV\", \"note\": \"This position was returned by get_candidate in this session and originates from the SV caller's output.\"}",
+   "   breakpoint_evidence_summary {'dataset': 'PUB', 'chromosome': 'chr1', 'position': 12345} -> position_provenance: {\"source\": \"caller_supplied\", \"candidate_id\": null, \"set_id\": null, \"set_label\": null, \"note\": \"This position was supplied directly in the tool call. It did NOT come from a registered candidate set, so nothing here corroborates that the position is a real candidate. Do not present this result as confirma",
+   "",
+   "============================================================",
+   "ALL INTERFACE PAGE TESTS PASSED"
+  ],
+  "igv_reference_source": "https://igv.org/genomes/legacy/json/hg38.json (read 2026-10-02): fastaURL and twoBitURL are under https://igv.org/genomes/data/hg38/; the gene track is https://hgdownload.soe.ucsc.edu/goldenPath/hg38/database/ncbiRefSeq.txt.gz, fetched whole",
+  "answer_check_and_units": "chat.verify_numbers on a text holding '~37x', '~1400bp', '99x', '2.5kb' and '36.7x' beside 60.0, 0.0, 0.779, 198,600 and 15.7%: it extracted the five free-standing numbers only (chat.py _NUM); a number written against letters is neither counted nor marked"
+ },
+ "position_check_estimate_at_patient_scale": {
+  "model": "N positions spread evenly over GRCh38 chr1-22, X, Y (3,088,269,832 bp); a written number x is flagged when any position on any chromosome lies within 1,000 bp of x",
+  "one_sample_30596_junctions": {
+   "positions": 61192,
+   "near_200000_or_33700000": "61%",
+   "a_coordinate_drawn_from_the_genome": "49%"
+  },
+  "both_samples": {
+   "positions": 125274,
+   "near_200000_or_33700000": "86%",
+   "a_coordinate_drawn_from_the_genome": "73%"
+  },
+  "check_of_the_model_on_public_data": "PRIVTEST, 1,694 positions on chr20 and chr21: an even spread gives 5.1%; measured 16 of 400 (4.0%) through the server and 3.0% over 2,000 draws by the same rule, so the model overstates by a factor of 1.3 to 1.7 and the true rates at patient scale are probably lower (61% -> about 43%, 86% -> about 68%, if the same factor of 1.7 applied)",
+  "status": "an estimate, NOT a measurement: no number was sent to the check while patient data were registered"
+ },
+ "walkthrough": {
+  "record": "interface_walkthrough_2026-10-02_phase25.json",
+  "record_sha256": "c2669b41978d42c8fcc24abb9b44581e1e216057d799c6f0b5fbcfec84bedb45",
+  "command": "python3 scripts/interface_walkthrough.py --out <logs>/walkthrough --cloud (headless Chromium; the interface started with IGV's Java on PATH, DISPLAY=:0 and PRIVTEST registered explicitly; PID noted, stopped by PID)",
+  "checks": "24 of 24: the 21 of the patch and 3 added (P5)",
+  "rehearsal": "19 of 19 without IGV and without --cloud, ANTHROPIC_BASE_URL on a closed port, before the recorded run",
+  "igv_seconds": 145,
+  "igv_images": 4,
+  "igv_failed_panels": 0,
+  "local_model": {
+   "verdict_lines": [
+    "Malformed tool call: breakpoint_evidence_summary — arguments failed the tool's schema: 1 validation error for call[breakpoint_evidence_summary]",
+    "17 numbers checked — every one was returned by a tool in this answer. The check covers numbers only, not words such as “strong”."
+   ],
+   "tool_calls": 7
+  },
+  "cloud_test_data": {
+   "meta": "24.6 s · 5 model turns · 2,333 tokens written · cost $0.063",
+   "lines": [
+    "31 numbers checked — every one was returned by a tool in this answer. The check covers numbers only, not words such as “strong”.",
+    "Cloud model without permission for private data: it was offered test data only."
+   ]
+  },
+  "cloud_privtest_with_permission": {
+   "meta": "43.9 s · 5 model turns · 4,158 tokens written · cost $0.089",
+   "lines": [
+    "35 numbers checked — every one was returned by a tool in this answer. The check covers numbers only, not words such as “strong”.",
+    "Sent to Anthropic with your permission: tool results for PRIVTEST. The permission covered PRIVTEST only."
+   ]
+  },
+  "api_questions_sent": 2,
+  "api_cost_usd_shown": [
+   0.063,
+   0.089
+  ],
+  "private_list": {
+   "hidden_title": "27 candidates to review",
+   "with_comparison": {
+    "title": "0 candidates to review",
+    "button": "Show the 0 candidates",
+    "last_funnel_row": "Not found in IMP01author's choice both ends within 500 bp count as the same junction source"
+   }
+  },
+  "answer_rendering": {
+   "numbers_shown": [
+    1,
+    2,
+    3
+   ],
+   "text": "Two steps:\n\nIt's 39 pairs\n<img src=x onerror=alert(1)> <u>second</u>\nthird",
+   "elements_from_model_html": 0
+  },
+  "page_errors": [],
+  "session_call_log": "64 calls, 1 error (the local model's malformed call)",
+  "screenshots": "stage1_igv_assistant/screenshots/interface_2026-10-02_phase25/ (12 PNG, each looked at; public data only; chunk types IHDR, IDAT, IEND only)"
+ },
+ "dry_run": {
+  "attempt_file": "~/public_data/sim/logs/phase18_2026-09-29/attempt_3.json",
+  "attempt_sha256": "041468a56e9f8d19cb66cc9184d4b7dbded3c46627f96cfc1ce3fe0f7561c533",
+  "started": "2026-10-02T18:12:46+0300",
+  "failure": null,
+  "total_wall_s": 162.1,
+  "page_bytes": 91641,
+  "routes_called_by_page": {
+   "/api/bootstrap": true,
+   "/api/load": true,
+   "/api/funnel": true,
+   "/api/candidate": true,
+   "/api/assess": true,
+   "/api/call?id=": true,
+   "/api/igv": true,
+   "/api/chat_models": true,
+   "/api/chat": true
+  },
+  "all_nine_routes_true": true,
+  "interface_stopped": {
+   "pid": 35806,
+   "children_before_stop": 0,
+   "method": "SIGTERM",
+   "exit_status": -15,
+   "children_left_and_stopped_by_pid": 0,
+   "port_8765_free_after": true
+  },
+  "call_log": {
+   "calls": 33,
+   "by_tool": {
+    "applicable_layers": 4,
+    "bam_stats_at_locus": 4,
+    "breakpoint_evidence_summary": 4,
+    "discordant_pairs": 4,
+    "evidence_panel": 1,
+    "get_candidate": 1,
+    "list_candidates": 1,
+    "load_candidate_set": 1,
+    "read_depth_profile": 5,
+    "soft_clipped_reads": 4,
+    "split_reads": 4
+   },
+   "errors": 1
+  },
+  "no_patient_data": {
+   "a_listed_equal_derived_from_public_data": {
+    "datasets": true,
+    "candidate_files": true
+   },
+   "b_identifier_list": {
+    "identifiers_read": 6,
+    "labels_containing_an_identifier": 0,
+    "positive_control_caught": true
+   },
+   "c_call_log": {
+    "files_named": 31,
+    "not_a_listed_label": 0,
+    "positive_control_caught": true
+   },
+   "d_open_files_outside_allowed_total": 0,
+   "d_positive_control_caught": true
+  },
+  "against_demo_dry_run_2026-09-29": {
+   "1_load": {
+    "dataset_labels_same": true,
+    "candidate_set_labels_same": true,
+    "load_counts_same": true,
+    "load_counts": {
+     "total_records": 918,
+     "junctions_after_dedup": 896,
+     "records_merged_by_dedup": 22
+    },
+    "hand_entry_note_same": true,
+    "limits_headings_changed": [
+     {
+      "was": "A balanced translocation can never score \"strong\" here.",
+      "now": "A balanced translocation cannot score \"strong\" here unless the depth measurement errs."
+     }
+    ],
+    "limits_headings_unchanged": 5
+   },
+   "2_filters": {
+    "chain_same": true,
+    "total_in_set": 896,
+    "surviving_after_each_step": [
+     515,
+     157,
+     29,
+     29,
+     29
+    ],
+    "total_matching": 29
+   },
+   "3_candidate": {
+    "candidate_id": "CAND_52179e966345",
+    "candidate_same": true,
+    "shown": [
+     {
+      "at": "chr21:14100001",
+      "score": 40.0,
+      "band": "moderate",
+      "components": {
+       "discordant_pairs": 7.5,
+       "soft_clipped_reads": 25.0,
+       "split_reads": 7.5,
+       "read_depth": 0.0
+      },
+      "attainable_here": 57.5
+     },
+     {
+      "at": "chr20:200000",
+      "score": 40.0,
+      "band": "moderate",
+      "components": {
+       "discordant_pairs": 7.5,
+       "soft_clipped_reads": 25.0,
+       "split_reads": 7.5,
+       "read_depth": 0.0
+      },
+      "attainable_here": 57.5
+     }
+    ],
+    "every_shown_value_same": true
+   },
+   "4_tool_return": {
+    "discordant_pairs_shown_and_returned": [
+     44,
+     44
+    ],
+    "score_shown_and_returned": [
+     40.0,
+     40.0
+    ],
+    "equal": true,
+    "same_as_record": true
+   },
+   "5_hand_entry": {
+    "at": "chr20:33700000",
+    "dataset": "IMP09",
+    "score": 22.5,
+    "band": "weak",
+    "components": {
+     "discordant_pairs": 7.5,
+     "soft_clipped_reads": 0.0,
+     "split_reads": 0.0,
+     "read_depth": 15.0
+    },
+    "low_mapq_fraction": 0.364,
+    "banner": null,
+    "agrees_with_rescue_record": {
+     "discordant_pairs": true,
+     "soft_clipped_reads": true,
+     "score": true,
+     "band": true
+    },
+    "every_shown_value_same": true
+   },
+   "6_igv": {
+    "images": 4,
+    "wall_s": 133.59,
+    "error": null,
+    "panel_errors": [],
+    "identical_to_committed_panels": [
+     "discordant_pairs.png",
+     "soft_clipped_reads.png",
+     null,
+     "read_depth.png"
+    ],
+    "record_2026_09_29": {
+     "images": 3,
+     "wall_s": 378.23,
+     "panel_errors": [
+      "read_depth"
+     ]
+    }
+   },
+   "7_chat": {
+    "models_offered": [
+     "qwen2.5:7b",
+     "qwen3.5:4b"
+    ],
+    "tool_schemas_offered": 15,
+    "model": "qwen2.5:7b",
+    "question_same": true,
+    "error": null,
+    "answered": true,
+    "tool_calls": 7,
+    "numbers_in_answer": 15,
+    "unsupported": [],
+    "wall_s": {
+     "chat_models": 0.0,
+     "chat": 25.28,
+     "reported_by_chat": 25.3
+    },
+    "tool_calls_rejected": 1,
+    "answer_begins": "The evidence for a breakpoint at chr20:200000 in dataset IMP01 is moderate, with an evidence score of 40.0/100 (normaliz"
+   }
+  },
+  "command": ".venv/bin/python scripts/demo_dry_run.py run (the script starts its own interface on 8765 with ANTHROPIC_BASE_URL on a closed port; `record` was not run)"
+ },
+ "patient_check": {
+  "blinding": "aggregate counts only. /api/funnel was called once per sample, with counts_only true; the script asserts that the reply holds no candidate before it prints or keeps anything, and prints only total_in_set, total_matching and each step's surviving_after_this_step. No /api/candidate, /api/assess, /api/igv or /api/compare call on either sample; no browser was open while they were registered; neither message sent to /api/privacy_check or /api/chat contains a number.",
+  "registered": "the two neutral read-file links and the two DELLY call sets under ~/patient_data, as in the demonstration's command; existence checked with test -e only",
+  "a_check": {
+   "command": "python -m stage1_igv_assistant.ui --check with the four registered (the demonstration's command, as written)",
+   "with_igv_java_on_path_and_display": {
+    "exit": 0,
+    "tool_contract": "11 evidence tools + 4 bridge tools",
+    "tiers": "derived from bam_tools source",
+    "datasets": 15,
+    "candidate_files": 15,
+    "check_lines_pass": 11,
+    "check_lines_fail": 0,
+    "tiers_available": [
+     "MINIMAL",
+     "FULL",
+     "COMPLETE"
+    ]
+   },
+   "in_a_plain_shell": {
+    "exit": 0,
+    "datasets": 15,
+    "candidate_files": 15,
+    "check_lines_pass": 9,
+    "check_lines_fail": 1,
+    "the_failing_line": "CHECK FULL [FAIL] a Java runtime igv.sh will use — no bundled jdk*/bin/java next to igv.sh and no java on PATH",
+    "note": "the demonstration's two export lines (PATH, DISPLAY) turn it into [x] FULL"
+   }
+  },
+  "b_interface": {
+   "environment": "ANTHROPIC_BASE_URL=http://127.0.0.1:9 (a closed port: no API request could leave the machine); curl only, through the step's script",
+   "question": "In dataset SAMPLE_A, how strong is the evidence?",
+   "funnel_request": {
+    "svtype": "BND",
+    "filter_pass": true,
+    "min_pe": 3,
+    "min_sr": 1,
+    "primary_only": true,
+    "use_mask": true,
+    "limit": 2000,
+    "counts_only": true
+   },
+   "kinds_private": {
+    "datasets": [
+     "SAMPLE_A",
+     "SAMPLE_B"
+    ],
+    "candidates": [
+     "SAMPLE_A",
+     "SAMPLE_B"
+    ]
+   },
+   "kinds_public": {
+    "datasets": [
+     "IMP01",
+     "IMP02",
+     "IMP03",
+     "IMP04",
+     "IMP05",
+     "IMP06",
+     "IMP07",
+     "IMP08",
+     "IMP09",
+     "IMP10",
+     "IMP11",
+     "IMP12",
+     "NA12878.chr20_chr21"
+    ],
+    "candidates": [
+     "IMP01",
+     "IMP02",
+     "IMP03",
+     "IMP04",
+     "IMP05",
+     "IMP06",
+     "IMP07",
+     "IMP08",
+     "IMP09",
+     "IMP10",
+     "IMP11",
+     "IMP12",
+     "background"
+    ]
+   },
+   "capabilities": {
+    "igv_ready": true,
+    "api_key": true
+   },
+   "samples": {
+    "SAMPLE_A": {
+     "load": {
+      "total_records": 30980,
+      "junctions_after_dedup": 30596,
+      "records_merged_by_dedup": 384
+     },
+     "load_is_error": false,
+     "load_equal_to_committed": true,
+     "funnel_call": 2,
+     "candidates_in_reply": 0,
+     "returned": 0,
+     "total_in_set": 30596,
+     "total_matching": 57,
+     "steps": [
+      "svtype",
+      "filter_pass",
+      "min_pe",
+      "min_sr",
+      "primary_only",
+      "exclude_masked"
+     ],
+     "surviving_after_each_step": [
+      9172,
+      896,
+      664,
+      57,
+      57,
+      57
+     ],
+     "mask_applied": true,
+     "chain_equal_to_committed": true
+    },
+    "SAMPLE_B": {
+     "load": {
+      "total_records": 32451,
+      "junctions_after_dedup": 32041,
+      "records_merged_by_dedup": 410
+     },
+     "load_is_error": false,
+     "load_equal_to_committed": true,
+     "funnel_call": 4,
+     "candidates_in_reply": 0,
+     "returned": 0,
+     "total_in_set": 32041,
+     "total_matching": 63,
+     "steps": [
+      "svtype",
+      "filter_pass",
+      "min_pe",
+      "min_sr",
+      "primary_only",
+      "exclude_masked"
+     ],
+     "surviving_after_each_step": [
+      9655,
+      923,
+      642,
+      63,
+      63,
+      63
+     ],
+     "mask_applied": true,
+     "chain_equal_to_committed": true
+    }
+   },
+   "privacy_check": {
+    "labels": [
+     "SAMPLE_A"
+    ],
+    "positions": []
+   },
+   "chat_without_permission": {
+    "error": "Not sent: this question names private data (SAMPLE_A). A cloud model would receive it. Confirm that you have permission to send it, or ask a model on this computer.",
+    "has_events": false,
+    "keys": [
+     "error",
+     "privacy"
+    ],
+    "privacy": {
+     "cloud": true,
+     "private_allowed": false,
+     "permitted": [],
+     "blocked": [],
+     "question_refs": {
+      "labels": [
+       "SAMPLE_A"
+      ],
+      "positions": []
+     }
+    }
+   },
+   "call_log": {
+    "calls": 4,
+    "by_tool": {
+     "load_candidate_set": 2,
+     "list_candidates": 2
+    },
+    "errors": 0,
+    "list_candidates": [
+     {
+      "id": 2,
+      "tool": "list_candidates",
+      "limit": 1,
+      "offset": 2147483647,
+      "is_error": false
+     },
+     {
+      "id": 4,
+      "tool": "list_candidates",
+      "limit": 1,
+      "offset": 2147483647,
+      "is_error": false
+     }
+    ],
+    "offsets_are_2147483647": true
+   },
+   "all_ok": true,
+   "stopped": "by its PID (SIGTERM); port 8765 free afterwards"
+  },
+  "identifier_list_entries_found_in_the_logs_of_this_step": 0,
+  "identifier_scan_positive_control_caught": true
+ },
+ "demo_bundle": {
+  "file": "demo_bundle/sv-assistant.conf (local, ignored by git, not committed)",
+  "before": {
+   "sha256": "0da0d3a40cbe0461ee95cc62f629b5263956893df2dc3c5ede2f7127ebbd8eae",
+   "kinds": {
+    "DEMO_CLEAN": "private",
+    "DEMO_REPEAT": "private"
+   }
+  },
+  "appended": "[test_data]\nlabels = DEMO_CLEAN, DEMO_REPEAT",
+  "after": {
+   "sha256": "9e128fdb642d391f2447d3eb8f9b0f721a725920007e6cabd29ffd967dcb6a26",
+   "kinds": {
+    "DEMO_CLEAN": "public",
+    "DEMO_REPEAT": "public"
+   }
+  },
+  "how": "the interface started with SV_CONFIG on that file (port 8791, ANTHROPIC_BASE_URL on a closed port), GET /api/bootstrap, stopped by PID; read files and candidate files alike"
+ },
+ "thesis_v4": {
+  "source": "Rimas_MSc_Thesis_2026-10-02_v4.docx",
+  "sha256": "2302c821eb8253e8a72217eab2f6f0b8fb2192c1b9339393073e379d4c4aaeb8",
+  "copied_over": "docs/thesis/Rimas_MSc_Thesis.docx",
+  "head_copy_sha256": "ce2d32889c4e913c8f886b1488b915db69b6b51c99f75040f51737d9d8832267",
+  "parts": "26 in each; only word/document.xml and docProps/core.xml differ; comments, footnotes, endnotes and footers are byte-identical",
+  "paragraphs": {
+   "head": 529,
+   "v4": 530,
+   "table_cells_included": true
+  },
+  "differing_blocks": [
+   {
+    "paragraphs": "5",
+    "what": "the title-page date: 'Working draft · 30 September 2026' -> 'Working draft · 2 October 2026'"
+   },
+   {
+    "paragraphs": "416-418",
+    "what": "The Instrument: the network sentence (416); the recorder paragraph's link and log sentence (417); one inserted paragraph (418: three steps, test data and private data, the hidden list)"
+   },
+   {
+    "paragraphs": "420",
+    "what": "the assistant paragraph: 'A chat panel adds' -> 'The assistant adds'; labels, the refusal of a path, the scope of the confirmation"
+   }
+  ],
+  "other_differences": 0,
+  "docs_thesis_README": "names the draft of 2 October 2026 (v4) and section O"
+ },
+ "demo_guide_v3": {
+  "file": "demonstracijai/Demonstracija_kaip_parodyti_2026-10-02_v3.docx",
+  "sha256": "59c360031cf13303ac735b78c10cbb58446fd2408b8526c67070b6e1a33d8823",
+  "read_only": true,
+  "paragraphs_and_cells": 129,
+  "companions": {
+   "paleidimo_komandos.txt": "d29f4133db1db4f2c5c231f7eb2278897cc202f5bf26da8dd37a8c17b9681223",
+   "klausimas_modeliui.txt": "572bb934f843d73afdb1c117daba142d1ffa160ae9fb925468af2b8cf8b5716b",
+   "IGV_IMP01_chr20_200000": "four PNG, pixel-identical to screenshots/imp01_2026-09-27/ (0 differing pixels in each; the copies carry a caBX content-credentials chunk)"
+  }
+ },
+ "igv_track_name_through_a_link": {
+  "what": "PUBLIC data: a symbolic link LINKNAME_X.bam (and .bai) pointing at IMP01's read file, registered as --dataset LINKNAME_X=<the link>; POST /api/igv at chr20:200000 (port 8791, ANTHROPIC_BASE_URL on a closed port; stopped by PID)",
+  "images": 4,
+  "error": null,
+  "panel_errors": [],
+  "track_names_in_the_images": [
+   "LINKNAME_X.bam Coverage",
+   "LINKNAME_X.bam"
+  ],
+  "images_looked_at": [
+   "discordant pairs",
+   "split reads"
+  ],
+  "target_name_in_the_reply": false,
+  "conclusion": "IGV names the track after the link it is given, not after the file the link points to; bam_tools passes the registered path on without resolving it (no realpath)",
+  "not_tested": "no IGV image of a patient locus was made"
+ }
+}

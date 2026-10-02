@@ -234,7 +234,61 @@ async def main(a):
                   facts["consent_ticked_after_sending"] is False and await pg.locator("#askbtn").is_disabled())
             await shot(pg, "assistant_cloud_permission")
 
-        # 8. limits and the call log
+        # 8. a private sample's list stays hidden until asked for
+        print("8. private sample list", flush=True)
+        await pg.click("#tab-cands")
+        n_calls = len((await api(pg, "GET", "/api/calls")).get("calls", []))
+        await pg.select_option("#sample", a.private_label)
+        await pg.wait_for_selector("#reveal", timeout=120000)
+        await pg.wait_for_timeout(600)
+        facts["private_hidden_title"] = await pg.inner_text("#cands-title")
+        check("choosing a private sample shows its counts but no candidate row",
+              await pg.locator("tr.cand").count() == 0 and await pg.locator("#funnel .funnel-count").count() > 0)
+        calls = (await api(pg, "GET", "/api/calls")).get("calls", [])[n_calls:]
+        lists = [c for c in calls if c["tool"] == "list_candidates"]
+        check("... and asks the server for counts only (no position reaches the page or the call log)",
+              bool(lists) and all((c.get("params") or {}).get("offset", 0) >= 2 ** 31 - 1 for c in lists),
+              [(c.get("params") or {}).get("offset") for c in lists])
+        await shot(pg, "private_list_hidden", full=True)
+        # a comparison chosen while the list is still hidden, as the demonstration does:
+        # the count changes, no row appears, and the reply to the page carries no position
+        # (the server's two listing calls for the comparison are in the call log)
+        await pg.select_option("#f-rec", facts["default_sample"])
+        await pg.wait_for_function("document.querySelector('#funnel').innerText.includes('Not found in')", timeout=120000)
+        await pg.wait_for_timeout(600)
+        held = await pg.evaluate("JSON.stringify(S.compare)")
+        facts["private_hidden_with_comparison"] = {
+            "title": await pg.inner_text("#cands-title"),
+            "button": await pg.inner_text("#reveal") if await pg.locator("#reveal").count() else None,
+            "last_funnel_row": " ".join((await pg.locator("#funnel .step").last.inner_text()).split())}
+        check("with a comparison chosen the list stays hidden, and the page is sent no position",
+              await pg.locator("tr.cand").count() == 0 and await pg.locator("#reveal").count() == 1
+              and '"survivor_effect"' in held and '"pos1"' not in held, held[:300])
+        await pg.select_option("#f-rec", "")
+        await pg.wait_for_function("!document.querySelector('#funnel').innerText.includes('Not found in')", timeout=120000)
+        await pg.wait_for_timeout(600)
+        await pg.click("#reveal")
+        await pg.wait_for_selector("tr.cand", timeout=120000)
+        await pg.wait_for_timeout(600)
+        check("Show the candidates reveals the list", await pg.locator("tr.cand").count() > 0)
+
+        # 9. how an answer is drawn: the page's own function on a text written here (no model)
+        print("9. answer rendering", flush=True)
+        drawn = await pg.evaluate("""(t) => { const d = document.createElement('div'); d.className = 'answer';
+            d.innerHTML = renderMarkdown(t, [{text: '39', supported: true}]); document.body.appendChild(d);
+            const numbers = [...d.querySelectorAll('ol > li')].map(li => { const ol = li.parentElement;
+                return li.hasAttribute('value') ? li.value : (ol.start || 1) + [...ol.children].indexOf(li); });
+            const out = {numbers_shown: numbers, text: d.innerText,
+                         elements_from_model_html: d.querySelectorAll('img,script,a,u,iframe').length};
+            d.remove(); return out; }""",
+            "Two steps:\n\n1. It's 39 pairs\n\n2. <img src=x onerror=alert(1)> <u>second</u>\n\n3. third")
+        facts["answer_rendering"] = drawn
+        check("a numbered list keeps the numbers the model wrote, also across blank lines",
+              drawn["numbers_shown"] == [1, 2, 3], drawn)
+        check("an apostrophe next to a checked 39 stays an apostrophe, and HTML the model wrote stays text",
+              "It's 39 pairs" in drawn["text"] and "<img" in drawn["text"] and drawn["elements_from_model_html"] == 0, drawn)
+
+        # 10. limits and the call log
         await pg.evaluate("window.scrollTo(0,0)")
         await pg.click("#btnLimits")
         await pg.wait_for_timeout(500)

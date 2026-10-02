@@ -96,14 +96,26 @@ final answer that no tool returned is marked on screen (its intermediate text is
 shown unchecked). The page offers the models the local Ollama serves and, when an
 Anthropic API key is present, `claude-sonnet-5` and `claude-opus-5` (the two
 evaluated). A cloud model receives private data only on the person's explicit
-confirmation for that question: without it the model is offered the test-data
-labels alone, any call naming a private label, a set loaded from a private file,
-or a file by its path is refused before it runs, and a question that names a
-private sample or contains a position read from private data is not sent at all
-(`ui.private_refs_in_text`, `ui._private_hits`; tests:
-`tests/test_interface_page.py`). The confirmation is cleared when the question is
-sent; while it holds, the model is offered every private label, not only the ones
-the question names.
+confirmation for that question, and only for the private samples the question
+names or whose positions it contains (within 1 kb, in any digit grouping or in
+Mb/kb): the model is offered the test-data labels and those, any call naming
+another private label or a set loaded from another private file is refused before
+it runs, and without the confirmation a question that involves private data is not
+sent at all (`ui.private_refs_in_text`, `ui._private_hits`; tests:
+`tests/test_interface_page.py`). The position check compares the number alone,
+not its chromosome, so with a large private call set loaded an unrelated number
+can be flagged as well; and it does not recognise a number written against
+letters (`33700000bp`), `33.7M`, a grouped kb value (`33,700 kb`) or scientific
+notation. The confirmation is cleared when the question is sent. A file named by
+its path instead of a label, a mask file included, is refused for every model,
+local ones included. A private sample's candidate list is shown only on request;
+until then the page is sent counts and no position. A comparison with another
+sample is the exception for the call log only: the server lists both filtered
+sets to compare them, so those two calls are recorded with their positions, and
+once a list is shown, its rows marked "also in …" are the junctions the
+comparison sample shares. *Note, 2026-10-02:* the scope of the
+confirmation, the wider text check, the refusal of paths for local models and the
+hidden list were added in Phase 25, after the first run with real data.
 
 **Controlled positive test.** Twelve heterozygous balanced translocations were
 implanted into real NA12878 reads at positions known in advance. In the rebuild

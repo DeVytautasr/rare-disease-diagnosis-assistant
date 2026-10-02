@@ -211,7 +211,20 @@ details .inner{margin-top:10px;font-size:13.5px}
 .qa .q p{margin:0;font-weight:600;min-width:0}
 .qa .q .pill{flex:none;align-self:flex-start}
 .qa .a{padding:16px 18px}
-.answer{font-size:16px;line-height:1.6;margin:0 0 12px;white-space:pre-wrap}
+.answer{font-size:16px;line-height:1.6;margin:0 0 12px}
+.answer p{margin:0 0 10px}
+.answer .md-h{font-weight:700;margin-top:14px}
+.answer ul,.answer ol{margin:0 0 10px;padding-left:22px}
+.answer li{margin:2px 0}
+.answer code{font:13.5px var(--mono);background:#F3F1F8;border-radius:4px;padding:0 4px}
+.answer pre{font:13px/1.45 var(--mono);background:#F8F7FB;border:1px solid var(--line);border-radius:6px;padding:9px;overflow:auto;white-space:pre-wrap}
+.answer table{width:auto;margin:4px 0 12px;font-size:14.5px}
+.answer td,.answer th{padding:5px 10px;border-bottom:1px solid var(--line)}
+.answer hr{border:0;border-top:1px solid var(--line);margin:12px 0}
+.reveal{background:var(--amber-soft);border:1px solid #F0CFA8;border-radius:10px;padding:14px 16px;display:flex;
+  gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.reveal p{margin:0;max-width:70ch}
+.netnote{font-size:13px;color:var(--amber);margin-top:8px}
 .answer .vnum{border-bottom:2px solid #9ACDB2}
 .answer .unsup{background:#FBD5D2;border-bottom:2px solid var(--alert);font-weight:700;padding:0 2px;border-radius:3px}
 .verdict{display:block;border-radius:8px;padding:10px 12px;font-size:14px;margin-bottom:10px}
@@ -407,6 +420,7 @@ details .inner{margin-top:10px;font-size:13.5px}
 "use strict";
 // ── state and helpers ─────────────────────────────────────────────────────────
 const S = {boot:null, models:null, sample:null, setId:null, setInfo:null, funnel:null, compare:null,
+           revealed:new Set(), seq:0, fseq:0,
            cand:null, evidence:[], ctx:null, asked:0};
 const $ = id => document.getElementById(id);
 const post = (u,b) => fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}).then(r=>r.json());
@@ -434,10 +448,10 @@ const TYPE_ARTICLE = {BND:'a translocation',DEL:'a deletion',DUP:'a duplication'
 const kindPill = (kind,label) => kindOf(kind,label)==='public'
   ? '<span class="pill public small">Test data</span>' : '<span class="pill private small">Private data</span>';
 const LAYER_TEXT = {
-  discordant_pairs:['Discordant pairs','read pairs whose mate maps to another chromosome or unexpectedly far away'],
+  discordant_pairs:['Discordant pairs','read pairs whose mate maps to another chromosome'],
   soft_clipped_reads:['Soft-clipped reads','reads cut off at the same base'],
   split_reads:['Split reads','reads aligned in two pieces, the second piece elsewhere'],
-  read_depth:['Read depth','coverage dip or rise around the position']};
+  read_depth:['Read depth','coverage dip around the position']};
 const kindOf = (kind,label) => ((S.boot&&S.boot.kinds&&S.boot.kinds[kind])||{})[label]||'private';
 
 // ── navigation ────────────────────────────────────────────────────────────────
@@ -494,6 +508,7 @@ function renderStatus(){
 $('sample').addEventListener('change', e => chooseSample(e.target.value));
 
 async function chooseSample(label){
+  const seq = ++S.seq;
   S.sample = label; S.setId = null; S.funnel = null; S.compare = null;
   const B = S.boot, isCand = B.candidate_files.includes(label), hasReads = B.datasets.includes(label);
   const kind = isCand ? kindOf('candidates',label) : kindOf('datasets',label);
@@ -517,6 +532,7 @@ async function chooseSample(label){
     return;
   }
   const r = await post('/api/load',{candidates_label:label});
+  if(seq !== S.seq) return;
   if(r.is_error || !r.result || r.result.error){
     $('funnel-panel').hidden = true; $('cands-panel').hidden = false;
     $('cands').innerHTML = `<div class="err">The candidate list could not be read.\n${esc((r.result&&r.result.error)||JSON.stringify(r.result))}</div>`;
@@ -536,10 +552,19 @@ function filterBody(){
           min_pe:$('f-pe').value===''?null:$('f-pe').value, min_sr:$('f-sr').value===''?null:$('f-sr').value,
           primary_only:$('f-prim').checked, use_mask:$('f-mask').checked};
 }
+// A private sample's list stays hidden until the person asks for it: until then the
+// page asks only for counts, so no position of it reaches the page or the call log.
+// A comparison with another sample is the one exception, and only for the call log:
+// the server lists both filtered sets to compare them, and those two calls are
+// recorded like every other. The page itself asks the comparison for no examples.
+const isPrivateSample = () => S.sample && kindOf('candidates', S.sample) !== 'public';
+const listHidden = () => isPrivateSample() && !S.revealed.has(S.sample);
 async function runFilters(){
   if(!S.setId) return;
+  const seq = ++S.fseq, sample = S.sample;
   const body = filterBody();
-  const r = await post('/api/funnel',{set_id:S.setId,...body,limit:2000});
+  const r = await post('/api/funnel',{set_id:S.setId,...body,limit:2000,counts_only:listHidden()});
+  if(seq !== S.fseq || sample !== S.sample) return;
   if(!r.result || r.result.error){
     $('funnel-panel').hidden = false;
     $('funnel').innerHTML = `<div class="err" style="grid-column:1/-1">${esc((r.result&&r.result.error)||'The filters could not be applied.')}</div>`;
@@ -549,7 +574,8 @@ async function runFilters(){
   S.compare = null;
   const other = $('f-rec').value;
   if(other){
-    const c = await post('/api/compare',{label_a:S.sample,label_b:other,tolerance_bp:$('f-tol').value||null,...body});
+    const c = await post('/api/compare',{label_a:S.sample,label_b:other,tolerance_bp:$('f-tol').value||null,...body,examples:false});
+    if(seq !== S.fseq || sample !== S.sample) return;
     S.compare = c.error ? {error:c.error} : c;
   }
   renderFunnel(); renderCandidates();
@@ -608,9 +634,16 @@ function renderCandidates(){
   const showRec = $('show-rec').checked;
   const visible = list.filter(c => !recurrent.has(c.candidate_id) || showRec);
   visible.sort((a,b)=>(recurrent.has(a.candidate_id)-recurrent.has(b.candidate_id)) || (b.pe||0)-(a.pe||0) || (b.sr||0)-(a.sr||0));
-  const n = C ? C.a.unique : F.total_matching;
-  $('cands-title').textContent = `${fmt(n)} candidate${n===1?'':'s'} to review` + (F.returned<F.total_matching?` (showing ${fmt(F.returned)})`:'');
-  if(!visible.length){
+  const n = C ? C.a.unique : F.total_matching, hidden = listHidden();
+  $('cands-title').textContent = `${fmt(n)} candidate${n===1?'':'s'} to review`
+    + (!hidden && F.returned < F.total_matching ? ` (showing ${fmt(F.returned)})` : '');
+  if(hidden){
+    $('show-rec-wrap').hidden = true;
+    $('cands').innerHTML = `<div class="reveal"><p><b>${esc(S.sample)} is private data, so its list is hidden until you ask
+      for it.</b> The counts above are totals only; they show no position.</p>
+      <button class="btn primary" type="button" id="reveal">Show the ${fmt(n)} candidate${n===1?'':'s'}</button></div>`;
+    $('reveal').addEventListener('click', ()=>{ S.revealed.add(S.sample); runFilters(); });
+  } else if(!visible.length){
     $('cands').innerHTML = '<div class="empty">No candidates pass these filters. Loosen a filter above.</div>';
   } else {
     const ends = c => inGenomeOrder({chromosome:c.chrom1,position:c.pos1},{chromosome:c.chrom2,position:c.pos2});
@@ -852,6 +885,8 @@ function breakendPanel(E,i){
       <button class="btn" type="button" data-igv="${i}">Show IGV images</button>
       <button class="btn quiet" type="button" data-ask="${i}">Ask the assistant about this position</button>
     </div>
+    ${kindOf('datasets', E.bam_label) === 'public' ? '' : `<div class="netnote">Private data: IGV images ask igv.org for this
+      region's reference sequence, and a gene lookup sends the position to Ensembl. No reads leave this computer.</div>`}
     <div class="igv-state" id="igv-state-${i}" hidden></div></div>`;
 }
 $('ev').addEventListener('click', e => {
@@ -882,6 +917,11 @@ function igvBlock(i){
   }
   return blk;
 }
+// IGV fetches the reference sequence of the region it draws from igv.org, so for
+// private data the region's coordinates leave the computer (the reads never do).
+const igvNetNote = E => kindOf('datasets', E.bam_label) === 'public' ? ''
+  : `<div class="netnote">${esc(E.bam_label)} is private data. IGV asks igv.org for the reference sequence of this
+     region, so its coordinates leave this computer; no reads do.</div>`;
 async function runIGV(i){
   if(S.igvBusy) return;
   const E = S.evidence[i], gen = S.evGen, t0 = Date.now();
@@ -891,7 +931,7 @@ async function runIGV(i){
   blk.innerHTML = `<div class="igv-head"><h3>IGV images at ${where}</h3><span class="muted small">reads from ${esc(E.bam_label)}</span></div>
     <div class="igv-wait"><div class="spin"></div><div><b>IGV is drawing one image per measurement.</b>
     This usually takes a few minutes because IGV loads the genome for every image. You can keep reading or ask the assistant meanwhile.
-    <span class="muted" id="igv-t-${i}"></span></div></div>`;
+    <span class="muted" id="igv-t-${i}"></span></div></div>${igvNetNote(E)}`;
   state.hidden = false; state.innerHTML = `IGV is drawing. <button type="button" class="src" data-jump="igvb-${i}">Go to the images</button>`;
   blk.scrollIntoView({behavior:'smooth', block:'start'});
   const timer = setInterval(()=>{ const el = $('igv-t-'+i); if(el) el.textContent = ` ${Math.round((Date.now()-t0)/1000)} s`; }, 1000);
@@ -902,7 +942,7 @@ async function runIGV(i){
   if(gen !== S.evGen) return;          // the person opened something else meanwhile; the call log keeps the result
   const secs = Math.round((Date.now()-t0)/1000);
   const head = `<div class="igv-head"><h3>IGV images at ${where}</h3><span class="muted small">reads from ${esc(E.bam_label)},
-    ${secs} s ${src(r.call,'source')}</span></div>`;
+    ${secs} s ${src(r.call,'source')}</span></div>${igvNetNote(E)}`;
   if(r.error && !(r.image_refs||[]).length){
     blk.innerHTML = head + `<div class="err"><b>No IGV image was produced.</b>\n${esc(r.error)}${r.hint?'\n\n'+esc(r.hint):''}</div>`;
     state.innerHTML = `No IGV image was produced. <button type="button" class="src" data-jump="igvb-${i}">See why</button>`;
@@ -983,10 +1023,11 @@ function showPrivacy(refs){
     const keep = box.querySelector('#consent'); const was = keep ? keep.checked : false;
     const list = esc(all.join(', ')), many = all.length>1;
     const head = refs.labels.length && !fromPos.length ? `${list} ${many?'are':'is'} private data.`
-      : !refs.labels.length ? `This question contains ${refs.positions.length>1?'positions':'a position'} read from ${list}, which ${many?'are':'is'} private data.`
-      : `${list} ${many?'are':'is'} private data, and the question contains ${refs.positions.length>1?'positions':'a position'} read from ${many?'them':'it'}.`;
+      : !refs.labels.length ? `This question contains ${refs.positions.length>1?'positions':'a position'} at or near one read from ${list}, which ${many?'are':'is'} private data.`
+      : `${list} ${many?'are':'is'} private data, and the question contains ${refs.positions.length>1?'positions':'a position'} at or near one read from ${many?'them':'it'}.`;
     box.innerHTML = `<div class="consent"><b>${head}</b>
-      A cloud model would receive the question and the positions, read counts and gene names its tools return.
+      A cloud model would receive the question and the positions, read counts and gene names its tools return
+      for ${many?'these samples':'this sample'} (and for no other private sample).
       Send them only with permission from the data owner.
       <label class="check"><input type="checkbox" id="consent"${was?' checked':''}> I have permission to send this private data to Anthropic</label></div>`;
     $('consent').addEventListener('change', ()=>askEnabled($('consent').checked));
@@ -1010,7 +1051,9 @@ function suggestions(){
   } else {
     out.push(`In dataset ${sample}, how strong is the evidence for a breakpoint at chr20:200000? Give the evidence score and its band, and say whether this position could reach the strong band.`);
   }
-  if(S.boot && S.boot.candidate_files.includes(sample))
+  // a private sample's list is offered as a question only once the person has chosen to see it
+  if(S.boot && S.boot.candidate_files.includes(sample)
+     && (kindOf('candidates', sample) === 'public' || S.revealed.has(sample)))
     out.push(`Load the candidate set ${sample} and list the translocations that pass the default filters.`);
   return out;
 }
@@ -1028,10 +1071,58 @@ function markNumbers(text, details){
   let out = esc(text||'');
   const bad = new Set((details||[]).filter(d=>!d.supported).map(d=>d.text));
   const good = new Set((details||[]).filter(d=>d.supported).map(d=>d.text));
-  const rx = s => new RegExp('(?<![\\w.])'+esc(s).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?![\\w.])','g');
+  // a number ends where no digit follows (a full stop or a unit such as x or % may);
+  // the 39 inside &#39;, which esc() writes for an apostrophe, is not a number
+  const rx = s => new RegExp('(?<![\\w.])(?<!&#)'+esc(s).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?!\\d|[.,]\\d)','g');
   for(const b of bad) out = out.replace(rx(b), `<span class="unsup" title="No tool call returned this number">${esc(b)}</span>`);
   for(const g of good) if(!bad.has(g)) out = out.replace(rx(g), m => `<span class="vnum" title="Returned by a tool in this answer">${m}</span>`);
   return out;
+}
+// The model writes Markdown. Its structure (headings, lists, tables, code) is read
+// from the raw text; every piece of text is then escaped and number-marked exactly
+// as before, and only then given bold, italic or code formatting. Nothing the model
+// wrote is ever inserted as HTML.
+function renderMarkdown(text, details){
+  const inline = t => markNumbers(t, details)
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
+    .replace(/(^|[^*\w])\*([^*\s][^*]*?)\*(?![*\w])/g, '$1<i>$2</i>');
+  const lines = String(text||'').replace(/\r/g,'').split('\n');
+  const out = []; let para = [], list = null, table = null, code = null;
+  const flushPara = () => { if(para.length){ out.push('<p>' + para.map(inline).join('<br>') + '</p>'); para = []; } };
+  // a numbered item keeps the number the model wrote (value=): a blank line or a nested
+  // bullet ends the <ol>, and the next one would otherwise start again at 1
+  const flushList = () => { if(list){ out.push(`<${list.tag}>` + list.items.map((x,k)=>(list.nums?`<li value="${list.nums[k]}">`:'<li>')+inline(x)+'</li>').join('') + `</${list.tag}>`); list = null; } };
+  const flushTable = () => { if(table){ out.push('<div class="table-wrap"><table>' + table.map((cells,k)=>'<tr>'
+      + cells.map(c=>(k===0?'<th>':'<td>') + inline(c) + (k===0?'</th>':'</td>')).join('') + '</tr>').join('') + '</table></div>'); table = null; } };
+  const flushAll = () => { flushPara(); flushList(); flushTable(); };
+  for(const raw of lines){
+    if(code !== null){
+      if(/^\s*```/.test(raw)){ out.push('<pre>' + markNumbers(code.join('\n'), details) + '</pre>'); code = null; }
+      else code.push(raw);
+      continue;
+    }
+    if(/^\s*```/.test(raw)){ flushAll(); code = []; continue; }
+    const line = raw.replace(/\s+$/,'');
+    let m;
+    if(!line.trim()){ flushAll(); continue; }
+    if(/^\s*\|.*\|\s*$/.test(line)){
+      flushPara(); flushList();
+      const cells = line.trim().replace(/^\|/,'').replace(/\|$/,'').split('|').map(c=>c.trim());
+      if(cells.every(c=>/^:?-{2,}:?$/.test(c))) continue;          // the |---|---| line
+      (table = table || []).push(cells); continue;
+    }
+    flushTable();
+    if((m = line.match(/^\s{0,3}#{1,6}\s+(.*)$/))){ flushPara(); flushList(); out.push('<p class="md-h">' + inline(m[1].replace(/\s*#+\s*$/,'')) + '</p>'); continue; }
+    if(/^\s{0,3}([-*_])(\s*\1){2,}\s*$/.test(line)){ flushPara(); flushList(); out.push('<hr>'); continue; }
+    if((m = line.match(/^\s{0,6}[-*•+]\s+(.*)$/))){ flushPara(); if(!list || list.tag!=='ul'){ flushList(); list = {tag:'ul', items:[]}; } list.items.push(m[1]); continue; }
+    if((m = line.match(/^\s{0,6}(\d{1,3})[.)]\s+(.*)$/))){ flushPara(); if(!list || list.tag!=='ol'){ flushList(); list = {tag:'ol', items:[], nums:[]}; } list.items.push(m[2]); list.nums.push(+m[1]); continue; }
+    if(list && /^\s{2,}\S/.test(raw)){ list.items[list.items.length-1] += ' ' + line.trim(); continue; }
+    flushList(); para.push(line);
+  }
+  if(code !== null) out.push('<pre>' + markNumbers(code.join('\n'), details) + '</pre>');
+  flushAll();
+  return out.join('');
 }
 $('askform').addEventListener('submit', async e => {
   e.preventDefault();
@@ -1127,7 +1218,7 @@ function renderAnswer(r, model){
   if(r.error) return `<div class="err">${esc(r.error)}</div>`;
   const v = r.verification||{unsupported:[],details:[],numbers_in_prose:0};
   let h = '';
-  if(r.final_text) h += `<p class="answer">${markNumbers(r.final_text, v.details)}</p>`;
+  if(r.final_text) h += `<div class="answer">${renderMarkdown(r.final_text, v.details)}</div>`;
   if(r.ended_without_answer) h += `<div class="verdict bad"><b>No answer was produced.</b> The model kept calling tools until the limit and never wrote a conclusion. The tool results below stand on their own.</div>`;
   if(r.api_error) h += `<div class="verdict bad"><b>The cloud request failed:</b> ${esc(r.api_error)}</div>`;
   if((r.refusals||[]).length) h += `<div class="verdict warn"><b>The model declined part of the request.</b></div>`;
@@ -1150,10 +1241,14 @@ function renderAnswer(r, model){
     const named = tools.filter(t=>!t.rejected).map(t=>{ const p = t.params||{};
       return [JSON.stringify(p), setLabel[p.set_id]||'', setLabel[p.set_a]||'', setLabel[p.set_b]||''].join(' '); }).join(' ');
     const sent = privateLabelsIn(named);
+    const covered = (P.permitted||[]).join(', ');
     if(P.private_allowed && sent.length)
-      h += `<div class="verdict cloud"><b>Sent to Anthropic with your permission:</b> tool results for ${esc(sent.join(', '))}.</div>`;
+      h += `<div class="verdict cloud"><b>Sent to Anthropic with your permission:</b> tool results for ${esc(sent.join(', '))}.
+        ${covered?`The permission covered ${esc(covered)} only.`:''}</div>`;
+    else if(P.private_allowed && covered)
+      h += `<div class="verdict cloud">Permission covered ${esc(covered)}, but this answer used test data only.</div>`;
     else if(P.private_allowed)
-      h += `<div class="verdict cloud">Permission for private data was given, but this answer used test data only.</div>`;
+      h += `<div class="verdict cloud">The question involves no private sample, so the permission opened none; the model was offered test data only.</div>`;
     else
       h += `<div class="verdict cloud">Cloud model without permission for private data: it was offered test data only.</div>`;
   }
@@ -1191,7 +1286,8 @@ document.addEventListener('keydown', e => { if(e.key==='Escape') closeAll(); });
 async function showCalls(){
   const r = await get('/api/calls');
   $('drawer-title').textContent = 'Call log';
-  $('drawer-sub').textContent = `Every number on this page came from one of these ${r.calls.length} tool calls.`;
+  $('drawer-sub').textContent = `Every measurement and score on this page came from one of these ${r.calls.length} tool calls. `
+    + `“Reachable here” is worked out from them; chromosome lengths in the diagram are GRCh38's.`;
   $('drawer-body').innerHTML = r.calls.length ? `<table><thead><tr><th>#</th><th>Tool</th><th style="text-align:right">ms</th><th></th></tr></thead><tbody>`
     + r.calls.slice().reverse().map(c=>`<tr><td class="n">${c.id}</td><td>${esc(c.tool)}${c.is_error?' <span style="color:var(--alert)">error</span>':''}
       <div class="muted small">${esc(c.server)}</div></td><td class="n">${fmt(c.ms)}</td>

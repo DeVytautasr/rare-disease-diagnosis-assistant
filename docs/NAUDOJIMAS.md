@@ -73,8 +73,24 @@ Prie mėginio pavadinimo matomas ženkliukas **Test data** arba **Private data**
 | **Private data** | visa, kas užregistruota aiškiai: komandinėje eilutėje (`--dataset`, `--candidates`) arba konfigūracijos failo skiltyse `[datasets]` ir `[candidates]` |
 
 Puslapis visada atsidaro su testiniu mėginiu. Privatus mėginys savaime
-neįkeliamas — tik jį pasirinkus. Kada privatūs duomenys gali palikti kompiuterį,
-aprašyta skyriuje „Asistentas“.
+neįkeliamas — tik jį pasirinkus. Ir tada rodomi **tik suvestiniai skaičiai**:
+kiek jungčių lieka po kiekvieno filtro. Kandidatų sąrašas su pozicijomis
+atsiranda tik paspaudus **Show the … candidates** (iki tol puslapis iš serverio
+pozicijų net negauna). Taip privataus mėginio pozicijos nepamatomos atsitiktinai,
+pvz., sąraše **Sample** paspaudus rodyklės klavišą. Kada privatūs duomenys gali
+palikti kompiuterį, aprašyta skyriuje „Asistentas“.
+
+Viena išimtis — palyginimas su kitu mėginiu (**Drop junctions also found in**).
+Jam serveris sudaro abiejų mėginių filtruotus sąrašus; puslapis ir tada gauna tik
+skaičius, bet tie du kvietimai su pozicijomis lieka žurnale **Call log**. Be to,
+jei palyginimui pasirinktas privatus mėginys, kito mėginio eilutės su žyme
+„also in …“ parodo, kurias jungtis tas privatus mėginys turi bendras — taigi ir
+jo pozicijas (laukelyje **within … bp** nurodyto atstumo tikslumu), nors jo
+paties sąrašas neatvertas.
+
+*Pastaba, 2026-10-02 (Phase 25):* paslėptas privataus mėginio sąrašas, leidimo
+apimtis ir platesnis klausimo patikrinimas (žr. „Asistentas“) pridėti po pirmojo
+bandymo su tikrais duomenimis.
 
 ### 1. Candidates — kandidatų sąrašas
 
@@ -156,6 +172,10 @@ kiekvienam paveikslėliui iš interneto įkelia genomą ir genų takelį. Vienu 
 piešiamas vienas rinkinys: kol jis piešiamas, kiti IGV mygtukai neaktyvūs.
 Paveikslėlius mato tik žmogus — asistentas jų nemato.
 
+Privatiems duomenims prie IGV paveikslėlių parašyta, kad IGV prašo
+`igv.org` tos srities referencinės sekos: srities koordinatės palieka kompiuterį,
+skaitiniai — ne.
+
 ### 3. Ask the assistant
 
 Žr. skyrių „Asistentas“.
@@ -166,10 +186,10 @@ Paveikslėlius mato tik žmogus — asistentas jų nemato.
 
 | Sluoksnis | Ką skaičiuoja | Ką reiškia |
 |---|---|---|
-| **Poriniai skaitiniai** (discordant pairs) | poras, kurių du galai nusėdo ne ten, kur turėtų | rodo, su kuo sujungta |
+| **Poriniai skaitiniai** (discordant pairs) | poras, kurių antras galas nusėdo kitoje chromosomoje | rodo, su kuo sujungta |
 | **Nukirsti skaitiniai** (soft-clipped) | skaitinius, kurių galas „nukerpamas“ toje pačioje vietoje | rodo **tikslią** lūžio vietą |
 | **Perskelti skaitiniai** (split reads) | skaitinius, kurių dalis nusėdo kitur | pats tiesiausias įrodymas |
-| **Skaitymo gylis** (read depth) | ar padaugėjo/sumažėjo medžiagos | rodo iškritas ir dublikacijas |
+| **Skaitymo gylis** (read depth) | ar toje vietoje sumažėjo skaitymo gylis (taškai skiriami tik už kritimą) | rodo iškritas; padaugėjimas (dublikacija) taškų negauna |
 
 Kiekvienas vertinamas atskirai nuo 0 iki 25, iš viso 0–100.
 Vertinimas: **70 ir daugiau — „strong“**, **40 ir daugiau — „moderate“**,
@@ -269,24 +289,33 @@ Debesijos modeliui privatūs duomenys siunčiami **tik jūsų patvirtinimu ir ti
 tam vienam klausimui**:
 
 - Jei klausimas **mini privatų mėginį** arba **turi vietą, perskaitytą iš privačių
-  duomenų** (pvz., ką tik patikrintą koordinatę), po klausimu atsiranda oranžinis
-  langelis, o **Ask** neaktyvus, kol nepažymite **I have permission to send this
-  private data to Anthropic**. Išsiuntus klausimą žymė nuimama: kitam klausimui
-  leidimą reikia pažymėti iš naujo.
+  duomenų, ar šalia jos** (iki 1 000 bazių; atpažįstami užrašai `33700000`,
+  `33,700,000`, `33 700 000`, `33.700.000`, `33.7 Mb`, `33,7 Mb`, `33700 kb`), po
+  klausimu atsiranda oranžinis langelis, o **Ask** neaktyvus, kol nepažymite
+  **I have permission to send this private data to Anthropic**. Išsiuntus klausimą
+  žymė nuimama: kitam klausimui leidimą reikia pažymėti iš naujo.
+  Tikrinamas tik skaičius, ne chromosoma, todėl, įkėlus didelį privatų kandidatų
+  rinkinį, langelis gali atsirasti ir dėl su juo nesusijusio skaičiaus.
+  Neatpažįstama: skaičius, prie kurio be tarpo prirašytos raidės (`33700000bp`),
+  `33.7M`, grupuota kb reikšmė (`33,700 kb`), mokslinis užrašas (`3.37e7`).
 - Nepažymėjus modelis privačių etikečių **net nemato**: jam pasiūlomos tik
-  testinių duomenų etiketės, o įrankio kvietimas su privačia etikete, su iš
-  privataus failo įkelto rinkinio identifikatoriumi arba su tiesiogiai nurodytu
-  failo keliu atmetamas dar prieš jį vykdant (atsakyme — **Blocked to protect
-  private data**). Serveris klausimo
+  testinių duomenų etiketės, o įrankio kvietimas su privačia etikete arba su iš
+  privataus failo įkelto rinkinio identifikatoriumi atmetamas dar prieš jį
+  vykdant (atsakyme — **Blocked to protect private data**). Serveris klausimo
   tekstą tikrina dar kartą, todėl, net ir apėjus puslapį, toks klausimas
   neišsiunčiamas.
-- Pažymėjus atsakyme parašoma, kas išsiųsta: **Sent to Anthropic with your
-  permission: tool results for …**. Leidimas galioja visam klausimui, ne vienam
-  mėginiui: tam klausimui modeliui pasiūlomos **visos** privačios etiketės, ne tik
-  paminėtos klausime.
+- Failo kelias vietoje etiketės (taip pat ir neįtraukiamų sričių failo kelias)
+  atmetamas **bet kuriam** modeliui, ir vietiniam: duomenys pasiekiami tik per
+  etiketes.
+- Leidimas apima **tik tuos privačius mėginius, kuriuos klausimas mini arba
+  kurių pozicijas jis turi** — tuos pačius, kuriuos įvardija oranžinis langelis.
+  Kitų privačių mėginių modelis nemato, o jų kvietimai atmetami.
+- Pažymėjus atsakyme parašoma, kas išsiųsta ir ką leidimas apėmė: **Sent to
+  Anthropic with your permission: tool results for …**.
 
 Siųskite privačius duomenis tik turėdami duomenų savininko leidimą. Vietiniams
-modeliams šie apribojimai netaikomi — duomenys lieka kompiuteryje.
+modeliams šie apribojimai, išskyrus failo kelio atmetimą, netaikomi — duomenys
+lieka kompiuteryje.
 
 **Genų paieška** (`gene_at_locus`) siunčia chromosomą ir poziciją į Ensembl
 (`rest.ensembl.org`) — ir naudojant vietinį modelį. Tokie kvietimai pažymėti

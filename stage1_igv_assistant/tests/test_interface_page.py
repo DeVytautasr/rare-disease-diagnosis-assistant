@@ -146,19 +146,21 @@ def fake_run_turn(model, message, tools, tool_names, exec_fn, **kw):
 
 def main():
     with tempfile.TemporaryDirectory() as d:
-        bam_pub, bam_priv = os.path.join(d, "pub.bam"), os.path.join(d, "priv.bam")
-        write_bam(bam_pub)
-        write_bam(bam_priv)
-        vcf_pub, vcf_priv = os.path.join(d, "pub.vcf"), os.path.join(d, "priv.vcf")
-        # PUB and PRIV share one junction (within 500 bp) and differ in two
+        bam_pub, bam_priv, bam_priv2 = (os.path.join(d, f) for f in ("pub.bam", "priv.bam", "privb.bam"))
+        for b in (bam_pub, bam_priv, bam_priv2):
+            write_bam(b)
+        vcf_pub, vcf_priv, vcf_priv2 = (os.path.join(d, f) for f in ("pub.vcf", "priv.vcf", "privb.vcf"))
+        # PUB and PRIV share one junction (within 500 bp) and differ in two; PRIV2 is a
+        # second private sample, far from both, for the scope of a permission
         write_vcf(vcf_pub, [("a1", 10000, 10500), ("a2", 20000, 21000), ("a3", 30000, 30600)])
         write_vcf(vcf_priv, [("b1", 10050, 10520), ("b2", 25000, 26000), ("b3", 33000, 34000)])
+        write_vcf(vcf_priv2, [("c1", 60000, 61000), ("c2", 70000, 71000)])
 
         saved = (dict(ui.DATASETS), dict(ui.CANDIDATE_FILES), {k: set(v) for k, v in ui.PUBLIC_LABELS.items()},
                  ui.API_KEY, ui.probe_ollama, chatmod.run_turn_api, chatmod.run_turn, ui.PAGE_FILE)
         ui.DATASETS.clear(); ui.CANDIDATE_FILES.clear()
-        ui.DATASETS.update({"PUB": bam_pub, "PRIV": bam_priv})
-        ui.CANDIDATE_FILES.update({"PUB": vcf_pub, "PRIV": vcf_priv})
+        ui.DATASETS.update({"PUB": bam_pub, "PRIV": bam_priv, "PRIV2": bam_priv2})
+        ui.CANDIDATE_FILES.update({"PUB": vcf_pub, "PRIV": vcf_priv, "PRIV2": vcf_priv2})
         ui.PUBLIC_LABELS["datasets"] = {"PUB"}
         ui.PUBLIC_LABELS["candidates"] = {"PUB"}
         ui._CHAT_TOOLS.clear()
@@ -279,8 +281,9 @@ def run(S, d):
     # a private file loaded under a public-looking label is still private
     from stage1_igv_assistant.tools import vcf_tools
     disguised = vcf_tools.load_candidate_set(ui.CANDIDATE_FILES["PRIV"], "PUB")["set_id"]
-    check("a private file loaded under a public label still counts as private",
-          ui._private_hits({"set_id": disguised}) == ["PUB"] and ui._set_is_private(vcf_tools._SETS[disguised]))
+    check("a private file loaded under a public label still counts as private, named by its sample",
+          ui._private_hits({"set_id": disguised}) == ["PRIV"] and ui._set_is_private(vcf_tools._SETS[disguised]),
+          str(ui._private_hits({"set_id": disguised})))
     check("control: the public file under its own label does not", not ui._set_is_private(vcf_tools._SETS[pub_set]))
     del vcf_tools._SETS[disguised]          # keep the rest of the test about PUB and PRIV only
 
@@ -312,12 +315,33 @@ def run(S, d):
                                      "allow_private_cloud": "true"})
     check("permission must be the literal true: the string 'true' does not count",
           (r.get("privacy") or {}).get("private_allowed") is False and "PRIV" not in SEEN.get("offered", set()))
+    # permission covers the private samples the question involves, and no others
     SEEN.clear()
-    r = S.json("POST", "/api/chat", {"model": "claude-sonnet-5", "message": "How strong is the evidence?",
-                                     "allow_private_cloud": True})
-    priv_runs = [c for c in ui.RECORDER.calls[n_before:] if (c.get("params") or {}).get("bam_path") == ui.DATASETS["PRIV"]]
-    check("with permission the private label is offered", "PRIV" in SEEN.get("offered", set()))
-    check("with permission the private call runs", len(priv_runs) >= 1 and not (r.get("privacy") or {}).get("blocked"))
+    SCRIPT[:] = [("breakpoint_evidence_summary", {"dataset": "PRIV", "chromosome": "chr1", "position": 10000}),
+                 ("breakpoint_evidence_summary", {"dataset": "PRIV2", "chromosome": "chr1", "position": 10000})]
+    r = S.json("POST", "/api/chat", {"model": "claude-sonnet-5", "allow_private_cloud": True,
+                                     "message": "In dataset PRIV, how strong is the evidence?"})
+    runs_on = lambda lbl: [c for c in ui.RECORDER.calls[n_before:]
+                           if (c.get("params") or {}).get("bam_path") == ui.DATASETS[lbl]]
+    blocked = {(x["tool"], tuple(x["labels"])) for x in (r.get("privacy") or {}).get("blocked", [])}
+    check("with permission the private sample the question names is offered, and only that one",
+          "PRIV" in SEEN.get("offered", set()) and "PRIV2" not in SEEN.get("offered", set()), str(SEEN.get("offered")))
+    check("... its call runs", len(runs_on("PRIV")) >= 1)
+    check("... a call on another private sample is blocked and never runs",
+          ("breakpoint_evidence_summary", ("PRIV2",)) in blocked and not runs_on("PRIV2"), str(blocked))
+    check("... and the answer records what the permission covered",
+          (r.get("privacy") or {}).get("permitted") == ["PRIV"], str(r.get("privacy")))
+    n_before = len(ui.RECORDER.calls)
+    SEEN.clear()
+    r = S.json("POST", "/api/chat", {"model": "claude-sonnet-5", "allow_private_cloud": True,
+                                     "message": "How strong is the evidence?"})
+    blocked = {(x["tool"], tuple(x["labels"])) for x in (r.get("privacy") or {}).get("blocked", [])}
+    check("permission given for a question that involves no private sample opens none",
+          "PRIV" not in SEEN.get("offered", set()) and ("breakpoint_evidence_summary", ("PRIV",)) in blocked
+          and not runs_on("PRIV"), str(blocked))
+    SCRIPT[:] = [("breakpoint_evidence_summary", {"dataset": "PRIV", "chromosome": "chr1", "position": 10000}),
+                 ("breakpoint_evidence_summary", {"dataset": "PUB", "chromosome": "chr1", "position": 10000}),
+                 ("list_candidates", {"set_id": priv_set})]
 
     n_before = len(ui.RECORDER.calls)
     r = S.json("POST", "/api/chat", {"model": "qwen2.5:7b", "message": "How strong is the evidence?"})
@@ -369,8 +393,8 @@ def run(S, d):
     probe = S.json("POST", "/api/privacy_check", {"message": "Which gene lies at chr1:20000?"})
     check("... and its positions are not treated as private", probe == {"labels": [], "positions": []}, str(probe))
     mine = vcf_tools.load_candidate_set(ui.CANDIDATE_FILES["PRIV"], "PRIV_calls")["set_id"]
-    check("control: a private file under a label of the model's own choosing is still private",
-          ui._private_hits({"set_id": mine}) == ["PRIV_calls"], str(ui._private_hits({"set_id": mine})))
+    check("control: a private file under a label of the model's own choosing is still private, named by its sample",
+          ui._private_hits({"set_id": mine}) == ["PRIV"], str(ui._private_hits({"set_id": mine})))
     alias = vcf_tools.load_candidate_set(ui.CANDIDATE_FILES["PUB"], "PRIV")["set_id"]
     check("a set loaded under a registered private label is private whatever its file",
           ui._private_hits({"set_id": alias}) == ["PRIV"], str(ui._private_hits({"set_id": alias})))
@@ -388,7 +412,15 @@ def run(S, d):
     check("a longer word that merely starts with the name is not flagged", probe.get("labels") == [], str(probe))
     probe = S.json("POST", "/api/privacy_check", {"message": "Which gene lies at chr1:33,000?"})
     check("a position from a private candidate list is flagged with its sample",
-          probe.get("positions") == [{"position": 33000, "labels": ["PRIV"]}], str(probe))
+          probe.get("positions") == [{"written": "33,000", "labels": ["PRIV"]}], str(probe))
+    for q, written in (("chr1:33 000", "33 000"), ("chr1:33.000", "33.000"), ("chr1:33001", "33001"),
+                       ("chr1:32,400", "32,400"), ("0.033 Mb", "0.033 Mb"), ("33 kb", "33 kb"), ("33,4 kb", "33,4 kb")):
+        probe = S.json("POST", "/api/privacy_check", {"message": f"Which gene lies at {q}?"})
+        check(f"... also written as {q!r} (any digit grouping, within {ui.NEAR_BP} bp, or inside a Mb/kb rounding)",
+              probe.get("positions") == [{"written": written, "labels": ["PRIV"]}], str(probe))
+    for q in ("chr1:36,500", "0.04 Mb", "within 500 bp"):
+        probe = S.json("POST", "/api/privacy_check", {"message": f"What is at {q}?"})
+        check(f"control: {q!r} is not near any private position", probe.get("positions") == [], str(probe))
     probe = S.json("POST", "/api/privacy_check", {"message": "Which gene lies at chr1:20000?"})
     check("a position only in test data is not flagged", probe == {"labels": [], "positions": []}, str(probe))
     SEEN.clear()
@@ -402,7 +434,54 @@ def run(S, d):
     S.json("POST", "/api/assess", {"bam_label": "PRIV", "chromosome": "chr1", "position": 18888})
     probe = S.json("POST", "/api/privacy_check", {"message": "what about chr1:18,888"})
     check("a position checked by hand in a private read file is flagged",
-          probe.get("positions") == [{"position": 18888, "labels": ["PRIV"]}], str(probe))
+          probe.get("positions") == [{"written": "18,888", "labels": ["PRIV"]}], str(probe))
+
+    # a file named by its path is refused for every model, not only for a cloud one
+    print("\nfile paths")
+    n_before = len(ui.RECORDER.calls)
+    SCRIPT[:] = [("breakpoint_evidence_summary", {"bam_path": ui.DATASETS["PUB"], "chromosome": "chr1", "position": 10000})]
+    r = S.json("POST", "/api/chat", {"model": "qwen2.5:7b", "message": "How strong is the evidence?"})
+    ev = (r.get("events") or [{}])[0]
+    check("a model on this computer that names a file by its path is refused, and nothing runs",
+          ev.get("rejected") and "file path is not accepted" in json.dumps(ev.get("result"))
+          and len(ui.RECORDER.calls) == n_before, str(ev)[:200])
+    SCRIPT[:] = [("breakpoint_evidence_summary", {"dataset": "PUB", "chromosome": "chr1", "position": 10000})]
+    r = S.json("POST", "/api/chat", {"model": "qwen2.5:7b", "message": "How strong is the evidence?"})
+    check("control: the same call by label runs", len(ui.RECORDER.calls) > n_before)
+    # mask_path is a path argument too: the schemas offer exclude_masked in its place,
+    # but resolve_args passes a mask file the model names straight to the tool (found
+    # when the Phase 25 patch was applied; FIGURE_MAP O)
+    for model, where in (("qwen2.5:7b", "on this computer"), ("claude-sonnet-5", "in the cloud")):
+        n_before = len(ui.RECORDER.calls)
+        SCRIPT[:] = [("list_candidates", {"set_id": pub_set, "mask_path": ui.CANDIDATE_FILES["PRIV"]})]
+        r = S.json("POST", "/api/chat", {"model": model, "message": "List the candidates."})
+        ev = (r.get("events") or [{}])[0]
+        check(f"a model {where} that names a mask file by its path is refused, and nothing runs",
+              ev.get("rejected") and "file path is not accepted" in json.dumps(ev.get("result"))
+              and len(ui.RECORDER.calls) == n_before, str(ev)[:200])
+    SCRIPT[:] = [("list_candidates", {"set_id": pub_set, "exclude_masked": True})]
+    n_before = len(ui.RECORDER.calls)
+    r = S.json("POST", "/api/chat", {"model": "qwen2.5:7b", "message": "List the candidates."})
+    check("control: asking for the exclude regions with exclude_masked runs",
+          len(ui.RECORDER.calls) > n_before and not (r.get("events") or [{}])[0].get("rejected"))
+    SCRIPT[:] = []
+
+    # ── 5b. a private sample's list: counts only until the person asks ──────
+    print("\ncounts only")
+    full = S.json("POST", "/api/funnel", {"set_id": priv_set, "limit": 100})
+    counts = S.json("POST", "/api/funnel", {"set_id": priv_set, "limit": 100, "counts_only": True})
+    fr, cr = full.get("result") or {}, counts.get("result") or {}
+    check("control: the full funnel lists the private sample's candidates", len(fr.get("candidates") or []) == 3)
+    check("counts only returns no candidate, and every count unchanged",
+          cr.get("candidates") == [] and cr.get("total_matching") == fr.get("total_matching") == 3
+          and [x["surviving_after_this_step"] for x in cr.get("filters_applied", [])]
+          == [x["surviving_after_this_step"] for x in fr.get("filters_applied", [])], str(cr)[:200])
+    rec = next(c for c in ui.RECORDER.calls if c["id"] == counts.get("call"))
+    check("... and the recorded call holds no position either",
+          not (rec.get("result") or {}).get("candidates") and "pos1" not in json.dumps(rec.get("result")))
+    check("counts only must be the literal true",
+          len(((S.json("POST", "/api/funnel", {"set_id": priv_set, "limit": 100, "counts_only": "yes"})
+                .get("result") or {}).get("candidates")) or []) == 3)
 
     # ── 6. comparison ids ───────────────────────────────────────────────────
     print("\ncomparison ids")
@@ -418,6 +497,28 @@ def run(S, d):
     junction_at = {j.candidate_id: (j.pos1, j.pos2) for j in vcf_tools._SETS[pub_set]["junctions"]}
     check("the recurrent one is the junction both files share", [junction_at[i] for i in rec] == [(10500, 10000)],
           str([junction_at[i] for i in rec]))
+
+    # ── 6a. the comparison's reply to the new page carries no position ──────
+    # Found when the Phase 25 patch was applied (FIGURE_MAP O): with a comparison chosen,
+    # the reply listed up to ten example junctions per sample, so the positions of a
+    # private sample whose list was still hidden reached the page. The new page marks
+    # survivors by id and never showed the examples; it now asks for none.
+    print("\ncomparison examples")
+    by_default = S.json("POST", "/api/compare", {"label_a": "PRIV", "label_b": "PUB"})
+    for_page = S.json("POST", "/api/compare", {"label_a": "PRIV", "label_b": "PUB", "examples": False})
+    da, pa = ((x.get("survivor_effect") or {}).get("a") or {} for x in (by_default, for_page))
+    check("control: by default the reply lists example junctions with their positions (the previous page shows them)",
+          len(da.get("unique_examples") or []) == 2 and '"pos1"' in json.dumps(by_default), str(da)[:200])
+    check("asked for no examples, the reply carries no position of either sample",
+          for_page.get("survivor_effect") and not re.search(r'"pos[12]?"|"position"', json.dumps(for_page)),
+          str(re.findall(r'"pos[12]?": \d+', json.dumps(for_page))[:4]))
+    same = lambda x: {k: v for k, v in x.items() if k not in ("unique_examples", "call")}
+    check("... and the same counts and ids", bool(pa) and same(pa) == same(da) and pa.get("unique") == 2, str(pa)[:200])
+    check("examples are left out only for the literal false",
+          len((((S.json("POST", "/api/compare", {"label_a": "PRIV", "label_b": "PUB", "examples": "no"})
+                 .get("survivor_effect") or {}).get("a") or {}).get("unique_examples")) or []) == 2)
+    check("the new page asks the comparison for no examples",
+          bool(re.search(r"post\('/api/compare',\s*\{[^}]*examples:\s*false", S.raw("GET", "/"))))
 
     # ── 6b. the startup self-test leaves nothing behind ─────────────────────
     # ui.main() runs verify_minimal() before serving. Its fixture candidate set stayed

@@ -867,3 +867,155 @@ Each was first shown as a failing check on the as-patched code (`PC` `new_test.b
    `twoBitURL`); the reads do not leave.
 8. The local `demo_bundle/` (built 25 September, not tracked) has no `[test_data]` section, so
    its two samples would show as "Private data" until `make_demo_bundle.py` is run again.
+
+## O. Phase 25 — blinding, permission scope, thesis v4, 2026-10-02
+
+The second interface patch was applied and checked on public data, the two patient samples were
+registered once more (aggregate counts only), the thesis v4 was copied in and diffed against
+HEAD's copy, and the demo guide v3 was read. `PC25` = `results/phase25_checks_2026-10-02.json`,
+`WT25` = `results/interface_walkthrough_2026-10-02_phase25.json`, `WT24` =
+`results/interface_walkthrough_2026-10-02.json`, `SU25` = `results/suites_2026-10-02_phase25.json`,
+`DR29` = `results/demo_dry_run_2026-09-29.json`, `PR` = `results/patient_rerun_2026-09.json`.
+PRIVTEST is the PUBLIC read file and call set of implant IMP09 registered under an explicit label
+(which is what makes a sample private); PUB, PRIV and PRIV2 are the synthetic fixture of
+`tests/test_interface_page.py`. Logs are outside the repository, under
+`~/public_data/sim/logs/phase25_2026-10-02/`. `PC25` `code_state` gives the sha256 of the files
+every check ran on; they are the files committed with this section. Line numbers are those of
+the committed files.
+
+| # | Claim | Evidence | Status |
+|---|---|---|---|
+| O1 | Blinding: choosing a private sample shows its counts only, and its list only after **Show the N candidates**; until then the page asks `/api/funnel` with `counts_only: true`, and the question that would list the candidates is suggested only once the list is shown | `ui.py:752`–`757` (`limit` 1, `offset` 2,147,483,647); `ui_page.html:560`–`566`, `644`–`645`, `1056`. Test "counts only", 4 checks: no candidate and every count unchanged, the recorded call holds no position, only the literal `true` counts. `WT25` step 8: PRIVTEST chosen → "27 candidates to review", no row, every `list_candidates` call it made with that offset, then the button lists the rows. Probes (`PC25` `scratch_probes` 1 and 3): chosen with the arrow keys, 0 of PRIVTEST's 1,694 positions anywhere on the page; neither `/api/load` nor the counts-only reply, nor their recorded calls, holds a position; the list question is not among the suggestions. Patient samples: O13 | agrees for choosing a sample and changing its filters. A comparison is the exception for the call log (O.4, 1); its reply carried example positions until P2 |
+| O2 | The permission covers only the private samples the question names or whose positions it contains; the model is offered the test-data labels and those; a call on another private sample is refused before it runs; a set is named by the registered label of its file; the answer records `privacy.permitted` | `ui.py:912`–`945` (`involved`, `permitted`, `guarded_exec`), `:503` (`_visible`), `:547` (`_set_names`). Test, 5 checks (the named sample is offered and only that one; its call runs; a call on another private sample is blocked and never runs; `permitted` is recorded; a permission given for a question with no private sample opens none) and the two "named by its sample" checks. Probe 4: with permission for PRIV the model loads PRIV's list under a label of its own and lists it, while PRIV2 is refused twice. `WT25`: "Sent to Anthropic with your permission: tool results for PRIVTEST. The permission covered PRIVTEST only." Probe 6 (the reply stubbed in the browser): the four permission lines | agrees. A position near another private sample's brings that sample into the scope, on any chromosome (O.4, 3) |
+| O3 | The question check catches any digit grouping, positions within `NEAR_BP` (1,000 bp) of a private one, and Mb/kb values whose rounding interval holds one | `ui.py:583`–`587`, `:629`–`662`. Test: 7 forms flagged, 3 controls not. Probe 2, PRIVTEST's list loaded (894 junctions, 1,694 positions), one private position written 39 ways: 27 flagged — plain, with commas, spaces, dots, apostrophes, no-break, thin and narrow spaces or underscores; 999 bp either side; in a locus or a range; before a full stop, a comma, a bracket or a question mark; followed by " bp"; in Mb to one, two or three decimals, with a decimal comma, without a space, as "Mbp"; in kb as an integer or to one decimal. Seven controls (a far position three ways, "500 bp", "0.75", "2026", "36.4%") not flagged | agrees for the forms it states; 12 forms are not recognised and unrelated numbers are flagged (O.4, 3 and 4) |
+| O4 | Wording: discordant pairs "read pairs whose mate maps to another chromosome"; read depth "coverage dip around the position"; the call log's subtitle no longer says every number came from a call | `ui_page.html:451`, `:454`, `:1289`–`1290`; probe 3b reads them from the running page: "Every measurement and score on this page came from one of these N tool calls. “Reachable here” is worked out from them; chromosome lengths in the diagram are GRCh38's."; `WT25` screenshots 02 and 12 | agrees |
+| O5 | `_chat_exec` refuses a path argument for every model, local ones included | `ui.py:665`–`683`. Test "file paths": a model on this computer that names a read file by its path is refused and nothing runs; the same call by label runs | agrees after P1: `mask_path` was not among the refused arguments |
+| O6 | For private reads the evidence panel and the IGV block say what leaves the computer | `ui_page.html:888`–`889`, `:922`–`924`; probe 3b on PRIVTEST: "Private data: IGV images ask igv.org for this region's reference sequence, and a gene lookup sends the position to Ensembl. No reads leave this computer." and "PRIVTEST is private data. IGV asks igv.org for the reference sequence of this region, so its coordinates leave this computer; no reads do."; neither for test data. IGV's hg38 descriptor (igv.org/genomes/legacy/json/hg38.json, read 2026-10-02) gives `fastaURL` and `twoBitURL` under igv.org; the gene track is fetched whole from UCSC | agrees |
+| O7 | Answers are rendered as Markdown from the raw text; every piece is escaped and number-marked; nothing the model wrote is inserted as HTML; a number before a full stop or a unit is marked | `ui_page.html:1070`–`1126`, `:1221`. Probe 3: `<img onerror>`, `<script>`, `<u>` and a `javascript:` link written in the text create no element and no script runs; headings, lists, tables, code and rules are drawn; "36.7x" and "40." are marked when 36.7 and 40 are among the checked numbers. `WT25` step 9 and screenshots 06, 08, 09 (three real answers) | agrees after P3 and P4. A number written against a unit is marked only if the check extracted the same number elsewhere: the check itself never examines it (O.4, 5) |
+| O8 | A sample switch or filter change overtaken by a newer one is dropped | `ui_page.html:511`, `:535`, `:564`, `:567`, `:578`. Probe 5: the reply to the first sample's `/api/load` was held back until the second sample had been drawn, then released — sample, heading, set and 29 rows unchanged; the same with an overtaken filter value | agrees |
+| O9 | the patch: `phase25_interface.patch`, sha256 10b1715f…c4e36d7b, made against `88996f6`; 6 files, +358 −102; no protected file; nothing under `docs/thesis/` | preconditions: clean tree, `HEAD` = `origin/main` = `88996f6` (the local ref and GitHub), the three sha256 as stated, `guard_protected.py` exit 0; `git apply --check` and `git apply` exit 0; `git apply --stat` (6 files, 358 / 102); the whole diff was read, and the changed code in its place; `PC25` `patch` | applied; P1–P6 on top of it (O.2) |
+| O10 | the tests | `tests/test_interface_page.py` as patched: 82 checks, all pass. With the 8 checks added in O.2: 86 pass and 4 fail on the as-patched code, 90 of 90 after the fixes and on the committed files (`PC25` `interface_test`). Every suite with the census, `SU25` (run on the committed files, after P6; a first run before P6 gave the same counts): 27 suites, 27 passed, 0 failed, 0 incomplete; 849 assertions held, 0 failed, 0 NOT RUN lines. Against `suites_2026-10-02.json` (822) only `test_interface_page.py` differs, 63 → 90; no suite changed status | pass |
+| O11 | the click-through, public data only | `scripts/interface_walkthrough.py --cloud`, same setup as N3 (headless Chromium; IGV's Java, `DISPLAY=:0`, PRIVTEST registered explicitly; stopped by PID): 24 of 24 checks, the 21 of the patch and 3 added (P5); a rehearsal without IGV and without `--cloud`, 19 of 19. `WT25`: opens on IMP01, "Test data"; 896 → 515 → 157 → 29 → 29 → 29; chr20:200,000 ↔ chr21:14,100,001, both ends 40 moderate; IGV 145 s, 4 images, none failed; IMP09 chr20:33,700,000 typed in, 22.5 weak; qwen2.5:7b: 7 tool calls, 1 malformed, "17 numbers checked — every one was returned by a tool in this answer" (it reported 32.5, weak: a tool return, so from a call with other parameters than the page's own, which shows 40); the permission box for a question naming PRIVTEST and for a position read from it; that question posted without permission refused ("Not sent: this question contains a position read from private data (PRIVTEST). …") before any model ran. Two questions to claude-sonnet-5: test data, "24.6 s · 5 model turns · 2,333 tokens written · cost $0.063", "31 numbers checked — every one was returned by a tool in this answer", "Cloud model without permission for private data: it was offered test data only."; PRIVTEST with permission, "43.9 s · 5 model turns · 4,158 tokens written · cost $0.089", "35 numbers checked — …", "Sent to Anthropic with your permission: tool results for PRIVTEST. The permission covered PRIVTEST only.", the box unticked afterwards. Step 8 as in O1; with IMP01 chosen as the comparison while the list was hidden, "0 candidates to review" (all 27 are also in IMP01), still no row, and no position in the reply. 12 screenshots, `screenshots/interface_2026-10-02_phase25/`, each looked at | pass. Both cost lines are in the record |
+| O12 | the demo dry run | `scripts/demo_dry_run.py run` (`record` not run; `DR29` unchanged); attempt 3, `PC25` `dry_run`. `routes_called_by_page`: all nine true (page 91,641 bytes). Against `DR29`: step 1 same labels, 918 / 896 / 22, same hand-entry note, five of six limits headings the same and the sixth as Phase 24 changed it; step 2 same chain (515, 157, 29, 29, 29); step 3 CAND_52179e966345, both ends 40.0 moderate, 57.5, every shown value the same; step 4 44 = 44 and 40.0 = 40.0; step 5 IMP09 chr20:33,700,000 22.5 weak (7.5, 0, 0, 15), 36.4 % below MAPQ 20, every shown value the same; step 6 four images in 134 s, no error (29 September: three, one timed out; 378 s), three byte-identical to the committed panels; step 7 qwen2.5:7b answered "moderate, … 40.0/100", 7 calls (1 rejected), 15 numbers, none unsupported. No failure; stopped by PID; the four no-patient-data checks hold, controls caught | agrees |
+| O13 | the patient check, aggregate only | `PC25` `patient_check`. `--check` with the four files registered (the demo guide's command as written): exit 0, 11 + 4 tools, tiers derived from the source, 15 datasets and 15 candidate files, 11 check lines pass and none fails with IGV's Java on PATH (in a plain shell "[ ] FULL" and one failing line, as the guide says). Interface with `ANTHROPIC_BASE_URL` on a closed port, curl only: SAMPLE_A and SAMPLE_B private (read files and candidate sets), the 13 + 13 autodiscovered labels public; `/api/load` 30,980 / 30,596 / 384 and 32,451 / 32,041 / 410; one `/api/funnel` call per sample with `{"svtype": "BND", "filter_pass": true, "min_pe": 3, "min_sr": 1, "primary_only": true, "use_mask": true, "limit": 2000, "counts_only": true}`, `result.candidates == []` asserted in code before anything was printed: 30,596 → 9,172 → 896 → 664 → 57 → 57 → 57 and 32,041 → 9,655 → 923 → 642 → 63 → 63 → 63, both equal to `PR` `funnel`; in `/api/calls` (fields other than `result`) both `list_candidates` calls have `offset` 2147483647 and `limit` 1; `/api/privacy_check` on "In dataset SAMPLE_A, how strong is the evidence?" → labels [SAMPLE_A], positions []; `/api/chat` with claude-sonnet-5 and no permission → "Not sent: this question names private data (SAMPLE_A). …", no events. The session's call log: 4 calls, two `load_candidate_set` and two `list_candidates`. **No patient candidate was opened, no patient coordinate was seen, and nothing reached any API**: no candidate, assess, igv or compare call on either sample, the two funnel calls counts only, no browser while they were registered, no message with a number, no identifier-list entry in any log of the step (the scan's control caught) | agrees |
+| O14 | the local demo bundle (not tracked, not committed) | `demo_bundle/sv-assistant.conf`: `[test_data]` with `labels = DEMO_CLEAN, DEMO_REPEAT` appended. `/api/bootstrap` with `SV_CONFIG` on that file: before, both labels "private" (read files and candidate sets); after, both "public" (`PC25` `demo_bundle`) | done |
+| O15 | the thesis v4: `Rimas_MSc_Thesis_2026-10-02_v4.docx`, sha256 2302c821…c4aaeb8, copied over `docs/thesis/Rimas_MSc_Thesis.docx` | against HEAD's copy (v3, ce2d3288…d8832267) only `word/document.xml` and `docProps/core.xml` differ; comments, footnotes, endnotes and footers are byte-identical. Every paragraph, table cells included (529 → 530): three differing blocks and no other — the title-page date ("30 September" → "2 October 2026"); in "The Instrument" the network sentence, the recorder paragraph's link and log sentence and one inserted paragraph (three steps, test and private data, the hidden list); the assistant paragraph (labels, the refusal of a path, the scope of the confirmation). Against the code: the two frontier models are offered only with a key (`ui.py` `CLOUD_MODELS`, `/api/chat_models`); each layer count, the combined score and the mapping-quality line link to their call (`ui_page.html` `src(L.call…)`, `src(Sm.call…)`, `src(E.stats.call…)`) and the call log lists every call; test and private data (`ui.py` `discover_public`, `PUBLIC_LABELS`; `config.test_data_labels`); the hidden list O1; label, path, confirmation and scope O2, O5. `docs/thesis/README.md` now names v4 and this section | as expected; no other difference. Three clauses do not hold without qualification (O.4, 1, 3 and 5) |
+| O16 | the demo guide v3 (read only) | O.3 | 5 flags, 2 notes |
+| O17 | the documentation | the patch's README and NAUDOJIMAS changes against the code, and the English labels they quote against the page (every label NAUDOJIMAS prints in bold in its part on the page is in `ui_page.html` or built there from parts). Corrected, both files: the position check compares the number alone, not the chromosome, and the forms it does not recognise are named (NAUDOJIMAS said "bet kaip užrašytą", written in any way); a mask file's path is refused too (P1); "until then the page receives counts only" → the page is sent counts and no position, the comparison's two listing calls are in the call log, and rows marked "also in …" are the junctions a private comparison sample shares; NAUDOJIMAS: local models are exempt from the restrictions "except the refusal of a path". Left: the note "after the first run with real data" (it means Phase 24's registration check, aggregate only) | fixed |
+
+### O.2 Fixes made on top of the patch
+
+P1–P4 were each first shown failing on the as-patched code (`PC25` `interface_test`,
+`scratch_probes`), P6 by the identifier gate; none changes a label or the layout.
+
+| # | Fix | Why | Where |
+|---|---|---|---|
+| P1 | a mask file named by its path is refused for every model, like the other path arguments | `chat._PATH_PARAMS` holds `bam_path`, `bam_paths` and `path`. `mask_path`, which the schemas replace by `exclude_masked`, went through `resolve_args` to the tool, which opened whatever file the model named as its mask — in the probe a private candidate file, for a cloud model without permission (the error returned quoted one field of it) | `ui.py:680`; test "file paths", 3 checks |
+| P2 | the comparison's reply to the new page carries no example position | `/api/compare` returned up to ten example junctions per sample with their positions. The new page never showed them, but with a comparison chosen it received those of a private sample whose list was still hidden, against "until then the page asks only for counts" | `ui.py:858`–`863`, `:880` (`examples`); `ui_page.html:577` (`examples:false`); test "comparison examples", 5 checks; the walkthrough's check at `interface_walkthrough.py:264`. The previous page (`/classic`) still asks for and shows the examples |
+| P3 | a numbered list keeps the numbers the model wrote | a blank line or a nested bullet ends the `<ol>`, and each new one began again at 1: a list written 1., 2., 3. with blank lines between was shown as 1., 1., 1., and one starting at 3 as 1., 2. | `ui_page.html:1093`–`1095`, `:1119` (`<li value>`); `interface_walkthrough.py:286`; probe 3 before and after |
+| P4 | the 39 inside `&#39;` is not marked as a number | `esc()` writes an apostrophe as `&#39;`; with 39 among an answer's checked numbers every apostrophe was shown as "&#39;". Inherited from the Phase 24 page, in the line this patch rewrote | `ui_page.html:1074`–`1076`; `interface_walkthrough.py:288`; probe 3 before and after |
+| P5 | three checks added to the click-through: a comparison chosen while the list is hidden, as the demonstration does; a numbered list across blank lines; an apostrophe beside a checked 39, and HTML written by the model | P2, P3 and P4 can be checked only in a browser | `interface_walkthrough.py:253`–`290` |
+| P6 | the test's second private fixture is written to `privb.bam` and `privb.vcf` (its label stays PRIV2) | the patch named the two files after the label in lower case, its digit included. A sample-file name holding a digit has the shape of an identifier, and the identifier gate refused the staged test for it (rule ID-sample, exit 1; exit 0 after the change) — as it then refused this row and the record while they quoted the old names. The interface test and every suite were then run again | `tests/test_interface_page.py:149`, `:152` |
+
+### O.3 The demo guide v3
+
+`demonstracijai/Demonstracija_kaip_parodyti_2026-10-02_v3.docx` (59c36003…1a33d8823), read only,
+with `paleidimo_komandos.txt` and `klausimas_modeliui.txt`, against `ui_page.html`, `WT24`,
+`WT25`, `DR29`, `PR` `funnel` and `synthetic_control_2026-09/implants_ground_truth.json`.
+Matching: every page label it names (Candidates, Evidence, Ask the assistant; Sample, Test data,
+Private data; the four status pills; Type, Any type, Translocation (BND), the five other filter
+labels, Drop junctions also found in, within 500 bp; How the filters narrow the list; set by
+the tool, author's choice, reference file; Review, Show IGV images, Go to the images, the four
+view names; source, Call log, Limits; Reads from, Check position, Typed in by hand; reachable
+here; Ask the assistant about this position, Ask, Raw result, "… numbers checked", Claude
+Sonnet 5; "Show the 57 candidates" and "Show the 17 candidates" as the button builds them;
+"SAMPLE_A is private data, so its list is hidden until you ask for it."; "Not found in
+SAMPLE_B"; "Also show the 40 found in SAMPLE_B"; the permission label; "Sent to Anthropic with
+your permission: tool results for SAMPLE_A. The permission covered SAMPLE_A only." as the page
+builds it; Model settings, Thinking mode, Context length; "Local models: off", "Cloud: no
+key"; `--port`, `/classic`); the `--check` lines and "datasets: 15   candidate files: 15" (O13;
+the commands as written, tilde paths included, run); the colours it names (blue note, orange
+box and note, green and red marks); 918 and 896; 896 → 515 → 157 → 29 → 29 → 29, "−358 (−527
+alone)"; the IMP01 row (BND, 25, 6); 40 = 7.5 + 25 + 7.5 + 0 at both ends, 57.5 below 70; 44
+pairs in ±500; IMP09 22.5 weak = 7.5 + 0 + 0 + 15, 36 % below MAPQ 20, 72.5 = 7.5 + 25 + 25 +
+15; IMP01 clean, IMP09 low mappability, t(20;21); 136 s (`WT24`) and "about 6 minutes" (`DR29`,
+378 s); the question, equal to the page's suggestion and to `DR29`'s; seven numbers and
+"strong" against "moderate" (`DR29`); about 30 s, 0.06 USD and 0.4 (`WT24`); the six limits
+statements; 30,980 / 30,596 / 384 and the chain to 57 (O13); 17 (−40), 63, 44 and 19 (`PR`
+`funnel`: `after_recurrence_500bp`, `survivors_recurrent_in_other_sample`; not measured again,
+the comparison being outside this phase's patient calls); the four images in
+`IGV_IMP01_chr20_200000/`, pixel-identical to the committed panels (0 differing pixels in each;
+the copies carry a `caBX` content-credentials chunk).
+
+Flags:
+1. Step 10, the comparison while the list is hidden: the page shows the count and no row, as the
+   guide says, but from that step the call log holds both samples' filtered lists with their
+   coordinates (two `list_candidates` calls, O.4, 1). "Pozicijų puslapis dar net negavo" stays
+   true of the page. Until step 11, the log's entries should not be opened.
+2. Step 13, "The permission covered SAMPLE_A only." and, spoken, "tik paminėtam mėginiui": the
+   position in the question is compared with every private position loaded, whatever the
+   chromosome, and step 10 loads SAMPLE_B's list. By the estimate of O.4, 3 the box and the line
+   will name both samples between a third and a half of the time.
+3. Step 8, the cloud question on test data, "leidimo nereikia": true while no private list has
+   been loaded in that run of the interface (as in `WT25`). If the interface is left running
+   after the rehearsal's choice of SAMPLE_A, "chr20:200000" may well be flagged (O.4, 3: an
+   estimated chance near one half); a restart before the call avoids it.
+4. Step 8, spoken: "kiekvienas jo galutinio atsakymo skaičius patikrinamas" — a number written
+   against a unit is not examined (O.4, 5).
+5. Step 8, "Claude vieną skaičių (0.4) pakartojo ne iš įrankių": that is `WT24`'s answer; in
+   `WT25` both cloud answers had every checked number supported (31 and 35), IGV took 145 s and
+   the answers 24.6 s and 43.9 s, $0.063 and $0.089. The guide says the answer varies.
+Notes, not flags: in a plain shell `--check` shows "[ ] FULL" and one failing line until the
+guide's two export lines are entered, as it says; step 12's "IGV takelis vadinsis
+„SAMPLE_A.bam“" agrees with a test on public data — a read file registered through a symbolic
+link is drawn under the link's name (`PC25` `igv_track_name_through_a_link`; no patient image
+was made).
+
+### O.4 Not changed — for the author before the meeting
+
+1. The comparison and the call log. With **Drop junctions also found in** set, `/api/compare`
+   lists both filtered sets on the server (`list_candidates`, limit 20,000) and those two calls,
+   with every position, are recorded: for a private sample whose list is hidden, and for a
+   private sample chosen as the comparison. Nothing appears on screen. The thesis v4 says the
+   interface "requests counts alone, so that a blinded sample can be opened for its aggregate
+   figures without a position reaching the screen or the call log": true for opening a sample
+   (O1, O13), not for the call log once a comparison is chosen, which the demo guide does at
+   step 10. A list of ids without positions would need a change in the candidate tools, which
+   are protected.
+2. A private sample chosen as the comparison for another sample: that sample's rows marked
+   "also in …" are the junctions the private one shares (within the tolerance), shown without
+   its own list having been asked for. On PRIVTEST: IMP01 with PRIVTEST as comparison, reached
+   with the arrow keys on the comparison list, then **Also show the 27 found in PRIVTEST** — 27
+   of 29 rows tagged (probe 3).
+3. The position check compares the number alone, not the chromosome (`ui.py`
+   `_private_positions`, `private_refs_in_text`). With PRIVTEST's list loaded (1,694 positions
+   on two chromosomes) 16 of 400 unrelated numbers sent to the check were flagged, 4.0 %
+   (3.0 % over 2,000 by the same rule). For a list the size of a patient's (30,596 junctions,
+   61,192 positions over the genome) an even spread gives about 61 % for a number near 200,000
+   and 49 % for a coordinate drawn from the genome, and 86 % and 73 % with both lists loaded.
+   This is an estimate, not a measurement: no number may be sent to the check while patient
+   data are registered. On PRIVTEST the same arithmetic gives 5.1 % against the 3.0–4.0 %
+   measured, so the true rates are probably a quarter to two fifths lower — still between a
+   third and a half for one list. Consequences: the permission box can appear for a test-data
+   question once a patient list has been loaded, and a question about one patient's position
+   will often bring the other patient into the permission (O.3, 2 and 3).
+4. Forms the check does not recognise (probe 2): a number written against letters
+   ("9517621bp", "pos9517621"), "9.52M", "9.52 megabases", a grouped kb value ("9,518 kb",
+   "9 518 kb", "9,517.6 kb" — the comma is read as a decimal comma), "9518k", scientific
+   notation, "9 million 517,621", digits spaced singly.
+5. The answer check never examines a number written against letters (`chat.py:217`, `_NUM`):
+   "~37x", "~1400bp", "99x", "2.5kb" are neither counted nor marked. In `WT25` the cloud answers
+   show "depth ~37x", "~1400bp away" (the distance from the 198,600 it quotes to the position)
+   and "±500bp" unmarked (screenshots 08 and 09), while their verdict lines read "31 numbers
+   checked — every one was returned by a tool in this answer" and "35 numbers checked — …". So
+   "every number in its final answer is checked" (the thesis, the page's lede, the README) holds
+   for free-standing numbers only. `chat.py` is not part of the patch, and the committed
+   verification counts were made with it.
+6. `position_provenance` (attached in `server.py`, protected): when a cloud model without
+   permission makes a call on test data whose position or range covers a coordinate of a
+   private candidate opened earlier in the session, the return names that candidate's set label,
+   set id and candidate id (probe 7, PUB over a PRIV candidate). The ids are then refused by the
+   guard; the label and the candidate's presence in the range have been sent.
+7. Smaller: with a comparison that leaves no candidate the button reads "Show the 0 candidates";
+   nested lists in an answer are drawn flat; the previous page (`/classic`) has no hidden list
+   and still shows the comparison's ten examples.
