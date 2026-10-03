@@ -871,10 +871,16 @@ function renderEvent(waiting){
   parts.push(`<div class="panel" id="reads-panel"><div class="sec-head"><h3>The reads at the two ends</h3></div>${
     waiting ? `<div class="spinwait"><div class="spin"></div><div>Reading both ends in ${esc(E.reads)}…</div></div>` : readsSection(E)}</div>`);
   parts.push(callerSection(E));
-  S.igvTargets = E.breakpoints.map(b=>({bam_label:E.reads, chromosome:b.chromosome, position:b.start}));
+  // Phase 27: one IGV image of every end at once, with only the reads drawn above
+  const nEnds = E.breakpoints.length;
+  S.igvTargets = [{bam_label:E.reads, title: nEnds===2 ? 'IGV image of both ends' : `IGV image of all ${nEnds} ends`,
+                   junctions: joinsOf(E).map(j=>({chromosome_1:j.J.a.chromosome, position_1:j.J.a.position,
+                                                  chromosome_2:j.J.b.chromosome, position_2:j.J.b.position,
+                                                  orientation:j.orientation||null, name:j.name})),
+                   also_at: E.breakpoints.map(b=>`${b.chromosome}:${b.start}`)}];
   parts.push(`<div class="be-actions">
       <button class="btn" type="button" data-ask-event>Ask the assistant about this rearrangement</button>
-      ${S.igvTargets.map((t,i)=>`<button class="btn quiet" type="button" data-igv="${i}">IGV images at ${coord(t.chromosome,t.position)}</button>`).join('')}
+      ${S.igvTargets.map((t,i)=>`<button class="btn quiet" type="button" data-igv="${i}">${esc(t.title)}</button>`).join('')}
     </div>${kindOf('datasets', E.reads) === 'public' ? '' : `<div class="netnote">Private data: IGV images ask igv.org for the
       region's reference sequence. Everything else on this page, genes included, is worked out on this computer.</div>`}
     <div class="igv-area" id="igv-area"></div>`);
@@ -1345,7 +1351,8 @@ function renderPosition(r, ds){
   else if(G.nearest){ const nb = G.nearest; genes = `<p>No gene at this position.${['left','right'].filter(k=>nb[k]).map(k=>` ${esc(nb[k].name)}${omimTag(nb[k])} lies ${bp(nb[k].distance_bp)} to the ${k}.`).join('')}</p>`; }
   const band = G.band ? ` (${esc(num(r.chromosome)+G.band)})` : '';
   $('ev-head').innerHTML = `<h2 class="ev-title">${coord(r.chromosome,r.position)}${band}</h2><p class="lede">Checked by hand. Reads from ${esc(ds)} ${kindPill('datasets',ds)}</p>`;
-  S.igvTargets = [{bam_label:ds, chromosome:r.chromosome, position:r.position}];
+  S.igvTargets = [{bam_label:ds, title:`IGV image at ${coord(r.chromosome,r.position)}`,
+                   junctions:[{chromosome_1:r.chromosome, position_1:r.position}]}];
   $('ev').innerHTML = `<div class="banner hand"><b>Typed in by hand</b>The caller did not propose this position, so nothing here corroborates that it is a real breakpoint; the reads below stand on their own.</div>
     <div class="panel"><div class="sec-head"><h3>Where the reads here point</h3><span class="small muted">within ${fmt(D.window_bp)} bp, mapping quality 20 or more</span></div>
     ${rows.length?`<div class="table-wrap"><table class="partners"><thead><tr><th>Other chromosome</th><th style="text-align:right">Read pairs with the mate there</th><th style="text-align:right">Split reads with a piece there</th></tr></thead><tbody>
@@ -1358,7 +1365,7 @@ function renderPosition(r, ds){
       ${src(D.call,'pairs')} ${src(Sp.call,'split reads')} ${src(C.call,'clipped reads')} ${src(r.stats_call,'quality')}</p></div>
     <div class="panel"><div class="sec-head"><h3>Genes</h3>${src((r.genes||{}).call,'source')}</div>${genes}</div>
     <div class="be-actions"><button class="btn" type="button" data-ask-event>Ask the assistant about this position</button>
-      <button class="btn quiet" type="button" data-igv="0">IGV images at ${coord(r.chromosome,r.position)}</button></div>
+      <button class="btn quiet" type="button" data-igv="0">${esc(S.igvTargets[0].title)}</button></div>
     ${kindOf('datasets', ds) === 'public' ? '' : `<div class="netnote">Private data: IGV images ask igv.org for the region's reference sequence. Everything else here is worked out on this computer.</div>`}
     <div class="igv-area" id="igv-area"></div>`;
   syncIgvButtons();
@@ -1397,12 +1404,10 @@ async function openTyped(x){
 }
 
 // ── IGV (optional, slow) ──────────────────────────────────────────────────────
-const PANEL_TEXT = {discordant_pairs:'Discordant pairs view', soft_clipped_reads:'Soft clips view',
-                    split_reads:'Split reads view', read_depth:'Read depth view'};
 function syncIgvButtons(){
   for(const b of document.querySelectorAll('[data-igv]')){
     b.disabled = !!S.igvBusy;
-    b.title = S.igvBusy ? 'IGV is already drawing; wait for it to finish' : 'IGV draws one image per measurement around this end. It takes a few minutes.';
+    b.title = S.igvBusy ? 'IGV is already drawing; wait for it to finish' : 'IGV draws the reads shown here, every end side by side. It takes about a minute.';
   }
 }
 function igvBlock(i){
@@ -1420,36 +1425,37 @@ const igvNetNote = t => kindOf('datasets', t.bam_label) === 'public' ? ''
 async function runIGV(i){
   if(S.igvBusy) return;
   const t = S.igvTargets[i]; if(!t) return;
-  const gen = S.evGen, t0 = Date.now(), where = coord(t.chromosome,t.position);
+  const gen = S.evGen, t0 = Date.now(), where = esc(t.title);
   S.igvBusy = true; syncIgvButtons();
   const blk = igvBlock(i);
-  blk.innerHTML = `<div class="igv-head"><h3>IGV images at ${where}</h3><span class="muted small">reads from ${esc(t.bam_label)}</span></div>
-    <div class="spinwait"><div class="spin"></div><div><b>IGV is drawing one image per measurement.</b>
-    This usually takes a few minutes because IGV loads the genome for every image. <span class="muted" id="igv-t-${i}"></span></div></div>${igvNetNote(t)}`;
+  blk.innerHTML = `<div class="igv-head"><h3>${where}</h3><span class="muted small">reads from ${esc(t.bam_label)}</span></div>
+    <div class="spinwait"><div class="spin"></div><div><b>IGV is drawing the reads shown above.</b>
+    This takes about a minute, because IGV loads the genome first. <span class="muted" id="igv-t-${i}"></span></div></div>${igvNetNote(t)}`;
   blk.scrollIntoView({behavior:'smooth', block:'start'});
   const timer = setInterval(()=>{ const el = $('igv-t-'+i); if(el) el.textContent = ` ${Math.round((Date.now()-t0)/1000)} s`; }, 1000);
   let r;
-  try { r = await post('/api/igv',{bam_label:t.bam_label,chromosome:t.chromosome,position:t.position}); }
+  try { r = await post('/api/igv_view',{bam_label:t.bam_label, junctions:t.junctions, also_at:t.also_at||null}); }
   catch(err){ r = {error:String(err), image_refs:[]}; }
   finally { clearInterval(timer); S.igvBusy = false; syncIgvButtons(); }
   if(gen !== S.evGen) return;
   const secs = Math.round((Date.now()-t0)/1000);
-  const head = `<div class="igv-head"><h3>IGV images at ${where}</h3><span class="muted small">reads from ${esc(t.bam_label)},
+  const head = `<div class="igv-head"><h3>${where}</h3><span class="muted small">reads from ${esc(t.bam_label)},
     ${secs} s ${src(r.call,'source')}</span></div>${igvNetNote(t)}`;
-  if(r.error && !(r.image_refs||[]).length){
-    blk.innerHTML = head + `<div class="err"><b>No IGV image was produced.</b>\n${esc(r.error)}${r.hint?'\n\n'+esc(r.hint):''}</div>`;
+  const R = r.result || {}, ref = (r.image_refs||[])[0];
+  if(!ref){
+    blk.innerHTML = head + `<div class="err"><b>No IGV image was produced.</b>\n${esc(r.error||R.error||'no image')}${r.hint?'\n\n'+esc(r.hint):''}</div>`;
     return;
   }
-  const panels = (r.result&&r.result.panels)||{}, errs = r.panel_errors||{};
-  const refs = new Set(r.image_refs||[]);
-  const figs = Object.keys(panels).map(k=>{
-    const p = panels[k]||{}, ref = p.image_ref, cap = `<b>${esc(PANEL_TEXT[k]||k)}</b>, ${esc(p.region||'')}`;
-    if(ref && refs.has(ref)) return `<figure><img src="/img/${encodeURIComponent(ref)}" data-full="/img/${encodeURIComponent(ref)}" alt="${esc(PANEL_TEXT[k]||k)} ${esc(p.region||'')}"><figcaption>${cap}</figcaption></figure>`;
-    const why = (errs[k]&&errs[k].error) || p.error || (p.skipped ? 'skipped, ' + (p.reason||'no reason given') : 'no image');
-    return `<figure><div class="failed">This image was not produced: ${esc(why)}</div><figcaption>${cap}</figcaption></figure>`;
-  });
-  blk.innerHTML = head + `<div class="igv-grid">${figs.join('')}</div>
-    <p class="small muted">Click an image to open it larger. IGV shows every read here, normal ones included; the drawing above shows only the abnormal ones.</p>`;
+  const wins = (R.windows||[]).map(w=>span(w.chromosome,w.start,w.end)).join(' · ');
+  const key = (R.groups||[]).map(g=>`<span><i style="background:${esc(g.colour)}"></i>${esc(g.label.replace(/^\d+\. /,''))} (${fmt(g.reads)})</span>`).join('');
+  blk.innerHTML = head + `<div class="igv-grid"><figure><img src="/img/${encodeURIComponent(ref)}" data-full="/img/${encodeURIComponent(ref)}"
+      alt="IGV, ${esc(wins)}"><figcaption><b>${esc(wins)}</b>, ${plural(R.reads_drawn||0,'read')} drawn,
+      ${plural(R.normal_reads_hidden||0,'normal read')} left out</figcaption></figure></div>
+    <div class="legend">${key}</div>
+    <p class="small muted">IGV is given only the reads drawn above, so normal reads cannot appear. Each read has this page's
+    colour and is grouped under this page's words for it (IGV draws the colours a little lighter); a read at mapping
+    quality 0 is hollow. Each window is centred on its breakpoint, marked by the dashed line. Genes come from the
+    table on this computer. Click the image to open it larger.</p>`;
 }
 // ── 3 · assistant ─────────────────────────────────────────────────────────────
 async function loadModels(){

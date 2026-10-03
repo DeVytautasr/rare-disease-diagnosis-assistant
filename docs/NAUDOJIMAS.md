@@ -168,7 +168,7 @@ Toliau:
   CIGAR, kokybė abiejuose galuose).
 - **What the caller reported** — `delly` įrašai ir jų PE/SR palyginti su čia
   suskaičiuotais skaitiniais.
-- **IGV images at …** — IGV paveikslėliai (žr. žemiau); nebūtini.
+- **IGV image of both ends** — vienas IGV paveikslėlis su abiem galais (žr. žemiau); nebūtinas.
 
 **Bet kurią kitą vietą** galima patikrinti dešinėje viršuje: pasirinkite, kurio
 mėginio skaitinius naudoti (**Reads from**), įrašykite vietą (pvz.,
@@ -197,10 +197,17 @@ matyti, ar lentelė rasta. Be lentelės įrankis veikia, tik genų neįvardija.
 
 ### IGV paveikslėliai
 
-**IGV images at …** paleidžia IGV, kuris nupiešia po paveikslėlį kiekvienam
-matavimui. Tai trunka **kelias minutes**. IGV rodo **visus** skaitinius, ir
-normalius; aukščiau esančios dvi dėžutės rodo tik nenormalius. Paveikslėlius mato
-tik žmogus — asistentas jų nemato. Privatiems duomenims IGV prašo `igv.org` tos
+**IGV image of both ends** (nuo Phase 27; ranka įvestai vietai — **IGV image at …**)
+paleidžia IGV, kuris viename paveikslėlyje greta parodo abu persitvarkymo galus.
+IGV gauna **tik tuos skaitinius, kuriuos nupiešia dvi dėžutės aukščiau**: normalių
+skaitinių jame nėra. Kiekvienas skaitinys nuspalvintas puslapio spalva ir sugrupuotas
+po puslapio žodžiais (pvz. „1. joins the two ends as junction 1 does“); IGV spalvas
+piešia šiek tiek šviesesnes. Skaitinys, kurio kartografavimo kokybė 0, nuspalvintas
+tuščiaviduris. Kiekvienas langas sucentruotas ties lūžio tašku (punktyrinė linija),
+rodomos nukirptos bazės, genai — iš šio kompiuterio lentelės. Tai trunka **apie
+minutę**. Laikinas tų skaitinių BAM failas ištrinamas, kai IGV baigia. Paveikslėlį
+mato tik žmogus — asistentas jo nemato. Ankstesnis puslapis (`/classic`) vis dar
+rodo keturis IGV paveikslėlius kiekvienam galui. Privatiems duomenims IGV prašo `igv.org` tos
 srities referencinės sekos: srities koordinatės palieka kompiuterį, skaitiniai —
 ne.
 

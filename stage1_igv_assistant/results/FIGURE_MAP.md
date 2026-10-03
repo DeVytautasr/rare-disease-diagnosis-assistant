@@ -1107,3 +1107,33 @@ Each was first shown failing: Q1 and Q2 on the as-patched page, Q3 on the code o
 | G2 | `scripts/guard_protected.py` (base 25d12bb): before the patch, after it, and on the staged tree | exit 0, all identical, each time |
 | G3 | what is staged: nothing under `~/public_data/annotation/`, no log, no `.venv`, nothing under `docs/thesis/` | none of them |
 | G4 | the same three gates on the second commit (Q3, Q4 and this update): `--staged`, then `--base 42a5bfd` before the push; the guard | as G1–G3: nothing fired, INCOMPLETE without the list; the guard exit 0 Covered by G1's run on the author's machine: clean, exit 0. |
+
+## Q. Phase 27 — the IGV image to the supervisor's requirements, 2026-10-03
+
+At the meeting of 2 October the supervisor found the IGV images uninformative and asked for
+two boxes instead: where the piece left and where it arrived, only the abnormal reads,
+coloured by what they say, the normal reads hidden and the ambiguous ("white", mapping
+quality 0) reads kept. Phase 26 drew that on the page but left the IGV button as it was: four
+whole-file images per end. The author authorised changing the IGV setup on 2026-10-03. Public
+data only; no patient file was opened and no question was sent to the API. `PC27` =
+`results/phase27_checks_2026-10-03.json`, `SU27` = `results/suites_2026-10-03_phase27.json`,
+`WT27` = `results/interface_walkthrough_2026-10-03_phase27.json`.
+
+| # | Claim | Evidence | Status |
+|---|---|---|---|
+| Q1 | IGV shows both ends side by side | one `goto` with every end's window (IGV's multi-locus view), each centred on its breakpoint, with IGV's centre line on; IMP01: chr20:199,001–201,000 and chr21:14,099,002–14,101,001 in one image (`screenshots/interface_2026-10-03_phase27/igv_two_ends_IMP01.png`). The evidence view has one button, **IGV image of both ends** (a position typed by hand: **IGV image at …**, one window) | done |
+| Q2 | only the abnormal reads; normal reads cannot appear | IGV loads a temporary BAM holding exactly the reads `junction_tools.support_with(view=True)` returns for the page's two boxes (`tools/igv_review.py`). IMP01: 149 reads drawn, 0 missing, 853 normal reads left out (`WT27` `igv_result`). Tested on the synthetic fixture: the BAM equals the page's reads, and the window's normal reads are absent (`tests/test_igv_review.py` section 1, with its control) | done |
+| Q3 | coloured by what each read says, with the page's words | each read's YC tag holds the page's colour (`colorBy YC_TAG`) and its XG tag the page's words (`group TAG XG`): "1. joins the two ends as junction 1 does", "… (mapping quality below 20, not counted)", "mate on another chromosome" and so on. The colours are read back from `ui_page.html` by the test, so the two cannot drift apart (with a control). IGV draws reads at about 75% opacity, so its colours are the page's lightened; the pixel check finds 0 pixels of the blended junction colours on an IGV image with its default colouring, and 16,035–21,813 per colour with YC (`PC27` `prototype_findings`; test section 6) | done |
+| Q4 | ambiguous reads kept | `SAM.QUALITY_THRESHOLD 0`, `SAM.FLAG_ZERO_QUALITY true` (a read at mapping quality 0 is drawn hollow); a read placed equally well elsewhere is grey rather than the page's white, which IGV would not outline at mapping quality 1–19 | done |
+| Q5 | the other settings | no downsampling; no coverage track (it would be the coverage of the abnormal reads alone); supplementary pieces kept; soft-clipped bases shown; clipping of 10 or more bases flagged (the page's `MIN_CLIP_BASES`; the first prototype used a key IGV does not have, `SAM.CLIP_FLAG_THRESHOLD`, caught against the jar's `preferences.tab`); genes from the local table, whole canonical transcripts, in place of IGV's RefSeq track | done |
+| Q6 | no copy of the reads is left behind | the BAM, the gene BED and the batch script live in a temporary directory deleted when IGV is done; only the PNG is kept (test section 4, with its control) | done |
+| Q7 | what did not change | `bam_tools.py` (protected; guard exit 0) and its four-image `evidence_panel`, still used by `/classic`, `server.py` and the benchmarks; the `/api/igv` route. The new tool `igv_junction_view` is the review server's fourth (19 tools in all; `--check`: "11 evidence tools + 4 bridge tools + 4 review tools") and is not offered to the assistant: a model would get only an opaque reference, and IGV takes a minute (`tests/test_junction_review.py`, with its control) | agrees |
+| Q8 | tests and suites | `tests/test_igv_review.py` 45 of 45, including one IGV run on IMP01. It found one defect, fixed: a position typed by hand failed (`KeyError 'reads'`). One of its own checks was wrong and was corrected (it expected "GENE_A"; the label is "GENE_A (OMIM)"). `SU27`: 29 suites, all passed, 984 assertions (936 + 45 new, + 1 in `test_interface_page.py`, + 2 in `test_junction_review.py`) | pass |
+| Q9 | the click-through | `WT27`, without `--cloud`: 29 of 29, no page error; IGV 29 s for the image of both ends (the four-image panel took 101–110 s per end). First try: 2 of 29 failed, because the script read the tool's result from `/api/calls`, which lists calls without results; the page had drawn the image. Fixed to read `/api/call?id=` | pass |
+| Q10 | open | the thesis v4 and the demo dry run (`scripts/demo_dry_run.py`, which exercises the old routes and their committed records) still describe the four-image panel; IGV still asks igv.org for the genome of the regions shown; the page's IGV image has not been looked at on a patient sample (that is for the author, after the meeting's unblinding) | open |
+
+### Q.1 Gates
+
+| # | Gate | Result |
+|---|---|---|
+| R1 | `identifier_gate.py --staged` with the list and the key file; `--base 42a5bfd` before the push; the guard; what is staged | see the commit message |

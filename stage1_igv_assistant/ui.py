@@ -60,7 +60,7 @@ EXPECTED_BRIDGE_TOOLS = {
 }
 # Phase 26: the geneticist's view (review_server.py). Read counts, coordinates and
 # genes; no score.
-EXPECTED_REVIEW_TOOLS = {"junction_evidence", "review_candidates", "genes_near"}
+EXPECTED_REVIEW_TOOLS = {"junction_evidence", "review_candidates", "genes_near", "igv_junction_view"}
 # Tools the assistant is not offered in this interface. The supervisor's review
 # (2 October 2026) asked that a geneticist never be shown the combined score, and
 # the assistant's answers are read by the geneticist too, so the scoring tool is
@@ -69,7 +69,9 @@ EXPECTED_REVIEW_TOOLS = {"junction_evidence", "review_candidates", "genes_near"}
 # answers the same question on this computer, so it is left out too.
 # The MCP servers themselves are unchanged: the benchmark harness and /classic
 # still have every tool.
-HIDDEN_FROM_ASSISTANT = {"breakpoint_evidence_summary"}
+# Phase 27: igv_junction_view draws the page's IGV image. A model gets only an
+# opaque reference to it, and it runs IGV for a minute, so it is not offered either.
+HIDDEN_FROM_ASSISTANT = {"breakpoint_evidence_summary", "igv_junction_view"}
 
 
 def hidden_from_assistant():
@@ -989,6 +991,23 @@ def _api(path, body):
             out["tool_note_suppressed"] = bool(first.get("note"))
         elif panel_errors:
             out["panel_errors"] = panel_errors
+        return out
+    if path == "/api/igv_view":
+        # Phase 27: the page's IGV image -- every end of a rearrangement side by side,
+        # with only the reads the page draws (review_server.igv_junction_view).
+        if body.get("bam_label") not in DATASETS:
+            return {"error": "unknown read file", "image_refs": []}
+        r = RECORDER.call("review", "igv_junction_view",
+                          {"bam_path": DATASETS[body["bam_label"]], "junctions": body.get("junctions") or [],
+                           "also_at": body.get("also_at") or None})
+        refs = _refs(r["result"])
+        out = {"call": r["id"], "result": r["result"], "is_error": r["is_error"], "image_refs": refs}
+        err = tool_error(r)
+        if err and not refs:
+            out["error"] = err["error"]
+            if err.get("error_type") == "igv_missing":
+                out["hint"] = ("IGV was looked for in $IGV_PATH and the built-in locations the startup banner "
+                               "lists. The read counts and the drawing above are unaffected.")
         return out
     if path == "/api/compare":
         la, lb = body["label_a"], body["label_b"]

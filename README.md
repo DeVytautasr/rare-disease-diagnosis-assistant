@@ -61,15 +61,16 @@ linux-64 development environment exactly, build hashes included, use
 ## Status
 
 **Stage 1 (`stage1_igv_assistant/`) — SV/breakpoint inspection module.**
-Three MCP servers exposing 18 tools: 11 evidence tools over BAM files
+Three MCP servers exposing 19 tools: 11 evidence tools over BAM files
 (`server.py` — discordant pairs, soft clips, split reads, depth, quality,
 layer applicability, gene lookup, reciprocal check, integrated summary, two
 IGV image tools), 4 candidate-set tools (`candidate_server.py` — load a
 caller's VCF/BCF, filter it down a reported chain, open one junction, compare
-two sets) and, since Phase 26, 3 review tools (`review_server.py` — the reads
+two sets) and, since Phase 26, 4 review tools (`review_server.py` — the reads
 that join the two ends of one junction, a review of every candidate of a sample
-grouped into rearrangements and sorted by supporting reads, and genes from a local
-table with OMIM marks; read counts and coordinates, no score). Validated on synthetic translocation data, HCC1143 (real
+grouped into rearrangements and sorted by supporting reads, genes from a local
+table with OMIM marks, and, since Phase 27, one IGV image of every end of a
+rearrangement with only the reads the page draws; read counts and coordinates, no score). Validated on synthetic translocation data, HCC1143 (real
 short-read, 2018 pipeline), and GIAB HG002 — cross-technology, on both real
 PacBio HiFi (long-read) and real Illumina 300x (short-read) alignments of the
 same confirmed deletion. See `stage1_igv_assistant/README.md` for tool
@@ -94,7 +95,9 @@ piece that leaves each chromosome, where it attaches, the derivative chromosomes
 with the coordinates of every piece), the genes, two boxes of the abnormal reads at
 the two ends (normal reads hidden, colour-coded by what each read says about the
 junction), the supporting reads themselves, hand-entered positions (marked as such),
-and IGV images on request. *Ask the assistant*: below. The candidate list, the
+and, on request, one IGV image of both ends (Phase 27: IGV is given only the reads
+the two boxes draw, in their colours and grouped under their labels, each window
+centred on its breakpoint; `tools/igv_review.py`). *Ask the assistant*: below. The candidate list, the
 filter chain and each panel of reads link to the tool call that returned their
 counts (*source*), and a call log lists every call of the session;
 "Limits" states what the tool cannot tell you. Genes come from a table on this

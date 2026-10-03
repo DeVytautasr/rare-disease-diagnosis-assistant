@@ -133,23 +133,30 @@ async def main(a):
               [w for w in ("score", "reachable here", "moderate 40", "strong 70") if w in ev])
         await shot(pg, "evidence", full=True)
 
-        # 3. IGV, one run at a time
+        # 3. IGV (Phase 27): one image of both ends, with only the reads the page draws
         if not a.no_igv:
-            print("3. IGV (minutes)", flush=True)
+            print("3. IGV (a minute)", flush=True)
             t0 = time.time()
+            facts["igv_buttons"] = await pg.locator("[data-igv]").all_inner_texts()
             await pg.locator('[data-igv="0"]').click()
             await pg.wait_for_timeout(800)
-            check("while IGV draws, the other IGV button is disabled",
-                  await pg.locator('[data-igv="1"]').is_disabled())
+            check("while IGV draws, its button is disabled", await pg.locator('[data-igv="0"]').is_disabled())
             await shot(pg, "igv_waiting")
             await pg.wait_for_selector("#igvb-0 .igv-grid, #igvb-0 .err", timeout=a.igv_timeout * 1000)
             await pg.wait_for_timeout(1500)
             facts["igv_seconds"] = round(time.time() - t0)
             facts["igv_images"] = await pg.locator("#igvb-0 .igv-grid img").count()
-            facts["igv_failed_panels"] = await pg.locator("#igvb-0 .failed").count()
-            check("IGV produced four images", facts["igv_images"] == 4,
-                  await pg.locator("#igvb-0").inner_text())
-            await shot(pg, "igv")
+            facts["igv_caption"] = " ".join((await pg.inner_text("#igvb-0")).split())[:600]
+            calls = (await api(pg, "GET", "/api/calls")).get("calls", [])
+            view = next((c for c in reversed(calls) if c["tool"] == "igv_junction_view"), None)
+            res = ((await api(pg, "GET", f"/api/call?id={view['id']}")) if view else {}).get("result") or {}
+            facts["igv_result"] = {k: res.get(k) for k in ("windows", "reads_drawn", "reads_not_found_again",
+                                                           "groups", "normal_reads_hidden", "genes_shown")}
+            check("IGV made one image of both ends", facts["igv_images"] == 1 and len(res.get("windows") or []) == 2,
+                  await pg.inner_text("#igvb-0"))
+            check("... with only the reads the page draws, none of them missing",
+                  res.get("reads_drawn", 0) > 0 and res.get("reads_not_found_again") == 0, facts["igv_result"])
+            await shot(pg, "igv", full=True)
 
         # 4. a position typed in by hand
         print("4. hand entry", flush=True)

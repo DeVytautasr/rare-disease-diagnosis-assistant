@@ -1,0 +1,132 @@
+{
+ "what": "Phase 27: the page's IGV image set up to the supervisor's requirements (2 October 2026). Public data only; no patient file was opened and no question was sent to the API.",
+ "authorised": "2026-10-03, by the author: 'I give you permission so change igv set up please so screenshots are based on requirements'",
+ "requirements": [
+  "two boxes side by side: where the piece left and where it arrived",
+  "only the abnormal reads, coloured by what they say",
+  "normal reads hidden",
+  "ambiguous (white, mapping quality 0) reads kept"
+ ],
+ "design": {
+  "reads": "junction_tools.support_with(view=True), the call behind the page's read boxes, chooses them; a temporary BAM of only those reads is what IGV loads",
+  "colour": "each read's YC tag holds the page's colour; IGV: colorBy YC_TAG",
+  "labels": "each read's XG tag holds the page's words; IGV: group TAG XG (joining reads first: their labels start with the junction's number)",
+  "windows": "one goto with every end's window (multi-locus), each centred on its breakpoint; SAM.SHOW_CENTER_LINE true",
+  "other_settings": "SAM.SHOW_COV_TRACK false, SAM.DOWNSAMPLE_READS false, SAM.QUALITY_THRESHOLD 0, SAM.FLAG_ZERO_QUALITY true, SAM.FILTER_SUPPLEMENTARY_ALIGNMENTS false, SAM.SHOW_SOFT_CLIPPED true, SAM.FLAG_CLIPPING true, SAM.CLIPPING_THRESHOLD 10",
+  "genes": "a BED of the local gene table's genes in the windows (whole canonical transcripts) replaces IGV's RefSeq track",
+  "cleanup": "the temporary BAM, gene BED and batch script are deleted when IGV is done; only the PNG is kept",
+  "not_changed": "bam_tools.py (protected; guard exit 0) and its four-image evidence_panel, which /classic, server.py and the benchmarks still use; the /api/igv route",
+  "assistant": "igv_junction_view is not offered to the assistant (ui.HIDDEN_FROM_ASSISTANT): a model gets only an opaque reference and IGV takes a minute"
+ },
+ "prototype_findings": {
+  "colorBy_yc": "colorBy YC_TAG paints each read in its YC colour (measured: 0 pixels near the blended junction colours with IGV's default colouring, 16,035-21,813 per junction colour on the two YC-coloured IMP01 images)",
+  "opacity": "IGV paints reads at about 75% opacity over its (250,250,250) background: #0F766E came out as (74,151,145), #BE185D as (205,81,133)",
+  "wrong_key_caught": "the first prototype used SAM.CLIP_FLAG_THRESHOLD, which is not an IGV preference; the jar's preferences.tab names SAM.CLIPPING_THRESHOLD",
+  "intron_only_gene": "a gene whose exons all lie outside the window was first written with a 1 bp dummy block; it is now written whole"
+ },
+ "code_state": {
+  "stage1_igv_assistant/tools/igv_review.py": "f182fca2d99162b5c1d4b3f4d8ee4c375e6c2fd2495957175f6e26e9680aae93",
+  "stage1_igv_assistant/review_server.py": "170d9932ebafde4c545da5d4db03e50a568b7247bf8dd27de1048aca51b81f2c",
+  "stage1_igv_assistant/ui.py": "e2810bbcd527861c34318d4b4fcc25d0da3c4cde9376f67f1fc7337cb02e9ee9",
+  "stage1_igv_assistant/ui_page.html": "26f2f02734cbc4dc3e970c47ec78fa16de5e9643578e127b169624ea7daf018f",
+  "stage1_igv_assistant/tests/test_igv_review.py": "15acd89d3bf83ac33d2fc53e512f6071481231d4d9845c89526b081a1ba3a4a9",
+  "stage1_igv_assistant/tests/test_interface_page.py": "4c55dda0f83f64ce838fb5540ac0dbf88b128d13aec3811a6e922b5b4e40c9fb",
+  "stage1_igv_assistant/tests/test_junction_review.py": "531d4a493ba042905030cf2cb00f149e2453c187a40b246d11a85b517c431b0a",
+  "scripts/interface_walkthrough.py": "be13ddc57fcf84d63f73b80ca6476fa5d9401ea53f4252e744d6d9008fd7334b"
+ },
+ "tests": {
+  "test_igv_review.py": "45 of 45, exit 0, including one IGV run on IMP01 (IGV 2.17.4, Java 21, DISPLAY=:0)",
+  "defects_found_by_it": [
+   "a position typed by hand failed (KeyError 'reads'): select_reads read scan_end's result under the wrong key; fixed",
+   "its own gene check expected 'GENE_A' where the label is 'GENE_A (OMIM)' (the fixture marks it); the check was wrong and was corrected"
+  ],
+  "suites_record": "results/suites_2026-10-03_phase27.json",
+  "summary": {
+   "suites": 29,
+   "passed": 29,
+   "failed": 0,
+   "incomplete": 0,
+   "assertions_held": 984,
+   "assertions_failed": 0,
+   "not_run_lines": 0
+  },
+  "changed_against_suites_2026-10-03_phase26": {
+   "test_igv_review.py": "new, 45",
+   "test_interface_page.py": "93 -> 94",
+   "test_junction_review.py": "84 -> 86"
+  }
+ },
+ "startup_check": "tool contract OK: 11 evidence tools + 4 bridge tools + 4 review tools",
+ "walkthrough": {
+  "command": "scripts/interface_walkthrough.py without --cloud (no API question), PRIVTEST = IMP09's files",
+  "record": "results/interface_walkthrough_2026-10-03_phase27.json",
+  "checks_passed": 29,
+  "checks": 29,
+  "page_errors": [],
+  "igv_seconds": 29,
+  "igv_buttons": [
+   "IGV image of both ends"
+  ],
+  "igv_result": {
+   "windows": [
+    {
+     "chromosome": "chr20",
+     "start": 199001,
+     "end": 201000,
+     "locus": "chr20:199001-201000"
+    },
+    {
+     "chromosome": "chr21",
+     "start": 14099002,
+     "end": 14101001,
+     "locus": "chr21:14099002-14101001"
+    }
+   ],
+   "reads_drawn": 149,
+   "reads_not_found_again": 0,
+   "groups": [
+    {
+     "label": "1. joins the two ends as junction 1 does",
+     "colour": "#0F766E",
+     "reads": 55
+    },
+    {
+     "label": "1. joins the two ends as junction 1 does (mapping quality below 20, not counted)",
+     "colour": "#0F766E",
+     "reads": 2
+    },
+    {
+     "label": "2. joins the two ends as junction 2 does",
+     "colour": "#BE185D",
+     "reads": 54
+    },
+    {
+     "label": "clipped, no other piece",
+     "colour": "#CFCAD8",
+     "reads": 19
+    },
+    {
+     "label": "mate on another chromosome",
+     "colour": "#64748B",
+     "reads": 14
+    },
+    {
+     "label": "split read, other piece elsewhere",
+     "colour": "#A3AEC0",
+     "reads": 1
+    },
+    {
+     "label": "split read, other piece elsewhere (mapping quality below 20)",
+     "colour": "#A3AEC0",
+     "reads": 4
+    }
+   ],
+   "normal_reads_hidden": 853,
+   "genes_shown": [
+    "ENSG00000224905"
+   ]
+  },
+  "first_try": "29 checks, 2 failed: the walkthrough looked for the tool's result in /api/calls, which lists calls without results; the page itself had drawn the image. The script now reads the call through /api/call?id=, and the second try passed 29 of 29",
+  "screenshots": "screenshots/interface_2026-10-03_phase27/ (04_igv shows the image on the page; igv_two_ends_IMP01.png is the image itself)"
+ }
+}

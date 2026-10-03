@@ -1,7 +1,7 @@
 """
 review_server.py
 FastMCP server for the geneticist's view of a candidate list (Phase 26):
-three tools that report read counts, coordinates and genes, and no score.
+four tools that report read counts, coordinates and genes, and no score.
 
     junction_evidence   the reads that join the two ends of one junction
     review_candidates   every candidate of a sample that passes the filters,
@@ -9,22 +9,29 @@ three tools that report read counts, coordinates and genes, and no score.
                         reads, sorted by the reads that support it
     genes_near          genes at a position or in a segment, from the local
                         gene table: nothing leaves the computer
+    igv_junction_view   (Phase 27) one IGV image of both ends of a rearrangement
+                        with only the reads the page draws, in its colours
 
 A separate server, like candidate_server.py: the eleven evidence tools and the
 four candidate-set tools are unchanged. The interface (ui.py) runs all three
-in-process through one recorder; the assistant is offered these three in place
-of the combined score.
+in-process through one recorder; the assistant is offered the first three in
+place of the combined score (igv_junction_view is the page's: its image is not
+shown to a model, and it takes a minute).
 
 Run from repo root: python -m stage1_igv_assistant.review_server
 """
 
+import hashlib
 import os
+import time
 from dataclasses import asdict
 from typing import Optional
 
 from fastmcp import FastMCP
 
+from stage1_igv_assistant.tools import bam_tools as _bt
 from stage1_igv_assistant.tools import gene_table as _genes
+from stage1_igv_assistant.tools import igv_review as _igv
 from stage1_igv_assistant.tools import junction_tools as _jt
 from stage1_igv_assistant.tools import vcf_tools as _vcf
 
@@ -426,6 +433,37 @@ def genes_near(chromosome: str, position: int, end: Optional[int] = None) -> dic
             out["nearest"] = t.nearest(chromosome, position)
     out["source"] = "local gene table" + (", OMIM marks" if t.has_disease_marks else "")
     return out
+
+
+@mcp.tool()
+def igv_junction_view(bam_path: str, junctions: list, also_at: Optional[list] = None) -> dict:
+    """
+    One IGV image of a rearrangement, as the supervisor's review asked: every end
+    side by side (IGV's multi-locus view, each window centred on its breakpoint),
+    only the abnormal reads (exactly the reads junction_evidence draws: normal
+    reads are not loaded), each coloured and grouped as the interface's read
+    boxes colour and label them, reads at mapping quality 0 hollow, soft clips
+    shown, no downsampling, genes from the local table.
+
+    junctions: the rearrangement's junctions in the interface's order, each
+    {"chromosome_1", "position_1", "chromosome_2", "position_2", "orientation",
+    "name"} (orientation and name optional); a position typed by hand is one
+    junction with no second end. also_at: other breakpoints of the rearrangement
+    ("chr22:40050000"), as for junction_evidence.
+
+    Returns an opaque image_ref (no path), the windows, the reads drawn per group,
+    the normal reads left out, the genes shown and the IGV settings used. The
+    temporary BAM of the drawn reads is deleted when IGV is done.
+    """
+    if also_at is not None and not isinstance(also_at, list):
+        return {"error": "also_at must be a list of 'chromosome:position'", "error_type": "bad_parameter"}
+    session = _bt.image_session_dir()
+    tag = hashlib.sha256(repr((junctions, also_at, time.time())).encode()).hexdigest()[:12]
+    png = os.path.join(session, f"igv_two_ends_{tag}.png")
+    result = _igv.igv_two_ends(bam_path, junctions, png, also_at=also_at)
+    if "screenshot_path" in result or result.get("success") is not None:
+        return _bt.to_handle_result(result, session)
+    return result
 
 
 if __name__ == "__main__":

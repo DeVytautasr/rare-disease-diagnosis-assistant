@@ -38,7 +38,7 @@ DRY_RUN_ROUTES = ["/api/bootstrap", "/api/load", "/api/funnel", "/api/candidate"
 # The page since Phase 26 reviews every candidate at once and shows no score: it
 # calls the review routes instead of /api/candidate and /api/assess.
 PAGE_ROUTES = ["/api/bootstrap", "/api/load", "/api/funnel", "/api/review", "/api/junction", "/api/position",
-               "/api/genes", "/api/call?id=", "/api/igv", "/api/chat_models", "/api/chat"]
+               "/api/genes", "/api/call?id=", "/api/igv_view", "/api/chat_models", "/api/chat"]
 EXTERNAL_RE = re.compile(r"""(?:src|href)\s*=\s*["']?(?:https?:)?//|@import|url\(\s*["']?(?:https?:)?//""", re.I)
 # Upper-case names the page's script reads (indexed, a member taken, or interpolated),
 # and the names it declares (const/let/var, a later name in the same declaration, a
@@ -214,7 +214,11 @@ def run(S, d):
     check("the previous page calls every route the demo dry run requires", not [r for r in DRY_RUN_ROUTES if r not in classic])
     check("the new page no longer asks for the combined score", "/api/assess" not in page)
     check("control: the route check fails on a page missing one route",
-          [r for r in PAGE_ROUTES if r not in page.replace("/api/igv", "/api/xxx")] == ["/api/igv"])
+          [r for r in PAGE_ROUTES if r not in page.replace("/api/igv_view", "/api/xxx")] == ["/api/igv_view"])
+    # Phase 27: the IGV button draws both ends with only the reads shown, not the
+    # four whole-file images per end the previous page shows
+    check("the new page asks for the IGV image of both ends, not the four-image panel",
+          "/api/igv_view" in page and "'/api/igv'" not in page and '"/api/igv"' not in page)
     check("the new page carries no absolute path", not PATH_RE.findall(page.replace("/api/", "").replace("/img/", "")),
           str(PATH_RE.findall(page)[:3]))
     # The page links genes to OMIM entries (<a href>, opened only when clicked); those

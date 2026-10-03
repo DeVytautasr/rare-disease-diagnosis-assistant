@@ -12,6 +12,7 @@ vacuously is first shown to fail on a control.
 
 Run: python3 stage1_igv_assistant/tests/test_junction_review.py
 """
+import asyncio
 import json
 import os
 import sys
@@ -311,6 +312,10 @@ def run(d):
         check("the assistant is offered the three review tools", {"junction_evidence", "review_candidates", "genes_near"} <= names)
         check("... and not the combined score", "breakpoint_evidence_summary" not in names)
         check("... nor the internet gene lookup while a local gene table is set up", "gene_at_locus" not in names)
+        # Phase 27: the IGV image is the page's; a model would get an opaque reference only
+        check("... nor the IGV image tool", "igv_junction_view" not in names)
+        check("control: ... which the review server does provide",
+              "igv_junction_view" in {t.name for t in asyncio.run(R.mcp.list_tools())})
         gt.load(None); ui._CHAT_TOOLS.clear()
         names0 = {t["function"]["name"] for t in ui._chat_tools()[0]}
         check("control: without a local table the internet lookup is offered again", "gene_at_locus" in names0)
