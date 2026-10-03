@@ -1,0 +1,1011 @@
+{
+ "what": "rank of each implanted translocation in the review's list (Phase 26)",
+ "definitions": "Phase 26: where the implanted translocations land in the review's ranking. PUBLIC DATA ONLY: the twelve synthetic samples of the controlled positive test (results/synthetic_control_2026-09/implants_ground_truth.json) and the background they were built on. python3 scripts/review_ranking.py OUT_JSON [--sim ~/public_data/sim] [--background-bam ~/public_data/NA12878.chr20_chr21.bam] [--background-calls ~/public_data/sim/delly/background.bcf] For every sample with both a read file (sim/bams/IMPxx.bam) and a caller file (sim/delly/IMPxx.bcf) it runs review_candidates exactly as the page does (its defaults: translocations, PASS, read pairs >= 3, split reads >= 1, main chromosomes, the configured exclude template), and records: detected a rearrangement has a breakpoint within MATCH_BP of the implant's chr20 breakpoint and one within MATCH_BP of its chr21 breakpoint rank its place in the list (1 = most supporting reads), and the number of rearrangements listed pattern \"both junctions\" when both of the implant's junctions passed the filters, otherwise what the review says support read pairs, split reads and distinct reads it counted cautions the cautions the page would show The background (no implant) gives the list a geneticist would see in a sample without the event: its length and its best-supported rearrangement. Nothing is written into the repository except OUT_JSON, which holds public coordinates only.",
+ "started": "2026-10-03T11:21:09",
+ "match_bp": 1000,
+ "exclude_template_found": true,
+ "gene_table_found": true,
+ "samples": [
+  {
+   "id": "IMP01",
+   "class": "clean_unique",
+   "breakpoints": {
+    "chr20": 200000,
+    "chr21": 14100000,
+    "convention": "1-based; each junction lies between the given base and the next"
+   },
+   "seconds": 0.04,
+   "junctions_passing_filters": 2,
+   "rearrangements_listed": 1,
+   "detected": true,
+   "implant": {
+    "rank": 1,
+    "pattern": "both junctions",
+    "iscn": "t(20;21)(p13;q11.2)",
+    "breakpoints": [
+     {
+      "chromosome": "chr20",
+      "start": 200000,
+      "end": 200001,
+      "band": "p13"
+     },
+     {
+      "chromosome": "chr21",
+      "start": 14100000,
+      "end": 14100001,
+      "band": "q11.2"
+     }
+    ],
+    "support": {
+     "read_pairs": 44,
+     "split_reads": 16,
+     "fragments": 49
+    },
+    "cautions": [],
+    "junctions": [
+     {
+      "caller_id": "BND00000878",
+      "orientation": "3to5",
+      "pe": 25,
+      "sr": 6,
+      "support": {
+       "read_pairs": 25,
+       "split_reads": 4,
+       "fragments": 26
+      }
+     },
+     {
+      "caller_id": "BND00000877",
+      "orientation": "5to3",
+      "pe": 19,
+      "sr": 12,
+      "support": {
+       "read_pairs": 19,
+       "split_reads": 12,
+       "fragments": 23
+      }
+     }
+    ]
+   },
+   "first": {
+    "rank": 1,
+    "pattern": "both junctions",
+    "iscn": "t(20;21)(p13;q11.2)",
+    "breakpoints": [
+     {
+      "chromosome": "chr20",
+      "start": 200000,
+      "end": 200001,
+      "band": "p13"
+     },
+     {
+      "chromosome": "chr21",
+      "start": 14100000,
+      "end": 14100001,
+      "band": "q11.2"
+     }
+    ],
+    "support": {
+     "read_pairs": 44,
+     "split_reads": 16,
+     "fragments": 49
+    },
+    "cautions": [],
+    "junctions": [
+     {
+      "caller_id": "BND00000878",
+      "orientation": "3to5",
+      "pe": 25,
+      "sr": 6,
+      "support": {
+       "read_pairs": 25,
+       "split_reads": 4,
+       "fragments": 26
+      }
+     },
+     {
+      "caller_id": "BND00000877",
+      "orientation": "5to3",
+      "pe": 19,
+      "sr": 12,
+      "support": {
+       "read_pairs": 19,
+       "split_reads": 12,
+       "fragments": 23
+      }
+     }
+    ]
+   },
+   "patterns": {
+    "both junctions": 1
+   }
+  },
+  {
+   "id": "IMP02",
+   "class": "clean_unique",
+   "breakpoints": {
+    "chr20": 45500000,
+    "chr21": 33900000,
+    "convention": "1-based; each junction lies between the given base and the next"
+   },
+   "seconds": 0.05,
+   "junctions_passing_filters": 2,
+   "rearrangements_listed": 1,
+   "detected": true,
+   "implant": {
+    "rank": 1,
+    "pattern": "both junctions",
+    "iscn": "t(20;21)(q13.12;q22.11)",
+    "breakpoints": [
+     {
+      "chromosome": "chr20",
+      "start": 45500000,
+      "end": 45500001,
+      "band": "q13.12"
+     },
+     {
+      "chromosome": "chr21",
+      "start": 33900000,
+      "end": 33900001,
+      "band": "q22.11"
+     }
+    ],
+    "support": {
+     "read_pairs": 26,
+     "split_reads": 18,
+     "fragments": 36
+    },
+    "cautions": [],
+    "junctions": [
+     {
+      "caller_id": "BND00000978",
+      "orientation": "3to5",
+      "pe": 14,
+      "sr": 9,
+      "support": {
+       "read_pairs": 14,
+       "split_reads": 9,
+       "fragments": 17
+      }
+     },
+     {
+      "caller_id": "BND00000977",
+      "orientation": "5to3",
+      "pe": 12,
+      "sr": 9,
+      "support": {
+       "read_pairs": 12,
+       "split_reads": 9,
+       "fragments": 19
+      }
+     }
+    ]
+   },
+   "first": {
+    "rank": 1,
+    "pattern": "both junctions",
+    "iscn": "t(20;21)(q13.12;q22.11)",
+    "breakpoints": [
+     {
+      "chromosome": "chr20",
+      "start": 45500000,
+      "end": 45500001,
+      "band": "q13.12"
+     },
+     {
+      "chromosome": "chr21",
+      "start": 33900000,
+      "end": 33900001,
+      "band": "q22.11"
+     }
+    ],
+    "support": {
+     "read_pairs": 26,
+     "split_reads": 18,
+     "fragments": 36
+    },
+    "cautions": [],
+    "junctions": [
+     {
+      "caller_id": "BND00000978",
+      "orientation": "3to5",
+      "pe": 14,
+      "sr": 9,
+      "support": {
+       "read_pairs": 14,
+       "split_reads": 9,
+       "fragments": 17
+      }
+     },
+     {
+      "caller_id": "BND00000977",
+      "orientation": "5to3",
+      "pe": 12,
+      "sr": 9,
+      "support": {
+       "read_pairs": 12,
+       "split_reads": 9,
+       "fragments": 19
+      }
+     }
+    ]
+   },
+   "patterns": {
+    "both junctions": 1
+   }
+  },
+  {
+   "id": "IMP03",
+   "class": "clean_unique",
+   "breakpoints": {
+    "chr20": 4900000,
+    "chr21": 45700000,
+    "convention": "1-based; each junction lies between the given base and the next"
+   },
+   "seconds": 0.04,
+   "junctions_passing_filters": 2,
+   "rearrangements_listed": 1,
+   "detected": true,
+   "implant": {
+    "rank": 1,
+    "pattern": "both junctions",
+    "iscn": "t(20;21)(p13;q22.3)",
+    "breakpoints": [
+     {
+      "chromosome": "chr20",
+      "start": 4899999,
+      "end": 4900000,
+      "band": "p13"
+     },
+     {
+      "chromosome": "chr21",
+      "start": 45699999,
+      "end": 45700000,
+      "band": "q22.3"
+     }
+    ],
+    "support": {
+     "read_pairs": 34,
+     "split_reads": 12,
+     "fragments": 43
+    },
+    "cautions": [],
+    "junctions": [
+     {
+      "caller_id": "BND00001059",
+      "orientation": "3to5",
+      "pe": 16,
+      "sr": 9,
+      "support": {
+       "read_pairs": 16,
+       "split_reads": 9,
+       "fragments": 23
+      }
+     },
+     {
+      "caller_id": "BND00001058",
+      "orientation": "5to3",
+      "pe": 18,
+      "sr": 4,
+      "support": {
+       "read_pairs": 18,
+       "split_reads": 3,
+       "fragments": 20
+      }
+     }
+    ]
+   },
+   "first": {
+    "rank": 1,
+    "pattern": "both junctions",
+    "iscn": "t(20;21)(p13;q22.3)",
+    "breakpoints": [
+     {
+      "chromosome": "chr20",
+      "start": 4899999,
+      "end": 4900000,
+      "band": "p13"
+     },
+     {
+      "chromosome": "chr21",
+      "start": 45699999,
+      "end": 45700000,
+      "band": "q22.3"
+     }
+    ],
+    "support": {
+     "read_pairs": 34,
+     "split_reads": 12,
+     "fragments": 43
+    },
+    "cautions": [],
+    "junctions": [
+     {
+      "caller_id": "BND00001059",
+      "orientation": "3to5",
+      "pe": 16,
+      "sr": 9,
+      "support": {
+       "read_pairs": 16,
+       "split_reads": 9,
+       "fragments": 23
+      }
+     },
+     {
+      "caller_id": "BND00001058",
+      "orientation": "5to3",
+      "pe": 18,
+      "sr": 4,
+      "support": {
+       "read_pairs": 18,
+       "split_reads": 3,
+       "fragments": 20
+      }
+     }
+    ]
+   },
+   "patterns": {
+    "both junctions": 1
+   }
+  },
+  {
+   "id": "IMP04",
+   "class": "clean_unique",
+   "breakpoints": {
+    "chr20": 46900000,
+    "chr21": 29200000,
+    "convention": "1-based; each junction lies between the given base and the next"
+   },
+   "seconds": 0.04,
+   "junctions_passing_filters": 2,
+   "rearrangements_listed": 1,
+   "detected": true,
+   "implant": {
+    "rank": 1,
+    "pattern": "both junctions",
+    "iscn": "t(20;21)(q13.12;q21.3)",
+    "breakpoints": [
+     {
+      "chromosome": "chr20",
+      "start": 46899999,
+      "end": 46900000,
+      "band": "q13.12"
+     },
+     {
+      "chromosome": "chr21",
+      "start": 29199999,
+      "end": 29200000,
+      "band": "q21.3"
+     }
+    ],
+    "support": {
+     "read_pairs": 24,
+     "split_reads": 10,
+     "fragments": 28
+    },
+    "cautions": [],
+    "junctions": [
+     {
+      "caller_id": "BND00000953",
+      "orientation": "3to5",
+      "pe": 14,
+      "sr": 5,
+      "support": {
+       "read_pairs": 14,
+       "split_reads": 5,
+       "fragments": 16
+      }
+     },
+     {
+      "caller_id": "BND00000952",
+      "orientation": "5to3",
+      "pe": 10,
+      "sr": 7,
+      "support": {
+       "read_pairs": 10,
+       "split_reads": 5,
+       "fragments": 12
+      }
+     }
+    ]
+   },
+   "first": {
+    "rank": 1,
+    "pattern": "both junctions",
+    "iscn": "t(20;21)(q13.12;q21.3)",
+    "breakpoints": [
+     {
+      "chromosome": "chr20",
+      "start": 46899999,
+      "end": 46900000,
+      "band": "q13.12"
+     },
+     {
+      "chromosome": "chr21",
+      "start": 29199999,
+      "end": 29200000,
+      "band": "q21.3"
+     }
+    ],
+    "support": {
+     "read_pairs": 24,
+     "split_reads": 10,
+     "fragments": 28
+    },
+    "cautions": [],
+    "junctions": [
+     {
+      "caller_id": "BND00000953",
+      "orientation": "3to5",
+      "pe": 14,
+      "sr": 5,
+      "support": {
+       "read_pairs": 14,
+       "split_reads": 5,
+       "fragments": 16
+      }
+     },
+     {
+      "caller_id": "BND00000952",
+      "orientation": "5to3",
+      "pe": 10,
+      "sr": 7,
+      "support": {
+       "read_pairs": 10,
+       "split_reads": 5,
+       "fragments": 12
+      }
+     }
+    ]
+   },
+   "patterns": {
+    "both junctions": 1
+   }
+  },
+  {
+   "id": "IMP05",
+   "class": "repeat_adjacent",
+   "breakpoints": {
+    "chr20": 1900000,
+    "chr21": 13300000,
+    "convention": "1-based; each junction lies between the given base and the next"
+   },
+   "seconds": 0.04,
+   "junctions_passing_filters": 2,
+   "rearrangements_listed": 1,
+   "detected": true,
+   "implant": {
+    "rank": 1,
+    "pattern": "both junctions",
+    "iscn": "t(20;21)(p13;q11.2)",
+    "breakpoints": [
+     {
+      "chromosome": "chr20",
+      "start": 1900000,
+      "end": 1900001,
+      "band": "p13"
+     },
+     {
+      "chromosome": "chr21",
+      "start": 13300000,
+      "end": 13300001,
+      "band": "q11.2"
+     }
+    ],
+    "support": {
+     "read_pairs": 31,
+     "split_reads": 10,
+     "fragments": 35
+    },
+    "cautions": [],
+    "junctions": [
+     {
+      "caller_id": "BND00000868",
+      "orientation": "3to5",
+      "pe": 13,
+      "sr": 7,
+      "support": {
+       "read_pairs": 13,
+       "split_reads": 4,
+       "fragments": 15
+      }
+     },
+     {
+      "caller_id": "BND00000867",
+      "orientation": "5to3",
+      "pe": 18,
+      "sr": 6,
+      "support": {
+       "read_pairs": 18,
+       "split_reads": 6,
+       "fragments": 20
+      }
+     }
+    ]
+   },
+   "first": {
+    "rank": 1,
+    "pattern": "both junctions",
+    "iscn": "t(20;21)(p13;q11.2)",
+    "breakpoints": [
+     {
+      "chromosome": "chr20",
+      "start": 1900000,
+      "end": 1900001,
+      "band": "p13"
+     },
+     {
+      "chromosome": "chr21",
+      "start": 13300000,
+      "end": 13300001,
+      "band": "q11.2"
+     }
+    ],
+    "support": {
+     "read_pairs": 31,
+     "split_reads": 10,
+     "fragments": 35
+    },
+    "cautions": [],
+    "junctions": [
+     {
+      "caller_id": "BND00000868",
+      "orientation": "3to5",
+      "pe": 13,
+      "sr": 7,
+      "support": {
+       "read_pairs": 13,
+       "split_reads": 4,
+       "fragments": 15
+      }
+     },
+     {
+      "caller_id": "BND00000867",
+      "orientation": "5to3",
+      "pe": 18,
+      "sr": 6,
+      "support": {
+       "read_pairs": 18,
+       "split_reads": 6,
+       "fragments": 20
+      }
+     }
+    ]
+   },
+   "patterns": {
+    "both junctions": 1
+   }
+  },
+  {
+   "id": "IMP06",
+   "class": "repeat_adjacent",
+   "breakpoints": {
+    "chr20": 3900000,
+    "chr21": 17200000,
+    "convention": "1-based; each junction lies between the given base and the next"
+   },
+   "seconds": 0.05,
+   "junctions_passing_filters": 2,
+   "rearrangements_listed": 1,
+   "detected": true,
+   "implant": {
+    "rank": 1,
+    "pattern": "both junctions",
+    "iscn": "t(20;21)(p13;q21.1)",
+    "breakpoints": [
+     {
+      "chromosome": "chr20",
+      "start": 3899999,
+      "end": 3900000,
+      "band": "p13"
+     },
+     {
+      "chromosome": "chr21",
+      "start": 17199999,
+      "end": 17200000,
+      "band": "q21.1"
+     }
+    ],
+    "support": {
+     "read_pairs": 37,
+     "split_reads": 21,
+     "fragments": 49
+    },
+    "cautions": [],
+    "junctions": [
+     {
+      "caller_id": "BND00000895",
+      "orientation": "3to5",
+      "pe": 18,
+      "sr": 9,
+      "support": {
+       "read_pairs": 18,
+       "split_reads": 8,
+       "fragments": 23
+      }
+     },
+     {
+      "caller_id": "BND00000894",
+      "orientation": "5to3",
+      "pe": 19,
+      "sr": 14,
+      "support": {
+       "read_pairs": 19,
+       "split_reads": 13,
+       "fragments": 26
+      }
+     }
+    ]
+   },
+   "first": {
+    "rank": 1,
+    "pattern": "both junctions",
+    "iscn": "t(20;21)(p13;q21.1)",
+    "breakpoints": [
+     {
+      "chromosome": "chr20",
+      "start": 3899999,
+      "end": 3900000,
+      "band": "p13"
+     },
+     {
+      "chromosome": "chr21",
+      "start": 17199999,
+      "end": 17200000,
+      "band": "q21.1"
+     }
+    ],
+    "support": {
+     "read_pairs": 37,
+     "split_reads": 21,
+     "fragments": 49
+    },
+    "cautions": [],
+    "junctions": [
+     {
+      "caller_id": "BND00000895",
+      "orientation": "3to5",
+      "pe": 18,
+      "sr": 9,
+      "support": {
+       "read_pairs": 18,
+       "split_reads": 8,
+       "fragments": 23
+      }
+     },
+     {
+      "caller_id": "BND00000894",
+      "orientation": "5to3",
+      "pe": 19,
+      "sr": 14,
+      "support": {
+       "read_pairs": 19,
+       "split_reads": 13,
+       "fragments": 26
+      }
+     }
+    ]
+   },
+   "patterns": {
+    "both junctions": 1
+   }
+  },
+  {
+   "id": "IMP07",
+   "class": "repeat_adjacent",
+   "breakpoints": {
+    "chr20": 55000000,
+    "chr21": 41200000,
+    "convention": "1-based; each junction lies between the given base and the next"
+   },
+   "seconds": 0.04,
+   "junctions_passing_filters": 2,
+   "rearrangements_listed": 1,
+   "detected": true,
+   "implant": {
+    "rank": 1,
+    "pattern": "both junctions",
+    "iscn": "t(20;21)(q13.2;q22.2)",
+    "breakpoints": [
+     {
+      "chromosome": "chr20",
+      "start": 54999999,
+      "end": 55000000,
+      "band": "q13.2"
+     },
+     {
+      "chromosome": "chr21",
+      "start": 41199999,
+      "end": 41200000,
+      "band": "q22.2"
+     }
+    ],
+    "support": {
+     "read_pairs": 32,
+     "split_reads": 15,
+     "fragments": 36
+    },
+    "cautions": [],
+    "junctions": [
+     {
+      "caller_id": "BND00001013",
+      "orientation": "3to5",
+      "pe": 15,
+      "sr": 7,
+      "support": {
+       "read_pairs": 15,
+       "split_reads": 3,
+       "fragments": 16
+      }
+     },
+     {
+      "caller_id": "BND00001012",
+      "orientation": "5to3",
+      "pe": 17,
+      "sr": 11,
+      "support": {
+       "read_pairs": 17,
+       "split_reads": 12,
+       "fragments": 20
+      }
+     }
+    ]
+   },
+   "first": {
+    "rank": 1,
+    "pattern": "both junctions",
+    "iscn": "t(20;21)(q13.2;q22.2)",
+    "breakpoints": [
+     {
+      "chromosome": "chr20",
+      "start": 54999999,
+      "end": 55000000,
+      "band": "q13.2"
+     },
+     {
+      "chromosome": "chr21",
+      "start": 41199999,
+      "end": 41200000,
+      "band": "q22.2"
+     }
+    ],
+    "support": {
+     "read_pairs": 32,
+     "split_reads": 15,
+     "fragments": 36
+    },
+    "cautions": [],
+    "junctions": [
+     {
+      "caller_id": "BND00001013",
+      "orientation": "3to5",
+      "pe": 15,
+      "sr": 7,
+      "support": {
+       "read_pairs": 15,
+       "split_reads": 3,
+       "fragments": 16
+      }
+     },
+     {
+      "caller_id": "BND00001012",
+      "orientation": "5to3",
+      "pe": 17,
+      "sr": 11,
+      "support": {
+       "read_pairs": 17,
+       "split_reads": 12,
+       "fragments": 20
+      }
+     }
+    ]
+   },
+   "patterns": {
+    "both junctions": 1
+   }
+  },
+  {
+   "id": "IMP08",
+   "class": "repeat_adjacent",
+   "breakpoints": {
+    "chr20": 13500000,
+    "chr21": 39300000,
+    "convention": "1-based; each junction lies between the given base and the next"
+   },
+   "seconds": 0.04,
+   "junctions_passing_filters": 2,
+   "rearrangements_listed": 1,
+   "detected": true,
+   "implant": {
+    "rank": 1,
+    "pattern": "both junctions",
+    "iscn": "t(20;21)(p12.1;q22.2)",
+    "breakpoints": [
+     {
+      "chromosome": "chr20",
+      "start": 13499999,
+      "end": 13500000,
+      "band": "p12.1"
+     },
+     {
+      "chromosome": "chr21",
+      "start": 39299999,
+      "end": 39300000,
+      "band": "q22.2"
+     }
+    ],
+    "support": {
+     "read_pairs": 31,
+     "split_reads": 22,
+     "fragments": 40
+    },
+    "cautions": [],
+    "junctions": [
+     {
+      "caller_id": "BND00000997",
+      "orientation": "3to5",
+      "pe": 15,
+      "sr": 15,
+      "support": {
+       "read_pairs": 15,
+       "split_reads": 15,
+       "fragments": 22
+      }
+     },
+     {
+      "caller_id": "BND00000996",
+      "orientation": "5to3",
+      "pe": 16,
+      "sr": 7,
+      "support": {
+       "read_pairs": 16,
+       "split_reads": 7,
+       "fragments": 18
+      }
+     }
+    ]
+   },
+   "first": {
+    "rank": 1,
+    "pattern": "both junctions",
+    "iscn": "t(20;21)(p12.1;q22.2)",
+    "breakpoints": [
+     {
+      "chromosome": "chr20",
+      "start": 13499999,
+      "end": 13500000,
+      "band": "p12.1"
+     },
+     {
+      "chromosome": "chr21",
+      "start": 39299999,
+      "end": 39300000,
+      "band": "q22.2"
+     }
+    ],
+    "support": {
+     "read_pairs": 31,
+     "split_reads": 22,
+     "fragments": 40
+    },
+    "cautions": [],
+    "junctions": [
+     {
+      "caller_id": "BND00000997",
+      "orientation": "3to5",
+      "pe": 15,
+      "sr": 15,
+      "support": {
+       "read_pairs": 15,
+       "split_reads": 15,
+       "fragments": 22
+      }
+     },
+     {
+      "caller_id": "BND00000996",
+      "orientation": "5to3",
+      "pe": 16,
+      "sr": 7,
+      "support": {
+       "read_pairs": 16,
+       "split_reads": 7,
+       "fragments": 18
+      }
+     }
+    ]
+   },
+   "patterns": {
+    "both junctions": 1
+   }
+  },
+  {
+   "id": "IMP09",
+   "class": "low_mappability",
+   "breakpoints": {
+    "chr20": 33700000,
+    "chr21": 5900000,
+    "convention": "1-based; each junction lies between the given base and the next"
+   },
+   "seconds": 0.02,
+   "junctions_passing_filters": 0,
+   "rearrangements_listed": 0,
+   "detected": false,
+   "implant": null,
+   "first": null,
+   "patterns": {}
+  },
+  {
+   "id": "IMP10",
+   "class": "low_mappability",
+   "breakpoints": {
+    "chr20": 25800000,
+    "chr21": 7600000,
+    "convention": "1-based; each junction lies between the given base and the next"
+   },
+   "seconds": 0.02,
+   "junctions_passing_filters": 0,
+   "rearrangements_listed": 0,
+   "detected": false,
+   "implant": null,
+   "first": null,
+   "patterns": {}
+  },
+  {
+   "id": "IMP11",
+   "class": "low_mappability",
+   "breakpoints": {
+    "chr20": 31100000,
+    "chr21": 20200000,
+    "convention": "1-based; each junction lies between the given base and the next"
+   },
+   "seconds": 0.03,
+   "junctions_passing_filters": 0,
+   "rearrangements_listed": 0,
+   "detected": false,
+   "implant": null,
+   "first": null,
+   "patterns": {}
+  },
+  {
+   "id": "IMP12",
+   "class": "low_mappability",
+   "breakpoints": {
+    "chr20": 47900000,
+    "chr21": 44100000,
+    "convention": "1-based; each junction lies between the given base and the next"
+   },
+   "seconds": 0.02,
+   "junctions_passing_filters": 0,
+   "rearrangements_listed": 0,
+   "detected": false,
+   "implant": null,
+   "first": null,
+   "patterns": {}
+  }
+ ],
+ "background": {
+  "seconds": 0.02,
+  "junctions_passing_filters": 0,
+  "rearrangements_listed": 0,
+  "first": null,
+  "supports": []
+ },
+ "summary": {
+  "samples_run": 12,
+  "implants_detected": 8,
+  "ranked_first": 8,
+  "ranks": {
+   "IMP01": 1,
+   "IMP02": 1,
+   "IMP03": 1,
+   "IMP04": 1,
+   "IMP05": 1,
+   "IMP06": 1,
+   "IMP07": 1,
+   "IMP08": 1
+  },
+  "both_junctions": 8,
+  "background_listed": 0
+ },
+ "finished": "2026-10-03T11:21:09"
+}

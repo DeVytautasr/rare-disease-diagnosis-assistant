@@ -296,10 +296,19 @@ async def main(a):
         await pg.select_option("#f-rec", "")
         await pg.wait_for_function("!document.querySelector('#funnel').innerText.includes('Not found in')", timeout=120000)
         await pg.wait_for_timeout(600)
+        # with the page's defaults (translocations only) the private copy can have no
+        # junction at all (IMP09 has none): the reveal then shows that nothing passes
+        facts["private_matching"] = await pg.evaluate("S.funnel.total_matching")
         await pg.click("#reveal")
-        await pg.wait_for_selector("tr.rearr, #cands .err", timeout=300000)
+        await pg.wait_for_selector("tr.rearr, #cands .err" + (", #cands .empty" if facts["private_matching"] == 0 else ""),
+                                   timeout=300000)
         await pg.wait_for_timeout(600)
-        check("Show the candidates reveals the list, reviewed", await pg.locator("tr.rearr").count() > 0)
+        if facts["private_matching"]:
+            check("Show the candidates reveals the list, reviewed", await pg.locator("tr.rearr").count() > 0)
+        else:
+            facts["private_revealed"] = await pg.inner_text("#cands")
+            check("Show the candidates reveals the list (empty here: nothing passes the filters)",
+                  "No junction passes these filters" in facts["private_revealed"], facts["private_revealed"])
 
         # 9. how an answer is drawn: the page's own function on a text written here (no model)
         print("9. answer rendering", flush=True)

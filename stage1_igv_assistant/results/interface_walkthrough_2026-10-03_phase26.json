@@ -1,0 +1,260 @@
+{
+ "url": "http://127.0.0.1:8765/",
+ "cloud_questions_sent": false,
+ "facts": {
+  "default_sample": "IMP01",
+  "default_sample_kind": "Test data",
+  "kinds": {
+   "datasets": {
+    "NA12878.chr20_chr21": "public",
+    "IMP01": "public",
+    "IMP02": "public",
+    "IMP03": "public",
+    "IMP04": "public",
+    "IMP05": "public",
+    "IMP06": "public",
+    "IMP07": "public",
+    "IMP08": "public",
+    "IMP09": "public",
+    "IMP10": "public",
+    "IMP11": "public",
+    "IMP12": "public",
+    "PRIVTEST": "private"
+   },
+   "candidates": {
+    "IMP01": "public",
+    "IMP02": "public",
+    "IMP03": "public",
+    "IMP04": "public",
+    "IMP05": "public",
+    "IMP06": "public",
+    "IMP07": "public",
+    "IMP08": "public",
+    "IMP09": "public",
+    "IMP10": "public",
+    "IMP11": "public",
+    "IMP12": "public",
+    "background": "public",
+    "PRIVTEST": "private"
+   }
+  },
+  "loaded_at_start": [
+   "IMP01"
+  ],
+  "funnel_counts": [
+   "896",
+   "15",
+   "5",
+   "3",
+   "2",
+   "2",
+   "2"
+  ],
+  "candidates_title": "1 rearrangement from 2 junctions, most read support first",
+  "rearrangement_rows": 1,
+  "first_rows": [
+   "1 | t(20;21)(p13;q11.2) | Both | junctions | found | chr20:200,000\u2013200,001 | chr21:14,100,000\u201314,100,001 | no | gene | (nearest | DEFB128, | 10 | kb) | ENSG00000224905 | intron | 2/2 | 49 | 44 | pairs, | 16 | split | Review"
+  ],
+  "funnel_explanation": "\u201cMain chromosomes only\u201d and \u201cSkip known problem regions\u201d remove nothing here, and the counts say why. Of the 15 translocation junctions in this file, none involves a contig other than the main chromosomes, and none touches a listed problem region. A caller run with an exclude list leaves such junctions out itself, so these steps only matter for files made without one.",
+  "row": "1 | t(20;21)(p13;q11.2) | Both | junctions | found | chr20:200,000\u2013200,001 | chr21:14,100,000\u201314,100,001 | no | gene | (nearest | DEFB128, | 10 | kb) | ENSG00000224905 | intron | 2/2 | 49 | 44 | pairs, | 16 | split | Review",
+  "evidence_title": "t(20;21)(p13;q11.2)\nchr20:200,000\u2013200,001 \u2194 chr21:14,100,000\u201314,100,001",
+  "summary_line": "49 reads support it: 44 read pairs join the two ends and 16 reads are split across the junctions.",
+  "cautions": [],
+  "genes": "chr20:200,000\u2013200,001 (20p13) No gene at this breakpoint. Nearest: DEFB128 10 kb to the left; DEFB129 27 kb to the right. chr21:14,100,000\u201314,100,001 (21q11.2) ENSG00000224905 intron 2 of 2 lncRNA, + strand \u2014",
+  "read_box_heads": [
+   "chr20 around 200,000 (20p13)",
+   "chr21 around 14,100,001 (21q11.2)"
+  ],
+  "legend": "joins the two ends as junction 1 does (26 counted)\njoins the two ends as junction 2 does (23 counted)\nmate on another chromosome (14)\nsplit read, other piece elsewhere (5)\nclipped, no other piece (19)",
+  "igv_seconds": 101,
+  "igv_images": 4,
+  "igv_failed_panels": 0,
+  "hand_title": "chr20:33,700,000 (20q11.22)",
+  "hand_partners": "Typed in by hand The caller did not propose this position, so nothing here corroborates that it is a real breakpoint; the reads below stand on their own. Where the reads here point within 1,000 bp, mapping quality 20 or more Other chromosome Read pairs with the mate there Split reads with a piece there chr21 6 0 chr19 2 0 chr7 1 0 chr2 1 0 chr5 1 0 chr4 1 0 chr1 1 0 chrX 1 0 Split reads give exact partner positions. Open one as a junction to see both ends: Junction with chr10_GL383546v1_alt:176,",
+  "local_models": [
+   "qwen2.5:7b",
+   "qwen3.5:4b"
+  ],
+  "cloud_models": [
+   "claude-sonnet-5",
+   "claude-opus-5"
+  ],
+  "local_verdict": [
+   "10 numbers checked \u2014 every one was returned by a tool in this answer. The check covers numbers only, not words such as \u201cstrong\u201d."
+  ],
+  "local_tool_calls": 1,
+  "local_tool_names": [
+   "review_candidates"
+  ],
+  "local_answer": "The strongest rearrangement in sample IMP01 based on read support is the balanced translocation t(20;21)(p13;q11.2), with junction coordinates chr20:200,000\u2013200,001 and chr21:14,100,000\u201314,100,001. This rearrangement is supported by 44 read pairs and 16 split reads, totaling 49 distinct supporting reads.\n\nThe gene broken at this breakpoint on chromosome 20 (chr20) is ENSG00000224905, which falls within the intron 2 of its canonical transcript. This gene is OMIM-marked and is associated with disorders related to Down syndrome. On chromosome 21 (chr21), no specific genes are reported as being directly broken at this breakpoint.\n\nPlease review these findings for further analysis and validation.",
+  "refusal": "Not sent: this question contains a position read from private data (PRIVTEST). A cloud model would receive it. Confirm that you have permission to send it, or ask a model on this computer.",
+  "private_hidden_title": "0 junctions to review",
+  "private_hidden_with_comparison": {
+   "title": "0 junctions to review",
+   "button": "Show the 0 candidates",
+   "last_funnel_row": "Not found in IMP01author's choice both ends within 500 bp count as the same junction source"
+  },
+  "private_matching": 0,
+  "private_revealed": "No junction passes these filters. Loosen a filter above.",
+  "answer_rendering": {
+   "numbers_shown": [
+    1,
+    2,
+    3
+   ],
+   "text": "Two steps:\n\nIt's 39 pairs\n<img src=x onerror=alert(1)> <u>second</u>\nthird",
+   "elements_from_model_html": 0
+  },
+  "limits_headings": [
+   "It checks what the caller proposed. It does not search the genome.",
+   "A read count is evidence, not proof.",
+   "Which junctions belong together is a rule of thumb.",
+   "Genes come from a local table; a gene listed is not a diagnosis.",
+   "Bands and the t(\u2026)(\u2026) name are worked out from coordinates.",
+   "Coverage is not used here."
+  ]
+ },
+ "checks": [
+  {
+   "check": "the page opens on a test-data sample",
+   "ok": true,
+   "detail": "{'default_sample': 'IMP01', 'default_sample_kind': 'Test data'}"
+  },
+  {
+   "check": "PRIVTEST (registered explicitly) is reported as private",
+   "ok": true,
+   "detail": "{'datasets': {'NA12878.chr20_chr21': 'public', 'IMP01': 'public', 'IMP02': 'public', 'IMP03': 'public', 'IMP04': 'public', 'IMP05': 'public', 'IMP06': 'public', 'IMP07': 'public', 'IMP08': 'public', 'IMP09': 'public', 'IMP10': 'public', 'IMP11': 'public', 'IMP12': 'public', 'PRIVTEST': 'private'}, '"
+  },
+  {
+   "check": "nothing private was loaded at start",
+   "ok": true,
+   "detail": "['IMP01']"
+  },
+  {
+   "check": "every candidate was reviewed: rearrangements are listed, most read support first",
+   "ok": true,
+   "detail": "1 rearrangement from 2 junctions, most read support first"
+  },
+  {
+   "check": "the candidate list shows no score",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "check": "a rearrangement containing 14,100,001 is listed",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "the rearrangement is drawn: the chromosomes before and after",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "the abnormal reads at both ends are drawn",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "the evidence view shows no score",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "check": "while IGV draws, the other IGV button is disabled",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "IGV produced four images",
+   "ok": true,
+   "detail": "IGV images at chr20:200,000\nreads from IMP01, 99 s source\nDiscordant pairs view, chr20:198500-201500\nSoft clips view, chr20:199850-200150\nSplit reads view, chr20:198500-201500\nRead depth view, chr20:197000-203000\n\nClick an image to open it larger. IGV shows every read here, normal ones included; the"
+  },
+  {
+   "check": "a position typed in by hand says where its reads point, without a score",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "a private sample is marked private next to its name",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "the local model answered through tool calls",
+   "ok": true,
+   "detail": "['10 numbers checked \u2014 every one was returned by a tool in this answer. The check covers numbers only, not words such as \u201cstrong\u201d.']"
+  },
+  {
+   "check": "... and reviewed every candidate in one call",
+   "ok": true,
+   "detail": "['review_candidates']"
+  },
+  {
+   "check": "naming a private sample shows the permission box",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "... and the Ask button stays off until it is ticked",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "a position read from private data also needs permission",
+   "ok": true,
+   "detail": "This question contains a position at or near one read from PRIVTEST, which is private data. A cloud model would receive the question and the positions, read counts and gene names its tools return for this sample (and for no other private sample). Send them only with permission from the data owner. \n"
+  },
+  {
+   "check": "posted without permission, it is refused before any model runs",
+   "ok": true,
+   "detail": "Not sent: this question contains a position read from private data (PRIVTEST). A cloud model would receive it. Confirm that you have permission to send it, or ask a model on this computer."
+  },
+  {
+   "check": "a test-data question needs no permission",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "choosing a private sample shows its counts but no candidate row",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "... and the private sample is not reviewed before it is shown",
+   "ok": true,
+   "detail": "['load_candidate_set', 'list_candidates']"
+  },
+  {
+   "check": "... and asks the server for counts only (no position reaches the page or the call log)",
+   "ok": true,
+   "detail": "[2147483647]"
+  },
+  {
+   "check": "with a comparison chosen the list stays hidden, and the page is sent no position",
+   "ok": true,
+   "detail": "{\"compare\":{\"set_a\":\"CSET_991a59c5\",\"label_a\":\"PRIVTEST\",\"set_b\":\"CSET_253c82fe\",\"label_b\":\"IMP01\",\"total_in_a\":894,\"total_in_b\":896,\"matched_in_a\":894,\"matched_in_b\":894,\"unmatched_in_a\":0,\"unmatched_in_b\":2,\"matched_pairs\":[{\"candidate_id_a\":\"CAND_a270dd31eace\",\"candidate_id_b\":\"CAND_a270dd31eace\""
+  },
+  {
+   "check": "Show the candidates reveals the list (empty here: nothing passes the filters)",
+   "ok": true,
+   "detail": "No junction passes these filters. Loosen a filter above."
+  },
+  {
+   "check": "a numbered list keeps the numbers the model wrote, also across blank lines",
+   "ok": true,
+   "detail": "{'numbers_shown': [1, 2, 3], 'text': \"Two steps:\\n\\nIt's 39 pairs\\n<img src=x onerror=alert(1)> <u>second</u>\\nthird\", 'elements_from_model_html': 0}"
+  },
+  {
+   "check": "an apostrophe next to a checked 39 stays an apostrophe, and HTML the model wrote stays text",
+   "ok": true,
+   "detail": "{'numbers_shown': [1, 2, 3], 'text': \"Two steps:\\n\\nIt's 39 pairs\\n<img src=x onerror=alert(1)> <u>second</u>\\nthird\", 'elements_from_model_html': 0}"
+  },
+  {
+   "check": "no script error on the page",
+   "ok": true,
+   "detail": "[]"
+  }
+ ],
+ "page_errors": []
+}

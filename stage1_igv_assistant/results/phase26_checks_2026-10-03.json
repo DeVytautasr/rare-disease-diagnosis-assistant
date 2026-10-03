@@ -1,0 +1,236 @@
+{
+ "what": "Phase 26, second part (the author's machine): the checks behind FIGURE_MAP P1, P3-P7 that need this machine. Public data only, except step 7 (patient samples), which is aggregate counts only.",
+ "branch": "claude/task-264xvi (pull request #1), on aa646a1",
+ "preconditions": {
+  "clean_tree": true,
+  "HEAD": "aa646a1",
+  "origin_branch": "aa646a1",
+  "guard_protected_exit": 0,
+  "patch_sha256": "33431446fca88ad8834e2c1ac25906dae0ca4cef57c4d0c5475acc0f928b31e9",
+  "patch_vs_first_commit": "the patch applied to 42a5bfd in a scratch worktree differs from 06018a1 only in FIGURE_MAP, the two cloud records, and the P.2/P.10 fixes (Q1, Q2, the README and NAUDOJIMAS corrections, the two test checks); not applied again on the branch"
+ },
+ "code_state": {
+  "scripts/make_gene_table.py": "284662afc9fe94f10642095bd2418b56168bd1fcd2ec3b0fe2a1d623d2b45260",
+  "scripts/review_ranking.py": "0ae006d9019a54e46d1d1615b82f6fb6044f0ce1cca58f82ef2e2f2756e68451",
+  "scripts/interface_walkthrough.py": "d79dad81cac8e78b7abca4deb68ae5aa1c02b908d96274ac1421e05198244e9d",
+  "scripts/run_suites.py": "7a7560c6a196239d4b45200901c7e9fb3398c29541d9fb011d04dc4495970106",
+  "stage1_igv_assistant/ui.py": "880d4837209810cdf67452adbc7c2433470e97142b3fc01d8416900f04b68d51",
+  "stage1_igv_assistant/ui_page.html": "4a2b729901ca52453d174c5b2a46d45497dda9f48150c0ac7f9d3e746b93e4e2",
+  "stage1_igv_assistant/chat.py": "3b624f951d435ae75760808af3ea54efa385ab783d13efda3d6164622c135029",
+  "stage1_igv_assistant/review_server.py": "1500f2969d597b23b5080fe6a054a6b9c8121a3af9d47f4db19b6082156125a4",
+  "stage1_igv_assistant/tools/junction_tools.py": "a2291803313218d174adc6ee81b56b3a1c53511fabc49d8257280ecc149bb4a7",
+  "stage1_igv_assistant/tools/gene_table.py": "809d75ab964b5bcec9e72ac9daaa9819c3c0d076c623d94d887163452eb41d94"
+ },
+ "annotation": {
+  "downloaded": "2026-10-03 08:01 UTC, curl -fL --retry 3, into ~/public_data/annotation (never committed)",
+  "files": [
+   {
+    "file": "gencode.v46.basic.annotation.gtf.gz",
+    "url": "https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_46/gencode.v46.basic.annotation.gtf.gz",
+    "bytes": 30390388,
+    "sha256": "d620d548ad23dad6c2d67486b7679d12f00f02f66dd5787183d8e6678dceb9b4",
+    "server_last_modified": "Mon, 13 May 2024 15:01:32 GMT",
+    "header_date": "2024-03-26 (GENCODE 46, Ensembl 112)"
+   },
+   {
+    "file": "mim2gene.txt",
+    "url": "https://omim.org/static/omim/data/mim2gene.txt",
+    "bytes": 989611,
+    "sha256": "e74c81766afe11c996a8da01b33593d2194d33291b34e6d3293148cc0da06daa",
+    "server_last_modified": "Fri, 02 Oct 2026 11:01:41 GMT",
+    "header_date": "Generated: 2026-10-02"
+   },
+   {
+    "file": "genes_to_disease.txt",
+    "url": "https://purl.obolibrary.org/obo/hp/hpoa/genes_to_disease.txt",
+    "resolved_to": "https://github.com/obophenotype/human-phenotype-ontology/releases/download/v2026-09-01/genes_to_disease.txt (the purl redirects there; the fallback address was not needed)",
+    "bytes": 1492039,
+    "sha256": "7937a1b92779dc8614e39ace623b443c7c71dd15e4de11d5e52b14e331ab5978",
+    "server_last_modified": "Wed, 02 Sep 2026 21:07:56 GMT",
+    "release": "v2026-09-01"
+   }
+  ],
+  "gene_table": {
+   "command": "python3 scripts/make_gene_table.py ~/public_data/annotation/gencode.v46.basic.annotation.gtf.gz ~/public_data/annotation/genes_grch38.tsv.gz",
+   "printed": [
+    "63086 genes written; 20065 protein-coding"
+   ],
+   "seconds_wall": 7.18,
+   "bytes": 3671404,
+   "sha256_of_the_gzip": "b1b101a14fde658b164e37dabb25c69be5b68dc24afc12e3afa5cb5c0f77d89d",
+   "documented_command": "NAUDOJIMAS's command (from ~/public_data/annotation, system python3 without the venv) run into a scratch file: exit 0, the same line printed, identical uncompressed content"
+  },
+  "spot_checks": {
+   "printed": [
+    "TP53 chr17 7661779 7687546 - 11 {'omim_gene': 191170, 'omim_phenotype': False, 'disorders': ['OMIM:114480', 'OMIM:114500', 'OMIM:114550', 'OMIM:137800', 'OMIM:151623', 'OMIM:202300', 'OMIM:259500', 'OMIM:260350', 'OMIM:260500', 'OMIM:607107', 'OMIM:614740', 'OMIM:618165'], 'disorder_count': 34, 'omim_disorders': 12} ['exon 11 of 11'] ['exon 1 of 11']",
+    "BCR chr22 23179704 23318037 + 23 {'omim_gene': 151410, 'omim_phenotype': False, 'disorders': ['OMIM:608232', 'OMIM:613065', 'ORPHA:261330', 'ORPHA:521', 'ORPHA:585909', 'ORPHA:99861'], 'disorder_count': 6, 'omim_disorders': 2} ['exon 1 of 23'] ['exon 23 of 23']",
+    "ABL1 chr9 130713043 130887675 + 11 {'omim_gene': 189980, 'omim_phenotype': False, 'disorders': ['OMIM:608232', 'OMIM:617602', 'ORPHA:521', 'ORPHA:585909', 'ORPHA:643503', 'ORPHA:99861'], 'disorder_count': 6, 'omim_disorders': 2} ['exon 1 of 11'] ['exon 11 of 11']",
+    "{'available': True, 'genes': 63086, 'source': ['local gene table for the breakpoint interface, built 2026-10-03', 'source GTF: gencode.v46.basic.annotation.gtf.gz sha256 d620d548ad23dad6c2d67486b7679d12f00f02f66dd5787183d8e6678dceb9b4', 'columns: chrom start end strand gene_name gene_id gene_type transcript_id exon_starts exon_ends'], 'omim': '17736 genes with an OMIM gene entry', 'disorders': '5550 genes linked to a disorder', 'disease_marks': True}"
+   ],
+   "expected": "TP53 chr17 strand -, OMIM 191170, disorders including OMIM:151623; BCR chr22 +, OMIM 151410; ABL1 chr9 +, OMIM 189980; lowest exon 'exon N of N' on -, 'exon 1 of N' on +",
+   "agrees": true
+  }
+ },
+ "tests": {
+  "test_junction_review.py": "84 of 84 ([PASS] lines), exit 0",
+  "test_interface_page.py": "93 of 93 (PASSED lines), exit 0",
+  "suites_record": "results/suites_2026-10-03_phase26.json",
+  "summary": {
+   "suites": 28,
+   "passed": 28,
+   "failed": 0,
+   "incomplete": 0,
+   "assertions_held": 936,
+   "assertions_failed": 0,
+   "not_run_lines": 0
+  },
+  "changed_against_suites_2026-10-02_phase25": {
+   "test_interface_page.py": "exit 0, 90 -> 93 held",
+   "test_junction_review.py": "new, exit 0, 84 held"
+  },
+  "environment": "Java 21 (igv-java env) on PATH, DISPLAY=:0, .venv first on PATH"
+ },
+ "startup_check": {
+  "command": "python -m stage1_igv_assistant.ui --check (public data only)",
+  "exit": 0,
+  "printed": [
+   "tool contract OK: 11 evidence tools + 4 bridge tools + 3 review tools",
+   "scoring tiers: derived from bam_tools source",
+   "datasets: 13   candidate files: 13",
+   "",
+   "  available tier: COMPLETE",
+   "    [x] MINIMAL   filter chain, four evidence layers, hand-entered coordinates — self-test passed (5 conditions)",
+   "    [x] FULL      IGV panels — prerequisites verified: ~/IGV_2.17.4/igv.sh executable, Java 21, display :0 (no test render)",
+   "    [x] COMPLETE  local model chat — 2 model(s): qwen2.5:7b, qwen3.5:4b",
+   "    [x] exclude template  ~/reference/human.hg38.excl.tsv  [built-in default]",
+   "    [x] data directory    ~/public_data  [built-in default]",
+   "    [x] gene table        ~/public_data/annotation/genes_grch38.tsv.gz  [built-in default]",
+   "    [x] OMIM mim2gene     ~/public_data/annotation/mim2gene.txt  [built-in default]",
+   "    [x] gene disorders    ~/public_data/annotation/genes_to_disease.txt  [built-in default]",
+   "    [x] Anthropic key     present",
+   "    config file: none found (searched SV_CONFIG, ./sv-assistant.conf, ~/.config/sv-assistant/config.ini)"
+  ]
+ },
+ "walkthrough": {
+  "run1": {
+   "command": "scripts/interface_walkthrough.py --cloud, as patched (PRIVTEST = IMP09's files)",
+   "printed_check_lines": [
+    "  PASSED  the page opens on a test-data sample",
+    "  PASSED  PRIVTEST (registered explicitly) is reported as private",
+    "  PASSED  nothing private was loaded at start",
+    "  PASSED  every candidate was reviewed: rearrangements are listed, most read support first",
+    "  PASSED  the candidate list shows no score",
+    "  PASSED  a rearrangement containing 14,100,001 is listed",
+    "  PASSED  the rearrangement is drawn: the chromosomes before and after",
+    "  PASSED  the abnormal reads at both ends are drawn",
+    "  PASSED  the evidence view shows no score",
+    "  PASSED  while IGV draws, the other IGV button is disabled",
+    "  PASSED  IGV produced four images",
+    "  PASSED  a position typed in by hand says where its reads point, without a score",
+    "  PASSED  a private sample is marked private next to its name",
+    "  PASSED  the local model answered through tool calls",
+    "  PASSED  ... and reviewed every candidate in one call",
+    "  PASSED  naming a private sample shows the permission box",
+    "  PASSED  ... and the Ask button stays off until it is ticked",
+    "  PASSED  a position read from private data also needs permission",
+    "  PASSED  posted without permission, it is refused before any model runs",
+    "  PASSED  a test-data question needs no permission",
+    "  PASSED  the cloud model answered a test-data question",
+    "  PASSED  with permission, the answer says what was sent",
+    "  PASSED  once the question is sent, the permission box is unticked again",
+    "  PASSED  choosing a private sample shows its counts but no candidate row",
+    "  PASSED  ... and the private sample is not reviewed before it is shown",
+    "  PASSED  ... and asks the server for counts only (no position reaches the page or the call log)",
+    "  PASSED  with a comparison chosen the list stays hidden, and the page is sent no position"
+   ],
+   "outcome": "27 checks passed, then a TimeoutError in step 8 before walkthrough.json was written: after 'Show the 0 candidates' the script waited for a rearrangement row or an error, but PRIVTEST has no junction under the page's defaults (translocations only), and the page shows 'No junction passes these filters' (an .empty box). The two cloud questions were sent in this run; their meta lines (time, turns, tokens, cost) were drawn below the screenshots' viewport and were not recorded, and the server keeps no copy. The answers are in screenshots run1_08 and run1_09."
+  },
+  "fix_Q5": "scripts/interface_walkthrough.py: when the private copy has no junction under the filters, the reveal waits for the empty message and checks it; otherwise as before (a row). The number of checks is unchanged.",
+  "run2": {
+   "command": "scripts/interface_walkthrough.py without --cloud, on a fresh interface (no question sent to Anthropic)",
+   "record": "results/interface_walkthrough_2026-10-03_phase26.json",
+   "checks_passed": 28,
+   "checks": 28,
+   "page_errors": [],
+   "igv_seconds": 101,
+   "local_model": "qwen2.5:7b",
+   "local_tool_names": [
+    "review_candidates"
+   ],
+   "local_answer_finding": "the answer's numbers all check, but its words are wrong: it places ENSG00000224905 at the chr20 breakpoint (the tool reports it at chr21) and calls it OMIM-marked with Down syndrome disorders (the tool gives it no OMIM mark); a finding about the model, the page unchanged"
+  },
+  "cloud_api_questions_sent": 2,
+  "screenshots": "screenshots/interface_2026-10-03_phase26/ (run 2's ten, and run 1's two cloud answers as run1_08, run1_09)"
+ },
+ "ranking": {
+  "record": "results/review_ranking_2026-10-03.json",
+  "summary": {
+   "samples_run": 12,
+   "implants_detected": 8,
+   "ranked_first": 8,
+   "ranks": {
+    "IMP01": 1,
+    "IMP02": 1,
+    "IMP03": 1,
+    "IMP04": 1,
+    "IMP05": 1,
+    "IMP06": 1,
+    "IMP07": 1,
+    "IMP08": 1
+   },
+   "both_junctions": 8,
+   "background_listed": 0
+  },
+  "seconds_per_sample": {
+   "IMP01": 0.04,
+   "IMP02": 0.05,
+   "IMP03": 0.04,
+   "IMP04": 0.04,
+   "IMP05": 0.04,
+   "IMP06": 0.05,
+   "IMP07": 0.04,
+   "IMP08": 0.04,
+   "IMP09": 0.02,
+   "IMP10": 0.02,
+   "IMP11": 0.03,
+   "IMP12": 0.02
+  },
+  "background": {
+   "seconds": 0.02,
+   "junctions_passing_filters": 0,
+   "rearrangements_listed": 0,
+   "first": null,
+   "supports": []
+  },
+  "agrees_with_figures_json": "sensitivity 8/12 translocations, both junctions 8/12; losses IMP09-IMP12 at discovery (no delly record)"
+ },
+ "patient_check": {
+  "blinding": "aggregate counts only. The interface was started with the four patient files registered (the two neutral read-file links and the two DELLY call sets under ~/patient_data, existence checked with test -e only), ANTHROPIC_BASE_URL=http://127.0.0.1:9, no DISPLAY, no browser; only review_counts.py spoke to it (GET /api/bootstrap, POST /api/review four times); no message to /api/privacy_check or /api/chat; no IGV image; stopped by its PID. No patient coordinate, band, gene name, read name or caller id was printed, logged by me or recorded.",
+  "script": {
+   "file": "review_counts.py (read first; prints counts only)",
+   "sha256": "1743b6ce9e3fed11b5d390657b7fbb3ed892c27e83df2480f06cae68e416947e"
+  },
+  "printed": [
+   "bootstrap {'kinds': {'datasets': {'NA12878.chr20_chr21': 'public', 'IMP01': 'public', 'IMP02': 'public', 'IMP03': 'public', 'IMP04': 'public', 'IMP05': 'public', 'IMP06': 'public', 'IMP07': 'public', 'IMP08': 'public', 'IMP09': 'public', 'IMP10': 'public', 'IMP11': 'public', 'IMP12': 'public', 'SAMPLE_A': 'private', 'SAMPLE_B': 'private'}, 'candidates': {'IMP01': 'public', 'IMP02': 'public', 'IMP03': 'public', 'IMP04': 'public', 'IMP05': 'public', 'IMP06': 'public', 'IMP07': 'public', 'IMP08': 'public', 'IMP09': 'public', 'IMP10': 'public', 'IMP11': 'public', 'IMP12': 'public', 'background': 'public', 'SAMPLE_A': 'private', 'SAMPLE_B': 'private'}}, 'tool_counts': {'evidence': 11, 'bridge': 4, 'review': 3}, 'genes': {'available': True, 'genes': 63086, 'disease_marks': True}, 'exclude_regions': True}",
+   "SAMPLE_A alone {'seconds': 4.7, 'junctions_in_file': 30596, 'chain': [('svtype', 'BND', 9172, 21424), ('filter_pass', True, 896, 8276), ('min_pe', 3, 664, 7424), ('min_sr', 1, 57, 4937), ('primary_only', True, 57, 0), ('exclude_masked', True, 57, 1)], 'junctions_passing_filters': 57, 'junctions_reviewed': 57, 'truncated': False, 'rearrangements': 48, 'patterns': {'both junctions': 7, 'one junction': 40, 'complex (3 junctions)': 1}, 'kinds': {'translocation': 48}, 'supporting_reads': {'0': 0, '1-4': 0, '5-9': 17, '10+': 31}, 'break_a_gene': 39, 'break_a_disorder_gene': 15, 'with_a_caution': 40, 'cautions': {'many pairs point elsewhere': 47, 'reciprocal junction filtered out': 16, 'many ambiguous reads': 16, 'centromere/heterochromatin/stalk band': 4, 'reads for an uncalled reciprocal join': 12}, 'gene_table_loaded': True, 'exclude_regions_available': True}",
+   "SAMPLE_A compared with SAMPLE_B {'seconds': 4.6, 'rearrangements': 48, 'cautions': {'also in the other sample': 34, 'many pairs point elsewhere': 47, 'reciprocal junction filtered out': 16, 'many ambiguous reads': 16, 'centromere/heterochromatin/stalk band': 4, 'reads for an uncalled reciprocal join': 12}}",
+   "SAMPLE_B alone {'seconds': 2.7, 'junctions_in_file': 32041, 'chain': [('svtype', 'BND', 9655, 22386), ('filter_pass', True, 923, 8732), ('min_pe', 3, 642, 7803), ('min_sr', 1, 63, 5289), ('primary_only', True, 63, 0), ('exclude_masked', True, 63, 0)], 'junctions_passing_filters': 63, 'junctions_reviewed': 63, 'truncated': False, 'rearrangements': 55, 'patterns': {'both junctions': 8, 'one junction': 47}, 'kinds': {'translocation': 55}, 'supporting_reads': {'0': 0, '1-4': 2, '5-9': 17, '10+': 36}, 'break_a_gene': 41, 'break_a_disorder_gene': 15, 'with_a_caution': 39, 'cautions': {'reciprocal junction filtered out': 19, 'reads for an uncalled reciprocal join': 11, 'many pairs point elsewhere': 52, 'many ambiguous reads': 10, 'centromere/heterochromatin/stalk band': 6}, 'gene_table_loaded': True, 'exclude_regions_available': True}",
+   "SAMPLE_B compared with SAMPLE_A {'seconds': 2.7, 'rearrangements': 55, 'cautions': {'also in the other sample': 38, 'reciprocal junction filtered out': 19, 'reads for an uncalled reciprocal join': 11, 'many pairs point elsewhere': 52, 'many ambiguous reads': 10, 'centromere/heterochromatin/stalk band': 6}}"
+  ],
+  "chain_equals_patient_rerun_2026-09": {
+   "SAMPLE_A": true,
+   "SAMPLE_B": true
+  },
+  "seconds": {
+   "SAMPLE_A alone": 4.7,
+   "SAMPLE_A compared with SAMPLE_B": 4.6,
+   "SAMPLE_B alone": 2.7,
+   "SAMPLE_B compared with SAMPLE_A": 2.7
+  },
+  "identifier_scan": {
+   "what": "every file under the step logs and every new record of this part, against ~/patient_data/.identifier_list (6 entries, never printed)",
+   "hits": 0,
+   "positive_control": "a scratch file holding the first entry: caught (1 hit), then deleted"
+  }
+ }
+}
