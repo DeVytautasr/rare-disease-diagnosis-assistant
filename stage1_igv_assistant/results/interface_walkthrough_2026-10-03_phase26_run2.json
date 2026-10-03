@@ -1,6 +1,6 @@
 {
  "url": "http://127.0.0.1:8765/",
- "cloud_questions_sent": true,
+ "cloud_questions_sent": false,
  "facts": {
   "default_sample": "IMP01",
   "default_sample_kind": "Test data",
@@ -66,7 +66,7 @@
    "chr21 around 14,100,001 (21q11.2)"
   ],
   "legend": "joins the two ends as junction 1 does (26 counted)\njoins the two ends as junction 2 does (23 counted)\nmate on another chromosome (14)\nsplit read, other piece elsewhere (5)\nclipped, no other piece (19)",
-  "igv_seconds": 110,
+  "igv_seconds": 101,
   "igv_images": 4,
   "igv_failed_panels": 0,
   "hand_title": "chr20:33,700,000 (20q11.22)",
@@ -80,25 +80,14 @@
    "claude-opus-5"
   ],
   "local_verdict": [
-   "11 numbers checked \u2014 every one was returned by a tool in this answer. The check covers numbers only, not words such as \u201cstrong\u201d."
+   "10 numbers checked \u2014 every one was returned by a tool in this answer. The check covers numbers only, not words such as \u201cstrong\u201d."
   ],
   "local_tool_calls": 1,
   "local_tool_names": [
    "review_candidates"
   ],
-  "local_answer": "The strongest rearrangement in IMP01 based on read support is the balanced translocation t(20;21)(p13;q11.2). This translocation has:\n\n44 read pairs supporting one end of the breakpoint.\n16 split reads (totaling 49 reads) supporting both ends.\n\nThe genes broken by this rearrangement are:\n\nENSG00000224905, which is intron 2 out of 2 in its canonical transcript. This gene has an OMIM number and linked disorders, but those details are not provided here.\n\nThis balanced translocation involves the following breakpoints:\n\nchr20:200,000\u2013200,001 (p13)\nchr21:14,100,000\u201314,100,001 (q11.2)",
+  "local_answer": "The strongest rearrangement in sample IMP01 based on read support is the balanced translocation t(20;21)(p13;q11.2), with junction coordinates chr20:200,000\u2013200,001 and chr21:14,100,000\u201314,100,001. This rearrangement is supported by 44 read pairs and 16 split reads, totaling 49 distinct supporting reads.\n\nThe gene broken at this breakpoint on chromosome 20 (chr20) is ENSG00000224905, which falls within the intron 2 of its canonical transcript. This gene is OMIM-marked and is associated with disorders related to Down syndrome. On chromosome 21 (chr21), no specific genes are reported as being directly broken at this breakpoint.\n\nPlease review these findings for further analysis and validation.",
   "refusal": "Not sent: this question contains a position read from private data (PRIVTEST). A cloud model would receive it. Confirm that you have permission to send it, or ask a model on this computer.",
-  "cloud_public_meta": "6.1 s \u00b7 2 model turns \u00b7 454 tokens written \u00b7 cost $0.032",
-  "cloud_public_lines": [
-   "17 numbers checked \u2014 every one was returned by a tool in this answer. The check covers numbers only, not words such as \u201cstrong\u201d.",
-   "Cloud model without permission for private data: it was offered test data only."
-  ],
-  "cloud_private_meta": "22.5 s \u00b7 4 model turns \u00b7 2,405 tokens written \u00b7 cost $0.064",
-  "cloud_private_lines": [
-   "32 numbers checked \u2014 every one was returned by a tool in this answer. The check covers numbers only, not words such as \u201cstrong\u201d.",
-   "Sent to Anthropic with your permission: tool results for PRIVTEST. The permission covered PRIVTEST only."
-  ],
-  "consent_ticked_after_sending": false,
   "private_hidden_title": "0 junctions to review",
   "private_hidden_with_comparison": {
    "title": "0 junctions to review",
@@ -179,7 +168,7 @@
   {
    "check": "IGV produced four images",
    "ok": true,
-   "detail": "IGV images at chr20:200,000\nreads from IMP01, 109 s source\nDiscordant pairs view, chr20:198500-201500\nSoft clips view, chr20:199850-200150\nSplit reads view, chr20:198500-201500\nRead depth view, chr20:197000-203000\n\nClick an image to open it larger. IGV shows every read here, normal ones included; th"
+   "detail": "IGV images at chr20:200,000\nreads from IMP01, 99 s source\nDiscordant pairs view, chr20:198500-201500\nSoft clips view, chr20:199850-200150\nSplit reads view, chr20:198500-201500\nRead depth view, chr20:197000-203000\n\nClick an image to open it larger. IGV shows every read here, normal ones included; the"
   },
   {
    "check": "a position typed in by hand says where its reads point, without a score",
@@ -194,7 +183,7 @@
   {
    "check": "the local model answered through tool calls",
    "ok": true,
-   "detail": "['11 numbers checked \u2014 every one was returned by a tool in this answer. The check covers numbers only, not words such as \u201cstrong\u201d.']"
+   "detail": "['10 numbers checked \u2014 every one was returned by a tool in this answer. The check covers numbers only, not words such as \u201cstrong\u201d.']"
   },
   {
    "check": "... and reviewed every candidate in one call",
@@ -223,21 +212,6 @@
   },
   {
    "check": "a test-data question needs no permission",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "the cloud model answered a test-data question",
-   "ok": true,
-   "detail": "['17 numbers checked \u2014 every one was returned by a tool in this answer. The check covers numbers only, not words such as \u201cstrong\u201d.', 'Cloud model without permission for private data: it was offered test data only.']"
-  },
-  {
-   "check": "with permission, the answer says what was sent",
-   "ok": true,
-   "detail": "['32 numbers checked \u2014 every one was returned by a tool in this answer. The check covers numbers only, not words such as \u201cstrong\u201d.', 'Sent to Anthropic with your permission: tool results for PRIVTEST. The permission covered PRIVTEST only.']"
-  },
-  {
-   "check": "once the question is sent, the permission box is unticked again",
    "ok": true,
    "detail": ""
   },

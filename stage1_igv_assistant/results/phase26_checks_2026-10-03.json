@@ -148,7 +148,7 @@
   "fix_Q5": "scripts/interface_walkthrough.py: when the private copy has no junction under the filters, the reveal waits for the empty message and checks it; otherwise as before (a row). The number of checks is unchanged.",
   "run2": {
    "command": "scripts/interface_walkthrough.py without --cloud, on a fresh interface (no question sent to Anthropic)",
-   "record": "results/interface_walkthrough_2026-10-03_phase26.json",
+   "record": "results/interface_walkthrough_2026-10-03_phase26_run2.json (moved from the step's own name when run 3 took it)",
    "checks_passed": 28,
    "checks": 28,
    "page_errors": [],
@@ -160,7 +160,35 @@
    "local_answer_finding": "the answer's numbers all check, but its words are wrong: it places ENSG00000224905 at the chr20 breakpoint (the tool reports it at chr21) and calls it OMIM-marked with Down syndrome disorders (the tool gives it no OMIM mark); a finding about the model, the page unchanged"
   },
   "cloud_api_questions_sent": 2,
-  "screenshots": "screenshots/interface_2026-10-03_phase26/ (run 2's ten, and run 1's two cloud answers as run1_08, run1_09)"
+  "screenshots": "screenshots/interface_2026-10-03_phase26/ holds run 3's twelve; run 2's ten and run 1's two cloud answers (run1_08, run1_09) are in screenshots/interface_2026-10-03_phase26_runs1-2/",
+  "run3": {
+   "why": "run 1's cloud meta lines were lost; on 2026-10-03 the author allowed the two --cloud questions to be sent once more (public data only)",
+   "command": "scripts/interface_walkthrough.py --cloud (with Q5), on a fresh interface with PRIVTEST = IMP09's files",
+   "record": "results/interface_walkthrough_2026-10-03_phase26.json",
+   "checks_passed": 31,
+   "checks": 31,
+   "page_errors": [],
+   "igv_seconds": 110,
+   "local_tool_names": [
+    "review_candidates"
+   ],
+   "local_verdict": [
+    "11 numbers checked — every one was returned by a tool in this answer. The check covers numbers only, not words such as “strong”."
+   ],
+   "local_answer_finding": "every number checks again, and the words are wrong again: it says ENSG00000224905 'has an OMIM number and linked disorders' (the tool gives it no OMIM mark) and puts the 44 read pairs at 'one end' and the 16 split reads at 'both ends'",
+   "cloud_public_meta": "6.1 s · 2 model turns · 454 tokens written · cost $0.032",
+   "cloud_public_lines": [
+    "17 numbers checked — every one was returned by a tool in this answer. The check covers numbers only, not words such as “strong”.",
+    "Cloud model without permission for private data: it was offered test data only."
+   ],
+   "cloud_private_meta": "22.5 s · 4 model turns · 2,405 tokens written · cost $0.064",
+   "cloud_private_lines": [
+    "32 numbers checked — every one was returned by a tool in this answer. The check covers numbers only, not words such as “strong”.",
+    "Sent to Anthropic with your permission: tool results for PRIVTEST. The permission covered PRIVTEST only."
+   ],
+   "consent_ticked_after_sending": false
+  },
+  "cloud_api_questions_sent_in_all": "4: two in run 1, two in run 3; none in run 2"
  },
  "ranking": {
   "record": "results/review_ranking_2026-10-03.json",
